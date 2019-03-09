@@ -3,5 +3,10 @@ kind: Pulp
 metadata:
   name: example-pulp
 spec:
-  # Add fields here
-  size: 3
+  pulp_core:
+    replicas: 2
+    log_level: INFO
+  pulp_worker:
+    replicas: 2
+  pulp_resource_manager:
+    replicas: 2

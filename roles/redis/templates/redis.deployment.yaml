@@ -1,0 +1,40 @@
+---
+apiVersion: v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: "{{ project_name }}"
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      serviceAccountName: "{{ project_name }}-anyuid"
+      containers:
+        - name: redis
+          image: "{{ registry }}/redis:latest"
+          env:
+            - name: REDIS_DB
+              value: pulp
+            - name: REDIS_USER
+              value: pulp
+            - name: REDIS_PASS
+              value: pulp
+          volumeMounts:
+            - readOnly: false
+              mountPath: /var/lib/redis
+              name: redis-data
+          ports:
+            - protocol: TCP
+              containerPort: 6379
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-data

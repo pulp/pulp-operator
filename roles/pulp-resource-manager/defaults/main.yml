@@ -1,0 +1,3 @@
+---
+pulp_resource_manager:
+  replicas: 1

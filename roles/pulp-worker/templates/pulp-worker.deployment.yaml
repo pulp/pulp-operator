@@ -1,0 +1,32 @@
+---
+apiVersion: v1
+kind: Deployment
+metadata:
+  name: pulp-worker
+  namespace: "{{ project_name }}"
+  labels:
+    app: pulp-worker
+spec:
+  replicas: {{ pulp_worker.replicas }}
+  selector:
+    matchLabels:
+      app: pulp-worker
+  template:
+    metadata:
+      labels:
+        app: pulp-worker
+    spec:
+      serviceAccountName: "{{ project_name }}-anyuid"
+      volumes:
+        - name: pulp-server
+          configMap:
+            name: pulp-server
+            items:
+              - path: settings.py
+                key: settings.py
+      containers:
+        - name: pulp-worker
+          image: "{{ registry }}/pulp-worker:{{ version }}"
+          volumeMounts:
+            - name: pulp-server
+              mountPath: "/etc/pulp/"

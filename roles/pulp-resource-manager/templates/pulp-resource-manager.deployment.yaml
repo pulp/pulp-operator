@@ -1,0 +1,32 @@
+---
+apiVersion: v1
+kind: Deployment
+metadata:
+  name: pulp-resource-manager
+  namespace: "{{ project_name }}"
+  labels:
+    app: pulp-resource-manager
+spec:
+  replicas: {{ pulp_resource_manager.replicas }}
+  selector:
+    matchLabels:
+      app: pulp-resource-manager
+  template:
+    metadata:
+      labels:
+        app: pulp-resource-manager
+    spec:
+      serviceAccountName: "{{ project_name }}-anyuid"
+      volumes:
+        - name: pulp-server
+          configMap:
+            name: pulp-server
+            items:
+              - path: settings.py
+                key: settings.py
+      containers:
+        - name: pulp-resource-manager
+          image: "{{ registry }}/pulp-resource-manager:{{ version }}"
+          volumeMounts:
+            - name: pulp-server
+              mountPath: "/etc/pulp/"

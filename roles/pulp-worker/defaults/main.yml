@@ -1,0 +1,3 @@
+---
+pulp_worker:
+  replicas: 2

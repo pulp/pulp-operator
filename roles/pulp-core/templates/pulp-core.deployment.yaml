@@ -1,0 +1,36 @@
+---
+apiVersion: v1
+kind: Deployment
+metadata:
+  name: pulp-core
+  namespace: "{{ project_name }}"
+  labels:
+    app: pulp-core
+spec:
+  replicas: {{ pulp_core.replicas }}
+  selector:
+    matchLabels:
+      app: pulp-core
+  template:
+    metadata:
+      labels:
+        app: pulp-core
+    spec:
+      serviceAccountName: "{{ project_name }}-anyuid"
+      volumes:
+        - name: pulp-server
+          configMap:
+            name: pulp-server
+            items:
+              - path: settings.py
+                key: settings.py
+      containers:
+        - name: pulp-core
+          image: "{{ registry }}/pulp-core:{{ version }}"
+          imagePullPolicy: Always
+          ports:
+            - protocol: TCP
+              containerPort: 8080
+          volumeMounts:
+            - name: pulp-server
+              mountPath: "/etc/pulp/"
