@@ -1,0 +1,5 @@
+---
+- version: v1alpha1
+  group: pulpproject.org
+  kind: Pulp
+  role: /opt/ansible/roles/pulp
