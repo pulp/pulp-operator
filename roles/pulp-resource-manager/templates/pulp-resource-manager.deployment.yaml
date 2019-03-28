@@ -16,7 +16,7 @@ spec:
       labels:
         app: pulp-resource-manager
     spec:
-      serviceAccountName: "{{ project_name }}-anyuid"
+      #serviceAccountName: "{{ project_name }}-anyuid"
       volumes:
         - name: pulp-server
           configMap:

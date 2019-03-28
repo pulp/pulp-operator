@@ -10,4 +10,3 @@
     - pulp-core
     - pulp-resource-manager
     - pulp-worker
-    - pulp-routes

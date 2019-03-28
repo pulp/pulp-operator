@@ -3,6 +3,7 @@ kind: Pulp
 metadata:
   name: example-pulp
 spec:
+  version: latest
   pulp_core:
     replicas: 2
     log_level: INFO
