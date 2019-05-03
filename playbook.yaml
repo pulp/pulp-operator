@@ -8,5 +8,6 @@
     - postgres
     - redis
     - pulp-api
+    - pulp-content
     - pulp-resource-manager
     - pulp-worker
