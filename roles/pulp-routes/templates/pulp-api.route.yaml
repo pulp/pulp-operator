@@ -11,4 +11,4 @@ spec:
     kind: Service
     name: pulp-api
   port:
-    targetPort: pulp-api-8080
+    targetPort: pulp-api-24817
