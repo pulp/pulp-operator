@@ -7,6 +7,6 @@
   roles:
     - postgres
     - redis
-    - pulp-core
+    - pulp-api
     - pulp-resource-manager
     - pulp-worker

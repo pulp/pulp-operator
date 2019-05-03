@@ -5,10 +5,10 @@ metadata:
   name: pulp-http
   namespace: "{{ project_name }}"
   labels:
-    app: pulp-core
+    app: pulp-api
 spec:
   to:
     kind: Service
-    name: pulp-core
+    name: pulp-api
   port:
-    targetPort: pulp-core-8080
+    targetPort: pulp-api-8080

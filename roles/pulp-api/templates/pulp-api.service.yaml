@@ -2,15 +2,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: pulp-core
+  name: pulp-api
   namespace: "{{ project_name }}"
   labels:
-    app: pulp-core
+    app: pulp-api
 spec:
   selector:
-    app: pulp-core
+    app: pulp-api
   ports:
     - protocol: TCP
       targetPort: 8080
-      name: pulp-core-8080
+      name: pulp-api-8080
       port: 8080

@@ -1,4 +1,4 @@
 ---
-pulp_core:
+pulp_api:
   replicas: 1
   log_level: INFO
