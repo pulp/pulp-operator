@@ -2,7 +2,7 @@
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: pulp-http
+  name: pulp-api
   namespace: "{{ project_name }}"
   labels:
     app: pulp-api
