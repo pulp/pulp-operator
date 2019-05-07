@@ -5,12 +5,12 @@ metadata:
 spec:
   version: latest
   pulp_api:
-    replicas: 2
+    replicas: 1
     log_level: INFO
   pulp_content:
-    replicas: 2
+    replicas: 1
     log_level: INFO
   pulp_worker:
     replicas: 2
   pulp_resource_manager:
-    replicas: 2
+    replicas: 1
