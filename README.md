@@ -9,4 +9,6 @@
 `podman push quay.io/mikedep333/pulp-operator:latest`
 
 ## Usage
-./up.sh
+`./up.sh`
+
+`minikube service list`
