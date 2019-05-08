@@ -24,9 +24,15 @@ spec:
             items:
               - path: settings.py
                 key: settings.py
+        - name: pulp-file-storage
+          persistentVolumeClaim:
+            claimName: pulp-file-storage
       containers:
         - name: pulp-resource-manager
           image: "{{ registry }}/pulp-resource-manager:{{ version }}"
           volumeMounts:
             - name: pulp-server
               mountPath: "/etc/pulp/"
+            - name: pulp-file-storage
+              readOnly: false
+              mountPath: "/var/lib/pulp"
