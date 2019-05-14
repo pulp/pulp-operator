@@ -17,12 +17,6 @@ rules:
   verbs:
   - '*'
 - apiGroups:
-  - ""
-  resources:
-  - namespaces
-  verbs:
-  - get
-- apiGroups:
   - apps
   resources:
   - deployments
@@ -47,7 +41,7 @@ rules:
   verbs:
   - update
 - apiGroups:
-  - pulpproject.org
+  - example.com
   resources:
   - '*'
   verbs:
