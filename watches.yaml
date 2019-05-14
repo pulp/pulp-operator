@@ -2,4 +2,4 @@
 - version: v1alpha1
   group: pulpproject.org
   kind: Pulp
-  playbook: /opt/ansible/playbook.yaml
+  playbook: /opt/ansible/playbook.yml
