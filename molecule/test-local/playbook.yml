@@ -100,7 +100,18 @@
 
     - name: get operator logs
       failed_when: false
-      command: kubectl logs deployment/{{ definition.metadata.name }} -n {{ namespace }}
+      command: kubectl logs deployment/{{ definition.metadata.name }} -n {{ namespace }} -c operator
+      environment:
+        KUBECONFIG: '{{ lookup("env", "KUBECONFIG") }}'
+      vars:
+        definition: "{{ lookup('template', '/'.join([deploy_dir, 'operator.yaml'])) | from_yaml }}"
+      register: log
+
+    - debug: var=log.stdout_lines
+
+    - name: get ansible logs
+      failed_when: false
+      command: kubectl logs deployment/{{ definition.metadata.name }} -n {{ namespace }} -c ansible
       environment:
         KUBECONFIG: '{{ lookup("env", "KUBECONFIG") }}'
       vars:
