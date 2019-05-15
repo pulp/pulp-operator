@@ -19,19 +19,17 @@ spec:
       containers:
         - name: postgres
           env:
-            - name: POSTGRES_DB
+            - name: POSTGRESQL_DATABASE
               value: pulp
-            - name: POSTGRES_USER
+            - name: POSTGRESQL_USER
               value: pulp
-            - name: POSTGRES_PASS
+            - name: POSTGRESQL_PASSWORD
               value: pulp
-            - name: PGDATA
-              value: /var/lib/pgsql/data/userdata
           volumeMounts:
             - readOnly: false
               mountPath: /var/lib/pgsql/data
               name: postgres-data
-          image: ansible/postgresql
+          image: registry.centos.org/postgresql/postgresql:9.6
       volumes:
         - name: postgres-data
           persistentVolumeClaim:
