@@ -9,4 +9,4 @@ spec:
     requests:
       storage: 375Gi
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
