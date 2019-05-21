@@ -1,0 +1,14 @@
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: pulp-content
+  namespace: "{{ project_name }}"
+  labels:
+    app: pulp-content
+spec:
+  to:
+    kind: Service
+    name: pulp-content
+  port:
+    targetPort: pulp-content-24816

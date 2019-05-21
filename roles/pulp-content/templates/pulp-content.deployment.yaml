@@ -2,19 +2,19 @@
 apiVersion: v1
 kind: Deployment
 metadata:
-  name: pulp-core
+  name: pulp-content
   namespace: "{{ project_name }}"
   labels:
-    app: pulp-core
+    app: pulp-content
 spec:
-  replicas: {{ pulp_core.replicas }}
+  replicas: {{ pulp_content.replicas }}
   selector:
     matchLabels:
-      app: pulp-core
+      app: pulp-content
   template:
     metadata:
       labels:
-        app: pulp-core
+        app: pulp-content
     spec:
       #serviceAccountName: "{{ project_name }}-anyuid"
       volumes:
@@ -24,13 +24,19 @@ spec:
             items:
               - path: settings.py
                 key: settings.py
+        - name: pulp-file-storage
+          persistentVolumeClaim:
+            claimName: pulp-file-storage
       containers:
-        - name: pulp-core
-          image: "{{ registry }}/pulp-core:{{ version }}"
+        - name: pulp-content
+          image: "{{ registry }}/pulp-content:{{ version }}"
           imagePullPolicy: Always
           ports:
             - protocol: TCP
-              containerPort: 8080
+              containerPort: 24816
           volumeMounts:
             - name: pulp-server
               mountPath: "/etc/pulp/"
+            - name: pulp-file-storage
+              readOnly: false
+              mountPath: "/var/lib/pulp"

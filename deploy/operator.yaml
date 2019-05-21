@@ -14,10 +14,23 @@ spec:
     spec:
       serviceAccountName: pulp-operator
       containers:
-        - name: pulp-operator
-          # Replace this with the built image name
-          image: "quay.io/carafe/pulp-operator:v0.0.1"
+        - name: ansible
+          command:
+          - /usr/local/bin/ao-logs
+          - /tmp/ansible-operator/runner
+          - stdout
+          image: "quay.io/mikedep333/pulp-operator:latest"
           imagePullPolicy: "Always"
+          volumeMounts:
+          - mountPath: /tmp/ansible-operator/runner
+            name: runner
+            readOnly: true
+        - name: operator
+          image: "quay.io/mikedep333/pulp-operator:latest"
+          imagePullPolicy: "Always"
+          volumeMounts:
+          - mountPath: /tmp/ansible-operator/runner
+            name: runner
           env:
             - name: WATCH_NAMESPACE
               valueFrom:
@@ -29,3 +42,6 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "pulp-operator"
+      volumes:
+        - name: runner
+          emptyDir: {}

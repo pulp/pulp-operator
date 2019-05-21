@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pulp-content
+  namespace: "{{ project_name }}"
+  labels:
+    app: pulp-content
+spec:
+  selector:
+    app: pulp-content
+  ports:
+    - protocol: TCP
+      targetPort: 24816
+      name: pulp-content-24816
+      port: 24816
+  type: NodePort

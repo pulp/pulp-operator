@@ -1,0 +1,31 @@
+---
+- set_fact:
+    secret_key: "{{ lookup('password', '/dev/null length=50 chars=ascii_letters') }}"
+
+- name: pulp-file-storage persistent volume claim
+  k8s:
+    state: "{{ deployment_state }}"
+    definition: "{{ lookup('template', 'templates/' + item + '.pvc.yaml') | from_yaml }}"
+  with_items:
+    - pulp-file-storage
+
+- name: pulp-api config-map
+  k8s:
+    state: "{{ deployment_state }}"
+    definition: "{{ lookup('template', 'templates/' + item + '.config-map.yaml') | from_yaml }}"
+  with_items:
+    - pulp-api
+
+- name: pulp-api service
+  k8s:
+    state: "{{ deployment_state }}"
+    definition: "{{ lookup('template', 'templates/' + item + '.service.yaml') | from_yaml }}"
+  with_items:
+    - pulp-api
+
+- name: postgres deployment
+  k8s:
+    state: "{{ deployment_state }}"
+    definition: "{{ lookup('template', 'templates/' + item + '.deployment.yaml') | from_yaml }}"
+  with_items:
+    - pulp-api

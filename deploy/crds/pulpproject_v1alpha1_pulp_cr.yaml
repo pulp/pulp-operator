@@ -4,10 +4,15 @@ metadata:
   name: example-pulp
 spec:
   version: latest
-  pulp_core:
-    replicas: 2
+  pulp_api:
+    replicas: 1
+    log_level: INFO
+  pulp_content:
+    replicas: 1
     log_level: INFO
   pulp_worker:
     replicas: 2
   pulp_resource_manager:
-    replicas: 2
+    # Waiting on this to be implemented:
+    # https://pulp.plan.io/issues/3707
+    replicas: 1

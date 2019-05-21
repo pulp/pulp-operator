@@ -1,3 +1,5 @@
 ---
 pulp_resource_manager:
+  # Waiting on this to be implemented:
+  # https://pulp.plan.io/issues/3707
   replicas: 1

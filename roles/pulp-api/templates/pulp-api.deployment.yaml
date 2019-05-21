@@ -2,19 +2,19 @@
 apiVersion: v1
 kind: Deployment
 metadata:
-  name: pulp-worker
+  name: pulp-api
   namespace: "{{ project_name }}"
   labels:
-    app: pulp-worker
+    app: pulp-api
 spec:
-  replicas: {{ pulp_worker.replicas }}
+  replicas: {{ pulp_api.replicas }}
   selector:
     matchLabels:
-      app: pulp-worker
+      app: pulp-api
   template:
     metadata:
       labels:
-        app: pulp-worker
+        app: pulp-api
     spec:
       #serviceAccountName: "{{ project_name }}-anyuid"
       volumes:
@@ -28,8 +28,16 @@ spec:
           persistentVolumeClaim:
             claimName: pulp-file-storage
       containers:
-        - name: pulp-worker
-          image: "{{ registry }}/pulp-worker:{{ version }}"
+        - name: pulp-api
+          image: "{{ registry }}/pulp-api:{{ version }}"
+          imagePullPolicy: Always
+          env:
+            # TODO: Replace with k8s secrets
+            - name: PULP_ADMIN_PASSWORD
+              value: "password"
+          ports:
+            - protocol: TCP
+              containerPort: 24817
           volumeMounts:
             - name: pulp-server
               mountPath: "/etc/pulp/"
