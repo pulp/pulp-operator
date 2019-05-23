@@ -20,14 +20,14 @@ spec:
           - /tmp/ansible-operator/runner
           - stdout
           image: "quay.io/mikedep333/pulp-operator:latest"
-          imagePullPolicy: "Always"
+          imagePullPolicy: "{{ pull_policy|default('Always') }}"
           volumeMounts:
           - mountPath: /tmp/ansible-operator/runner
             name: runner
             readOnly: true
         - name: operator
           image: "quay.io/mikedep333/pulp-operator:latest"
-          imagePullPolicy: "Always"
+          imagePullPolicy: "{{ pull_policy|default('Always') }}"
           volumeMounts:
           - mountPath: /tmp/ansible-operator/runner
             name: runner
