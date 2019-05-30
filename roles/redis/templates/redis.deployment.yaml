@@ -19,7 +19,7 @@ spec:
       #serviceAccountName: "{{ project_name }}-anyuid"
       containers:
         - name: redis
-          image: "quay.io/mikedep333/redis:latest"
+          image: "quay.io/pulp/redis:latest"
           env:
             - name: REDIS_DB
               value: pulp

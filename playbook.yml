@@ -3,7 +3,7 @@
   vars:
     project_name: "{{ meta.namespace }}"
     deployment_state: present
-    registry: quay.io/mikedep333
+    registry: quay.io/pulp
   roles:
     - postgres
     - redis
