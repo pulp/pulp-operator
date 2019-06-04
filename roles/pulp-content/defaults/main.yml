@@ -1,4 +1,4 @@
 ---
 pulp_content:
-  replicas: 1
+  replicas: 2
   log_level: INFO
