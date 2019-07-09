@@ -29,7 +29,8 @@ spec:
             claimName: pulp-file-storage
       containers:
         - name: pulp-api
-          image: "{{ registry }}/pulp-api:{{ version }}"
+          image: "{{ registry }}/{{ image }}:{{ version }}"
+          command: ["pulp-api"]
           imagePullPolicy: Always
           env:
             # TODO: Replace with k8s secrets

@@ -4,6 +4,7 @@
     project_name: "{{ meta.namespace }}"
     deployment_state: present
     registry: quay.io/pulp
+    image: pulp
   roles:
     - postgres
     - redis

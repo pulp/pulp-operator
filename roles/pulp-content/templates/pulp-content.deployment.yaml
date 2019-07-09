@@ -29,7 +29,8 @@ spec:
             claimName: pulp-file-storage
       containers:
         - name: pulp-content
-          image: "{{ registry }}/pulp-content:{{ version }}"
+          image: "{{ registry }}/{{ image }}:{{ version }}"
+          command: ["pulp-content"]
           imagePullPolicy: Always
           ports:
             - protocol: TCP
