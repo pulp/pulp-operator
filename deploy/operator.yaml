@@ -19,14 +19,14 @@ spec:
           - /usr/local/bin/ao-logs
           - /tmp/ansible-operator/runner
           - stdout
-          image: "quay.io/pulp/pulp-operator:latest"
+          image: "quay.io/pulp/pulp-operator:1-image-to-rule-them-all"
           imagePullPolicy: "Always"
           volumeMounts:
           - mountPath: /tmp/ansible-operator/runner
             name: runner
             readOnly: true
         - name: operator
-          image: "quay.io/pulp/pulp-operator:latest"
+          image: "quay.io/pulp/pulp-operator:1-image-to-rule-them-all"
           imagePullPolicy: "Always"
           volumeMounts:
           - mountPath: /tmp/ansible-operator/runner
