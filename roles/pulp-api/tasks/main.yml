@@ -23,7 +23,7 @@
   with_items:
     - pulp-api
 
-- name: postgres deployment
+- name: pulp-api deployment
   k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.deployment.yaml') | from_yaml }}"

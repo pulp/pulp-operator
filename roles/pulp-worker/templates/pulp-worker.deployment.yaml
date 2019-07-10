@@ -29,7 +29,8 @@ spec:
             claimName: pulp-file-storage
       containers:
         - name: pulp-worker
-          image: "{{ registry }}/pulp-worker:{{ version }}"
+          image: "{{ registry }}/{{ image }}:{{ version }}"
+          command: ["pulp-worker"]
           volumeMounts:
             - name: pulp-server
               mountPath: "/etc/pulp/"
