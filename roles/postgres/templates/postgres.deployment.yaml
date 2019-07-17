@@ -29,7 +29,7 @@ spec:
             - readOnly: false
               mountPath: /var/lib/pgsql/data
               name: postgres-data
-          image: registry.centos.org/postgresql/postgresql:9.6
+          image: docker.io/centos/postgresql-96-centos7:9.6
       volumes:
         - name: postgres-data
           persistentVolumeClaim:
