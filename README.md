@@ -11,6 +11,9 @@
 `podman push quay.io/pulp/pulp-operator:latest`
 
 ## Usage
+
+Review `deploy/pulp-operator.default.config-map.yml`. If the values are not correct for your environment, copy to `deploy/pulp-operator.config-map.yml` and adjust them.
+
 `./up.sh`
 
 `minikube service list`

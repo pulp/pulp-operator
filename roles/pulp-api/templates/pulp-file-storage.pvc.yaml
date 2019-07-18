@@ -7,6 +7,6 @@ metadata:
 spec:
   resources:
     requests:
-      storage: 1Gi
+      storage: "{{ pulp_operator_config_map.resources[0].data.pulp_file_storage_size }}"
   accessModes:
-    - ReadWriteOnce
+    - "{{ pulp_operator_config_map.resources[0].data.pulp_file_storage_accessMode }}"
