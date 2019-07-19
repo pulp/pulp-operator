@@ -9,12 +9,12 @@
   with_items:
     - pulp-file-storage
 
-- name: pulp-api config-map
+- name: pulp-server config-map
   k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.config-map.yaml') | from_yaml }}"
   with_items:
-    - pulp-api
+    - pulp-server
 
 - name: pulp-api service
   k8s:
