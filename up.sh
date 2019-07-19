@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# up.sh: Deploy pulp-operator to K8s
+
 # TODO: Check if all of these are needed.
 # TODO: Check if these should only ever be run once; or require
 # special logic to update
