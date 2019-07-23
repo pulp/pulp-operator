@@ -2,6 +2,13 @@
 - set_fact:
     secret_key: "{{ lookup('password', '/dev/null length=50 chars=ascii_letters') }}"
 
+- name: Get pulp-operator ConfigMap
+  k8s_facts:
+    kind: ConfigMap
+    name: pulp-operator
+    namespace: "{{ project_name }}"
+  register: pulp_operator_config_map
+
 - name: pulp-file-storage persistent volume claim
   k8s:
     state: "{{ deployment_state }}"
@@ -9,12 +16,12 @@
   with_items:
     - pulp-file-storage
 
-- name: pulp-api config-map
+- name: pulp-server config-map
   k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.config-map.yaml') | from_yaml }}"
   with_items:
-    - pulp-api
+    - pulp-server
 
 - name: pulp-api service
   k8s:

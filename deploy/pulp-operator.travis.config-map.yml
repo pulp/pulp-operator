@@ -1,0 +1,10 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "pulp-operator"
+data:
+  # k3s local-path requires this
+  pulp_file_storage_accessMode: "ReadWriteOnce"
+  # We have a little over 40GB free on Travis VMs/instances
+  pulp_file_storage_size: "40Gi"

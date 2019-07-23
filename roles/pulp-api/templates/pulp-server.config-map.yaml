@@ -25,5 +25,3 @@ data:
     REDIS_HOST = 'redis'
     REDIS_PORT =  6379
     REDIS_PASSWORD = ''
-
-    CONTENT_HOST = 'pulp-server'

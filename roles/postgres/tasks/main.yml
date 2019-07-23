@@ -13,7 +13,7 @@
   with_items:
     - postgres
 
-- name: postges deployment
+- name: postgres deployment
   k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.deployment.yaml') | from_yaml }}"

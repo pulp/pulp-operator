@@ -11,6 +11,19 @@
 `podman push quay.io/pulp/pulp-operator:latest`
 
 ## Usage
+
+Review `deploy/pulp-operator.default.config-map.yml`. If the values are not correct for your environment, copy to `deploy/pulp-operator.config-map.yml` and adjust them.
+
 `./up.sh`
 
 `minikube service list`
+
+or
+
+Get external ports:
+
+`kubectl get services`
+
+Get external IP addresses:
+
+`kubectl get pods -o wide`
