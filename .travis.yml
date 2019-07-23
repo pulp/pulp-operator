@@ -13,7 +13,11 @@ install:
   # non-sudo pip command.
   - sudo pip install httpie
   - .travis/k3s-install.sh
+  - sudo wget https://github.com/operator-framework/operator-sdk/releases/download/v0.9.0/operator-sdk-v0.9.0-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
+  - sudo chmod +x /usr/local/bin/operator-sdk
 script:
+  - sudo operator-sdk build quay.io/pulp/pulp-operator:latest
+  - sudo docker images
   - sudo ./up.sh
   - .travis/pulp-operator-check-and-wait.sh
   - .travis/pulp_file-tests.sh
