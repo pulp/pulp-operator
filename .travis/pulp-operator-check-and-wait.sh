@@ -60,6 +60,8 @@ for tries in {0..120}; do
       echo "STATUS: Still waiting on pods to transitiion to running state."
       echo "PODS:"
       echo "$pods"
+      echo "DOCKER IMAGE CACHE:"
+      sudo docker images
     fi
     if [[ $tries -eq 120 ]]; then
       echo "ERROR 3: Pods never all transitioned to Running state"
