@@ -83,18 +83,21 @@ echo $URL
 #
 # --pretty format --print hb almost make it behave as if it were not redirected
 for tries in {0..120}; do
+  if [[ $tries -eq 120 ]]; then
+    echo "ERROR 4: Status page never accessible or returning success"
+    storage_debug
+    exit 4
+  fi
   output=$(http --timeout 5 --check-status --pretty format --print hb $URL 2>&1)
   rc=$?
   if echo "$output" | grep "Errno 111" ; then
     # if connection refused, httpie does not wait 5 seconds
     sleep 5
+  elif echo "$output" | grep "Request timed out" ; then
+    continue
   elif [[ $rc ]] ; then
     echo "Successfully got the status page after _roughly_ $((tries * 5)) seconds"
     echo "$output"
     break
-  elif [[ $tries -eq 120 ]]; then
-    echo "ERROR 4: Status page never accessible or returning success"
-    storage_debug
-    exit 4
   fi
 done
