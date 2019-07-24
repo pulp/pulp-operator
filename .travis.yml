@@ -7,7 +7,7 @@ services:
 before_install:
   - git clone https://github.com/pulp/pulp_file.git
 install:
-  - pip install docker molecule openshift jmespath
+  - pip install jmespath
   # Need /usr/bin/http script, so use sudo
   # It can mess up ownership of the python cache dir, so run it after the
   # non-sudo pip command.
