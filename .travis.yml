@@ -23,6 +23,10 @@ script:
   - .travis/pulp_file-tests.sh
 after_failure:
   - http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
+  - sudo docker images
   # With the selector (which eliminates the need to look up the pod name),
   # we cannot show all logs. 10000 lines should be sufficient.
   - sudo kubectl logs -l app=pulp-api --tail=10000
+  - sudo kubectl logs -l app=pulp-content --tail=10000
+  - sudo kubectl logs -l app=pulp-worker --tail=10000
+  - sudo kubectl logs -l app=pulp-resource-manager --tail=10000
