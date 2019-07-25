@@ -20,7 +20,9 @@ script:
   - sudo docker images
   - sudo ./up.sh
   - .travis/pulp-operator-check-and-wait.sh
-  - .travis/pulp_file-tests.sh
+  # This step will run indefinitely if we do not limit it to 5 mins.
+  # If the entire build reaches 50 mins, the after_failure steps never run.
+  - timeout 5m .travis/pulp_file-tests.sh
 after_failure:
   - http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
   - sudo docker images
