@@ -101,3 +101,16 @@ for tries in {0..120}; do
     break
   fi
 done
+
+if [[ "$(echo "$output" | sed -ne '/{/,$ p' | jq -r .online_content_apps)" = "[]" ]]; then
+    echo "ERROR 5: Content app never actually came online"
+    storage_debug
+    echo "$output"
+    exit 5
+fi
+if [[ "$(echo "$output" | sed -ne '/{/,$ p' | jq -r .online_workers)" = "[]" ]]; then
+    echo "ERROR 6: Worker(s) never actually came online"
+    storage_debug
+    echo "$output"
+    exit 6
+fi
