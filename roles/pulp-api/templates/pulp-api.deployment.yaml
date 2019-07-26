@@ -32,7 +32,6 @@ spec:
           image: "{{ registry }}/{{ image }}:{{ version }}"
           # We set args, not command, so as to not override the entrypoint script
           args: ["pulp-api"]
-          imagePullPolicy: Always
           env:
             # TODO: Replace with k8s secrets
             - name: PULP_ADMIN_PASSWORD
