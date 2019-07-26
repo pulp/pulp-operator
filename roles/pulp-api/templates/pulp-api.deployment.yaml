@@ -30,7 +30,8 @@ spec:
       containers:
         - name: pulp-api
           image: "{{ registry }}/{{ image }}:{{ version }}"
-          command: ["pulp-api"]
+          # We set args, not command, so as to not override the entrypoint script
+          args: ["pulp-api"]
           imagePullPolicy: Always
           env:
             # TODO: Replace with k8s secrets

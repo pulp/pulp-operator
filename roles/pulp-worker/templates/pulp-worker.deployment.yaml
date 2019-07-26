@@ -30,7 +30,8 @@ spec:
       containers:
         - name: pulp-worker
           image: "{{ registry }}/{{ image }}:{{ version }}"
-          command: ["pulp-worker"]
+          # We set args, not command, so as to not override the entrypoint script
+          args: ["pulp-worker"]
           volumeMounts:
             - name: pulp-server
               mountPath: "/etc/pulp/"
