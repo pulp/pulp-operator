@@ -30,8 +30,8 @@ spec:
       containers:
         - name: pulp-content
           image: "{{ registry }}/{{ image }}:{{ version }}"
-          command: ["pulp-content"]
-          imagePullPolicy: Always
+          # We set args, not command, so as to not override the entrypoint script
+          args: ["pulp-content"]
           ports:
             - protocol: TCP
               containerPort: 24816

@@ -7,7 +7,7 @@ services:
 before_install:
   - git clone https://github.com/pulp/pulp_file.git
 install:
-  - pip install docker molecule openshift jmespath
+  - pip install jmespath
   # Need /usr/bin/http script, so use sudo
   # It can mess up ownership of the python cache dir, so run it after the
   # non-sudo pip command.
@@ -20,9 +20,15 @@ script:
   - sudo docker images
   - sudo ./up.sh
   - .travis/pulp-operator-check-and-wait.sh
-  - .travis/pulp_file-tests.sh
+  # This step will run indefinitely if we do not limit it to 5 mins.
+  # If the entire build reaches 50 mins, the after_failure steps never run.
+  - timeout 5m .travis/pulp_file-tests.sh
 after_failure:
   - http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
+  - sudo docker images
   # With the selector (which eliminates the need to look up the pod name),
   # we cannot show all logs. 10000 lines should be sufficient.
   - sudo kubectl logs -l app=pulp-api --tail=10000
+  - sudo kubectl logs -l app=pulp-content --tail=10000
+  - sudo kubectl logs -l app=pulp-worker --tail=10000
+  - sudo kubectl logs -l app=pulp-resource-manager --tail=10000

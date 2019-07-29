@@ -46,7 +46,10 @@ done
 # up in time.
 STORAGE_POD=$(sudo kubectl -n local-path-storage get pod | awk '/local-path-provisioner/{print $1}')
 
-for tries in {0..120}; do
+# NOTE: Before the pods can be started, they must be downloaded/cached from
+# quay.io .
+# Therefore, this wait is highly dependent on network speed.
+for tries in {0..180}; do
   pods=$(sudo kubectl get pods -o wide)
   if [[ $(echo "$pods" | grep -c -v -E "STATUS|Running") -eq 0 ]]; then
     echo "PODS:"
@@ -57,13 +60,13 @@ for tries in {0..120}; do
     # Often after 30 tries (150 secs), not all of the pods are running yet.
     # Let's keep Travis from ending the build by outputting.
     if [[ $(( tries % 30 )) == 0 ]]; then
-      echo "STATUS: Still waiting on pods to transitiion to running state."
+      echo "STATUS: Still waiting on pods to transition to running state."
       echo "PODS:"
       echo "$pods"
       echo "DOCKER IMAGE CACHE:"
       sudo docker images
     fi
-    if [[ $tries -eq 120 ]]; then
+    if [[ $tries -eq 180 ]]; then
       echo "ERROR 3: Pods never all transitioned to Running state"
       storage_debug
       exit 3
@@ -83,18 +86,34 @@ echo $URL
 #
 # --pretty format --print hb almost make it behave as if it were not redirected
 for tries in {0..120}; do
+  if [[ $tries -eq 120 ]]; then
+    echo "ERROR 4: Status page never accessible or returning success"
+    storage_debug
+    exit 4
+  fi
   output=$(http --timeout 5 --check-status --pretty format --print hb $URL 2>&1)
   rc=$?
   if echo "$output" | grep "Errno 111" ; then
     # if connection refused, httpie does not wait 5 seconds
     sleep 5
+  elif echo "$output" | grep "Request timed out" ; then
+    continue
   elif [[ $rc ]] ; then
     echo "Successfully got the status page after _roughly_ $((tries * 5)) seconds"
     echo "$output"
     break
-  elif [[ $tries -eq 120 ]]; then
-    echo "ERROR 4: Status page never accessible or returning success"
-    storage_debug
-    exit 4
   fi
 done
+
+if [[ "$(echo "$output" | sed -ne '/{/,$ p' | jq -r .online_content_apps)" = "[]" ]]; then
+    echo "ERROR 5: Content app never actually came online"
+    storage_debug
+    echo "$output"
+    exit 5
+fi
+if [[ "$(echo "$output" | sed -ne '/{/,$ p' | jq -r .online_workers)" = "[]" ]]; then
+    echo "ERROR 6: Worker(s) never actually came online"
+    storage_debug
+    echo "$output"
+    exit 6
+fi
