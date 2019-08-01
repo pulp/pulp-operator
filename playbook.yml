@@ -5,6 +5,7 @@
     deployment_state: present
     registry: quay.io/pulp
     image: pulp
+    version: stable
   roles:
     - postgres
     - redis
