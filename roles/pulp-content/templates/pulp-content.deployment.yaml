@@ -29,7 +29,7 @@ spec:
             claimName: pulp-file-storage
       containers:
         - name: pulp-content
-          image: "{{ registry }}/{{ image }}:{{ version }}"
+          image: "{{ registry }}/{{ project }}/{{ image }}:{{ tag }}"
           # We set args, not command, so as to not override the entrypoint script
           args: ["pulp-content"]
           ports:

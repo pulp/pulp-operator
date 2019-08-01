@@ -19,7 +19,7 @@ spec:
       #serviceAccountName: "{{ project_name }}-anyuid"
       containers:
         - name: redis
-          image: "{{ registry }}/redis:latest"
+          image: "{{ registry }}/{{ project }}/redis:latest"
           env:
             - name: REDIS_DB
               value: pulp
