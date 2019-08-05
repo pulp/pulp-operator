@@ -17,7 +17,7 @@
 #
 # TODO: Fix access to registry.centos.org
 # https://github.com/rancher/k3s/issues/145#issuecomment-490143506
-curl -sfL https://get.k3s.io | sudo INSTALL_K3S_EXEC="--kube-apiserver-arg service-node-port-range=80-32767" sh -
+curl -sfL https://get.k3s.io | sudo INSTALL_K3S_EXEC="--docker --kube-apiserver-arg service-node-port-range=80-32767" sh -
 status=$(sudo systemctl status --full --lines=200 k3s)
 if ! [[ $? ]] ; then
   echo "${status}"
