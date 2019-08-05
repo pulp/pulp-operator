@@ -29,7 +29,8 @@ spec:
             claimName: pulp-file-storage
       containers:
         - name: pulp-api
-          image: "{{ registry }}/{{ image }}:{{ version }}"
+          image: "{{ registry }}/{{ project }}/{{ image }}:{{ tag }}"
+          imagePullPolicy: "IfNotPresent"
           # We set args, not command, so as to not override the entrypoint script
           args: ["pulp-api"]
           env:

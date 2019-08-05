@@ -30,6 +30,7 @@ spec:
               mountPath: /var/lib/pgsql/data
               name: postgres-data
           image: docker.io/centos/postgresql-96-centos7:9.6
+          imagePullPolicy: "IfNotPresent"
       volumes:
         - name: postgres-data
           persistentVolumeClaim:

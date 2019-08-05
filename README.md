@@ -12,7 +12,7 @@
 
 ## Usage
 
-Review `deploy/pulp-operator.default.config-map.yml`. If the values are not correct for your environment, copy to `deploy/pulp-operator.config-map.yml` and adjust them.
+Review `deploy/crds/pulpproject_v1alpha1_pulp_cr.default.yaml`. If the variables' default values are not correct for your environment, copy to `deploy/crds/pulpproject_v1alpha1_pulp_cr.yaml`, uncomment "spec:", and uncomment & adjust the variables.
 
 `./up.sh`
 

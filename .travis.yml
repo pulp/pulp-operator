@@ -28,6 +28,8 @@ after_failure:
   - sudo docker images
   # With the selector (which eliminates the need to look up the pod name),
   # we cannot show all logs. 10000 lines should be sufficient.
+  - sudo kubectl logs -l name=pulp-operator -c ansible --tail=10000
+  - sudo kubectl logs -l name=pulp-operator -c operator --tail=10000
   - sudo kubectl logs -l app=pulp-api --tail=10000
   - sudo kubectl logs -l app=pulp-content --tail=10000
   - sudo kubectl logs -l app=pulp-worker --tail=10000

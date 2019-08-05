@@ -7,6 +7,6 @@ metadata:
 spec:
   resources:
     requests:
-      storage: "{{ pulp_operator_config_map.resources[0].data.pulp_file_storage_size }}"
+      storage: "{{ pulp_file_storage.size }}"
   accessModes:
-    - "{{ pulp_operator_config_map.resources[0].data.pulp_file_storage_accessMode }}"
+    - "{{ pulp_file_storage.access_mode }}"
