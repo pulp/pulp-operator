@@ -34,3 +34,13 @@ after_failure:
   - sudo kubectl logs -l app=pulp-content --tail=10000
   - sudo kubectl logs -l app=pulp-worker --tail=10000
   - sudo kubectl logs -l app=pulp-resource-manager --tail=10000
+deploy:
+  - provider: script
+    # Push image to quay. That is our upstream "deployment".
+    script: sudo .travis/quay-push.sh
+    on:
+      # Only run on the master branch, because "latest" is hardcoded
+      branch: master
+      # Also, deploy will never run on PRs.
+      # "Note that pull request builds skip the deployment step altogether."
+      # https://docs.travis-ci.com/user/deployment#pull-requests
