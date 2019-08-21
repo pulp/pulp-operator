@@ -105,15 +105,32 @@ for tries in {0..120}; do
   fi
 done
 
-if [[ "$(echo "$output" | sed -ne '/{/,$ p' | jq -r .online_content_apps)" = "[]" ]]; then
-    echo "ERROR 5: Content app never actually came online"
+for tries in {0..120}; do
+  if [[ $tries -eq 120 ]]; then
+    echo "ERROR 5: Content app never came online"
     storage_debug
     echo "$output"
     exit 5
-fi
-if [[ "$(echo "$output" | sed -ne '/{/,$ p' | jq -r .online_workers)" = "[]" ]]; then
-    echo "ERROR 6: Worker(s) never actually came online"
+  fi
+  output=$(http --timeout 5 --check-status --pretty format --print hb $URL 2>&1)
+  if [[ "$(echo "$output" | sed -ne '/{/,$ p' | jq -r .online_content_apps)" != "[]" ]]; then
+    echo "Content app is online"
+    break
+  fi
+  sleep 5
+done
+
+for tries in {0..120}; do
+  if [[ $tries -eq 120 ]]; then
+    echo "ERROR 6: Worker(s) never came online"
     storage_debug
     echo "$output"
     exit 6
-fi
+  fi
+  output=$(http --timeout 5 --check-status --pretty format --print hb $URL 2>&1)
+  if [[ "$(echo "$output" | sed -ne '/{/,$ p' | jq -r .online_workers)" != "[]" ]]; then
+    echo "1 or more worker is online"
+    break
+  fi
+  sleep 5
+done
