@@ -22,9 +22,13 @@ spec:
             - name: POSTGRESQL_DATABASE
               value: pulp
             - name: POSTGRESQL_USER
-              value: pulp
+              value: "{{ database_connection.username }}"
             - name: POSTGRESQL_PASSWORD
-              value: pulp
+              value: "{{ database_connection.password }}"
+{% if database_connection.admin_password %}
+            - name: POSTGRESQL_ADMIN_PASSWORD
+              value: "{{ database_connection.admin_password }}"
+{% endif %}
           volumeMounts:
             - readOnly: false
               mountPath: /var/lib/pgsql/data
