@@ -93,7 +93,7 @@ for tries in {0..120}; do
   fi
   output=$(http --timeout 5 --check-status --pretty format --print hb $URL 2>&1)
   rc=$?
-  if echo "$output" | grep "Errno 111" ; then
+  if echo "$output" | grep -e "Errno 111" -e "error(104" ; then
     # if connection refused, httpie does not wait 5 seconds
     sleep 5
   elif echo "$output" | grep "Request timed out" ; then
