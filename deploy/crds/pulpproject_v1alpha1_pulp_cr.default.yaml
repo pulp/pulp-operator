@@ -11,6 +11,11 @@ metadata:
 # image: pulp
   # The image tag for the pulp image.
 # tag: stable
+  # Database connection settings.
+# database_connection:
+#   username: pulp
+#   password: pulp
+#   admin_password:
   # Configuration for the persistentVolumeClaim for /var/lib/pulp
 # pulp_file_storage:
      # If your K8s cluster is only 1 node, and its StorageClass /

@@ -8,3 +8,7 @@ spec:
     access_mode: "ReadWriteOnce"
     # We have a little over 40GB free on Travis VMs/instances
     size: "40Gi"
+  database_connection:
+    username: pulp
+    password: pulp
+    admin_password: pulp
