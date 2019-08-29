@@ -25,7 +25,7 @@ spec:
               value: "{{ database_connection.username }}"
             - name: POSTGRESQL_PASSWORD
               value: "{{ database_connection.password }}"
-{% if database_connection.admin_password %}
+{% if database_connection.admin_password is defined %}
             - name: POSTGRESQL_ADMIN_PASSWORD
               value: "{{ database_connection.admin_password }}"
 {% endif %}
