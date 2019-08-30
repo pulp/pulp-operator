@@ -25,3 +25,6 @@ data:
     REDIS_HOST = 'redis'
     REDIS_PORT =  6379
     REDIS_PASSWORD = ''
+{% if content_host is defined %}
+    CONTENT_HOST = '{{ content_host }}'
+{% endif %}
