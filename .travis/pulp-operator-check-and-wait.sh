@@ -107,10 +107,40 @@ done
 
 for tries in {0..120}; do
   if [[ $tries -eq 120 ]]; then
-    echo "ERROR 5: Content app never came online"
+    echo "ERROR 5: pulp-api never connected to the database"
     storage_debug
     echo "$output"
     exit 5
+  fi
+  output=$(http --timeout 5 --check-status --pretty format --print hb $URL 2>&1)
+  if [[ "$(echo "$output" | sed -ne '/{/,$ p' | jq -r .database_connection.connected)" = "true" ]]; then
+    echo "pulp-api is connected to the database"
+    break
+  fi
+  sleep 5
+done
+
+for tries in {0..120}; do
+  if [[ $tries -eq 120 ]]; then
+    echo "ERROR 6: pulp-api never connected to redis"
+    storage_debug
+    echo "$output"
+    exit 6
+  fi
+  output=$(http --timeout 5 --check-status --pretty format --print hb $URL 2>&1)
+  if [[ "$(echo "$output" | sed -ne '/{/,$ p' | jq -r .redis_connection.connected)" = "true" ]]; then
+    echo "pulp-api is connected to redis"
+    break
+  fi
+  sleep 5
+done
+
+for tries in {0..120}; do
+  if [[ $tries -eq 120 ]]; then
+    echo "ERROR 7: Content app never came online"
+    storage_debug
+    echo "$output"
+    exit 7
   fi
   output=$(http --timeout 5 --check-status --pretty format --print hb $URL 2>&1)
   if [[ "$(echo "$output" | sed -ne '/{/,$ p' | jq -r .online_content_apps)" != "[]" ]]; then
@@ -122,10 +152,10 @@ done
 
 for tries in {0..120}; do
   if [[ $tries -eq 120 ]]; then
-    echo "ERROR 6: Worker(s) never came online"
+    echo "ERROR 8: Worker(s) never came online"
     storage_debug
     echo "$output"
-    exit 6
+    exit 8
   fi
   output=$(http --timeout 5 --check-status --pretty format --print hb $URL 2>&1)
   if [[ "$(echo "$output" | sed -ne '/{/,$ p' | jq -r .online_workers)" != "[]" ]]; then
