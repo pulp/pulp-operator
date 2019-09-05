@@ -32,5 +32,5 @@ sudo kubectl cluster-info
 
 curl -L https://github.com/pulp/pulp-operator/archive/master.tar.gz | tar -xz
 cd pulp-operator-master
-sudo ./up.sh
+sudo TRAVIS=true ./up.sh
 .travis/pulp-operator-check-and-wait.sh
