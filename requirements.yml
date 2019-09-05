@@ -1,0 +1,4 @@
+---
+- src: https://github.com/mikedep333/pulp-rpm-prerequisites.git
+  version: fix-ubuntu-createrepo_c
+  name: pulp-rpm-prerequisites
