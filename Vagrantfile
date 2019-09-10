@@ -21,3 +21,15 @@ Vagrant.configure("2") do |config|
     path: "pulp-insta-demo.sh"
 end
 
+Vagrant.configure("2") do |config|
+  config.vm.define "xenial-pulp-insta-demo"
+  config.vm.box = "generic/ubuntu1604"
+  config.vm.provider "libvirt" do |v|
+    v.memory = 4096
+    v.cpus = 2
+  end
+  config.vm.provision "shell",
+    path: "pulp-insta-demo.sh",
+    args: "-f"
+end
+
