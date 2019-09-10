@@ -80,6 +80,18 @@ done
 URL=http://$API_NODE:$API_PORT/pulp/api/v3/status/
 echo "URL:"
 echo $URL
+
+if ! [ -x "$(command -v http)" -a -x "$(command -v jq)" ]; then
+  echo 'WARNING 100: `http` & `jq` not installed'
+  echo ""
+  echo "Pulp may or may not be successfully running, but not immediately", and
+  echo "this script can not perform its remaining checks."
+  echo ""
+  echo "Wait a few minutes (or longer if slow system/internet) and check manually:"
+  echo "http://$API_NODE:$API_PORT/pulp/api/v3/status/"
+  exit 100
+fi
+
 # Sometimes 30 tries is not enough for the service to actually come up
 # Until it does:
 # http: error: Request timed out (5.0s).
