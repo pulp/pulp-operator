@@ -17,7 +17,14 @@
 #
 # TODO: Fix access to registry.centos.org
 # https://github.com/rancher/k3s/issues/145#issuecomment-490143506
-curl -sfL https://get.k3s.io | sudo INSTALL_K3S_EXEC="--docker --kube-apiserver-arg service-node-port-range=80-32767" sh -
+#
+# Docker is used by CI (so that docker build can build images that k3s uses).
+# Bundled containerd is used by pulp-insta-demo.sh for simplicity of install.
+if [ "$1" = "--insta-demo" ]; then
+  curl -sfL https://get.k3s.io | sudo INSTALL_K3S_EXEC="--kube-apiserver-arg service-node-port-range=80-32767" sh -
+else
+  curl -sfL https://get.k3s.io | sudo INSTALL_K3S_EXEC="--docker --kube-apiserver-arg service-node-port-range=80-32767" sh -
+fi
 status=$(sudo systemctl status --full --lines=200 k3s)
 if ! [[ $? ]] ; then
   echo "${status}"
@@ -32,16 +39,22 @@ sudo kubectl get node
 # https://github.com/rancher/k3s/issues/85#issuecomment-468293334
 # This is the way to add a simple hostPath storage class.
 sudo kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
-sudo kubectl get storageclass
+if [ "$1" != "--insta-demo" ]; then
+  sudo kubectl get storageclass
+fi
 # How make it the default StorageClass
 sudo kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-sudo kubectl get storageclass
+if [ "$1" != "--insta-demo" ]; then
+  sudo kubectl get storageclass
+fi
 
-echo "NAT"
-sudo iptables -L -t nat
-echo "IPTABLES"
-sudo iptables -L
-echo "UFW"
-sudo ufw status verbose
+if [ "$1" != "--insta-demo" ]; then
+  echo "NAT"
+  sudo iptables -L -t nat
+  echo "IPTABLES"
+  sudo iptables -L
+  echo "UFW"
+  sudo ufw status verbose
+fi
 echo "CLUSTER-INFO"
 sudo kubectl cluster-info
