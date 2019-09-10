@@ -32,8 +32,19 @@ if ! [[ $? ]] ; then
   sudo cat /etc/systemd/system/k3s.service
   exit 1
 fi
+
+# Wait for k3s being up without requiring netcat to be installed; pure bash.
+timeout 45 bash -c 'until echo 2> /dev/null > /dev/tcp/localhost/6443; do sleep .2; done'
+
+# Apparently that wait is still not enough. I suspect that the backend
+# containers are not running yet.
+echo "CLUSTER-INFO"
+until sudo kubectl cluster-info | grep "running at"; do sleep 1; done
 echo "k3s NODE Status:"
-sudo kubectl get node
+# If no nodes are found, rc is still 0. So we cannot check that.
+# The full latter string would be like:
+# The connection to the server localhost:6443 was refused - did you specify the right host or port?
+until sudo kubectl get node -o wide 2>&1 | grep -v -E "No resources found.|The connection to the server"; do sleep 1; done
 
 # By default, k3s lacks a storage class.
 # https://github.com/rancher/k3s/issues/85#issuecomment-468293334
@@ -56,5 +67,3 @@ if [ "$1" != "--insta-demo" ]; then
   echo "UFW"
   sudo ufw status verbose
 fi
-echo "CLUSTER-INFO"
-sudo kubectl cluster-info
