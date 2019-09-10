@@ -44,7 +44,7 @@ sudo kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provi
 sudo kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 sudo kubectl cluster-info
 
-curl -L https://github.com/pulp/pulp-operator/archive/master.tar.gz | tar -xz
-cd pulp-operator-master
+curl -L https://github.com/mikedep333/pulp-operator/archive/accomodate-insta-demo.tar.gz | tar -xz
+cd pulp-operator-accomodate-insta-demo
 sudo TRAVIS=true ./up.sh
 .travis/pulp-operator-check-and-wait.sh
