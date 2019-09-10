@@ -18,7 +18,8 @@ Vagrant.configure("2") do |config|
     v.cpus = 2
   end
   config.vm.provision "shell",
-    path: "pulp-insta-demo.sh"
+    path: "pulp-insta-demo.sh",
+    args: "-f"
 end
 
 Vagrant.configure("2") do |config|
@@ -29,7 +30,6 @@ Vagrant.configure("2") do |config|
     v.cpus = 2
   end
   config.vm.provision "shell",
-    path: "pulp-insta-demo.sh",
-    args: "-f"
+    path: "pulp-insta-demo.sh"
 end
 

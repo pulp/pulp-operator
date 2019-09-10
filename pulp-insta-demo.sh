@@ -9,11 +9,11 @@
 
 FIXES=false
 # Replace with getopts if we start adding more args
-if [ "$1" = "--help" -o "$1" = "-h" ]; then
+if [ "$1" = "--help" ] || [ "$1" == "-h" ]; then
   echo "Usage $0 [ -f | --fixes ]"
   exit 1
 elif
-  [ "$1" = "--fixes" -o "$1" = "-f" ]; then
+  [ "$1" = "--fixes" ] || [ "$1" = "-f" ]; then
   FIXES=true
 fi
 
@@ -21,7 +21,7 @@ fi
 # but our test environment (fedora30 vagrant box) needs this.
 if [[ $(getenforce || echo "Disabled") != "Disabled" ]]; then
   if [[ ! -e /usr/sbin/semanage ]]; then
-    if [ $FIXES=true ]; then
+    if [ $FIXES = true ]; then
         sudo dnf -y install /usr/sbin/semanage || sudo yum -y install /usr/sbin/semanage
     else
       echo "SELinux is Enforcing or Permissive, but /usr/sbin/semanage is not installed."
@@ -35,8 +35,6 @@ fi
 # Does a bunch of stuff, such as setting up a `kubectl` -> `k3s kubectl` symlink.
 curl -sfL https://get.k3s.io | sudo INSTALL_K3S_EXEC="--kube-apiserver-arg service-node-port-range=80-32767" sh -
 sleep 30
-echo "k3s NODE Status:"
-sudo kubectl get node
 
 # By default, k3s lacks a storage class.
 # https://github.com/rancher/k3s/issues/85#issuecomment-468293334
