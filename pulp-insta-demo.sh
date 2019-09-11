@@ -31,8 +31,14 @@ if [[ $(getenforce || echo "Disabled") != "Disabled" ]]; then
   fi
 fi
 
+# TODO: Try-catch function in case these fail; advising users to recover or
+# uninstall. Similar to show_logs_and_return_non_zero .
 curl -SsL https://github.com/mikedep333/pulp-operator/archive/accomodate-insta-demo.tar.gz | tar -xz
 cd pulp-operator-accomodate-insta-demo
 sudo .travis/k3s-install.sh --insta-demo
 sudo TRAVIS=true ./up.sh
 .travis/pulp-operator-check-and-wait.sh || test $? = 100
+echo "Pulp has been installed in insta-demo mode."
+echo ""
+echo "If you wish to uninstall, run:"
+echo "$ sudo /usr/local/bin/k3s-uninstall.sh"
