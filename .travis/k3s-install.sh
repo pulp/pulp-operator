@@ -6,6 +6,8 @@
 # to setup the single-node k3s infrastructure for running Pulp containers in
 # Travis CI.
 
+set -e
+
 # This is their convenience installer script.
 # Does a bunch of stuff, such as setting up a `kubectl` -> `k3s kubectl` symlink.
 #
