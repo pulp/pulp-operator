@@ -44,8 +44,8 @@ if [[ $(getenforce 2> /dev/null || echo "Disabled") != "Disabled" ]]; then
 fi
 
 set -x
-curl -SsL https://github.com/mikedep333/pulp-operator/archive/accomodate-insta-demo.tar.gz | tar -xz || failure_message
-cd pulp-operator-accomodate-insta-demo || failure_message
+curl -SsL https://github.com/pulp/pulp-operator/archive/master.tar.gz | tar -xz || failure_message
+cd pulp-operator-master || failure_message
 sudo .travis/k3s-install.sh --insta-demo || failure_message
 sudo TRAVIS=true ./up.sh || failure_message
 .travis/pulp-operator-check-and-wait.sh || test $? = 100 || failure_message
