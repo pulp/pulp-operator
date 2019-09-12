@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#!/bin/bash -e
 
 # pulp-insta-demo.sh
 # This script quickly deploys pulp via k3s (lightweight Kubernetes), its
@@ -8,7 +8,6 @@
 # all-n-one "pulp" container with several plugins.
 
 FIXES=false
-# Replace with getopts if we start adding more args
 if [ "$1" = "--help" ] || [ "$1" == "-h" ]; then
   echo "Usage $0 [ -f | --fixes ]"
   exit 1
@@ -17,12 +16,25 @@ elif
   FIXES=true
 fi
 
+failure_message() {
+  set +x
+  echo "$0 failed to install."
+  echo ""
+  echo "You can either try to fix the errors and re-run it,"
+  echo "or uninstall by running:"
+  echo "$ sudo /usr/local/bin/k3s-uninstall.sh"
+  exit 1
+}
+
+# Replace with getopts if we start adding more args
 # We do not want to workaround every single possible reason the script may fail,
 # but our test environment (fedora30 vagrant box) needs this.
-if [[ $(getenforce || echo "Disabled") != "Disabled" ]]; then
+if [[ $(getenforce 2> /dev/null || echo "Disabled") != "Disabled" ]]; then
   if [[ ! -e /usr/sbin/semanage ]]; then
     if [ $FIXES = true ]; then
+        set -x
         sudo dnf -y install /usr/sbin/semanage || sudo yum -y install /usr/sbin/semanage
+        set +x
     else
       echo "SELinux is Enforcing or Permissive, but /usr/sbin/semanage is not installed."
       echo "k3s requires /usr/sbin/semanage to prevent SELinux errors."
@@ -31,13 +43,13 @@ if [[ $(getenforce || echo "Disabled") != "Disabled" ]]; then
   fi
 fi
 
-# TODO: Try-catch function in case these fail; advising users to recover or
-# uninstall. Similar to show_logs_and_return_non_zero .
-curl -SsL https://github.com/mikedep333/pulp-operator/archive/accomodate-insta-demo.tar.gz | tar -xz
-cd pulp-operator-accomodate-insta-demo
-sudo .travis/k3s-install.sh --insta-demo
-sudo TRAVIS=true ./up.sh
-.travis/pulp-operator-check-and-wait.sh || test $? = 100
+set -x
+curl -SsL https://github.com/mikedep333/pulp-operator/archive/accomodate-insta-demo.tar.gz | tar -xz || failure_message
+cd pulp-operator-accomodate-insta-demo || failure_message
+sudo .travis/k3s-install.sh --insta-demo || failure_message
+sudo TRAVIS=true ./up.sh || failure_message
+.travis/pulp-operator-check-and-wait.sh || test $? = 100 || failure_message
+set +x
 echo "Pulp has been installed in insta-demo mode."
 echo ""
 echo "If you wish to uninstall, run:"
