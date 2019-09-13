@@ -2,6 +2,23 @@
 
 # up.sh: Deploy pulp-operator to K8s
 
+# CentOS 7 /etc/sudoers does not include /usr/local/bin
+# Which k3s installs to.
+# But we do not want to break other possible kubectl implementations by
+# hardcoding /usr/local/bin/kubectl .
+# And this entire script may be run with sudo.
+# So if kubectl is not in the PATH, assume /usr/local/bin/kubectl .
+set -x
+if ! command -v kubectl > /dev/null; then
+  if [ -x /usr/local/bin/kubectl ]; then
+    echo "$0: kubectl not found, but /usr/local/bin/kubectl was found."
+    echo "    Setting kubectl temporariily as an alias to /usr/local/bin/kubectl ."
+    alias kubectl=/usr/local/bin/kubectl
+    shopt -s expand_aliases
+  else
+    echo "$0: ERROR 1: Cannot find kubectl"
+  fi
+fi
 # TODO: Check if all of these are needed.
 # TODO: Check if these should only ever be run once; or require
 # special logic to update
