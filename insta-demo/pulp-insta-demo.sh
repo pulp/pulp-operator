@@ -43,9 +43,22 @@ if [[ $(getenforce 2> /dev/null || echo "Disabled") != "Disabled" ]]; then
   fi
 fi
 
-set -x
-curl -SsL https://github.com/pulp/pulp-operator/archive/master.tar.gz | tar -xz || failure_message
-cd pulp-operator-master || failure_message
+if [ $(basename `git rev-parse --show-toplevel`) != "pulp-operator" ]; then
+  USER_REPO="pulp/pulp-operator"
+  BRANCH="master"
+  set -x
+else
+  set -x
+  REMOTE_NAME=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} | cut -f 1 -d /)
+  BRANCH=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} | cut -f 2- -d /)
+  REMOTE=$(git remote get-url $REMOTE_NAME)
+  # Processes examples of $REMOTE_NAME:
+  # https://github.com/USERNAME/RE-PO_SITORY.git
+  # git@github.com:USERNAME/RE-PO_SITORY.git
+  USER_REPO=$(echo $REMOTE | grep -oP '([\w\-]+)\/([\w\-]+)(?=.git)')
+fi
+curl -SsL https://github.com/$USER_REPO/archive/$BRANCH.tar.gz | tar -xz || failure_message
+cd pulp-operator-$BRANCH || failure_message
 sudo .travis/k3s-install.sh --insta-demo || failure_message
 sudo TRAVIS=true ./up.sh || failure_message
 .travis/pulp-operator-check-and-wait.sh || test $? = 100 || failure_message
