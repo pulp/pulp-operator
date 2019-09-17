@@ -43,11 +43,7 @@ if [[ $(getenforce 2> /dev/null || echo "Disabled") != "Disabled" ]]; then
   fi
 fi
 
-if [ $(basename `git rev-parse --show-toplevel`) != "pulp-operator" ]; then
-  USER_REPO="pulp/pulp-operator"
-  BRANCH="master"
-  set -x
-else
+if command -v git > /dev/null && [[ "$(basename `git rev-parse --show-toplevel`)" == "pulp-operator" ]]; then
   set -x
   REMOTE_NAME=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} | cut -f 1 -d /)
   BRANCH=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} | cut -f 2- -d /)
@@ -56,9 +52,21 @@ else
   # https://github.com/USERNAME/RE-PO_SITORY.git
   # git@github.com:USERNAME/RE-PO_SITORY.git
   USER_REPO=$(echo $REMOTE | grep -oP '([\w\-]+)\/([\w\-]+)(?=.git)')
+else
+  USER_REPO="pulp/pulp-operator"
+  BRANCH="master"
+  set -x
 fi
-curl -SsL https://github.com/$USER_REPO/archive/$BRANCH.tar.gz | tar -xz || failure_message
-cd pulp-operator-$BRANCH || failure_message
+URL=https://github.com/$USER_REPO/archive/$BRANCH.tar.gz
+VAGRANT_MOUNT_DIR=/home/vagrant/devel/pulp-operator
+if [ -e $VAGRANT_MOUNT_DIR ]; then
+  echo "Vagrant Detected. Using $VAGRANT_MOUNT_DIR instead of"
+  echo "$URL"
+  cd $VAGRANT_MOUNT_DIR || failure_message
+else
+  curl -SsL $URL | tar -xz || failure_message
+  cd pulp-operator-$BRANCH || failure_message
+fi
 sudo .travis/k3s-install.sh --insta-demo || failure_message
 sudo TRAVIS=true ./up.sh || failure_message
 .travis/pulp-operator-check-and-wait.sh || test $? = 100 || failure_message
