@@ -22,7 +22,20 @@ storage_debug() {
 # Which k3s installs to.
 # But we do not want to prevent other possible kubectl implementations.
 # So use the user's current PATH to find and save the location of kubectl.
-KUBECTL=$(command -v kubectl)
+
+# CentOS 7 /etc/sudoers , and non-interactive shells (vagrant provisions)
+# do not include /usr/local/bin , Which k3s installs to.
+# But we do not want to break other possible kubectl implementations by
+# hardcoding /usr/local/bin/kubectl .
+# So if kubectl is in the user's PATH, preserve the filepath for sudo.
+# And if kubectl is not in the PATH, assume /usr/local/bin/kubectl .
+if command -v kubectl > /dev/null; then
+  KUBECTL=$(command -v kubectl)
+elif [ -x /usr/local/bin/kubectl ]; then
+  KUBECTL=/usr/local/bin/kubectl
+else
+    echo "$0: ERROR 1: Cannot find kubectl"
+fi
 
 # Once the services are both up, the pods will be in a Pending state.
 # Before the services are both up, the pods may not exist at all.
