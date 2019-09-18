@@ -29,14 +29,14 @@ failure_message() {
 # Replace with getopts if we start adding more args
 # We do not want to workaround every single possible reason the script may fail,
 # but our test environment (fedora30 vagrant box) needs this.
-if [[ $(getenforce 2> /dev/null || echo "Disabled") != "Disabled" ]]; then
+if [[ $(getenforce 2> /dev/null) = "Enforcing" ]]; then
   if [[ ! -e /usr/sbin/semanage ]]; then
     if [ $FIXES = true ]; then
         set -x
         sudo dnf -y install /usr/sbin/semanage || sudo yum -y install /usr/sbin/semanage
         set +x
     else
-      echo "SELinux is Enforcing or Permissive, but /usr/sbin/semanage is not installed."
+      echo "SELinux is Enforcing, but /usr/sbin/semanage is not installed."
       echo "k3s requires /usr/sbin/semanage to prevent SELinux errors."
       echo "Exiting."
     fi
