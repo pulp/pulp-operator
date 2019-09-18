@@ -43,15 +43,40 @@ if [[ $(getenforce 2> /dev/null || echo "Disabled") != "Disabled" ]]; then
   fi
 fi
 
+# The behavior of this block is as follows:
+# 1. If the user downloads this script directly, grab the pulp/pulp-operator
+#    repo's master branch in a tarball from github. Few commands required.
+# 2. If a developer is testing this on his machine or VM, use git to determine
+#    the github user, repo and branch, and test the tarball download process
+#    to simulate #1. This requires the developer to commit & push 1st.
+# 3. If Travis, use Travis env vars (our git commands won't work without
+#    branches), and test the tarball download process to simulate #1.
+# 4. If in Vagrant (to test multiple distros), mount the directory.
+#    This does not test the tarball download process unfortunately,
+#    but Vagrant's shell provisioner only uploads the script, so we have
+#    no good & easy-to-implement option.
 if command -v git > /dev/null && [[ "$(basename `git rev-parse --show-toplevel`)" == "pulp-operator" ]]; then
   set -x
   REMOTE_NAME=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} | cut -f 1 -d /)
-  BRANCH=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} | cut -f 2- -d /)
-  REMOTE=$(git remote get-url $REMOTE_NAME)
-  # Processes examples of $REMOTE_NAME:
-  # https://github.com/USERNAME/RE-PO_SITORY.git
-  # git@github.com:USERNAME/RE-PO_SITORY.git
-  USER_REPO=$(echo $REMOTE | grep -oP '([\w\-]+)\/([\w\-]+)(?=.git)')
+  # Travis does not checkout a branch, just a specific commit.
+  if [ -n "$TRAVIS_PULL_REQUEST_BRANCH" ]; then
+    BRANCH=$TRAVIS_PULL_REQUEST_BRANCH
+  elif [ -n $TRAVIS_BRANCH ]; then
+    BRANCH=$TRAVIS_BRANCH
+  else
+    BRANCH=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} | cut -f 2- -d /)
+  fi
+  if [ -n "$TRAVIS_PULL_REQUEST_SLUG" ]; then
+    USER_REPO=$TRAVIS_PULL_REQUEST_SLUG
+  elif [ -n "$TRAVIS_REPO_SLUG" ]; then
+    USER_REPO=$TRAVIS_REPO_SLUG
+  else
+    REMOTE=$(git remote get-url $REMOTE_NAME)
+    # Processes examples of $REMOTE_NAME:
+    # https://github.com/USERNAME/RE-PO_SITORY.git
+    # git@github.com:USERNAME/RE-PO_SITORY.git
+    USER_REPO=$(echo $REMOTE | grep -oP '([\w\-]+)\/([\w\-]+)(?=.git)')
+  fi
 else
   USER_REPO="pulp/pulp-operator"
   BRANCH="master"
@@ -67,6 +92,7 @@ else
   curl -SsL $URL | tar -xz || failure_message
   cd pulp-operator-$BRANCH || failure_message
 fi
+
 sudo .travis/k3s-install.sh --insta-demo || failure_message
 sudo TRAVIS=true ./up.sh || failure_message
 .travis/pulp-operator-check-and-wait.sh || test $? = 100 || failure_message
