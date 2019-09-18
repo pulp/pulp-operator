@@ -36,7 +36,7 @@ if ! [[ $? ]] ; then
 fi
 
 # Wait for k3s being up without requiring netcat to be installed; pure bash.
-timeout 45 bash -c 'until echo 2> /dev/null > /dev/tcp/localhost/6443; do sleep .2; done'
+timeout 90 bash -c 'until echo 2> /dev/null > /dev/tcp/localhost/6443; do sleep .2; done'
 
 # Apparently that wait is still not enough. I suspect that the backend
 # containers are not running yet.
