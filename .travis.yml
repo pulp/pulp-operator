@@ -1,6 +1,5 @@
 dist: xenial
 sudo: required
-services: docker
 language: python
 services:
   - docker
@@ -15,14 +14,32 @@ install:
   - .travis/k3s-install.sh
   - sudo wget https://github.com/operator-framework/operator-sdk/releases/download/v0.9.0/operator-sdk-v0.9.0-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
   - sudo chmod +x /usr/local/bin/operator-sdk
-script:
-  - sudo operator-sdk build quay.io/pulp/pulp-operator:latest
-  - sudo docker images
-  - sudo ./up.sh
-  - .travis/pulp-operator-check-and-wait.sh
-  # This step will run indefinitely if we do not limit it to 5 mins.
-  # If the entire build reaches 50 mins, the after_failure steps never run.
-  - timeout 5m .travis/pulp_file-tests.sh
+jobs:
+  include:
+    - name: test-all-components
+      script:
+        - sudo operator-sdk build quay.io/pulp/pulp-operator:latest
+        - sudo docker images
+        - sudo ./up.sh
+        - .travis/pulp-operator-check-and-wait.sh
+        # This step will run indefinitely if we do not limit it to 5 mins.
+        # If the entire build reaches 50 mins, the after_failure steps never run.
+        - timeout 5m .travis/pulp_file-tests.sh
+      deploy:
+        provider: script
+        # Push image to quay. That is our upstream "deployment".
+        script: sudo .travis/quay-push.sh
+        on:
+          # Only run on the master branch, because "latest" is hardcoded
+          branch: master
+          # Also, deploy will never run on PRs.
+          # "Note that pull request builds skip the deployment step altogether."
+          # https://docs.travis-ci.com/user/deployment#pull-requests
+    - name: test-insta-demo
+      script:
+        - sudo operator-sdk build quay.io/pulp/pulp-operator:latest
+        - sudo docker images
+        - sudo insta-demo/pulp-insta-demo.sh
 after_failure:
   - http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
   - sudo docker images
@@ -34,13 +51,3 @@ after_failure:
   - sudo kubectl logs -l app=pulp-content --tail=10000
   - sudo kubectl logs -l app=pulp-worker --tail=10000
   - sudo kubectl logs -l app=pulp-resource-manager --tail=10000
-deploy:
-  - provider: script
-    # Push image to quay. That is our upstream "deployment".
-    script: sudo .travis/quay-push.sh
-    on:
-      # Only run on the master branch, because "latest" is hardcoded
-      branch: master
-      # Also, deploy will never run on PRs.
-      # "Note that pull request builds skip the deployment step altogether."
-      # https://docs.travis-ci.com/user/deployment#pull-requests
