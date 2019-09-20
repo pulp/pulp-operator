@@ -11,18 +11,37 @@
 
 storage_debug() {
   echo "VOLUMES:"
-  sudo kubectl get pvc
-  sudo kubectl get pv
+  sudo $KUBECTL get pvc
+  sudo $KUBECTL get pv
   df -h
-  sudo kubectl -n local-path-storage get pod
-  sudo kubectl -n local-path-storage logs $STORAGE_POD
+  sudo $KUBECTL -n local-path-storage get pod
+  sudo $KUBECTL -n local-path-storage logs $STORAGE_POD
 }
+
+# CentOS 7 /etc/sudoers does not include /usr/local/bin
+# Which k3s installs to.
+# But we do not want to prevent other possible kubectl implementations.
+# So use the user's current PATH to find and save the location of kubectl.
+
+# CentOS 7 /etc/sudoers , and non-interactive shells (vagrant provisions)
+# do not include /usr/local/bin , Which k3s installs to.
+# But we do not want to break other possible kubectl implementations by
+# hardcoding /usr/local/bin/kubectl .
+# So if kubectl is in the user's PATH, preserve the filepath for sudo.
+# And if kubectl is not in the PATH, assume /usr/local/bin/kubectl .
+if command -v kubectl > /dev/null; then
+  KUBECTL=$(command -v kubectl)
+elif [ -x /usr/local/bin/kubectl ]; then
+  KUBECTL=/usr/local/bin/kubectl
+else
+    echo "$0: ERROR 1: Cannot find kubectl"
+fi
 
 # Once the services are both up, the pods will be in a Pending state.
 # Before the services are both up, the pods may not exist at all.
 # So check for the services being up 1st.
 for tries in {0..30}; do
-  services=$(sudo kubectl get services)
+  services=$(sudo $KUBECTL get services)
   if [[ $(echo "$services" | grep -c NodePort) -eq 2 ]]; then
     # parse string like this. 30805 is the external port
     # pulp-api     NodePort    10.43.170.79   <none>        24817:30805/TCP   0s
@@ -44,13 +63,13 @@ done
 
 # This needs to be down here. Otherwise, the storage pod may not be
 # up in time.
-STORAGE_POD=$(sudo kubectl -n local-path-storage get pod | awk '/local-path-provisioner/{print $1}')
+STORAGE_POD=$(sudo $KUBECTL -n local-path-storage get pod | awk '/local-path-provisioner/{print $1}')
 
 # NOTE: Before the pods can be started, they must be downloaded/cached from
 # quay.io .
 # Therefore, this wait is highly dependent on network speed.
 for tries in {0..180}; do
-  pods=$(sudo kubectl get pods -o wide)
+  pods=$(sudo $KUBECTL get pods -o wide)
   if [[ $(echo "$pods" | grep -c -v -E "STATUS|Running") -eq 0 ]]; then
     echo "PODS:"
     echo "$pods"
