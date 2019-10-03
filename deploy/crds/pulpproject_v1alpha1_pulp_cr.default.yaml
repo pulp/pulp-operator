@@ -11,13 +11,28 @@ metadata:
 # image: pulp
   # The image tag for the pulp image.
 # tag: stable
-  # Database connection settings.
+  # Pulp settings.
+# pulp_settings:
+#    databases:
+#      default:
+#        HOST: postgres
+#        ENGINE: django.db.backends.postgresql_psycopg2
+#        NAME: pulp
+#        USER: pulp
+#        PASSWORD: pulp
+#        PORT: 5432,
+#        CONN_MAX_AGE: 0
+#    debug: "True"
+#    redis_host: redis
+#    redis_port:  6379
+#    redis_password: ''
+#    content_host: ''
+  # PostrgreSQL container settings for user accounts
 # database_connection:
 #   username: pulp
 #   password: pulp
+    # Password for db admin user 'postgres'.
 #   admin_password:
-  # The CONTENT_HOST setting for pulp-api
-# content_host:
   # Configuration for the persistentVolumeClaim for /var/lib/pulp
 # pulp_file_storage:
      # If your K8s cluster is only 1 node, and its StorageClass /
