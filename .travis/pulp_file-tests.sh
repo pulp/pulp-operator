@@ -2,10 +2,13 @@
 # coding=utf-8
 
 # From the pulp-server/pulp-api config-map
-echo "machine localhost
+echo "machine $(hostname)
 login admin
 password password\
 " > ~/.netrc
+
+export BASE_ADDR=$(hostname):24817
+export CONTENT_ADDR=$(hostname):24816
 
 pushd pulp_file/docs/_scripts
 # Let's only do sync tests.
