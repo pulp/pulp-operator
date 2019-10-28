@@ -7,6 +7,9 @@ login admin
 password password\
 " > ~/.netrc
 
+export BASE_ADDR=$(hostname):24817
+export CONTENT_ADDR=$(hostname):24816
+
 pushd pulp_file/docs/_scripts
 # Let's only do sync tests.
 # So as to check that Pulp can work in containers, including writing to disk.
