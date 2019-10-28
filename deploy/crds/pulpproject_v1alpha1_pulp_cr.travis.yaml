@@ -3,6 +3,11 @@ kind: Pulp
 metadata:
   name: example-pulp
 spec:
+  project: pulp
+  # The image name (repo name) for the pulp image.
+  image: pulp
+  # The image tag for the pulp image.
+  tag: latest
   pulp_file_storage:
     # k3s local-path requires this
     access_mode: "ReadWriteOnce"
