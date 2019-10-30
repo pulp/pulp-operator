@@ -6,25 +6,6 @@ metadata:
   namespace: "{{ project_name }}"
 data:
   settings.py: |
-    DATABASES = {
-      'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'pulp',
-        'USER': '{{ database_connection.username }}',
-        'PASSWORD': '{{ database_connection.password }}',
-        'HOST': 'postgres',
-        'PORT': '5432',
-        'CONN_MAX_AGE': 0
-      },
-    }
-
-    SECRET_KEY = "{{ secret_key }}"
-
-    DEBUG: True
-
-    REDIS_HOST = 'redis'
-    REDIS_PORT =  6379
-    REDIS_PASSWORD = ''
-{% if content_host is defined %}
-    CONTENT_HOST = '{{ content_host }}'
-{% endif %}
+    {% for setting, value in pulp_combined_settings.items() %}
+    {{ setting | upper }} = {{ value | string | capitalize if value | string in ["True", "False"] else value | to_json }}
+    {% endfor %}

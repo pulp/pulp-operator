@@ -2,6 +2,9 @@
 - set_fact:
     secret_key: "{{ lookup('password', '/dev/null length=50 chars=ascii_letters') }}"
 
+- set_fact:
+    pulp_combined_settings: "{{ pulp_default_settings|combine(pulp_settings, recursive=True) if pulp_settings is defined and pulp_settings is not none else pulp_default_settings }}"
+
 - name: pulp-file-storage persistent volume claim
   k8s:
     state: "{{ deployment_state }}"

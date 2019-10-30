@@ -5,6 +5,20 @@
     database_connection:
       username: pulp
       password: pulp
+    pulp_default_settings:
+      databases:
+        default:
+          HOST: postgres
+          ENGINE: django.db.backends.postgresql_psycopg2
+          NAME: pulp
+          USER: "{{ database_connection.username }}"
+          PASSWORD: "{{ database_connection.password }}"
+          PORT: 5432
+          CONN_MAX_AGE: 0
+      debug: "True"
+      redis_host: redis
+      redis_port:  6379
+      redis_password: ''
     deployment_state: present
     registry: quay.io
     project: pulp

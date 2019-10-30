@@ -3,6 +3,7 @@ kind: Pulp
 metadata:
   name: example-pulp
 spec:
+  tag: latest
   pulp_file_storage:
     # k3s local-path requires this
     access_mode: "ReadWriteOnce"
