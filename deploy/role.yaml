@@ -33,6 +33,12 @@ rules:
   - get
   - create
 - apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  verbs:
+  - '*'
+- apiGroups:
   - apps
   resourceNames:
   - pulp-operator

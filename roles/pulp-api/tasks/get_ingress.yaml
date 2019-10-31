@@ -1,0 +1,27 @@
+---
+- name: Look up ingress IP
+  k8s_facts:
+    api_version: networking.k8s.io/v1beta1
+    kind: Ingress
+    name: pulp-ingress
+    namespace: "{{ project_name }}"
+  register: pulp_ingress
+  until:
+    - (pulp_ingress.resources[0].status.loadBalancer is defined)
+    - (pulp_ingress.resources[0].status.loadBalancer is not none)
+    - (pulp_ingress.resources[0].status.loadBalancer.ingress is defined)
+    - (pulp_ingress.resources[0].status.loadBalancer.ingress is not none)
+    - (pulp_ingress.resources[0].status.loadBalancer.ingress|length > 0)
+    - (pulp_ingress.resources[0].status.loadBalancer.ingress[0].ip is defined)
+    - (pulp_ingress.resources[0].status.loadBalancer.ingress[0].ip is not none)
+    - (pulp_ingress.resources[0].status.loadBalancer.ingress[0].ip|length > 0)
+  retries: 90
+  delay: 2
+
+- name: DEBUG Show pulp_ingress
+  debug:
+    msg: "{{ pulp_ingress }}"
+
+- name: Set content_origin
+  set_fact:
+    pulp_default_settings: "{{ pulp_default_settings|combine({'content_origin': 'http://{{ pulp_ingress.resources[0].status.loadBalancer.ingress[0].ip }}' }) }}"

@@ -1,0 +1,26 @@
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: pulp-ingress
+  namespace: "{{ project_name }}"
+  labels:
+    app: pulp-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  selector:
+    app: pulp-ingress
+  rules:
+    - http:
+        paths:
+          - path: /pulp/content/
+            backend:
+              serviceName: pulp-content
+              servicePort: 24816
+          - path: /pulp/api/v3/
+            backend:
+              serviceName: pulp-api
+              servicePort: 24817
+  type: NodePort

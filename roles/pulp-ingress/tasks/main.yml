@@ -1,0 +1,7 @@
+---
+- name: pulp ingress
+  k8s:
+    state: "{{ deployment_state }}"
+    definition: "{{ lookup('template', 'templates/' + item + '.ingress.yaml') | from_yaml }}"
+  with_items:
+    - pulp

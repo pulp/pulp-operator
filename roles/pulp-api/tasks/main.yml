@@ -2,6 +2,24 @@
 - set_fact:
     secret_key: "{{ lookup('password', '/dev/null length=50 chars=ascii_letters') }}"
 
+# Workaround being unable to do the following, for the subsequent task:
+# when: (pulp_settings is not defined) or
+#   (pulp_settings.content_origin is not defined)
+# (short-circuit evaluation only works for multiple separate when statements)
+# https://github.com/ansible/ansible/issues/50554
+- set_fact:
+    content_origin_temp: pulp_settings.content_origin
+  when:
+    - pulp_settings is defined
+    - pulp_settings.content_origin is defined
+
+# TODO: Replace with watches on the status of the ingress
+- include_tasks:
+    file: get_ingress.yaml
+  # If the user does not want to set up an ingress, we won't require it.
+  # The user will have to set content_origin though.
+  when: content_origin_temp is not defined
+
 - set_fact:
     pulp_combined_settings: "{{ pulp_default_settings|combine(pulp_settings, recursive=True) if pulp_settings is defined and pulp_settings is not none else pulp_default_settings }}"
 
