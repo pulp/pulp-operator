@@ -33,5 +33,7 @@ echo "Will deploy config Custom Resource deploy/crds/$CUSTOM_RESOURCE"
 $KUBECTL apply -f deploy/crds/$CUSTOM_RESOURCE
 $KUBECTL apply -f deploy/service_account.yaml
 $KUBECTL apply -f deploy/role.yaml
+$KUBECTL apply -f deploy/cluster_role.yaml
 $KUBECTL apply -f deploy/role_binding.yaml
+$KUBECTL apply -f deploy/cluster_role_binding.yaml
 $KUBECTL apply -f deploy/operator.yaml

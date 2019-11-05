@@ -19,6 +19,7 @@
       redis_host: redis
       redis_port:  6379
       redis_password: ''
+#     content_origin: # Queried and set in pulp-api role
     deployment_state: present
     registry: quay.io
     project: pulp

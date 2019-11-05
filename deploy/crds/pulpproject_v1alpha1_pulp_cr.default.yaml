@@ -26,7 +26,11 @@ metadata:
 #    redis_host: redis
 #    redis_port:  6379
 #    redis_password: ''
-#    content_host: ''
+#    content_origin: # pulp-operator will query the 1st address of the 1st k8s
+#                      node. This suffices for most single node deployments.
+#                      If on a cluster, you should set this manually until
+#                      ingress(es) are implemented. Example:
+#                      http://myserver.fqdn:24816
   # PostrgreSQL container settings for user accounts
 # database_connection:
 #   username: pulp
