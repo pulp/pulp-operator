@@ -2,15 +2,30 @@
 - set_fact:
     secret_key: "{{ lookup('password', '/dev/null length=50 chars=ascii_letters') }}"
 
-- set_fact:
-    pulp_combined_settings: "{{ pulp_default_settings|combine(pulp_settings, recursive=True) if pulp_settings is defined and pulp_settings is not none else pulp_default_settings }}"
-
 - name: pulp-file-storage persistent volume claim
   k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.pvc.yaml') | from_yaml }}"
   with_items:
     - pulp-file-storage
+
+# Workaround being unable to do the following, for the subsequent task:
+# when: (pulp_settings is not defined) or
+#   (pulp_settings.content_origin is not defined)
+# (short-circuit evaluation only works for multiple separate when statements)
+# https://github.com/ansible/ansible/issues/50554
+- set_fact:
+    content_origin_temp: pulp_settings.content_origin
+  when:
+    - pulp_settings is defined
+    - pulp_settings.content_origin is defined
+
+- include_tasks:
+    file: get_node_ip.yml
+  when: content_origin_temp is not defined
+
+- set_fact:
+    pulp_combined_settings: "{{ pulp_default_settings|combine(pulp_settings, recursive=True) if pulp_settings is defined and pulp_settings is not none else pulp_default_settings }}"
 
 - name: pulp-server config-map
   k8s:

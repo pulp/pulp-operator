@@ -1,0 +1,18 @@
+---
+- name: Look up the 1st address of the 1st node
+  k8s_facts:
+    api_version: v1
+    kind: Node
+  register: k8s_nodes
+
+- name: DEBUG Show k8s_nodes
+  debug:
+    msg: "{{ k8s_nodes }}"
+
+- name: Set content_origin
+  set_fact:
+    pulp_default_settings: "{{ pulp_default_settings|combine({'content_origin': 'http://{{ k8s_nodes.resources[0].status.addresses[0].address }}:24816' }) }}"
+
+- name: DEBUG Show content_origin
+  debug:
+    msg: "{{ pulp_default_settings.content_origin }}"

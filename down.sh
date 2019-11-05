@@ -21,7 +21,9 @@ $KUBECTL delete -f deploy/operator.yaml
 
 $KUBECTL delete -f deploy/service_account.yaml
 $KUBECTL delete -f deploy/role.yaml
+$KUBECTL delete -f deploy/cluster_role.yaml
 $KUBECTL delete -f deploy/role_binding.yaml
+$KUBECTL delete -f deploy/cluster_role_binding.yaml
 # It doesn't matter which cr we specify; the metadata up top is the same.
 $KUBECTL delete -f deploy/crds/pulpproject_v1alpha1_pulp_cr.default.yaml
 $KUBECTL delete -f deploy/crds/pulpproject_v1alpha1_pulp_crd.yaml
