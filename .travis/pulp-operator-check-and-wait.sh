@@ -54,6 +54,12 @@ for tries in {0..30}; do
       echo "ERROR 2: 1 or more external services never came up"
       echo "SERVICES:"
       echo "$services"
+      if [ -x "$(command -v docker)" ]; then
+        echo "DOCKER IMAGE CACHE:"
+        sudo docker images
+      fi
+      echo "PODS:"
+      sudo $KUBECTL get pods -o wide
       storage_debug
       exit 2
     fi
