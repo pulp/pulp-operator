@@ -4,7 +4,10 @@ language: python
 services:
   - docker
 before_install:
-  - git clone https://github.com/pulp/pulp_file.git
+  .travis/before_install.sh
+  # Created template_config.yml with plugin_template,
+  # and after that I removed manually travis files not related to validating commit
+  # also removed some python related stuff like flake8, black and pip installing doc/test requirements
 install:
   - pip install jmespath
   # Need /usr/bin/http script, so use sudo
