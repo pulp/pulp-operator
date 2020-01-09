@@ -28,4 +28,10 @@ Vagrant.configure("2") do |config|
     a.vm.provision "shell",
       path: "pulp-insta-demo.sh"
   end
+
+  config.vm.define "bionic-pulp-insta-demo" do |a|
+    a.vm.box = "generic/ubuntu1804"
+    a.vm.provision "shell",
+      path: "pulp-insta-demo.sh"
+  end
 end
