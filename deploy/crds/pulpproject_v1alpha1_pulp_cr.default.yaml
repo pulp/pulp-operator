@@ -9,8 +9,8 @@ metadata:
 # project: pulp
   # The image name (repo name) for the pulp image.
 # image: pulp
-  # The image tag for the pulp image.
-# tag: stable
+  # The image tag for the pulp image. Quotes needed for '.' on certain K8s.
+# tag: "stable"
   # Pulp settings.
 # pulp_settings:
 #    databases:
