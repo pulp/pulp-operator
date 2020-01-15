@@ -1,0 +1,31 @@
+# This config represents the latest values used when running the plugin-template. Any settings that
+# were not present before running plugin-template have been added with their default values.
+
+additional_plugins: []
+black: true
+check_commit_message: true
+cherry_pick_automation: false
+coverage: false
+deploy_client_to_pypi: false
+deploy_client_to_rubygems: false
+deploy_daily_client_to_pypi: false
+deploy_daily_client_to_rubygems: false
+deploy_to_pypi: false
+docs_test: false
+plugin_app_label: operator
+plugin_camel: Pulp-Operator
+plugin_camel_short: Operator
+plugin_caps: PULP-OPERATOR
+plugin_caps_short: OPERATOR
+plugin_dash: pulp-operator
+plugin_dash_short: operator
+plugin_name: pulp-operator
+plugin_snake: pulp_operator
+pulp_settings: null
+pulpcore_branch: master
+pydocstyle: false
+pypi_username: null
+stable_branch: null
+test_bindings: false
+test_performance: false
+travis_notifications: null
