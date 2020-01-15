@@ -3,6 +3,10 @@ sudo: required
 language: python
 services:
   - docker
+addons:
+  apt:
+    packages:
+      - httpie
 before_install:
   .travis/before_install.sh
   # Created template_config.yml with plugin_template,
@@ -13,7 +17,6 @@ install:
   # Need /usr/bin/http script, so use sudo
   # It can mess up ownership of the python cache dir, so run it after the
   # non-sudo pip command.
-  - sudo pip install httpie
   - .travis/k3s-install.sh
   - sudo wget https://github.com/operator-framework/operator-sdk/releases/download/v0.9.0/operator-sdk-v0.9.0-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
   - sudo chmod +x /usr/local/bin/operator-sdk
