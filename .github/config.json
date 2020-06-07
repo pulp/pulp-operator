@@ -1,0 +1,8 @@
+{
+    "default_options": [
+    "--ignore-stdin",
+    "--default-scheme=https",
+    "--pretty=format",
+    "--traceback"
+    ]
+}

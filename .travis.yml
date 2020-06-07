@@ -18,7 +18,7 @@ install:
   # It can mess up ownership of the python cache dir, so run it after the
   # non-sudo pip command.
   - .travis/k3s-install.sh
-  - sudo wget https://github.com/operator-framework/operator-sdk/releases/download/v0.9.0/operator-sdk-v0.9.0-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
+  - sudo wget https://github.com/operator-framework/operator-sdk/releases/download/v0.18.0/operator-sdk-v0.18.0-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
   - sudo chmod +x /usr/local/bin/operator-sdk
 jobs:
   include:

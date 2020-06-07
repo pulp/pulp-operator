@@ -1,0 +1,131 @@
+name: Pulp CI
+on: [push, pull_request]
+jobs:
+  insta:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          git fetch --prune --unshallow
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.7'
+      - name: Install httpie
+        run: |
+          echo ::group::HTTPIE
+          sudo apt-get update -yq
+          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
+          echo ::endgroup::
+          echo "::set-env name=HTTPIE_CONFIG_DIR::$GITHUB_WORKSPACE/.github"
+        shell: bash
+      - name: Check commit message
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
+        run: |
+          echo ::group::REQUESTS
+          pip install requests
+          echo ::endgroup::
+          for sha in $(curl $GITHUB_CONTEXT | jq '.[].sha' | sed 's/"//g')
+          do
+            python .travis/validate_commit_message.py $sha
+            VALUE=$?
+            if [ "$VALUE" -gt 0 ]; then
+              exit $VALUE
+            fi
+          done
+        shell: bash
+      - name: Install Operator
+        run: |
+          sudo wget https://github.com/operator-framework/operator-sdk/releases/download/v0.18.0/operator-sdk-v0.18.0-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
+          sudo chmod +x /usr/local/bin/operator-sdk
+        shell: bash
+      - name: Build Operator
+        run: |
+          sudo operator-sdk build quay.io/pulp/pulp-operator:latest
+          sudo docker images
+        shell: bash
+      - name: Test insta-demo
+        run: sudo insta-demo/pulp-insta-demo.sh
+        shell: bash
+      - name: After failure
+        if: failure()
+        run: |
+          http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
+          sudo docker images
+          sudo kubectl logs -l name=pulp-operator -c ansible --tail=10000
+          sudo kubectl logs -l name=pulp-operator -c operator --tail=10000
+          sudo kubectl logs -l app=pulp-api --tail=10000
+          sudo kubectl logs -l app=pulp-content --tail=10000
+          sudo kubectl logs -l app=pulp-worker --tail=10000
+          sudo kubectl logs -l app=pulp-resource-manager --tail=10000
+
+  components:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          git fetch --prune --unshallow
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.7'
+      - name: Install httpie
+        run: |
+          echo ::group::HTTPIE
+          sudo apt-get update -yq
+          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
+          echo ::endgroup::
+          echo "::set-env name=HTTPIE_CONFIG_DIR::$GITHUB_WORKSPACE/.github"
+        shell: bash
+      - name: Check commit message
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
+        run: |
+          echo ::group::REQUESTS
+          pip install requests
+          echo ::endgroup::
+          for sha in $(curl $GITHUB_CONTEXT | jq '.[].sha' | sed 's/"//g')
+          do
+            python .travis/validate_commit_message.py $sha
+            VALUE=$?
+            if [ "$VALUE" -gt 0 ]; then
+              exit $VALUE
+            fi
+          done
+        shell: bash
+      - name: Install k3s and Operator
+        run: |
+          .travis/k3s-install.sh
+          sudo wget https://github.com/operator-framework/operator-sdk/releases/download/v0.18.0/operator-sdk-v0.18.0-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
+          sudo chmod +x /usr/local/bin/operator-sdk
+        shell: bash
+      - name: Build Operator
+        run: |
+          sudo operator-sdk build quay.io/pulp/pulp-operator:latest
+          sudo docker images
+        shell: bash
+      - name: Deploy pulp-operator to K8s
+        run: sudo TRAVIS=true ./up.sh
+        shell: bash
+      - name: Check and wait pulp-operator deploy
+        run: .travis/pulp-operator-check-and-wait.sh
+        shell: bash
+      - name: Test all components
+        run: |
+          git clone --depth=1 https://github.com/pulp/pulp_file.git
+          .travis/pulp_file-tests.sh
+        shell: bash
+      - name: After failure
+        if: failure()
+        run: |
+          http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
+          sudo docker images
+          sudo kubectl logs -l name=pulp-operator -c ansible --tail=10000
+          sudo kubectl logs -l name=pulp-operator -c operator --tail=10000
+          sudo kubectl logs -l app=pulp-api --tail=10000
+          sudo kubectl logs -l app=pulp-content --tail=10000
+          sudo kubectl logs -l app=pulp-worker --tail=10000
+          sudo kubectl logs -l app=pulp-resource-manager --tail=10000
