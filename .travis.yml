@@ -13,12 +13,11 @@ before_install:
   # and after that I removed manually travis files not related to validating commit
   # also removed some python related stuff like flake8, black and pip installing doc/test requirements
 install:
-  - pip install jmespath
   # Need /usr/bin/http script, so use sudo
   # It can mess up ownership of the python cache dir, so run it after the
   # non-sudo pip command.
   - .travis/k3s-install.sh
-  - sudo wget https://github.com/operator-framework/operator-sdk/releases/download/v0.9.0/operator-sdk-v0.9.0-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
+  - sudo wget https://github.com/operator-framework/operator-sdk/releases/download/v0.18.2/operator-sdk-v0.18.2-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
   - sudo chmod +x /usr/local/bin/operator-sdk
 jobs:
   include:
@@ -51,8 +50,7 @@ after_failure:
   - sudo docker images
   # With the selector (which eliminates the need to look up the pod name),
   # we cannot show all logs. 10000 lines should be sufficient.
-  - sudo kubectl logs -l name=pulp-operator -c ansible --tail=10000
-  - sudo kubectl logs -l name=pulp-operator -c operator --tail=10000
+  - sudo kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
   - sudo kubectl logs -l app=pulp-api --tail=10000
   - sudo kubectl logs -l app=pulp-content --tail=10000
   - sudo kubectl logs -l app=pulp-worker --tail=10000

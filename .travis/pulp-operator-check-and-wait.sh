@@ -33,6 +33,8 @@ if command -v kubectl > /dev/null; then
   KUBECTL=$(command -v kubectl)
 elif [ -x /usr/local/bin/kubectl ]; then
   KUBECTL=/usr/local/bin/kubectl
+elif which kubectl > /dev/null; then
+  KUBECTL=$(which kubectl)
 else
     echo "$0: ERROR 1: Cannot find kubectl"
 fi

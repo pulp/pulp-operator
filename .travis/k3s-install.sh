@@ -35,30 +35,42 @@ if ! [[ $? ]] ; then
   exit 1
 fi
 
+if [ -x /usr/local/bin/kubectl ]; then
+  KUBECTL=/usr/local/bin/kubectl
+elif which kubectl > /dev/null; then
+  KUBECTL=$(which kubectl)
+  mkdir -p $HOME/.kube
+  sudo cp -nf /etc/rancher/k3s/k3s.yaml $HOME/.kube/config
+elif command -v kubectl > /dev/null; then
+  KUBECTL=$(command -v kubectl)
+else
+    echo "$0: ERROR 1: Cannot find kubectl"
+fi
+
 # Wait for k3s being up without requiring netcat to be installed; pure bash.
-timeout 90 bash -c 'until echo 2> /dev/null > /dev/tcp/localhost/6443; do sleep .2; done'
+timeout 120 bash -c 'until echo 2> /dev/null > /dev/tcp/localhost/6443; do sleep .2; done'
 
 # Apparently that wait is still not enough. I suspect that the backend
 # containers are not running yet.
 echo "CLUSTER-INFO"
-until sudo /usr/local/bin/kubectl cluster-info | grep "running at"; do sleep 1; done
+until sudo $KUBECTL cluster-info | grep "running at"; do sleep 1; done
 echo "k3s NODE Status:"
 # If no nodes are found, rc is still 0. So we cannot check that.
 # The full latter string would be like:
 # The connection to the server localhost:6443 was refused - did you specify the right host or port?
-until sudo /usr/local/bin/kubectl get node -o wide 2>&1 | grep -v -E "No resources found.|The connection to the server"; do sleep 1; done
+until sudo $KUBECTL get node -o wide 2>&1 | grep -v -E "No resources found.|The connection to the server"; do sleep 1; done
 
 # By default, k3s lacks a storage class.
 # https://github.com/rancher/k3s/issues/85#issuecomment-468293334
 # This is the way to add a simple hostPath storage class.
-sudo /usr/local/bin/kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+sudo $KUBECTL apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
 if [ "$1" != "--insta-demo" ]; then
-  sudo /usr/local/bin/kubectl get storageclass
+  sudo $KUBECTL get storageclass
 fi
 # How make it the default StorageClass
-sudo /usr/local/bin/kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+sudo $KUBECTL patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 if [ "$1" != "--insta-demo" ]; then
-  sudo /usr/local/bin/kubectl get storageclass
+  sudo $KUBECTL get storageclass
 fi
 
 if [ "$1" != "--insta-demo" ]; then
