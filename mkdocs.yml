@@ -1,0 +1,12 @@
+site_name: Pulp Operator
+site_description: Pulp Operator
+site_author: Pulp Team
+site_url: https://pulp-operator.readthedocs.io/
+repo_name: pulp/pulp-operator
+repo_url: https://github.com/pulp/pulp-operator
+theme: readthedocs
+nav:
+  - Home: index.md
+  - Getting Started: quickstart.md
+markdown_extensions:
+  - pymdownx.superfences
