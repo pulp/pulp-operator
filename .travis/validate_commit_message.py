@@ -5,6 +5,8 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+import glob
+import os
 import re
 import requests
 import subprocess
@@ -13,6 +15,7 @@ import sys
 KEYWORDS = ["fixes", "closes", "re", "ref"]
 NO_ISSUE = "[noissue]"
 STATUSES = ["NEW", "ASSIGNED", "POST", "MODIFIED"]
+CHANGELOG_EXTS = [".feature", ".bugfix", ".doc", ".removal", ".misc"]
 
 sha = sys.argv[1]
 message = subprocess.check_output(["git", "log", "--format=%B", "-n 1", sha]).decode("utf-8")
@@ -30,6 +33,16 @@ def __check_status(issue):
         )
 
 
+def __check_changelog(issue):
+    matches = glob.glob("CHANGES/{issue}.*".format(issue=issue))
+
+    if len(matches) < 1:
+        sys.exit("Could not find changelog entry in CHANGES/ for {issue}.".format(issue=issue))
+    for match in matches:
+        if os.path.splitext(match)[1] not in CHANGELOG_EXTS:
+            sys.exit("Invalid extension for changelog entry '{match}'.".format(match=match))
+
+
 print("Checking commit message for {sha}.".format(sha=sha[0:7]))
 
 # validate the issue attached to the commit
@@ -44,6 +57,7 @@ else:
     if issues:
         for issue in pattern.findall(message):
             __check_status(issue)
+            __check_changelog(issue)
     else:
         sys.exit(
             "Error: no attached issues found for {sha}. If this was intentional, add "

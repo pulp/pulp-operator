@@ -8,5 +8,6 @@ theme: readthedocs
 nav:
   - Home: index.md
   - Getting Started: quickstart.md
+  - Changelog: CHANGES.md
 markdown_extensions:
   - pymdownx.superfences
