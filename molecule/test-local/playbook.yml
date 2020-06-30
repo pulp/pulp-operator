@@ -111,7 +111,7 @@
 
     - name: get ansible logs
       failed_when: false
-      command: kubectl logs deployment/{{ definition.metadata.name }} -n {{ namespace }} -c ansible
+      command: kubectl logs deployment/{{ definition.metadata.name }} -n {{ namespace }} -c pulp-operator
       environment:
         KUBECONFIG: '{{ lookup("env", "KUBECONFIG") }}'
       vars:
