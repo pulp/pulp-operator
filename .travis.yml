@@ -37,7 +37,7 @@ jobs:
       deploy:
         provider: script
         # Push image to quay. That is our upstream "deployment".
-        script: sudo .travis/quay-push.sh
+        script: sudo .travis/deploy.sh
         on:
           # Only run on the master branch, because "latest" is hardcoded
           branch: master
