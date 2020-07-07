@@ -8,6 +8,15 @@ theme: readthedocs
 nav:
   - Home: index.md
   - Getting Started: quickstart.md
+  - Contributing: contributing.md
+  - Roles:
+      - Pulp API: roles/pulp-api.md
+      - Pulp Content: roles/pulp-content.md
+      - Pulp Resource Manager: roles/pulp-resource-manager.md
+      - Pulp Routes: roles/pulp-routes.md
+      - Pulp Worker: roles/pulp-worker.md
+      - Postgres: roles/postgres.md
+      - Redis: roles/redis.md
   - Changelog: CHANGES.md
 markdown_extensions:
   - pymdownx.superfences
