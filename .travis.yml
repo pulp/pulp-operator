@@ -19,9 +19,7 @@ install:
   # non-sudo pip command.
   - .travis/k3s-install.sh
   - CURRENT_VERSION=$(head -1 ./build/Dockerfile  | cut -d ":" -f 2)
-  - SDK_LATEST_VERSION=$(http https://api.github.com/repos/operator-framework/operator-sdk/releases/latest | jq -r '.tag_name')
-  - sed -i "s/$CURRENT_VERSION/$SDK_LATEST_VERSION/g" ./build/Dockerfile
-  - sudo wget https://github.com/operator-framework/operator-sdk/releases/download/$SDK_LATEST_VERSION/operator-sdk-$SDK_LATEST_VERSION-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
+  - sudo wget https://github.com/operator-framework/operator-sdk/releases/download/$CURRENT_VERSION/operator-sdk-$CURRENT_VERSION-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
   - sudo chmod +x /usr/local/bin/operator-sdk
 jobs:
   include:
@@ -34,21 +32,24 @@ jobs:
         # This step will run indefinitely if we do not limit it to 5 mins.
         # If the entire build reaches 50 mins, the after_failure steps never run.
         - .travis/pulp_file-tests.sh
-      deploy:
-        provider: script
-        # Push image to quay. That is our upstream "deployment".
-        script: sudo .travis/deploy.sh
-        on:
-          # Only run on the master branch, because "latest" is hardcoded
-          branch: master
-          # Also, deploy will never run on PRs.
-          # "Note that pull request builds skip the deployment step altogether."
-          # https://docs.travis-ci.com/user/deployment#pull-requests
     - name: test-insta-demo
       script:
         - sudo operator-sdk build quay.io/pulp/pulp-operator:latest
         - sudo docker images
         - sudo insta-demo/pulp-insta-demo.sh
+    - name: molecule
+      dist: xenial
+      install:
+        - pip3 install docker molecule ansible-lint yamllint flake8 openshift jmespath
+      before_script: skip
+      script: .travis/molecule.sh
+    - stage: deploy
+      name: push-to-quay
+      # Push image to quay. That is our upstream "deployment".
+      script:
+        - sudo operator-sdk build quay.io/pulp/pulp-operator:latest
+        - sudo .travis/deploy.sh
+      if: type != pull_request
 after_failure:
   - http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
   - sudo docker images
