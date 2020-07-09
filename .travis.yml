@@ -23,6 +23,10 @@ install:
   - sed -i "s/$CURRENT_VERSION/$SDK_LATEST_VERSION/g" ./build/Dockerfile
   - sudo wget https://github.com/operator-framework/operator-sdk/releases/download/$SDK_LATEST_VERSION/operator-sdk-$SDK_LATEST_VERSION-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
   - sudo chmod +x /usr/local/bin/operator-sdk
+  - sudo wget https://github.com/derailed/popeye/releases/download/v0.8.7/popeye_Linux_x86_64.tar.gz
+  - sudo tar -xvzf popeye_Linux_x86_64.tar.gz
+  - sudo mv popeye /usr/local/bin/
+  - sudo chmod +x /usr/local/bin/popeye
 jobs:
   include:
     - name: test-all-components
@@ -34,6 +38,8 @@ jobs:
         # This step will run indefinitely if we do not limit it to 5 mins.
         # If the entire build reaches 50 mins, the after_failure steps never run.
         - .travis/pulp_file-tests.sh
+        - sudo cp -nf /etc/rancher/k3s/k3s.yaml $HOME/.kube/config
+        - sudo popeye -A
       deploy:
         provider: script
         # Push image to quay. That is our upstream "deployment".
@@ -49,6 +55,8 @@ jobs:
         - sudo operator-sdk build quay.io/pulp/pulp-operator:latest
         - sudo docker images
         - sudo insta-demo/pulp-insta-demo.sh
+        - sudo cp -nf /etc/rancher/k3s/k3s.yaml $HOME/.kube/config
+        - sudo popeye -A
 after_failure:
   - http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
   - sudo docker images
