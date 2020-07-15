@@ -93,7 +93,15 @@ else
   cd pulp-operator-$BRANCH || failure_message
 fi
 
-sudo .travis/k3s-install.sh --insta-demo || failure_message
+# Check if k3s is already installed
+if command -v kubectl > /dev/null; then
+  echo "k8s already installed!"
+elif [ -x /usr/local/bin/kubectl ]; then
+  echo "k8s already installed!"
+else
+    sudo .travis/k3s-install.sh --insta-demo || failure_message
+fi
+
 sudo TRAVIS=true ./up.sh || failure_message
 .travis/pulp-operator-check-and-wait.sh || test $? = 100 || failure_message
 set +x

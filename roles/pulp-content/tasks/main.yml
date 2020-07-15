@@ -2,13 +2,13 @@
 - name: pulp-content service
   k8s:
     state: "{{ deployment_state }}"
-    definition: "{{ lookup('template', 'templates/' + item + '.service.yaml') | from_yaml }}"
+    definition: "{{ lookup('template', 'templates/' + item + '.service.yaml.j2') | from_yaml }}"
   with_items:
     - pulp-content
 
 - name: pulp-content deployment
   k8s:
     state: "{{ deployment_state }}"
-    definition: "{{ lookup('template', 'templates/' + item + '.deployment.yaml') | from_yaml }}"
+    definition: "{{ lookup('template', 'templates/' + item + '.deployment.yaml.j2') | from_yaml }}"
   with_items:
     - pulp-content

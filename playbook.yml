@@ -1,5 +1,9 @@
+---
 - hosts: localhost
   gather_facts: no
+  collections:
+    - community.kubernetes
+    - operator_sdk.util
   vars:
     project_name: "{{ meta.namespace }}"
     database_connection:

@@ -16,8 +16,8 @@ spec:
       serviceAccountName: pulp-operator
       containers:
         - name: pulp-operator
-          image: "quay.io/pulp/pulp-operator:latest"
-          imagePullPolicy: "IfNotPresent"
+          image: "{{ image }}"
+          imagePullPolicy: "{{ pull_policy }}"
           volumeMounts:
           - mountPath: /tmp/ansible-operator/runner
             name: runner
@@ -40,6 +40,7 @@ spec:
               port: 6789
             initialDelaySeconds: 5
             periodSeconds: 3
+
       volumes:
         - name: runner
           emptyDir: {}
