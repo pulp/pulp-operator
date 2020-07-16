@@ -23,6 +23,10 @@ platforms:
       - ${MOLECULE_PROJECT_DIRECTORY}:/build:Z
 provisioner:
   name: ansible
+  config_options:
+    defaults:
+      stdout_callback: debug
+      callback_whitelist: profile_tasks
   log: true
   lint:
     name: ansible-lint
