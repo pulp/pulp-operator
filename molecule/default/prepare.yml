@@ -9,6 +9,12 @@
         flat: yes
         src: /root/.kube/config
 
+    - name: Change NodePort range
+      lineinfile:
+        path: /etc/kubernetes/manifests/kube-apiserver.yaml
+        line: '    - --service-node-port-range=24810-32767'
+        insertafter: 'service-cluster-ip-range.*'
+
     - name: Change the kubeconfig port to the proper value
       replace:
         regexp: '8443'

@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
 
-# Avoid nodePort error:
-# nodePort: Invalid value: 24816 The range of valid ports is 30000-32767
-# nodePort: Invalid value: 24817 The range of valid ports is 30000-32767
-find ./roles/* -exec sed -i 's/24816/31816/g' {} \;
-find ./roles/* -exec sed -i 's/24817/31817/g' {} \;
-
 # deploy/cluster_role_binding.yaml specify the namespace: default
 # The default namespace on molecule is: osdk-test
 # For running the molecule test we should:
