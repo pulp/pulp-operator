@@ -12,6 +12,10 @@ platforms:
   - k8s
 provisioner:
   name: ansible
+  config_options:
+    defaults:
+      stdout_callback: debug
+      callback_whitelist: profile_tasks
   lint: |
     set -e
     ansible-lint
