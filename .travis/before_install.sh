@@ -16,7 +16,7 @@ COMMIT_MSG=$(git log --format=%B --no-merges -1)
 export COMMIT_MSG
 
 if [ -f $PRE_BEFORE_INSTALL ]; then
-    $PRE_BEFORE_INSTALL
+  source $PRE_BEFORE_INSTALL
 fi
 
 if [[ -n $(echo -e $COMMIT_MSG | grep -P "Required PR:.*" | grep -v "https") ]]; then
@@ -24,14 +24,12 @@ if [[ -n $(echo -e $COMMIT_MSG | grep -P "Required PR:.*" | grep -v "https") ]];
   exit 1
 fi
 
-if [ "$TRAVIS_PULL_REQUEST" != "false" ] || [ -z "$TRAVIS_TAG" -a "$TRAVIS_BRANCH" != "master"]
+if [ "$TRAVIS_PULL_REQUEST" != "false" ] || [ -z "$TRAVIS_TAG" -a "$TRAVIS_BRANCH" != "master" ]
 then
-  export PULP_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulpcore\/pull\/(\d+)' | awk -F'/' '{print $7}')
-  export PULP_ROLES_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/ansible-pulp\/pull\/(\d+)' | awk -F'/' '{print $7}')
+  export PULPCORE_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulpcore\/pull\/(\d+)' | awk -F'/' '{print $7}')
   export PULP_FILE_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp_file\/pull\/(\d+)' | awk -F'/' '{print $7}')
 else
-  export PULP_PR_NUMBER=
-  export PULP_ROLES_PR_NUMBER=
+  export PULPCORE_PR_NUMBER=
   export PULP_FILE_PR_NUMBER=
 fi
 
@@ -43,34 +41,25 @@ fi
 git clone --depth=1 https://github.com/pulp/pulp_file.git
 if [ -n "$PULP_FILE_PR_NUMBER" ]; then
   cd pulp_file
-  git fetch --depth=1 origin +refs/pull/$PULP_FILE_PR_NUMBER/merge
-  git checkout FETCH_HEAD
+  git fetch --depth=1 origin pull/$PULP_FILE_PR_NUMBER/head:$PULP_FILE_PR_NUMBER
+  git checkout $PULP_FILE_PR_NUMBER
   cd ..
 fi
 
 
 cd ..
-git clone --depth=1 https://github.com/pulp/ansible-pulp.git
-if [ -n "$PULP_ROLES_PR_NUMBER" ]; then
-  cd ansible-pulp
-  git fetch --depth=1 origin +refs/pull/$PULP_ROLES_PR_NUMBER/merge
-  git checkout FETCH_HEAD
-  cd ..
-fi
-
-
 git clone --depth=1 https://github.com/pulp/pulpcore.git --branch master
 
-if [ -n "$PULP_PR_NUMBER" ]; then
-  cd pulpcore
-  git fetch --depth=1 origin +refs/pull/$PULP_PR_NUMBER/merge
-  git checkout FETCH_HEAD
-  cd ..
+cd pulpcore
+if [ -n "$PULPCORE_PR_NUMBER" ]; then
+  git fetch --depth=1 origin pull/$PULPCORE_PR_NUMBER/head:$PULPCORE_PR_NUMBER
+  git checkout $PULPCORE_PR_NUMBER
 fi
+cd ..
 
 
 cd pulp-operator
 
 if [ -f $POST_BEFORE_INSTALL ]; then
-    $POST_BEFORE_INSTALL
+  source $POST_BEFORE_INSTALL
 fi
