@@ -1,0 +1,27 @@
+---
+- op: add
+  path: /rules/-
+  value:
+    apiGroups:
+      - pulpproject.org.pulpproject.org
+    resources:
+      - pulps
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+- op: add
+  path: /rules/-
+  value:
+    apiGroups:
+      - pulpproject.org.pulpproject.org
+    resources:
+      - pulps/status
+    verbs:
+      - get
+      - patch
+      - update

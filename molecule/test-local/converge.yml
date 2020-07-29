@@ -15,7 +15,7 @@
       changed_when: false
 
     - name: Build Operator Image
-      command: docker build -f /build/build/Dockerfile -t {{ image }} /build
+      command: docker build -f /build/Dockerfile -t {{ image }} /build
       register: build_cmd
       changed_when: not hash or (hash and hash not in cmd_out)
       vars:

@@ -18,14 +18,11 @@ install:
   # It can mess up ownership of the python cache dir, so run it after the
   # non-sudo pip command.
   - .travis/k3s-install.sh
-  - CURRENT_VERSION=$(head -1 ./build/Dockerfile  | cut -d ":" -f 2)
-  - sudo wget https://github.com/operator-framework/operator-sdk/releases/download/$CURRENT_VERSION/operator-sdk-$CURRENT_VERSION-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
-  - sudo chmod +x /usr/local/bin/operator-sdk
 jobs:
   include:
     - name: test-all-components
       script:
-        - sudo operator-sdk build quay.io/pulp/pulp-operator:latest
+        - sudo make docker-build
         - sudo docker images
         - sudo ./up.sh
         - .travis/pulp-operator-check-and-wait.sh
@@ -34,7 +31,7 @@ jobs:
         - .travis/pulp_file-tests.sh
     - name: test-insta-demo
       script:
-        - sudo operator-sdk build quay.io/pulp/pulp-operator:latest
+        - sudo make docker-build
         - sudo docker images
         - sudo insta-demo/pulp-insta-demo.sh
     - name: molecule
@@ -47,7 +44,7 @@ jobs:
       name: push-to-quay
       # Push image to quay. That is our upstream "deployment".
       script:
-        - sudo operator-sdk build quay.io/pulp/pulp-operator:latest
+        - sudo make docker-build
         - sudo .travis/deploy.sh
       if: type != pull_request
 after_failure:

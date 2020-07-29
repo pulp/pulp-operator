@@ -5,7 +5,7 @@
     - community.kubernetes
     - operator_sdk.util
   vars:
-    project_name: "{{ meta.namespace }}"
+    project_name: "{{ ansible_operator_meta.namespace }}"
     database_connection:
       username: pulp
       password: pulp
