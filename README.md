@@ -22,18 +22,18 @@ See [latest slide deck](http://people.redhat.com/mdepaulo/presentations/Introduc
 - **pulpcore-resource-manager** - all asynchronous work flows through this service. Only a single entity does work, but other instances can be run as hot spares that will take over if the active one fails.
 
 ## Created with (based on template)
-`operator-sdk new pulp-operator --api-version=pulpproject.org/v1alpha1 --kind=Pulp --type=ansible --generate-playbook`
+```
+cd pulp-operator
+operator-sdk init --domain=pulpproject.org --plugins=ansible
+operator-sdk create api --group pulpproject.org --version v1alpha1 --kind Pulp --generate-playbook
+```
 
 ## Built/pushed with
-`operator-sdk build --image-builder=buildah quay.io/pulp/pulp-operator:latest`
-
-`podman login quay.io`
-
-`podman push quay.io/pulp/pulp-operator:latest`
+`make docker-build docker-push IMG=quay.io/pulp/pulp-operator:latest`
 
 ## Usage
 
-Review `deploy/crds/pulpproject_v1alpha1_pulp_cr.default.yaml`. If the variables' default values are not correct for your environment, copy to `deploy/crds/pulpproject_v1alpha1_pulp_cr.yaml`, uncomment "spec:", and uncomment and adjust the variables.
+Review `config/samples/pulp_v1alpha1_pulp.default.yaml`. If the variables' default values are not correct for your environment, copy to `config/samples/pulp_v1alpha1_pulp.yaml`, uncomment "spec:", and uncomment and adjust the variables.
 
 `./up.sh`
 

@@ -1,0 +1,73 @@
+apiVersion: pulp.pulpproject.org/v1alpha1
+kind: Pulp
+metadata:
+  name: example-pulp
+#spec:
+  # The registry to grab the pulp image from.
+# registry: quay.io
+  # The project (organization or user) to grab the pulp image from
+# project: pulp
+  # The image name (repo name) for the pulp image.
+# image: pulp
+  # The image tag for the pulp image. Quotes needed for '.' on certain K8s.
+# tag: "stable"
+  # Pulp settings.
+# pulp_settings:
+#    databases:
+#      default:
+#        HOST: postgres
+#        ENGINE: django.db.backends.postgresql_psycopg2
+#        NAME: pulp
+#        USER: pulp
+#        PASSWORD: pulp
+#        PORT: 5432,
+#        CONN_MAX_AGE: 0
+#    debug: "True"
+#    redis_host: redis
+#    redis_port:  6379
+#    redis_password: ''
+#    content_origin: # pulp-operator will query the 1st address of the 1st k8s
+#                      node. This suffices for most single node deployments.
+#                      If on a cluster, you should set this manually until
+#                      ingress(es) are implemented. Example:
+#                      http://myserver.fqdn:24816
+  # PostrgreSQL container settings for user accounts
+# database_connection:
+#   username: pulp
+#   password: pulp
+    # Password for db admin user 'postgres'.
+#   admin_password:
+  # Configuration for the persistentVolumeClaim for /var/lib/pulp
+# pulp_file_storage:
+     # If your K8s cluster is only 1 node, and its StorageClass /
+     # provisioner does not support ReadWriteMany, then you must change
+     # this to "ReadWriteOnce".
+     #
+     # If your K8s cluster is multiple nodes, and does not support
+     # ReadWriteMany, then pulp-operator is currently incompatible.
+     #
+     # Reference on which support ReadWriteMany:
+     # https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes
+#      access_mode: "ReadWriteMany"
+
+     # How much space do you want to give Pulp for storing content under
+     # /var/lib/pulp ?
+     # https://docs.pulpproject.org/en/3.0/nightly/installation/configuration.html#media-root
+
+     # For reference, epel7 x86_64 is currently (2019-07) 30G. So 100G
+     # should be sufficient for a test deployment with only the RPM
+     # content plugin.
+#    size: "100Gi"
+  # Values below are set in roles rather than in playbook.yaml
+# pulp_api:
+#   replicas: 1
+#   log_level: INFO
+# pulp_content:
+#   replicas: 2
+#   log_level: INFO
+# pulp_worker:
+#   replicas: 2
+# pulp_resource_manager:
+    # Waiting on this to be implemented:
+    # https://pulp.plan.io/issues/3707
+#   replicas: 1

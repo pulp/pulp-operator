@@ -1,5 +1,7 @@
 ---
+# Use the 'create api' subcommand to add watches to this file.
 - version: v1alpha1
-  group: pulpproject.org
+  group: pulp.pulpproject.org
   kind: Pulp
-  playbook: playbook.yml
+  playbook: playbooks/pulp.yml
+# +kubebuilder:scaffold:watch

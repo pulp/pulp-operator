@@ -16,24 +16,22 @@ else
     echo "$0: ERROR 1: Cannot find kubectl"
 fi
 
+make install
+make deploy
+$KUBECTL config set-context --current --namespace=pulp-operator-system
+$KUBECTL get deployment
+
 # TODO: Check if these should only ever be run once; or require
 # special logic to update
 # The Custom Resource (and any ConfigMaps) do not.
-$KUBECTL apply -f deploy/crds/pulpproject_v1alpha1_pulp_crd.yaml
-if [[ -e deploy/crds/pulpproject_v1alpha1_pulp_cr.yaml ]]; then
-  CUSTOM_RESOURCE=pulpproject_v1alpha1_pulp_cr.yaml
+if [[ -e config/samples/pulp_v1alpha1_pulp.yaml ]]; then
+  CUSTOM_RESOURCE=pulp_v1alpha1_pulp.yaml
 elif [[ "$TRAVIS" == "true" ]]; then
-  CUSTOM_RESOURCE=pulpproject_v1alpha1_pulp_cr.travis.yaml
+  CUSTOM_RESOURCE=pulp_v1alpha1_pulp.travis.yaml
 elif [[ "$(hostname)" == "pulp-demo"* ]]; then
-  CUSTOM_RESOURCE=pulpproject_v1alpha1_pulp_cr.pulp-demo.yaml
+  CUSTOM_RESOURCE=pulp_v1alpha1_pulp.pulp-demo.yaml
 else
-  CUSTOM_RESOURCE=pulpproject_v1alpha1_pulp_cr.default.yaml
+  CUSTOM_RESOURCE=pulp_v1alpha1_pulp.default.yaml
 fi
-echo "Will deploy config Custom Resource deploy/crds/$CUSTOM_RESOURCE"
-$KUBECTL apply -f deploy/crds/$CUSTOM_RESOURCE
-$KUBECTL apply -f deploy/service_account.yaml
-$KUBECTL apply -f deploy/role.yaml
-$KUBECTL apply -f deploy/cluster_role.yaml
-$KUBECTL apply -f deploy/role_binding.yaml
-$KUBECTL apply -f deploy/cluster_role_binding.yaml
-$KUBECTL apply -f deploy/operator.yaml
+echo "Will deploy config Custom Resource config/samples/$CUSTOM_RESOURCE"
+$KUBECTL apply -f config/samples/$CUSTOM_RESOURCE
