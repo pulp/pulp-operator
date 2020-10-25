@@ -40,7 +40,7 @@ jobs:
     - name: molecule
       dist: xenial
       install:
-        - pip3 install docker molecule ansible-lint yamllint flake8 openshift jmespath
+        - pip3 install docker molecule molecule-docker ansible-lint yamllint flake8 openshift jmespath
       before_script: skip
       script: .travis/molecule.sh
     - stage: deploy
