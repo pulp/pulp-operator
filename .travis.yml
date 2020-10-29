@@ -18,7 +18,7 @@ install:
   # It can mess up ownership of the python cache dir, so run it after the
   # non-sudo pip command.
   - .travis/k3s-install.sh
-  - export IMG="quay.io/fabricio_aguiar/pulp-operator:latest"
+  - export IMG="quay.io/pulp/pulp-operator:latest"
 jobs:
   include:
     - name: test-all-components
