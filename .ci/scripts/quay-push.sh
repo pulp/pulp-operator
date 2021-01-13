@@ -17,6 +17,8 @@ QUAY_IMAGE_TAG=${QUAY_IMAGE_TAG:-latest}
 
 QUAY_BOT_USERNAME=${QUAY_BOT_USERNAME:-pulp+github}
 
+RUNNER=${PODMAN_OR_DOCKER:-podman}
+
 # Reference: https://adriankoshka.github.io/blog/posts/travis-and-quay/
-echo "$QUAY_BOT_PASSWORD" | podman login -u "$QUAY_BOT_USERNAME" --password-stdin quay.io
-podman push "quay.io/$QUAY_PROJECT_NAME/$QUAY_REPO_NAME:$QUAY_IMAGE_TAG"
+echo "$QUAY_BOT_PASSWORD" | $RUNNER login -u "$QUAY_BOT_USERNAME" --password-stdin quay.io
+$RUNNER push "quay.io/$QUAY_PROJECT_NAME/$QUAY_REPO_NAME:$QUAY_IMAGE_TAG"

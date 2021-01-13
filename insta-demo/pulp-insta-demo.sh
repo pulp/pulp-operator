@@ -58,8 +58,10 @@ fi
 if command -v git > /dev/null && [[ "$(basename `git rev-parse --show-toplevel`)" == "pulp-operator" ]]; then
   set -x
   # Travis does not checkout a branch, just a specific commit.
-  if [ -n "${GITHUB_REF}" ]; then
+  if [ -n "${GITHUB_HEAD_REF}" ]; then
     BRANCH=${GITHUB_HEAD_REF##*/}
+  elif [ -n "${GITHUB_REF}" ]; then
+    BRANCH=${GITHUB_REF##*/}
   else
     BRANCH=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} | cut -f 2- -d /)
   fi
