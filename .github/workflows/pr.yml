@@ -1,23 +1,25 @@
-name: Pulp CI
+name: Pulp PR
 on:
-  push:
+  pull_request:
     branches:
       - '*'
-    tags:
-      - '*'
-  schedule:
-    # * is a special character in YAML so you have to quote this string
-    # runs at 3:00 UTC daily
-    - cron: '00 3 * * *'
 jobs:
   insta:
     runs-on: ubuntu-latest
     steps:
+      - name: PR head repo
+        id: head_repo_name
+        run: |
+          HEAD_REPO_NAME=$(jq -r '.pull_request.head.repo.full_name' "$GITHUB_EVENT_PATH")
+          echo "PR head repo: $HEAD_REPO_NAME"
+          echo "::set-output name=repo::$HEAD_REPO_NAME"
       - uses: actions/checkout@v2
         with:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
+          repository: ${{ steps.head_repo_name.outputs.repo }}
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Set up Python 3.7
         uses: actions/setup-python@v1
         with:
@@ -33,12 +35,31 @@ jobs:
           echo "IMG=quay.io/pulp/pulp-operator:latest" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
         shell: bash
+      - name: Check commit message
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
+        run: |
+          echo ::group::REQUESTS
+          pip install requests
+          echo ::endgroup::
+          for sha in $(curl $GITHUB_CONTEXT | jq '.[].sha' | sed 's/"//g')
+          do
+            python .ci/scripts/validate_commit_message.py $sha
+            VALUE=$?
+            if [ "$VALUE" -gt 0 ]; then
+              exit $VALUE
+            fi
+          done
+        shell: bash
       - name: Build Operator
         run: |
           sudo make docker-build IMG=quay.io/pulp/pulp-operator:latest
           sudo docker images
         shell: bash
       - name: Test insta-demo
+        env:
+          FORKED_REPOSITORY: ${{ steps.head_repo_name.outputs.repo }}
         run: sudo -E insta-demo/pulp-insta-demo.sh
         shell: bash
       - name: After failure
@@ -73,6 +94,23 @@ jobs:
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
           echo "IMG=quay.io/pulp/pulp-operator:latest" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
+        shell: bash
+      - name: Check commit message
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
+        run: |
+          echo ::group::REQUESTS
+          pip install requests
+          echo ::endgroup::
+          for sha in $(curl $GITHUB_CONTEXT | jq '.[].sha' | sed 's/"//g')
+          do
+            python .ci/scripts/validate_commit_message.py $sha
+            VALUE=$?
+            if [ "$VALUE" -gt 0 ]; then
+              exit $VALUE
+            fi
+          done
         shell: bash
       - name: Install k3s and Operator
         run: |
@@ -129,6 +167,23 @@ jobs:
           echo "IMG=quay.io/pulp/pulp-operator:latest" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
         shell: bash
+      - name: Check commit message
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
+        run: |
+          echo ::group::REQUESTS
+          pip install requests
+          echo ::endgroup::
+          for sha in $(curl $GITHUB_CONTEXT | jq '.[].sha' | sed 's/"//g')
+          do
+            python .ci/scripts/validate_commit_message.py $sha
+            VALUE=$?
+            if [ "$VALUE" -gt 0 ]; then
+              exit $VALUE
+            fi
+          done
+        shell: bash
       - name: Install
         run: pip3 install docker molecule molecule-docker ansible-lint yamllint flake8 openshift jmespath
       - name: Molecule
@@ -137,58 +192,3 @@ jobs:
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: [insta, components, molecule]
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          # by default, it uses a depth of 1
-          # this fetches all history so that we can read each commit
-          fetch-depth: 0
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v1
-        with:
-          python-version: '3.7'
-      - name: Install httpie
-        run: |
-          echo ::group::HTTPIE
-          sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
-          echo ::endgroup::
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo "IMG=quay.io/pulp/pulp-operator:latest" >> $GITHUB_ENV
-          echo "CI_TEST=true" >> $GITHUB_ENV
-        shell: bash
-      - name: Install k3s and Operator
-        run: |
-          sudo -E .ci/scripts/k3s-install.sh
-        shell: bash
-      - name: Build Operator
-        run: |
-          sudo make docker-build IMG=quay.io/pulp/pulp-operator:latest
-          sudo docker images
-        shell: bash
-      - name: Setting secrets
-        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
-        env:
-          SECRETS_CONTEXT: ${{ toJson(secrets) }}
-      - name: Deploy
-        run: |
-          git clone --depth=1 https://github.com/pulp/pulp_file.git
-          sudo -E .ci/scripts/deploy.sh
-        shell: bash
-        env:
-          PY_COLORS: '1'
-          ANSIBLE_FORCE_COLOR: '1'
-      - name: After failure
-        if: failure()
-        run: |
-          sudo docker images
-          sudo kubectl logs -l name=controller-manager -c manager --tail=10000
-          sudo kubectl logs -l app=pulp-api --tail=10000
-          sudo kubectl logs -l app=pulp-content --tail=10000
-          sudo kubectl logs -l app=pulp-worker --tail=10000
-          sudo kubectl logs -l app=pulp-resource-manager --tail=10000
-          http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
