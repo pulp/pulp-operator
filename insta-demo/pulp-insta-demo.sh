@@ -57,16 +57,18 @@ fi
 #    no good & easy-to-implement option.
 if command -v git > /dev/null && [[ "$(basename `git rev-parse --show-toplevel`)" == "pulp-operator" ]]; then
   set -x
-  REMOTE_NAME=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} | cut -f 1 -d /)
   # Travis does not checkout a branch, just a specific commit.
   if [ -n "${GITHUB_REF}" ]; then
-    BRANCH=${GITHUB_REF##*/}
+    BRANCH=${GITHUB_HEAD_REF##*/}
   else
     BRANCH=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} | cut -f 2- -d /)
   fi
-  if [ -n "${GITHUB_REPOSITORY}" ]; then
+  if [ -n "${FORKED_REPOSITORY}" ]; then
+    USER_REPO=$FORKED_REPOSITORY
+  elif [ -n "${GITHUB_REPOSITORY}" ]; then
     USER_REPO=$GITHUB_REPOSITORY
   else
+    REMOTE_NAME=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} | cut -f 1 -d /)
     REMOTE=$(git remote get-url $REMOTE_NAME)
     # Processes examples of $REMOTE_NAME:
     # https://github.com/USERNAME/RE-PO_SITORY.git
