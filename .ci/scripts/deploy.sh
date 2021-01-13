@@ -16,7 +16,7 @@ sudo -E ./up.sh
 podman images
 
 echo "Deploy pulp-operator"
-sudo -E $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
+sudo -E PODMAN_OR_DOCKER=docker $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
 
 echo "Deploy pulp latest"
 sudo -E QUAY_REPO_NAME=pulp $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
