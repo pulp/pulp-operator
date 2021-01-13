@@ -7,8 +7,9 @@ spec:
   pulp_file_storage:
     # k3s local-path requires this
     access_mode: "ReadWriteOnce"
-    # We have a little over 40GB free on Travis VMs/instances
-    size: "40Gi"
+    # We have a little over 10GB free on GHA VMs/instances
+    # https://docs.github.com/en/free-pro-team@latest/actions/reference/specifications-for-github-hosted-runners
+    size: "10Gi"
   database_connection:
     username: pulp
     password: pulp

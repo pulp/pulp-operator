@@ -16,9 +16,15 @@ else
     echo "$0: ERROR 1: Cannot find kubectl"
 fi
 
+echo "Make Install"
 make install
-make deploy
+echo "Make Deploy"
+make deploy IMG=quay.io/pulp/pulp-operator:latest
+echo "Namespaces"
+$KUBECTL get namespace
+echo "Set context"
 $KUBECTL config set-context --current --namespace=pulp-operator-system
+echo "Get Deployment"
 $KUBECTL get deployment
 
 # TODO: Check if these should only ever be run once; or require
@@ -26,8 +32,8 @@ $KUBECTL get deployment
 # The Custom Resource (and any ConfigMaps) do not.
 if [[ -e config/samples/pulp_v1alpha1_pulp.yaml ]]; then
   CUSTOM_RESOURCE=pulp_v1alpha1_pulp.yaml
-elif [[ "$TRAVIS" == "true" ]]; then
-  CUSTOM_RESOURCE=pulp_v1alpha1_pulp.travis.yaml
+elif [[ "$CI_TEST" == "true" ]]; then
+  CUSTOM_RESOURCE=pulp_v1alpha1_pulp.ci.yaml
 elif [[ "$(hostname)" == "pulp-demo"* ]]; then
   CUSTOM_RESOURCE=pulp_v1alpha1_pulp.pulp-demo.yaml
 else

@@ -11,7 +11,7 @@
       reason: Successful
       status: "True"
   vars:
-    cr_file: 'pulp_v1alpha1_pulp.travis.yaml'
+    cr_file: 'pulp_v1alpha1_pulp.ci.yaml'
 
 - name: Add assertions here
   assert:
