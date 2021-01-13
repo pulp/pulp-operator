@@ -10,6 +10,7 @@ rules:
   - apiGroups:
       - ""
     resources:
+      - secrets
       - pods
       - pods/exec
       - pods/log
@@ -19,7 +20,6 @@ rules:
       - persistentvolumeclaims
       - events
       - configmaps
-      - secrets
     verbs:
       - create
       - delete
@@ -58,6 +58,7 @@ rules:
     resources:
       - pulps
       - pulps/status
+      - pulps/finalizers
     verbs:
       - create
       - delete
