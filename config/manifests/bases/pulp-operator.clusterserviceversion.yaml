@@ -1,0 +1,43 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: pulp-operator.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions: {}
+  description: Kubernetes Operator for Pulp 3
+  displayName: Pulp
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - pulp
+  - pulpcore
+  - content
+  - repositories
+  - lifecycle
+  links:
+  - name: Pulp Operator
+    url: https://pulp-operator.domain
+  maturity: alpha
+  provider:
+    name: Pulp Team
+    url: https://pulpproject.org/
+  version: 0.0.0
