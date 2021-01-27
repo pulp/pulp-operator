@@ -1,0 +1,10 @@
+images:
+  - galaxy_master:
+      image_name: galaxy
+      tag: latest
+      pulpcore: git+https://github.com/pulp/pulpcore.git@3.8#egg=pulpcore
+      plugins:
+        - "git+https://github.com/ansible/galaxy_ng.git"
+        - "git+https://github.com/pulp/pulp_container.git@2.1"
+registry: quay.io
+project: pulp
