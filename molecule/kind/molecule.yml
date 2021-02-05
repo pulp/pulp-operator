@@ -9,15 +9,18 @@ lint: |
   set -e
   yamllint -d "{extends: relaxed, rules: {line-length: {max: 120}}}" .
 platforms:
-- name: cluster
-  groups:
-  - k8s
+  - name: cluster
+    groups:
+      - k8s
 provisioner:
   name: ansible
   config_options:
     defaults:
       stdout_callback: debug
       callback_whitelist: profile_tasks
+  playbooks:
+    prepare: ../default/prepare.yml
+    verify: ../default/verify.yml
   lint: |
     set -e
     ansible-lint
@@ -28,12 +31,16 @@ provisioner:
     host_vars:
       localhost:
         ansible_python_interpreter: '{{ ansible_playbook_python }}'
+        build_dir: ${MOLECULE_PROJECT_DIRECTORY}/build
         deploy_dir: ${MOLECULE_PROJECT_DIRECTORY}/deploy
-        template_dir: ${MOLECULE_PROJECT_DIRECTORY}/molecule/templates
-        operator_image: ${OPERATOR_IMAGE:-"quay.io/pulp/pulp-operator:latest"}
-        operator_pull_policy: ${OPERATOR_PULL_POLICY:-"Always"}
+        crds_dir: ${MOLECULE_PROJECT_DIRECTORY}/deploy/crds
+        project_dir: ${MOLECULE_PROJECT_DIRECTORY}
+        operator_image: testing-operator
+        operator_pull_policy: "Never"
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
   env:
-    K8S_AUTH_KUBECONFIG: ${KUBECONFIG:-"~/.kube/config"}
+    K8S_AUTH_KUBECONFIG: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
+    KUBECONFIG: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
 verifier:
   name: ansible
   lint: |

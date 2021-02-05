@@ -1,0 +1,14 @@
+---
+- name: Set resources to {{ state }}
+  k8s:
+    definition: "{{ lookup('template', '/'.join([deploy_dir, item])) }}"
+    namespace: '{{ namespace }}'
+    state: '{{ state }}'
+    wait: yes
+  with_items:
+    - service_account.yaml
+    - role.yaml
+    - cluster_role.yaml
+    - role_binding.yaml
+    - cluster_role_binding.yaml
+    - operator.yaml

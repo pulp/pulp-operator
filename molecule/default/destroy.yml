@@ -3,31 +3,20 @@
   hosts: localhost
   connection: local
   gather_facts: false
-  no_log: "{{ molecule_no_log }}"
   collections:
     - community.kubernetes
 
   tasks:
-    - name: Delete namespace
+    - import_tasks: resources.yml
+      vars:
+        state: absent
+
+    - name: Destroy Namespace
       k8s:
         api_version: v1
         kind: Namespace
         name: '{{ namespace }}'
         state: absent
-        wait: yes
-
-    - name: Delete RBAC resources
-      k8s:
-        definition: "{{ lookup('template', '/'.join([deploy_dir, item])) }}"
-        namespace: '{{ namespace }}'
-        state: absent
-        wait: yes
-      with_items:
-        - service_account.yaml
-        - role.yaml
-        - cluster_role.yaml
-        - role_binding.yaml
-        - cluster_role_binding.yaml
 
     - name: Delete Custom Resource Definition
       k8s:

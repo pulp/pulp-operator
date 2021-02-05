@@ -1,2 +1,22 @@
 ---
-- import_playbook: '{{ playbook_dir }}/../../playbook.yml'
+- name: Converge
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  collections:
+    - community.kubernetes
+
+  tasks:
+    - name: Create Custom Resource Definition
+      k8s:
+        definition: "{{ lookup('file', '/'.join([deploy_dir, 'crds/pulpproject_v1alpha1_pulp_crd.yaml'])) }}"
+
+    - name: Create Namespace
+      k8s:
+        api_version: v1
+        kind: Namespace
+        name: '{{ namespace }}'
+
+    - import_tasks: resources.yml
+      vars:
+        state: present

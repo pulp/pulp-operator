@@ -4,30 +4,20 @@ dependency:
   options:
     requirements-file: requirements.yml
 driver:
-  name: docker
+  name: delegated
 lint: |
   set -e
   yamllint -d "{extends: relaxed, rules: {line-length: {max: 120}}}" .
 platforms:
-- name: kind-default
-  groups:
-  - k8s
-  image: bsycorp/kind:latest-${KUBE_VERSION:-1.18}
-  privileged: True
-  override_command: no
-  exposed_ports:
-    - 8443/tcp
-    - 10080/tcp
-  published_ports:
-    - 0.0.0.0:${TEST_CLUSTER_PORT:-9443}:8443/tcp
-  pre_build_image: yes
+  - name: cluster
+    groups:
+      - k8s
 provisioner:
   name: ansible
   config_options:
     defaults:
       stdout_callback: debug
       callback_whitelist: profile_tasks
-  log: True
   lint: |
     set -e
     ansible-lint
@@ -35,15 +25,16 @@ provisioner:
     group_vars:
       all:
         namespace: ${TEST_OPERATOR_NAMESPACE:-osdk-test}
-        kubeconfig_file: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
     host_vars:
       localhost:
         ansible_python_interpreter: '{{ ansible_playbook_python }}'
+        build_dir: ${MOLECULE_PROJECT_DIRECTORY}/build
+        deploy_dir: ${MOLECULE_PROJECT_DIRECTORY}/deploy
+        crds_dir: ${MOLECULE_PROJECT_DIRECTORY}/deploy/crds
+        operator_image: ${OPERATOR_IMAGE:-"quay.io/pulp/pulp-operator:latest"}
+        operator_pull_policy: ${OPERATOR_PULL_POLICY:-"Always"}
   env:
-    K8S_AUTH_KUBECONFIG: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
-    KUBECONFIG: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
-    ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/roles
-    KIND_PORT: '${TEST_CLUSTER_PORT:-9443}'
+    K8S_AUTH_KUBECONFIG: ${KUBECONFIG:-"~/.kube/config"}
 verifier:
   name: ansible
   lint: |
