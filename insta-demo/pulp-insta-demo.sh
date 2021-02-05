@@ -57,20 +57,20 @@ fi
 #    no good & easy-to-implement option.
 if command -v git > /dev/null && [[ "$(basename `git rev-parse --show-toplevel`)" == "pulp-operator" ]]; then
   set -x
-  REMOTE_NAME=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} | cut -f 1 -d /)
   # Travis does not checkout a branch, just a specific commit.
-  if [ -n "$TRAVIS_PULL_REQUEST_BRANCH" ]; then
-    BRANCH=$TRAVIS_PULL_REQUEST_BRANCH
-  elif [ -n $TRAVIS_BRANCH ]; then
-    BRANCH=$TRAVIS_BRANCH
+  if [ -n "${GITHUB_HEAD_REF}" ]; then
+    BRANCH=${GITHUB_HEAD_REF##*/}
+  elif [ -n "${GITHUB_REF}" ]; then
+    BRANCH=${GITHUB_REF##*/}
   else
     BRANCH=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} | cut -f 2- -d /)
   fi
-  if [ -n "$TRAVIS_PULL_REQUEST_SLUG" ]; then
-    USER_REPO=$TRAVIS_PULL_REQUEST_SLUG
-  elif [ -n "$TRAVIS_REPO_SLUG" ]; then
-    USER_REPO=$TRAVIS_REPO_SLUG
+  if [ -n "${FORKED_REPOSITORY}" ]; then
+    USER_REPO=$FORKED_REPOSITORY
+  elif [ -n "${GITHUB_REPOSITORY}" ]; then
+    USER_REPO=$GITHUB_REPOSITORY
   else
+    REMOTE_NAME=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} | cut -f 1 -d /)
     REMOTE=$(git remote get-url $REMOTE_NAME)
     # Processes examples of $REMOTE_NAME:
     # https://github.com/USERNAME/RE-PO_SITORY.git
@@ -93,9 +93,13 @@ else
   cd pulp-operator-$BRANCH || failure_message
 fi
 
-sudo .travis/k3s-install.sh --insta-demo || failure_message
-sudo TRAVIS=true ./up.sh || failure_message
-.travis/pulp-operator-check-and-wait.sh || test $? = 100 || failure_message
+echo "=================================== K3S Install ==================================="
+sudo -E .ci/scripts/k3s-install.sh --insta-demo || failure_message
+echo "=================================== K3S Up ==================================="
+sudo -E ./up.sh || failure_message
+echo "=================================== Check and wait ==================================="
+echo ""
+.ci/scripts/pulp-operator-check-and-wait.sh || test $? = 100 || failure_message
 set +x
 echo "Pulp has been installed in insta-demo mode."
 echo ""

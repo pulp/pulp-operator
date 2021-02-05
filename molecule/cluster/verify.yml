@@ -8,7 +8,7 @@
     - community.kubernetes
 
   vars:
-    custom_resource: "{{ lookup('template', '/'.join([deploy_dir, 'crds/pulpproject_v1alpha1_pulp_cr.travis.yaml'])) | from_yaml }}"
+    custom_resource: "{{ lookup('template', '/'.join([deploy_dir, 'crds/pulpproject_v1alpha1_pulp_cr.ci.yaml'])) | from_yaml }}"
 
   tasks:
     - name: Create the Pulp Custom Resource

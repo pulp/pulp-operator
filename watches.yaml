@@ -1,5 +1,5 @@
 ---
 - version: v1alpha1
-  group: pulpproject.org
+  group: pulp.pulpproject.org
   kind: Pulp
   playbook: playbook.yml

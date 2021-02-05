@@ -1,4 +1,4 @@
-apiVersion: pulpproject.org/v1alpha1
+apiVersion: pulp.pulpproject.org/v1alpha1
 kind: Pulp
 metadata:
   name: example-pulp

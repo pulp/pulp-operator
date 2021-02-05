@@ -67,7 +67,7 @@ rules:
   verbs:
   - get
 - apiGroups:
-  - pulpproject.org
+  - pulp.pulpproject.org
   resources:
   - '*'
   verbs:

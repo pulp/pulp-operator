@@ -1,3 +1,5 @@
+![Pulp CI](https://github.com/pulp/pulp-operator/workflows/Pulp%20CI/badge.svg)
+
 # Pulp Operator
 
 A Kubernetes Operator for Pulp 3, under active development (not production ready yet) by the Pulp team. The goal is to provide a scalable and robust cluster for Pulp 3. [Pre-built images are hosted on quay.io](https://quay.io/repository/pulp/pulp-operator).

@@ -3,7 +3,7 @@
     secret_key: "{{ lookup('password', '/dev/null length=50 chars=ascii_letters') }}"
 
 - name: pulp-file-storage persistent volume claim
-  k8s:
+  community.kubernetes.k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.pvc.yaml.j2') | from_yaml }}"
   with_items:
@@ -35,21 +35,21 @@
     pulp_combined_settings: "{{ pulp_default_settings|combine(raw_pulp_settings, recursive=True) if pulp_settings is defined and pulp_settings is not none else pulp_default_settings }}"
 
 - name: pulp-server config-map
-  k8s:
+  community.kubernetes.k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.config-map.yaml.j2') | from_yaml }}"
   with_items:
     - pulp-server
 
 - name: pulp-api service
-  k8s:
+  community.kubernetes.k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.service.yaml.j2') | from_yaml }}"
   with_items:
     - pulp-api
 
 - name: pulp-api deployment
-  k8s:
+  community.kubernetes.k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.deployment.yaml.j2') | from_yaml }}"
   with_items:
