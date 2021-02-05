@@ -1,21 +1,21 @@
 ---
 - name: redis persistent volume claim
   k8s:
-    state: "{{ deployment_state }}"
+    apply: true
     definition: "{{ lookup('template', 'templates/' + item + '.pvc.yaml.j2') | from_yaml }}"
   with_items:
     - redis
 
 - name: redis service
   k8s:
-    state: "{{ deployment_state }}"
+    apply: true
     definition: "{{ lookup('template', 'templates/' + item + '.service.yaml.j2') | from_yaml }}"
   with_items:
     - redis
 
 - name: redis deployment
   k8s:
-    state: "{{ deployment_state }}"
+    apply: true
     definition: "{{ lookup('template', 'templates/' + item + '.deployment.yaml.j2') | from_yaml }}"
   with_items:
     - redis

@@ -1,7 +1,7 @@
 ---
 - name: pulp routes
   k8s:
-    state: "{{ deployment_state }}"
+    apply: true
     definition: "{{ lookup('template', 'templates/' + item + '.route.yaml.j2') | from_yaml }}"
   with_items:
     - pulp

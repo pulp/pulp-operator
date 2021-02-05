@@ -1,7 +1,7 @@
 ---
 - name: pulp-worker deployment
   k8s:
-    state: "{{ deployment_state }}"
+    apply: true
     definition: "{{ lookup('template', 'templates/' + item + '.deployment.yaml.j2') | from_yaml }}"
   with_items:
     - pulp-worker
