@@ -47,9 +47,10 @@ jobs:
       name: push-to-quay
       # Push image to quay. That is our upstream "deployment".
       script:
-        - sudo operator-sdk build quay.io/pulp/pulp-operator:latest
+        - sudo source .travis/quay-image-tag.sh
+        - sudo operator-sdk build quay.io/pulp/pulp-operator:$QUAY_IMAGE_TAG
         - sudo .travis/deploy.sh
-      if: type != pull_request
+      if: type = pull_request OR branch = main
 after_failure:
   - http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
   - sudo docker images
