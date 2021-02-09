@@ -185,7 +185,7 @@ jobs:
           echo "CI_TEST=true" >> $GITHUB_ENV
         shell: bash
       - name: Install
-        run: pip3 install docker molecule molecule-docker ansible-lint yamllint flake8 openshift jmespath
+        run: pip3 install molecule[docker,lint] openshift jmespath
       - name: Molecule
         run: .ci/scripts/molecule.sh
         shell: bash
