@@ -50,3 +50,35 @@ Get external ports:
 Get external IP addresses:
 
 `kubectl get pods -o wide`
+
+
+# How to File an Issue
+
+To file a new issue set the Category to `Operator` when filing [here](https://pulp.plan.io/projects/pulp/issues/new).
+
+See [redmine fields](https://docs.pulpproject.org/bugs-features.html#redmine-fields) for more detailed
+descriptions of all the fields and how they are used.
+
+| Field | Instructions |
+| ----- | ----------- |
+| Tracker | For a bug, select `Issue`, for a feature-request, choose `Story` |
+| Subject | Strive to be specific and concise. |
+| Description | This is the most important part! Please see [issue description](https://docs.pulpproject.org/bugs-features.html#issue-description). |
+| Category | Operator |
+| Version | The version of operator that you discovered the issue. |
+| OS | The Ansible managed OS. |
+
+
+# Get Help
+
+Documentation: https://pulp-operator.readthedocs.io/en/latest/
+
+Issue Tracker: https://pulp.plan.io
+
+User mailing list: https://www.redhat.com/mailman/listinfo/pulp-list
+
+Developer mailing list: https://www.redhat.com/mailman/listinfo/pulp-dev
+
+User questions welcome in #pulp on FreeNode IRC server.
+
+Developer discussion in #pulp-dev on FreeNode IRC server
