@@ -231,8 +231,9 @@ jobs:
           sudo wget https://github.com/operator-framework/operator-sdk/releases/download/$CURRENT_VERSION/operator-sdk-$CURRENT_VERSION-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
           sudo chmod +x /usr/local/bin/operator-sdk
           echo ::endgroup::
+          sudo operator-sdk build quay.io/pulp/pulp-operator:latest
           export QUAY_IMAGE_TAG="pr_${{ github.event.number }}"
-          sudo operator-sdk build quay.io/pulp/pulp-operator:$QUAY_IMAGE_TAG
+          sudo docker tag quay.io/pulp/pulp-operator:latest quay.io/pulp/pulp-operator:$QUAY_IMAGE_TAG
           sudo docker images
         shell: bash
       - name: Setting secrets
