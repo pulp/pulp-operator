@@ -1,0 +1,1 @@
+Add security context runAsUser and fsGroup to deployments interacting with pulp-file-storage PVC

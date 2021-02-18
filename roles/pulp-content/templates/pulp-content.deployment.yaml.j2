@@ -16,6 +16,9 @@ spec:
       labels:
         app: pulp-content
     spec:
+      securityContext:
+        runAsUser: 0
+        fsGroup: 0
       #serviceAccountName: "{{ project_name }}-anyuid"
       volumes:
         - name: pulp-server
