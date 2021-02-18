@@ -16,6 +16,9 @@ spec:
       labels:
         app: postgres
     spec:
+      securityContext:
+        runAsUser: 26
+        fsGroup: 26
       containers:
         - name: postgres
           env:
