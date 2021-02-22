@@ -1,0 +1,3 @@
+---
+pulp_web:
+  replicas: 1

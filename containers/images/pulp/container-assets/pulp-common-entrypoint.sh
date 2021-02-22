@@ -7,7 +7,7 @@
 # can change our scripts' locations in the future, and call special logic in this
 # script based solely on theo command name.
 
-if [[ "$@" = "pulp-content" || "$@" = "pulp-api" || "$@" = "pulp-worker" || "$@" = "pulp-resource-manager" ]]; then
+if [[ "$@" = "pulp-content" || "$@" = "pulp-api" || "$@" = "pulp-worker" || "$@" = "pulp-resource-manager"  || "$@" = "nginx" ]]; then
         exec "/usr/bin/$@"
 else
         exec "$@"

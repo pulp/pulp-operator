@@ -8,12 +8,20 @@
 # all-n-one "pulp" container with several plugins.
 
 FIXES=false
+KUBE="k3s"
+KUBE_FLAG=""
+KUBE_CLEANUP="$ sudo /usr/local/bin/k3s-uninstall.sh"
 if [ "$1" = "--help" ] || [ "$1" == "-h" ]; then
   echo "Usage $0 [ -f | --fixes ]"
   exit 1
 elif
   [ "$1" = "--fixes" ] || [ "$1" = "-f" ]; then
   FIXES=true
+elif
+  [ "$1" = "--minikube" ] || [ "$1" = "-m" ]; then
+  KUBE="minikube"
+  KUBE_FLAG="-m"
+  KUBE_CLEANUP="minikube delete --all"
 fi
 
 failure_message() {
@@ -22,7 +30,7 @@ failure_message() {
   echo ""
   echo "You can either try to fix the errors and re-run it,"
   echo "or uninstall by running:"
-  echo "$ sudo /usr/local/bin/k3s-uninstall.sh"
+  echo "$KUBE_CLEANUP"
   exit 1
 }
 
@@ -79,7 +87,7 @@ if command -v git > /dev/null && [[ "$(basename `git rev-parse --show-toplevel`)
   fi
 else
   USER_REPO="pulp/pulp-operator"
-  BRANCH="master"
+  BRANCH="main"
   set -x
 fi
 URL=https://github.com/$USER_REPO/archive/$BRANCH.tar.gz
@@ -92,16 +100,23 @@ else
   curl -SsL $URL | tar -xz || failure_message
   cd pulp-operator-$BRANCH || failure_message
 fi
-
-echo "=================================== K3S Install ==================================="
-sudo -E .ci/scripts/k3s-install.sh --insta-demo || failure_message
-echo "=================================== K3S Up ==================================="
+if [ "$KUBE" == "k3s" ]; then
+  echo "=================================== K3S Install ==================================="
+  sudo -E .ci/scripts/k3s-install.sh --insta-demo || failure_message
+fi
+if [ "$BRANCH" != "main" ] && [ "$KUBE" == "minikube" ]; then
+  echo "=================================== Build Operator ==================================="
+  eval $(minikube -p minikube docker-env) || failure_message
+  sudo -E operator-sdk build quay.io/pulp/pulp-operator:latest || failure_message
+  sudo -E docker images || failure_message
+fi
+echo "=================================== Operator Up ==================================="
 sudo -E ./up.sh || failure_message
 echo "=================================== Check and wait ==================================="
 echo ""
-.ci/scripts/pulp-operator-check-and-wait.sh || test $? = 100 || failure_message
+.ci/scripts/pulp-operator-check-and-wait.sh $KUBE_FLAG || test $? = 100 || failure_message
 set +x
 echo "Pulp has been installed in insta-demo mode."
 echo ""
 echo "If you wish to uninstall, run:"
-echo "$ sudo /usr/local/bin/k3s-uninstall.sh"
+echo "$KUBE_CLEANUP"

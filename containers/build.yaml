@@ -8,10 +8,10 @@
   tasks:
     - import_tasks: common_tasks.yaml
 
-    - name: Generate per-image Dockerfiles from the Dockerfile template
+    - name: Generate per-image Containerfiles from the Containerfile template
       template:
-        src: images/pulp/Dockerfile.j2
-        dest: "images/pulp/Dockerfile.{{ item.key }}"
+        src: images/pulp/{{ item.value.container_file}}.j2
+        dest: "images/pulp/{{ item.value.container_file}}.{{ item.key }}"
       with_dict: "{{ images }}"
 
     - name: 'Build images'
@@ -23,7 +23,7 @@
       # 1-off-builds and Travis CI purposes (which has no cache across CI runs.)
       # Run build.yaml with -e cache=false if your builds are using outdated
       # layers.
-      command: "{{ container_cli }} build --network host --no-cache={{ not cache | default(true) | bool }} -t {{ item.value.image_name }}:{{ item.value.tag }} -f images/pulp/Dockerfile.{{ item.key }} ../.."
+      command: "{{ container_cli }} build --network host --no-cache={{ not cache | default(true) | bool }} -t {{ item.value.image_name }}:{{ item.value.tag }} -f images/pulp/{{ item.value.container_file}}.{{ item.key }} ../.."
       with_dict: "{{ images }}"
       # Try 3x due to random failures to download RPMs from Fedora. Due to 2 bug
       # so far that are getting fixed, but break builds in the meantime.

@@ -48,6 +48,7 @@ RUN		dnf -y update && \
 RUN pip install rhsm
 
 RUN mkdir -p /etc/pulp
+RUN mkdir -p /var/lib/pulp/media
 
 RUN pip install gunicorn django-storages[boto3]
 {% if s3_test is defined %}

@@ -1,0 +1,16 @@
+FROM {{ registry | default('quay.io') }}/{{ project | default('pulp') }}/{{ item.value.base_image_name | default('pulp') }}:{{ item.value.tag | default('latest') }}
+
+RUN	dnf -y install nginx
+
+RUN mkdir -p /etc/nginx/pulp \
+             /etc/services.d/nginx \
+             /var/lib/pulp/assets
+
+COPY pulp-operator/containers/images/pulp/container-assets/nginx.conf /etc/nginx/nginx.conf
+COPY pulp-operator/containers/images/pulp/container-assets/nginx /usr/bin/nginx
+COPY pulp-operator/containers/images/pulp/container-assets/nginx-check /usr/bin/nginx-check
+
+RUN ln /usr/local/lib/python3.9/site-packages/pulp_ansible/app/webserver_snippets/nginx.conf /etc/nginx/pulp/pulp_ansible.conf
+RUN ln /usr/local/lib/python3.9/site-packages/pulp_container/app/webserver_snippets/nginx.conf /etc/nginx/pulp/pulp_container.conf
+
+EXPOSE 80

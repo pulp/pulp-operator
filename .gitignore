@@ -1,0 +1,12 @@
+
+# Ignore pyenv file
+.python-version
+
+# Ignore pipenv files
+Pipfile
+Pipfile.lock
+
+
+# Ignore generated container files
+containers/images/pulp/Containerfile.core.p*
+containers/images/pulp/Containerfile.web.p*
