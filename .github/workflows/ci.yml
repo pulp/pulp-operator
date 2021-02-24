@@ -64,11 +64,21 @@ jobs:
         if: failure()
         run: |
           sudo docker images
+          echo ::group::OPERATOR_LOGS
           sudo kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
+          echo ::endgroup::
+          echo ::group::PULP_API_LOGS
           sudo kubectl logs -l app=pulp-api --tail=10000
+          echo ::endgroup::
+          echo ::group::PULP_CONTENT_LOGS
           sudo kubectl logs -l app=pulp-content --tail=10000
+          echo ::endgroup::
+          echo ::group::PULP_WORKER_LOGS
           sudo kubectl logs -l app=pulp-worker --tail=10000
+          echo ::endgroup::
+          echo ::group::PULP_RESOURCE_MANAGER_LOGS
           sudo kubectl logs -l app=pulp-resource-manager --tail=10000
+          echo ::endgroup::
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
 
   components:
@@ -133,11 +143,21 @@ jobs:
         if: failure()
         run: |
           sudo docker images
+          echo ::group::OPERATOR_LOGS
           sudo kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
+          echo ::endgroup::
+          echo ::group::PULP_API_LOGS
           sudo kubectl logs -l app=pulp-api --tail=10000
+          echo ::endgroup::
+          echo ::group::PULP_CONTENT_LOGS
           sudo kubectl logs -l app=pulp-content --tail=10000
+          echo ::endgroup::
+          echo ::group::PULP_WORKER_LOGS
           sudo kubectl logs -l app=pulp-worker --tail=10000
+          echo ::endgroup::
+          echo ::group::PULP_RESOURCE_MANAGER_LOGS
           sudo kubectl logs -l app=pulp-resource-manager --tail=10000
+          echo ::endgroup::
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
 
   molecule:
@@ -228,9 +248,19 @@ jobs:
         if: failure()
         run: |
           sudo docker images
+          echo ::group::OPERATOR_LOGS
           sudo kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
+          echo ::endgroup::
+          echo ::group::PULP_API_LOGS
           sudo kubectl logs -l app=pulp-api --tail=10000
+          echo ::endgroup::
+          echo ::group::PULP_CONTENT_LOGS
           sudo kubectl logs -l app=pulp-content --tail=10000
+          echo ::endgroup::
+          echo ::group::PULP_WORKER_LOGS
           sudo kubectl logs -l app=pulp-worker --tail=10000
+          echo ::endgroup::
+          echo ::group::PULP_RESOURCE_MANAGER_LOGS
           sudo kubectl logs -l app=pulp-resource-manager --tail=10000
+          echo ::endgroup::
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
