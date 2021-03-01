@@ -1,11 +1,11 @@
 ---
-- name: Create the pulp.pulpproject.org/v1alpha1.Pulp
+- name: Create the pulp.pulpproject.org/v1beta1.Pulp
   k8s:
     state: present
     namespace: '{{ namespace }}'
     definition: "{{ lookup('template', '/'.join([crds_dir, cr_file])) | from_yaml }}"
   vars:
-    cr_file: 'pulpproject_v1alpha1_pulp_cr.ci.yaml'
+    cr_file: 'pulpproject_v1beta1_pulp_cr.ci.yaml'
 
 - name: Wait 5m for reconciliation to run
   k8s_info:
@@ -19,7 +19,7 @@
   delay: 6
   retries: 50
   vars:
-    custom_resource: "{{ lookup('template', '/'.join([crds_dir, 'pulpproject_v1alpha1_pulp_cr.ci.yaml'])) | from_yaml }}"
+    custom_resource: "{{ lookup('template', '/'.join([crds_dir, 'pulpproject_v1beta1_pulp_cr.ci.yaml'])) | from_yaml }}"
 
 - name: Add assertions here
   assert:
