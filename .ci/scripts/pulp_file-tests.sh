@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
 # coding=utf-8
 
+KUBE="k3s"
+SERVER=$(hostname)
+if [[ "$1" == "--minikube" ]] || [[ "$1" == "-m" ]]; then
+  KUBE="minikube"
+  SERVER="localhost"
+
+fi
+
 # From the pulp-server/pulp-api config-map
-echo "machine $(hostname)
+echo "machine $SERVER
 login admin
 password password\
 " > ~/.netrc
 
-export BASE_ADDR="http://$(hostname):24817"
+export BASE_ADDR="http://$SERVER:24817"
 
 pushd pulp_file/docs/_scripts
 # Let's only do sync tests.

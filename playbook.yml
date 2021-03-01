@@ -28,6 +28,7 @@
     registry: quay.io
     project: pulp
     image: pulp
+    image_web: pulp-web
     tag: stable
     pulp_file_storage:
       access_mode: "ReadWriteMany"
@@ -39,3 +40,4 @@
     - pulp-content
     - pulp-resource-manager
     - pulp-worker
+    - pulp-web

@@ -1,6 +1,13 @@
 #!/bin/bash -e
 #!/usr/bin/env bash
 
+KUBE_FLAG=""
+if
+  [ "$1" = "--minikube" ] || [ "$1" = "-m" ]; then
+  KUBE_FLAG="-m"
+fi
+
+
 echo "Build pulp/pulpcore images"
 cd $GITHUB_WORKSPACE/containers/
 cp $GITHUB_WORKSPACE/.ci/ansible/vars.yaml vars/vars.yaml
@@ -11,7 +18,7 @@ cd $GITHUB_WORKSPACE
 
 echo "Test pulp/pulpcore images"
 sudo -E ./up.sh
-.ci/scripts/pulp-operator-check-and-wait.sh
+.ci/scripts/pulp-operator-check-and-wait.sh $KUBE_FLAG
 .ci/scripts/pulp_file-tests.sh
 
 docker images

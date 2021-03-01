@@ -6,16 +6,25 @@
 # 2. Wait for pulp-operator to be deployed to the point that pulp-api is able to
 # serve requests.
 #
-# Currently only tested with k3s rather than a full K8s implementation.
+# Currently only tested with k3s & minikube rather than a full K8s implementation.
 # Uses generic K8s logic though.
+
+KUBE="k3s"
+if [[ "$1" == "--minikube" ]] || [[ "$1" == "-m" ]]; then
+  KUBE="minikube"
+  echo "Running $KUBE"
+  sleep 30
+fi
 
 storage_debug() {
   echo "VOLUMES:"
   sudo $KUBECTL get pvc
   sudo $KUBECTL get pv
   df -h
-  sudo $KUBECTL -n local-path-storage get pod
-  sudo $KUBECTL -n local-path-storage logs $STORAGE_POD
+  if [ "$KUBE" = "k3s" ]; then
+    sudo $KUBECTL -n local-path-storage get pod
+    sudo $KUBECTL -n local-path-storage logs $STORAGE_POD
+  fi
 }
 
 # CentOS 7 /etc/sudoers does not include /usr/local/bin
@@ -40,17 +49,18 @@ fi
 # Once the services are both up, the pods will be in a Pending state.
 # Before the services are both up, the pods may not exist at all.
 # So check for the services being up 1st.
-for tries in {0..30}; do
+for tries in {0..90}; do
   services=$(sudo $KUBECTL get services)
-  if [[ $(echo "$services" | grep -c NodePort) -eq 2 ]]; then
+  if [[ $(echo "$services" | grep -c NodePort) > 1 ]]; then
     # parse string like this. 30805 is the external port
-    # pulp-api     NodePort    10.43.170.79   <none>        24817:30805/TCP   0s
+    # pulp-api-svc     NodePort    10.43.170.79   <none>        24817:30805/TCP   0s
     API_PORT=$( echo "$services" | awk -F '[ :/]+' '/pulp-api/{print $6}')
+    SVC_NAME=$( echo "$services" | awk -F '[ :/]+' '/pulp-api/{print $1}')
     echo "SERVICES:"
     echo "$services"
     break
   else
-    if [[ $tries -eq 30 ]]; then
+    if [[ $tries -eq 90 ]]; then
       echo "ERROR 2: 1 or more external services never came up"
       echo "NAMESPACES:"
       sudo $KUBECTL get namespaces
@@ -69,9 +79,11 @@ for tries in {0..30}; do
   sleep 5
 done
 
-# This needs to be down here. Otherwise, the storage pod may not be
-# up in time.
-STORAGE_POD=$(sudo $KUBECTL -n local-path-storage get pod | awk '/local-path-provisioner/{print $1}')
+if [[ "$KUBE" == "k3s" ]]; then
+  # This needs to be down here. Otherwise, the storage pod may not be
+  # up in time.
+  STORAGE_POD=$(sudo $KUBECTL -n local-path-storage get pod | awk '/local-path-provisioner/{print $1}')
+fi
 
 # NOTE: Before the pods can be started, they must be downloaded/cached from
 # quay.io .
@@ -103,6 +115,12 @@ for tries in {0..180}; do
   fi
   sleep 5
 done
+
+if [[ "$KUBE" == "minikube" ]]; then
+  API_NODE="localhost"
+  kubectl port-forward service/$SVC_NAME $API_PORT:$API_PORT &
+  sleep 60
+fi
 
 # Later tests in other scripts will use localhost:24817, which was not a safe
 # assumption at the time this script was originally written.
@@ -139,6 +157,10 @@ for tries in {0..120}; do
     sleep 5
   elif echo "$output" | grep "Request timed out" ; then
     continue
+  elif echo "$output" | grep "HTTP/1.1 200 OK" ; then
+    echo "Successfully got the status page after _roughly_ $((tries * 5)) seconds"
+    echo "$output"
+    break
   elif [[ $rc ]] ; then
     echo "Successfully got the status page after _roughly_ $((tries * 5)) seconds"
     echo "$output"

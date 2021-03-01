@@ -1,0 +1,15 @@
+---
+
+- name: pulp-web deployment
+  community.kubernetes.k8s:
+    state: "{{ deployment_state }}"
+    definition: "{{ lookup('template', 'templates/' + item + '.deployment.yaml.j2') | from_yaml }}"
+  with_items:
+    - pulp-web
+
+- name: pulp-web service
+  community.kubernetes.k8s:
+    state: "{{ deployment_state }}"
+    definition: "{{ lookup('template', 'templates/' + item + '.service.yaml.j2') | from_yaml }}"
+  with_items:
+    - pulp-web
