@@ -19,15 +19,15 @@ fi
 # TODO: Check if these should only ever be run once; or require
 # special logic to update
 # The Custom Resource (and any ConfigMaps) do not.
-$KUBECTL apply -f deploy/crds/pulpproject_v1alpha1_pulp_crd.yaml
-if [[ -e deploy/crds/pulpproject_v1alpha1_pulp_cr.yaml ]]; then
-  CUSTOM_RESOURCE=pulpproject_v1alpha1_pulp_cr.yaml
+$KUBECTL apply -f deploy/crds/pulpproject_v1beta1_pulp_crd.yaml
+if [[ -e deploy/crds/pulpproject_v1beta1_pulp_cr.yaml ]]; then
+  CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.yaml
 elif [[ "$CI_TEST" == "true" ]]; then
-  CUSTOM_RESOURCE=pulpproject_v1alpha1_pulp_cr.ci.yaml
+  CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.ci.yaml
 elif [[ "$(hostname)" == "pulp-demo"* ]]; then
-  CUSTOM_RESOURCE=pulpproject_v1alpha1_pulp_cr.pulp-demo.yaml
+  CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.pulp-demo.yaml
 else
-  CUSTOM_RESOURCE=pulpproject_v1alpha1_pulp_cr.default.yaml
+  CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.default.yaml
 fi
 echo "Will deploy config Custom Resource deploy/crds/$CUSTOM_RESOURCE"
 $KUBECTL apply -f deploy/crds/$CUSTOM_RESOURCE
