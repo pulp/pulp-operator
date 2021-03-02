@@ -19,7 +19,7 @@ cd $GITHUB_WORKSPACE
 echo "Test pulp/pulpcore images"
 sudo -E ./up.sh
 .ci/scripts/pulp-operator-check-and-wait.sh $KUBE_FLAG
-.ci/scripts/pulp_file-tests.sh
+.ci/scripts/pulp_file-tests.sh -m
 
 docker images
 
@@ -31,3 +31,6 @@ sudo -E QUAY_REPO_NAME=pulp $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
 
 echo "Deploy pulpcore latest"
 sudo -E QUAY_REPO_NAME=pulpcore $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
+
+echo "Deploy pulp-web latest"
+sudo -E QUAY_REPO_NAME=pulp-web $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh

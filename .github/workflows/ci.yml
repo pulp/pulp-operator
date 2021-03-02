@@ -233,7 +233,7 @@ jobs:
       - name: Deploy
         run: |
           git clone --depth=1 https://github.com/pulp/pulp_file.git
-          .ci/scripts/deploy.sh
+          .ci/scripts/deploy.sh -m
         shell: bash
         env:
           PY_COLORS: '1'
