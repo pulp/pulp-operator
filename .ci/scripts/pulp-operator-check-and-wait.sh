@@ -119,7 +119,7 @@ done
 if [[ "$KUBE" == "minikube" ]]; then
   API_NODE="localhost"
   kubectl port-forward service/$SVC_NAME $API_PORT:$API_PORT &
-  sleep 60
+  sleep 100
 fi
 
 # Later tests in other scripts will use localhost:24817, which was not a safe

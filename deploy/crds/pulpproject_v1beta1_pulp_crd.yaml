@@ -12,11 +12,142 @@ spec:
   scope: Namespaced
   versions:
   - name: v1beta1
-    schema:
-      openAPIV3Schema:
-        type: object
-        x-kubernetes-preserve-unknown-fields: true
     served: true
     storage: true
     subresources:
       status: {}
+    schema:
+      openAPIV3Schema:
+        description: Schema validation for the Pulp CRD
+        properties:
+          spec:
+            properties:
+              registry:
+                description: The container image registry to use for pulling images.
+                type: string
+                default: quay.io
+              project:
+                description: The container image registry project for pulling images.
+                type: string
+                default: pulp
+              image:
+                description: The image name (repo name) for the pulp image.
+                type: string
+                default: pulp
+              tag:
+                description: The image tag for the pulp image.
+                type: string
+                default: stable
+              pulp_settings:
+                description: The pulp settings.
+                type: object
+              database_connection:
+                description: The configuration for the database connection.
+                properties:
+                  username:
+                    type: string
+                  password:
+                    type: string
+                  admin_password:
+                    type: string
+                type: object
+              pulp_file_storage:
+                description: Configuration for the persistentVolumeClaim for /var/lib/pulp.
+                properties:
+                  access_mode:
+                    description: The file storage access mode.
+                    type: string
+                    default: ReadWriteMany
+                    enum:
+                      - ReadWriteMany
+                      - ReadWriteOnce
+                  size:
+                    description: The size of the file storage; for example 100Gi.
+                    type: string
+                type: object
+              pulp_web:
+                description: The pulp web deployment.
+                properties:
+                  replicas:
+                    description: The number of replicas for the deployment.
+                    type: integer
+                    default: 1
+                    format: int32
+                type: object
+              pulp_api:
+                description: The pulp api deployment.
+                properties:
+                  replicas:
+                    description: The number of replicas for the deployment.
+                    type: integer
+                    default: 1
+                    format: int32
+                  log_level:
+                    description: The log level for the deployment.
+                    type: string
+                    default: INFO
+                    enum:
+                      - DEBUG
+                      - INFO
+                      - WARNING
+                      - ERROR
+                      - CRITICAL
+                type: object
+              pulp_content:
+                description: The pulp content deployment.
+                properties:
+                  replicas:
+                    description: The number of replicas for the deployment.
+                    type: integer
+                    default: 2
+                    format: int32
+                  log_level:
+                    description: The log level for the deployment.
+                    type: string
+                    default: INFO
+                    enum:
+                      - DEBUG
+                      - INFO
+                      - WARNING
+                      - ERROR
+                      - CRITICAL
+                type: object
+              pulp_worker:
+                description: The pulp worker deployment.
+                properties:
+                  replicas:
+                    description: The number of replicas for the deployment.
+                    type: integer
+                    default: 2
+                    format: int32
+                type: object
+              pulp_resource_manager:
+                description: The pulp resource manager deployment.
+                properties:
+                  replicas:
+                    description: The number of replicas for the deployment.
+                    type: integer
+                    default: 1
+                    format: int32
+                type: object
+            type: object
+          status:
+            properties:
+              conditions:
+                description: The resulting conditions when a Service Telemetry is instantiated
+                items:
+                  properties:
+                    status:
+                      type: string
+                    type:
+                      type: string
+                    reason:
+                      type: string
+                    lastTransitionTime:
+                      type: string
+                  type: object
+                type: array
+            type: object
+        type: object
+        x-kubernetes-preserve-unknown-fields: true
+
