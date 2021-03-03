@@ -23,9 +23,6 @@ sudo -E ./up.sh
 
 docker images
 
-echo "Deploy pulp-operator"
-sudo -E $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
-
 echo "Deploy pulp latest"
 sudo -E QUAY_REPO_NAME=pulp $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
 
@@ -34,3 +31,7 @@ sudo -E QUAY_REPO_NAME=pulpcore $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
 
 echo "Deploy pulp-web latest"
 sudo -E QUAY_REPO_NAME=pulp-web $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
+
+echo "Deploy pulp-operator"
+eval $(minikube -p minikube docker-env)
+sudo -E $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
