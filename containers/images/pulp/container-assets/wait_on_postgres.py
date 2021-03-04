@@ -15,7 +15,8 @@ if __name__ == "__main__":
         tries += 1
         try:
             print("Checking postgres host %s" % os.environ["POSTGRES_SERVICE_HOST"])
-            s.connect((os.environ["POSTGRES_SERVICE_HOST"], 5432))
+            print("Checking postgres port %s" % os.environ["POSTGRES_SERVICE_PORT"])
+            s.connect((os.environ["POSTGRES_SERVICE_HOST"], os.environ["POSTGRES_SERVICE_PORT"]))
         except socket.error:
             time.sleep(3)
         else:
@@ -25,5 +26,5 @@ if __name__ == "__main__":
         print("Postgres started!")
         sys.exit(0)
     else:
-        print("Unable to reach postgres on port 5432")
+        print("Unable to reach postgres on port %s" % os.environ["POSTGRES_SERVICE_PORT"])
         sys.exit(1)

@@ -1,0 +1,80 @@
+# Postgres StatefulSet.
+---
+apiVersion: v1
+kind: StatefulSet
+metadata:
+  name: '{{ meta.name }}-postgres'
+  namespace: '{{ meta.namespace }}'
+  labels:
+    app: '{{ deployment_type }}-postgres'
+spec:
+  selector:
+    matchLabels:
+      app: '{{ deployment_type }}-postgres'
+  serviceName: '{{ meta.name }}'
+  replicas: 1
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: '{{ deployment_type }}-postgres'
+    spec:
+      containers:
+        - image: '{{ postgres_image }}'
+          name: postgres
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: '{{ meta.name }}-postgres-configuration'
+                  key: database
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: '{{ meta.name }}-postgres-configuration'
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: '{{ meta.name }}-postgres-configuration'
+                  key: password
+            - name: PGDATA
+              value: '{{ postgres_data_path }}'
+            - name: POSTGRES_INITDB_ARGS
+              value: '{{ postgres_initdb_args }}'
+            - name: POSTGRES_HOST_AUTH_METHOD
+              value: '{{ postgres_host_auth_method }}'
+          ports:
+            - containerPort: 5432
+              name: postgres
+          volumeMounts:
+            - name: postgres
+              mountPath: '{{ postgres_data_path | dirname }}'
+              subPath: '{{ postgres_data_path | dirname | basename }}'
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres
+      spec:
+        accessModes:
+          - ReadWriteOnce
+{% if postgres_storage_class != '' %}
+        storageClassName: '{{ postgres_storage_class }}'
+{% endif %}
+        resources: {{ postgres_resource_requirements }}
+
+# Postgres Service.
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: '{{ meta.name }}-postgres'
+  namespace: '{{ meta.namespace }}'
+  labels:
+    app: '{{ deployment_type }}-postgres'
+spec:
+  ports:
+    - port: 5432
+  clusterIP: None
+  selector:
+    app: '{{ deployment_type }}-postgres'

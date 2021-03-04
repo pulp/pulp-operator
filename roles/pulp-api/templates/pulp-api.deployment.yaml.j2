@@ -19,11 +19,10 @@ spec:
       securityContext:
         runAsUser: 0
         fsGroup: 0
-      #serviceAccountName: "{{ project_name }}-anyuid"
       volumes:
         - name: pulp-server
-          configMap:
-            name: pulp-server
+          secret:
+            secretName: pulp-server
             items:
               - path: settings.py
                 key: settings.py
@@ -40,6 +39,10 @@ spec:
             # TODO: Replace with k8s secrets
             - name: PULP_ADMIN_PASSWORD
               value: "password"
+            - name: POSTGRES_SERVICE_HOST
+              value: "{{ postgres_host }}"
+            - name: POSTGRES_SERVICE_PORT
+              value: "{{ postgres_port }}"
           ports:
             - protocol: TCP
               containerPort: 24817

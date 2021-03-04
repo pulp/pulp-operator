@@ -9,9 +9,17 @@
   debug:
     msg: "{{ k8s_nodes }}"
 
+- name: Set node address
+  set_fact:
+    node_address: "{'content_origin': 'http://{{ k8s_nodes.resources[0].status.addresses[0].address }}:24816' }"
+
+- name: DEBUG Show node_address
+  debug:
+    msg: "{{ node_address }}"
+
 - name: Set content_origin
   set_fact:
-    pulp_default_settings: "{{ pulp_default_settings|combine({'content_origin': 'http://{{ k8s_nodes.resources[0].status.addresses[0].address }}:24816' }) }}"
+    pulp_default_settings: "{{ pulp_default_settings|combine(node_address) }}"
 
 - name: DEBUG Show content_origin
   debug:
