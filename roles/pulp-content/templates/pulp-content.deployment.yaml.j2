@@ -41,6 +41,10 @@ spec:
               value: "{{ postgres_host }}"
             - name: POSTGRES_SERVICE_PORT
               value: "{{ postgres_port }}"
+            - name: REDIS_SERVICE_HOST
+              value: "{{ meta.name }}-redis"
+            - name: REDIS_SERVICE_PORT
+              value: "{{ pulp_default_settings.redis_port }}"
           ports:
             - protocol: TCP
               containerPort: 24816

@@ -17,7 +17,7 @@
           PORT: "{{ postgres_port }}"
           CONN_MAX_AGE: 0
       debug: "True"
-      redis_host: redis
+      redis_host: "{{ meta.name }}-redis"
       redis_port:  6379
       redis_password: ''
     deployment_state: present

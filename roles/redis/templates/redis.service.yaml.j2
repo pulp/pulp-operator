@@ -2,13 +2,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis
+  name: "{{ meta.name }}-redis"
   namespace: "{{ project_name }}"
   labels:
-    app: redis
+    app: "{{ deployment_type }}-redis"
 spec:
   selector:
-    app: redis
+    app: "{{ deployment_type }}-redis"
   ports:
     - protocol: TCP
       targetPort: 6379
