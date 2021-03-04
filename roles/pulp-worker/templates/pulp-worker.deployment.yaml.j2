@@ -22,8 +22,8 @@ spec:
       #serviceAccountName: "{{ project_name }}-anyuid"
       volumes:
         - name: pulp-server
-          configMap:
-            name: pulp-server
+          secret:
+            secretName: pulp-server
             items:
               - path: settings.py
                 key: settings.py
@@ -36,6 +36,11 @@ spec:
           imagePullPolicy: "IfNotPresent"
           # We set args, not command, so as to not override the entrypoint script
           args: ["pulp-worker"]
+          env:
+            - name: POSTGRES_SERVICE_HOST
+              value: "{{ postgres_host }}"
+            - name: POSTGRES_SERVICE_PORT
+              value: "{{ postgres_port }}"
           volumeMounts:
             - name: pulp-server
               mountPath: "/etc/pulp/"

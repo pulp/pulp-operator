@@ -6,24 +6,20 @@
     - operator_sdk.util
   vars:
     project_name: "{{ meta.namespace }}"
-    database_connection:
-      username: pulp
-      password: pulp
     pulp_default_settings:
       databases:
         default:
-          HOST: postgres
+          HOST: "{{ postgres_host }}"
           ENGINE: django.db.backends.postgresql_psycopg2
-          NAME: pulp
-          USER: "{{ database_connection.username }}"
-          PASSWORD: "{{ database_connection.password }}"
-          PORT: 5432
+          NAME: "{{ postgres_database }}"
+          USER: "{{ postgres_user }}"
+          PASSWORD: "{{ postgres_pass }}"
+          PORT: "{{ postgres_port }}"
           CONN_MAX_AGE: 0
       debug: "True"
       redis_host: redis
       redis_port:  6379
       redis_password: ''
-#     content_origin: # Queried and set in pulp-api role
     deployment_state: present
     registry: quay.io
     project: pulp

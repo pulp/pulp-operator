@@ -31,12 +31,8 @@ metadata:
 #                      If on a cluster, you should set this manually until
 #                      ingress(es) are implemented. Example:
 #                      http://myserver.fqdn:24816
-  # PostrgreSQL container settings for user accounts
-# database_connection:
-#   username: pulp
-#   password: pulp
-    # Password for db admin user 'postgres'.
-#   admin_password:
+  # PostgreSQL container settings
+# postgres_configuration_secret: pg_secret_name
   # Configuration for the persistentVolumeClaim for /var/lib/pulp
 # pulp_file_storage:
      # If your K8s cluster is only 1 node, and its StorageClass /
