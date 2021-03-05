@@ -13,7 +13,7 @@ KUBE="k3s"
 if [[ "$1" == "--minikube" ]] || [[ "$1" == "-m" ]]; then
   KUBE="minikube"
   echo "Running $KUBE"
-  sleep 30
+  sleep 20
 fi
 
 storage_debug() {
@@ -46,6 +46,7 @@ else
     echo "$0: ERROR 1: Cannot find kubectl"
 fi
 
+echo "Waiting for services to come up ..."
 # Once the services are both up, the pods will be in a Pending state.
 # Before the services are both up, the pods may not exist at all.
 # So check for the services being up 1st.
@@ -85,6 +86,7 @@ if [[ "$KUBE" == "k3s" ]]; then
   STORAGE_POD=$(sudo $KUBECTL -n local-path-storage get pod | awk '/local-path-provisioner/{print $1}')
 fi
 
+echo "Waiting for pods to transition to Running ..."
 # NOTE: Before the pods can be started, they must be downloaded/cached from
 # quay.io .
 # Therefore, this wait is highly dependent on network speed.
@@ -116,17 +118,17 @@ for tries in {0..180}; do
   sleep 5
 done
 
+
 if [[ "$KUBE" == "minikube" ]]; then
   API_NODE="localhost"
   kubectl port-forward service/$SVC_NAME $API_PORT:$API_PORT &
-  sleep 100
+  sleep 20
 fi
 
 # Later tests in other scripts will use localhost:24817, which was not a safe
 # assumption at the time this script was originally written.
 URL=http://$API_NODE:$API_PORT/pulp/api/v3/status/
-echo "URL:"
-echo $URL
+echo "Waiting for $URL to respond ..."
 
 if ! [ -x "$(command -v http)" -a -x "$(command -v jq)" ]; then
   echo 'WARNING 100: `http` & `jq` not installed'
@@ -152,21 +154,26 @@ for tries in {0..120}; do
   fi
   output=$(http --timeout 5 --check-status --pretty format --print hb $URL 2>&1)
   rc=$?
+  first_line=`echo "${output}" | head -1`
+  echo "output=$first_line"
+  echo "rc=$rc"
   if echo "$output" | grep -e "Errno 111" -e "error(104" ; then
     # if connection refused, httpie does not wait 5 seconds
     sleep 5
   elif echo "$output" | grep "Request timed out" ; then
     continue
   elif echo "$output" | grep "HTTP/1.1 200 OK" ; then
-    echo "Successfully got the status page after _roughly_ $((tries * 5)) seconds"
+    echo "Successfully got the status page after _roughly_ $((tries * 5)) seconds -- 200 OK"
     echo "$output"
     break
-  elif [[ $rc ]] ; then
+  elif [[ $rc == 0 ]] ; then
     echo "Successfully got the status page after _roughly_ $((tries * 5)) seconds"
     echo "$output"
     break
   fi
 done
+
+echo "Final output test was:\n $output"
 
 messages=(
     "pulp-api is connected to the database"
@@ -188,6 +195,8 @@ tests=(
     "$(echo "$output" | sed -ne '/{/,$ p' | jq -r .online_content_apps)" != "[]"
     "$(echo "$output" | sed -ne '/{/,$ p' | jq -r .online_workers)" != "[]"
 )
+
+echo "Transistion to test output ..."
 
 for iteration in {5..8};do
     index=$(($iteration - 5))

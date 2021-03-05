@@ -1,0 +1,1 @@
+Use standard redis image for operator deployment and parameterize deployment using custom resource naming
