@@ -38,7 +38,7 @@ spec:
           env:
             # TODO: Replace with k8s secrets
             - name: PULP_ADMIN_PASSWORD
-              value: "password"
+              value: "{{ admin_password }}"
             - name: POSTGRES_SERVICE_HOST
               value: "{{ postgres_host }}"
             - name: POSTGRES_SERVICE_PORT

@@ -4,6 +4,7 @@ metadata:
   name: example-pulp
 spec:
   tag: "latest"
+  pulp_admin_password_secret: "example-pulp-admin-password"
   pulp_file_storage:
     # k3s local-path requires this
     access_mode: "ReadWriteOnce"

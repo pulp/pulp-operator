@@ -24,6 +24,8 @@ if [[ -e deploy/crds/pulpproject_v1beta1_pulp_cr.yaml ]]; then
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.yaml
 elif [[ "$CI_TEST" == "true" ]]; then
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.ci.yaml
+  echo "Will deploy admin password secret for testing ..."
+  $KUBECTL apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
 elif [[ "$(hostname)" == "pulp-demo"* ]]; then
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.pulp-demo.yaml
 else

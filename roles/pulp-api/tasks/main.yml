@@ -41,6 +41,9 @@
   with_items:
     - pulp-server
 
+- include_tasks:
+    file: admin_password_configuration.yml
+
 - name: pulp-api service
   community.kubernetes.k8s:
     state: "{{ deployment_state }}"

@@ -31,7 +31,9 @@ metadata:
 #                      If on a cluster, you should set this manually until
 #                      ingress(es) are implemented. Example:
 #                      http://myserver.fqdn:24816
-  # PostgreSQL container settings
+  # The pulp adminstrator password secret.
+# pulp_admin_password_secret:
+  # PostgreSQL container settings secret.
 # postgres_configuration_secret: pg_secret_name
   # Configuration for the persistentVolumeClaim for /var/lib/pulp
 # pulp_file_storage:

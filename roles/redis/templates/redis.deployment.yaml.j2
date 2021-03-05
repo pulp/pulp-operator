@@ -20,13 +20,6 @@ spec:
         - name: redis
           image: "{{ redis_image }}"
           imagePullPolicy: "IfNotPresent"
-          env:
-            - name: REDIS_DB
-              value: pulp
-            - name: REDIS_USER
-              value: pulp
-            - name: REDIS_PASS
-              value: pulp
           volumeMounts:
             - readOnly: false
               mountPath: /var/lib/redis

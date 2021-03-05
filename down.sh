@@ -27,3 +27,7 @@ $KUBECTL delete -f deploy/cluster_role_binding.yaml
 # It doesn't matter which cr we specify; the metadata up top is the same.
 $KUBECTL delete -f deploy/crds/pulpproject_v1beta1_pulp_cr.default.yaml
 $KUBECTL delete -f deploy/crds/pulpproject_v1beta1_pulp_crd.yaml
+
+if [[ "$CI_TEST" == "true" ]]; then
+  $KUBECTL delete -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
+fi
