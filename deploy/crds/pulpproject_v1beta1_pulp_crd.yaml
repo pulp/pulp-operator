@@ -44,6 +44,9 @@ spec:
               pulp_settings:
                 description: The pulp settings.
                 type: object
+              pulp_admin_password_secret:
+                  description: Secret where the administrator password can be found
+                  type: string
               postgres_configuration_secret:
                   description: Secret where the database configuration can be found
                   type: string
