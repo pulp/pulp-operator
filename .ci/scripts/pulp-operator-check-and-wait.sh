@@ -122,6 +122,7 @@ done
 if [[ "$KUBE" == "minikube" ]]; then
   API_NODE="localhost"
   kubectl port-forward service/$SVC_NAME $API_PORT:$API_PORT &
+  echo "port-forwarding service/$SVC_NAME $API_PORT:$API_PORT"
   sleep 30
 fi
 
@@ -171,6 +172,7 @@ for tries in {0..180}; do
     echo "$output"
     break
   fi
+  sleep 5
 done
 
 echo "Final output test was:\n $output"

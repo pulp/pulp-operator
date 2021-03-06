@@ -1,0 +1,60 @@
+{% if 'ingress' == ingress_type|lower %}
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: '{{ meta.name }}-ingress'
+  namespace: '{{ meta.namespace }}'
+{% if ingress_annotations %}
+  annotations:
+    {{ ingress_annotations | indent(width=4) }}
+{% endif %}
+spec:
+  rules:
+    - host: '{{ pulp_hostname }}'
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: '{{ meta.name }}-web-svc'
+              servicePort: 80
+{% if ingress_tls_secret %}
+  tls:
+    - hosts:
+        - {{ pulp_hostname }}
+      secretName: {{ ingress_tls_secret }}
+{% endif %}
+{% endif %}
+
+{% if 'route' == ingress_type|lower %}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: '{{ meta.name }}'
+  namespace: '{{ meta.namespace }}'
+spec:
+{% if route_host != '' %}
+  host: {{ route_host }}
+{% endif %}
+  port:
+    targetPort: '{{ (route_tls_termination_mechanism | lower == "passthrough") | ternary("https", "http") }}'
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: {{ route_tls_termination_mechanism | lower }}
+{% if route_tls_termination_mechanism | lower == 'edge' and route_tls_secret != '' %}
+    key: |-
+{{ route_tls_key | indent(width=6, indentfirst=True) }}
+    certificate: |-
+{{ route_tls_crt | indent(width=6, indentfirst=True) }}
+{% if route_ca_crt is defined %}
+    caCertificate: |-
+{{ route_ca_crt | indent(width=6, indentfirst=True) }}
+{% endif %}
+{% endif %}
+  to:
+    kind: Service
+    name: {{ meta.name }}-web-svc
+    weight: 100
+  wildcardPolicy: None
+{% endif %}

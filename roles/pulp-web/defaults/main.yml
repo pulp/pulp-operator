@@ -1,3 +1,28 @@
 ---
 pulp_web:
   replicas: 1
+
+ingress_type: none
+
+# Add annotations to the ingress. Specify as literal block. E.g.:
+# tower_ingress_annotations: |
+#   kubernetes.io/ingress.class: nginx
+#   nginx.ingress.kubernetes.io/proxy-connect-timeout: 60s
+ingress_annotations: ''
+# TLS secret for the ingress. The secret either has to exist before hand with
+# the corresponding cert and key or just be an indicator for where an automated
+# process like cert-manager (enabled via annotations) will store the TLS
+# certificate and key.
+ingress_tls_secret: ''
+
+# The TLS termination mechanism to use to access
+# the services. Supported mechanism are: edge, passthrough
+#
+route_tls_termination_mechanism: edge
+
+# Secret to lookup that provide the TLS specific
+# credentials to deploy
+#
+route_tls_secret: ''
+
+ca_trust_bundle: "/etc/pki/tls/certs/ca-bundle.crt"

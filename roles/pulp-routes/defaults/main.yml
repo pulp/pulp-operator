@@ -1,0 +1,7 @@
+---
+# Host to create the root with.
+# If not specific will default to <instance-name>-<namespace>-<routerCanonicalHostname>
+#
+route_host: ''
+
+pulp_hostname: '{{ deployment_type }}.example.com'

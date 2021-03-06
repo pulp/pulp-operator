@@ -1,23 +1,53 @@
 ---
+
+- name: Set web protocol
+  set_fact:
+    web_protocol: "https"
+  when:
+    - ingress_tls_secret | length
+    - route_tls_secret | length
+
+- name: Set node address for ingress
+  set_fact:
+    node_address: "{{ web_protocol }}://{{ pulp_hostname }}"
+  when:
+    - ingress_type|lower == "ingress"
+
+- name: Set node address for route
+  set_fact:
+    node_address: "{{ web_protocol }}://{{ route_host }}"
+  when:
+    - ingress_type|lower == "route"
+
 - name: Look up the 1st address of the 1st node
   k8s_info:
     api_version: v1
     kind: Node
   register: k8s_nodes
+  when:
+    - node_address is not defined
 
 - name: DEBUG Show k8s_nodes
   debug:
     msg: "{{ k8s_nodes }}"
+  when:
+    - node_address is not defined
 
 - name: Set node address
   set_fact:
-    node_address: "{'content_origin': 'http://{{ k8s_nodes.resources[0].status.addresses[0].address }}:24816' }"
+    node_address: "http://{{ k8s_nodes.resources[0].status.addresses[0].address }}:24816"
+  when:
+    - node_address is not defined
+
+- name: Set content_origin
+  set_fact:
+    node_address: "{'content_origin': '{{ node_address }}' }"
 
 - name: DEBUG Show node_address
   debug:
     msg: "{{ node_address }}"
 
-- name: Set content_origin
+- name: merge content_origin with settings
   set_fact:
     pulp_default_settings: "{{ pulp_default_settings|combine(node_address) }}"
 

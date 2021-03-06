@@ -5,6 +5,13 @@ metadata:
   name: pulp-operator
 rules:
 - apiGroups:
+  - route.openshift.io
+  resources:
+  - routes
+  - routes/custom-host
+  verbs:
+  - '*'
+- apiGroups:
   - ""
   resources:
   - pods
@@ -25,11 +32,13 @@ rules:
   - watch
 - apiGroups:
   - apps
+  - extensions
   resources:
   - deployments
   - daemonsets
   - replicasets
   - statefulsets
+  - ingresses
   verbs:
   - create
   - delete

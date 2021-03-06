@@ -9,3 +9,23 @@ raw_spec: "{{ vars['_pulp_pulpproject_org_pulp']['spec'] }}"
 # Secret to lookup that provide the admin password
 #
 pulp_admin_password_secret: ''
+
+# Host to create the root with.
+# If not specific will default to <instance-name>-<namespace>-<routerCanonicalHostname>
+#
+route_host: ''
+
+pulp_hostname: '{{ deployment_type }}.example.com'
+
+web_protocol: 'http'
+
+# TLS secret for the ingress. The secret either has to exist before hand with
+# the corresponding cert and key or just be an indicator for where an automated
+# process like cert-manager (enabled via annotations) will store the TLS
+# certificate and key.
+ingress_tls_secret: ''
+
+# Secret to lookup that provide the TLS specific
+# credentials to deploy
+#
+route_tls_secret: ''

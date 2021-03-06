@@ -2,28 +2,28 @@
 apiVersion: v1
 kind: Deployment
 metadata:
-  name: pulp-resource-manager
+  name: "{{ meta.name }}-resource-manager"
   namespace: "{{ project_name }}"
   labels:
-    app: pulp-resource-manager
+    app: "{{ deployment_type }}-resource-manager"
 spec:
   replicas: {{ pulp_resource_manager.replicas }}
   selector:
     matchLabels:
-      app: pulp-resource-manager
+      app: "{{ deployment_type }}-resource-manager"
   template:
     metadata:
       labels:
-        app: pulp-resource-manager
+        app: "{{ deployment_type }}-resource-manager"
     spec:
       securityContext:
         runAsUser: 0
         fsGroup: 0
       #serviceAccountName: "{{ project_name }}-anyuid"
       volumes:
-        - name: pulp-server
+        - name: {{ meta.name }}-pulp-server
           secret:
-            secretName: pulp-server
+            secretName: {{ meta.name }}-pulp-server
             items:
               - path: settings.py
                 key: settings.py
@@ -46,7 +46,7 @@ spec:
             - name: REDIS_SERVICE_PORT
               value: "{{ pulp_default_settings.redis_port }}"
           volumeMounts:
-            - name: pulp-server
+            - name: {{ meta.name }}-pulp-server
               mountPath: "/etc/pulp/"
             - name: pulp-file-storage
               readOnly: false

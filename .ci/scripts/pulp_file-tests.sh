@@ -6,7 +6,11 @@ SERVER=$(hostname)
 if [[ "$1" == "--minikube" ]] || [[ "$1" == "-m" ]]; then
   KUBE="minikube"
   SERVER="localhost"
-
+  if [[ "$CI_TEST" == "true" ]]; then
+    SVC_NAME="example-pulp-api-svc"
+    API_PORT="24817"
+    kubectl port-forward service/$SVC_NAME $API_PORT:$API_PORT &
+  fi
 fi
 
 # From the pulp-server/pulp-api config-map
