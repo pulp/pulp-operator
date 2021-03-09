@@ -3,6 +3,7 @@ kind: Pulp
 metadata:
   name: example-pulp
 spec:
+  # image: pulp
   tag: "latest"
   pulp_admin_password_secret: "example-pulp-admin-password"
   pulp_file_storage:
