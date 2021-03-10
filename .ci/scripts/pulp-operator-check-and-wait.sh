@@ -122,7 +122,7 @@ done
 if [[ "$KUBE" == "minikube" ]]; then
   API_NODE="localhost"
   kubectl port-forward service/$SVC_NAME $API_PORT:$API_PORT &
-  sleep 20
+  sleep 30
 fi
 
 # Later tests in other scripts will use localhost:24817, which was not a safe
@@ -146,8 +146,8 @@ fi
 # http: error: Request timed out (5.0s).
 #
 # --pretty format --print hb almost make it behave as if it were not redirected
-for tries in {0..120}; do
-  if [[ $tries -eq 120 ]]; then
+for tries in {0..180}; do
+  if [[ $tries -eq 180 ]]; then
     echo "ERROR 4: Status page never accessible or returning success"
     storage_debug
     exit 4

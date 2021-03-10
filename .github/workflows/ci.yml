@@ -143,6 +143,82 @@ jobs:
           sudo kubectl logs -l app=pulp-web --tail=10000
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
 
+  galaxy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # by default, it uses a depth of 1
+          # this fetches all history so that we can read each commit
+          fetch-depth: 0
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.7'
+      - name: Install httpie
+        run: |
+          echo ::group::HTTPIE
+          sudo apt-get update -yq
+          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
+          echo ::endgroup::
+          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
+          echo "IMG=quay.io/pulp/pulp-operator:latest" >> $GITHUB_ENV
+          echo "CI_TEST=true" >> $GITHUB_ENV
+        shell: bash
+      - name: Install minikube
+        id: minikube
+        uses: CodingNagger/minikube-setup-action@v1.0.2
+        with:
+          minikube-version: '1.17.1'
+          k8s-version: '1.20.2'
+      - name: Start minikube
+        run: |
+          minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
+        # now you can run kubectl to see the pods in the cluster
+      - name: Try the cluster !
+        run: kubectl get pods -A
+      - name: Setup a minikube docker env
+        run: minikube -p minikube docker-env | grep "export" | awk '{$1= ""; print $0}' >> $GITHUB_ENV
+      - name: Build galaxy image
+        run: |
+          cd $GITHUB_WORKSPACE/containers/
+          cp $GITHUB_WORKSPACE/.ci/ansible/galaxy/vars.yaml vars/vars.yaml
+          sed -i "s/podman/docker/g" common_tasks.yaml
+          pip install ansible
+          ansible-playbook -v build.yaml
+        shell: bash
+      - name: Build Operator
+        run: |
+          echo ::group::SDK
+          CURRENT_VERSION=$(head -1 ./build/Dockerfile  | cut -d ":" -f 2)
+          sudo wget https://github.com/operator-framework/operator-sdk/releases/download/$CURRENT_VERSION/operator-sdk-$CURRENT_VERSION-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
+          sudo chmod +x /usr/local/bin/operator-sdk
+          echo ::endgroup::
+          sed -i "s/image: pulp/image: galaxy/g" playbook.yml
+          sed -i "s/image_web: pulp-web/image_web: galaxy-web/g" playbook.yml
+          sed -i "s/# image: pulp/image: galaxy/g" deploy/crds/pulpproject_v1beta1_pulp_cr.ci.yaml
+          eval $(minikube -p minikube docker-env)
+          sudo -E operator-sdk build quay.io/pulp/pulp-operator:latest
+          sudo -E docker images
+        shell: bash
+      - name: Deploy pulp-operator to K8s
+        run: sudo -E ./up.sh
+        shell: bash
+      - name: Check and wait pulp-operator deploy
+        run: .ci/scripts/pulp-operator-check-and-wait.sh -m
+        shell: bash
+      - name: After failure
+        if: failure()
+        run: |
+          sudo docker images
+          sudo kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
+          sudo kubectl logs -l app=pulp-api --tail=10000
+          sudo kubectl logs -l app=pulp-content --tail=10000
+          sudo kubectl logs -l app=pulp-worker --tail=10000
+          sudo kubectl logs -l app=pulp-resource-manager --tail=10000
+          sudo kubectl logs -l app=pulp-web --tail=10000
+          http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
+
   molecule:
     runs-on: ubuntu-latest
     steps:

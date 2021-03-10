@@ -24,5 +24,17 @@ images:
       tag: latest
       container_file: Containerfile.web
       base_image_name: pulp
+  - galaxy_master:
+      image_name: galaxy
+      tag: latest
+      container_file: Containerfile.core
+      pulpcore: git+https://github.com/pulp/pulpcore.git@3.10#egg=pulpcore
+      plugins:
+        - "git+https://github.com/ansible/galaxy_ng.git"
+  - galaxy_web_master:
+      image_name: galaxy-web
+      tag: latest
+      container_file: Containerfile.web
+      base_image_name: galaxy
 registry: quay.io
 project: pulp

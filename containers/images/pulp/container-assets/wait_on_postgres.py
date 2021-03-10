@@ -16,7 +16,8 @@ if __name__ == "__main__":
         try:
             print("Checking postgres host %s" % os.environ["POSTGRES_SERVICE_HOST"])
             print("Checking postgres port %s" % os.environ["POSTGRES_SERVICE_PORT"])
-            s.connect((os.environ["POSTGRES_SERVICE_HOST"], os.environ["POSTGRES_SERVICE_PORT"]))
+            pg_port = int(os.environ["POSTGRES_SERVICE_PORT"])
+            s.connect((os.environ["POSTGRES_SERVICE_HOST"], pg_port))
         except socket.error:
             time.sleep(3)
         else:
