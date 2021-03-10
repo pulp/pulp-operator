@@ -1,5 +1,18 @@
 ---
 
+- name: Load Route TLS certificate
+  include_tasks: load_route_tls_secret.yml
+  when:
+    - ingress_type | lower == 'route'
+    - route_tls_secret != ''
+
+- name: pulp-web configmap
+  community.kubernetes.k8s:
+    state: "{{ deployment_state }}"
+    definition: "{{ lookup('template', 'templates/' + item + '.configmap.yaml.j2') | from_yaml }}"
+  with_items:
+    - pulp-web
+
 - name: pulp-web deployment
   community.kubernetes.k8s:
     state: "{{ deployment_state }}"

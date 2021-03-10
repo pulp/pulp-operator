@@ -37,3 +37,4 @@
     - pulp-resource-manager
     - pulp-worker
     - pulp-web
+    - pulp-routes

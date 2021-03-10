@@ -13,10 +13,15 @@ if __name__ == "__main__":
     print("Waiting on postgresql to start...")
     while not postgres_is_alive and tries < 100:
         tries += 1
+        pg_port = 5432
+        try:
+            env_port = os.environ.get("POSTGRES_SERVICE_PORT", "5432")
+            pg_port = int(env_port)
+        except ValueError:
+            pass
         try:
             print("Checking postgres host %s" % os.environ["POSTGRES_SERVICE_HOST"])
             print("Checking postgres port %s" % os.environ["POSTGRES_SERVICE_PORT"])
-            pg_port = int(os.environ["POSTGRES_SERVICE_PORT"])
             s.connect((os.environ["POSTGRES_SERVICE_HOST"], pg_port))
         except socket.error:
             time.sleep(3)

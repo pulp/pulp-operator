@@ -2,6 +2,6 @@
 - name: pulp routes
   community.kubernetes.k8s:
     state: "{{ deployment_state }}"
-    definition: "{{ lookup('template', 'templates/' + item + '.route.yaml.j2') | from_yaml }}"
+    definition: "{{ lookup('template', 'templates/' + item + '.ingress.yaml.j2') | from_yaml }}"
   with_items:
     - pulp

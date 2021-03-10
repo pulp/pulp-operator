@@ -14,9 +14,17 @@ django-admin collectstatic --noinput
 django-admin migrate --noinput
 django-admin migrate auth --noinput
 
+ADMIN_PASSWORD_FILE=/etc/pulp/pulp-admin-password
+if [[ -f "$ADMIN_PASSWORD_FILE" ]]; then
+   echo "pulp admin can be initialized."
+   PULP_ADMIN_PASSWORD=$(cat $ADMIN_PASSWORD_FILE)
+fi
+
 if [ -n "${PULP_ADMIN_PASSWORD}" ]; then
     django-admin reset-admin-password --password "${PULP_ADMIN_PASSWORD}"
 fi
+
+mkdir -p /var/lib/pulp/media
 
 # NOTE: Due to the Linux dual-stack functionality, this will listen on both IPv4
 # IPv6, even though netstat may seem to indicate it is IPv6 only.
