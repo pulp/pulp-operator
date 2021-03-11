@@ -18,12 +18,12 @@ fi
 
 storage_debug() {
   echo "VOLUMES:"
-  sudo $KUBECTL get pvc
-  sudo $KUBECTL get pv
+  sudo -E $KUBECTL get pvc
+  sudo -E $KUBECTL get pv
   df -h
   if [ "$KUBE" = "k3s" ]; then
-    sudo $KUBECTL -n local-path-storage get pod
-    sudo $KUBECTL -n local-path-storage logs $STORAGE_POD
+    sudo -E $KUBECTL -n local-path-storage get pod
+    sudo -E $KUBECTL -n local-path-storage logs $STORAGE_POD
   fi
 }
 
@@ -51,7 +51,7 @@ echo "Waiting for services to come up ..."
 # Before the services are both up, the pods may not exist at all.
 # So check for the services being up 1st.
 for tries in {0..90}; do
-  services=$(sudo $KUBECTL get services)
+  services=$(sudo -E $KUBECTL get services)
   if [[ $(echo "$services" | grep -c NodePort) > 1 ]]; then
     # parse string like this. 30805 is the external port
     # pulp-api-svc     NodePort    10.43.170.79   <none>        24817:30805/TCP   0s
@@ -64,15 +64,15 @@ for tries in {0..90}; do
     if [[ $tries -eq 90 ]]; then
       echo "ERROR 2: 1 or more external services never came up"
       echo "NAMESPACES:"
-      sudo $KUBECTL get namespaces
+      sudo -E $KUBECTL get namespaces
       echo "SERVICES:"
       echo "$services"
       if [ -x "$(command -v docker)" ]; then
         echo "DOCKER IMAGE CACHE:"
-        sudo docker images
+        sudo -E docker images
       fi
       echo "PODS:"
-      sudo $KUBECTL get pods -o wide
+      sudo -E $KUBECTL get pods -o wide
       storage_debug
       exit 2
     fi
@@ -83,7 +83,7 @@ done
 if [[ "$KUBE" == "k3s" ]]; then
   # This needs to be down here. Otherwise, the storage pod may not be
   # up in time.
-  STORAGE_POD=$(sudo $KUBECTL -n local-path-storage get pod | awk '/local-path-provisioner/{print $1}')
+  STORAGE_POD=$(sudo -E $KUBECTL -n local-path-storage get pod | awk '/local-path-provisioner/{print $1}')
 fi
 
 echo "Waiting for pods to transition to Running ..."
@@ -91,7 +91,7 @@ echo "Waiting for pods to transition to Running ..."
 # quay.io .
 # Therefore, this wait is highly dependent on network speed.
 for tries in {0..180}; do
-  pods=$(sudo $KUBECTL get pods -o wide)
+  pods=$(sudo -E $KUBECTL get pods -o wide)
   if [[ $(echo "$pods" | grep -c -v -E "STATUS|Running") -eq 0 ]]; then
     echo "PODS:"
     echo "$pods"
@@ -106,7 +106,7 @@ for tries in {0..180}; do
       echo "$pods"
       if [ -x "$(command -v docker)" ]; then
         echo "DOCKER IMAGE CACHE:"
-        sudo docker images
+        sudo -E docker images
       fi
     fi
     if [[ $tries -eq 180 ]]; then

@@ -32,9 +32,11 @@ spec:
             items:
               - path: pulp-admin-password
                 key: password
+{% if file_storage %}
         - name: pulp-file-storage
           persistentVolumeClaim:
             claimName: pulp-file-storage
+{% endif %}
       containers:
         - name: pulp-api
           image: "{{ registry }}/{{ project }}/{{ image }}:{{ tag }}"
@@ -80,6 +82,8 @@ spec:
               mountPath: "/etc/pulp/pulp-admin-password"
               subPath: pulp-admin-password
               readOnly: true
+{% if file_storage %}
             - name: pulp-file-storage
               readOnly: false
               mountPath: "/var/lib/pulp"
+{% endif %}

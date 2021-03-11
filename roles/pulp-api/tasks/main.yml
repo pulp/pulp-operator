@@ -2,12 +2,32 @@
 - set_fact:
     secret_key: "{{ lookup('password', '/dev/null length=50 chars=ascii_letters') }}"
 
+- set_fact:
+    file_storage: false
+  when:
+    - pulp_storage.object_storage is defined
+
 - name: pulp-file-storage persistent volume claim
   community.kubernetes.k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.pvc.yaml.j2') | from_yaml }}"
   with_items:
     - pulp-file-storage
+  when: file_storage
+
+- include_tasks:
+    file: s3-storage-configuration.yml
+  when:
+    - not file_storage
+    - pulp_storage.object_storage.s3_secret is defined
+    - pulp_storage.object_storage.s3_secret | length
+
+- include_tasks:
+    file: azure-storage-configuration.yml
+  when:
+    - not file_storage
+    - pulp_storage.object_storage.azure_secret is defined
+    - pulp_storage.object_storage.azure_secret | length
 
 # Workaround being unable to do the following, for the subsequent task:
 # when: (pulp_settings is not defined) or

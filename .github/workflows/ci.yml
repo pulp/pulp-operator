@@ -63,12 +63,12 @@ jobs:
         if: failure()
         run: |
           sudo docker images
-          sudo kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
-          sudo kubectl logs -l app=pulp-api --tail=10000
-          sudo kubectl logs -l app=pulp-content --tail=10000
-          sudo kubectl logs -l app=pulp-worker --tail=10000
-          sudo kubectl logs -l app=pulp-resource-manager --tail=10000
-          sudo kubectl logs -l app=pulp-web --tail=10000
+          sudo -E kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
+          sudo -E kubectl logs -l app=pulp-api --tail=10000
+          sudo -E kubectl logs -l app=pulp-content --tail=10000
+          sudo -E kubectl logs -l app=pulp-worker --tail=10000
+          sudo -E kubectl logs -l app=pulp-resource-manager --tail=10000
+          sudo -E kubectl logs -l app=pulp-web --tail=10000
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
 
   components:
@@ -135,12 +135,12 @@ jobs:
         if: failure()
         run: |
           sudo docker images
-          sudo kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
-          sudo kubectl logs -l app=pulp-api --tail=10000
-          sudo kubectl logs -l app=pulp-content --tail=10000
-          sudo kubectl logs -l app=pulp-worker --tail=10000
-          sudo kubectl logs -l app=pulp-resource-manager --tail=10000
-          sudo kubectl logs -l app=pulp-web --tail=10000
+          sudo -E kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
+          sudo -E kubectl logs -l app=pulp-api --tail=10000
+          sudo -E kubectl logs -l app=pulp-content --tail=10000
+          sudo -E kubectl logs -l app=pulp-worker --tail=10000
+          sudo -E kubectl logs -l app=pulp-resource-manager --tail=10000
+          sudo -E kubectl logs -l app=pulp-web --tail=10000
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
 
   galaxy:
@@ -211,12 +211,12 @@ jobs:
         if: failure()
         run: |
           sudo docker images
-          sudo kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
-          sudo kubectl logs -l app=pulp-api --tail=10000
-          sudo kubectl logs -l app=pulp-content --tail=10000
-          sudo kubectl logs -l app=pulp-worker --tail=10000
-          sudo kubectl logs -l app=pulp-resource-manager --tail=10000
-          sudo kubectl logs -l app=pulp-web --tail=10000
+          sudo -E kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
+          sudo -E kubectl logs -l app=pulp-api --tail=10000
+          sudo -E kubectl logs -l app=pulp-content --tail=10000
+          sudo -E kubectl logs -l app=pulp-worker --tail=10000
+          sudo -E kubectl logs -l app=pulp-resource-manager --tail=10000
+          sudo -E kubectl logs -l app=pulp-web --tail=10000
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
 
   molecule:
@@ -318,10 +318,10 @@ jobs:
         if: failure()
         run: |
           sudo docker images
-          sudo kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
-          sudo kubectl logs -l app=pulp-api --tail=10000
-          sudo kubectl logs -l app=pulp-content --tail=10000
-          sudo kubectl logs -l app=pulp-worker --tail=10000
-          sudo kubectl logs -l app=pulp-resource-manager --tail=10000
-          sudo kubectl logs -l app=pulp-web --tail=10000
+          sudo -E kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
+          sudo -E kubectl logs -l app=pulp-api --tail=10000
+          sudo -E kubectl logs -l app=pulp-content --tail=10000
+          sudo -E kubectl logs -l app=pulp-worker --tail=10000
+          sudo -E kubectl logs -l app=pulp-resource-manager --tail=10000
+          sudo -E kubectl logs -l app=pulp-web --tail=10000
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/

@@ -19,26 +19,17 @@ Role Variables
     [Dynaconf syntax](https://dynaconf.readthedocs.io/en/latest/guides/environment_variables.html#precedence-and-type-casting)
     Please see [pulpcore configuration docs](https://docs.pulpproject.org/en/master/nightly/installation/configuration.html#id2)
     for documentation on the possible variable names and their values.
-    * `databases`: The default database config.
-        * `default`: A dictionary with the default database values.
-              * `HOST`: The database host.
-              * `ENGINE`: The django backend engine.
-              * `NAME`: The database name.
-              * `USER`: The database user.
-              * `PASSWORD`: The database password.
-              * `PORT`: The database port.
-              * `CONN_MAX_AGE`: The lifetime of a database connection.
     * `debug`: Wether to run pulp in debug mode.
-    * `redis_host`: The redis host.
-    * `redis_port`: The redis port.
-    * `redis_password`: The redis password.
 * `registry`: The container registry.
 * `project`: The project name e.g. user or org name at the container registry.
 * `image`: The image name.
 * `tag`: The tag name.
-* `pulp_file_storage`: A dict for specifying a persistent volume claim for pulp-file.
-    * `access_mode`: The access mode for the volume.
-    * `size`: The storage size.
+* `pulp_storage`: A dict for specifying storage configuration.
+    * `file`: A dict for specifying a persistent volume claim for pulp-file.
+        * `access_mode`: The access mode for the volume.
+        * `size`: The storage size.
+    * `object_storage`: A dict for specifying s3 compliant object storage configuation.
+        * `s3_secret`: The kubernetes secret with s3 configuration information.
 
 Dependencies
 ------------

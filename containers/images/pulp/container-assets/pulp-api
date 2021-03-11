@@ -24,7 +24,9 @@ if [ -n "${PULP_ADMIN_PASSWORD}" ]; then
     django-admin reset-admin-password --password "${PULP_ADMIN_PASSWORD}"
 fi
 
-mkdir -p /var/lib/pulp/media
+mkdir -p /var/lib/pulp/media \
+         /var/lib/pulp/assets \
+         /var/lib/pulp/tmp
 
 # NOTE: Due to the Linux dual-stack functionality, this will listen on both IPv4
 # IPv6, even though netstat may seem to indicate it is IPv6 only.

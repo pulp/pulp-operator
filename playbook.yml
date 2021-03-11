@@ -26,9 +26,10 @@
     image: pulp
     image_web: pulp-web
     tag: stable
-    pulp_file_storage:
-      access_mode: "ReadWriteMany"
-      size: "100Gi"
+    pulp_storage:
+      file:
+        access_mode: "ReadWriteMany"
+        size: "100Gi"
   roles:
     - postgres
     - redis
