@@ -1,0 +1,160 @@
+---
+- name: Check for specified s3 storage configuration
+  k8s_info:
+    kind: Secret
+    namespace: '{{ meta.namespace }}'
+    name: '{{ pulp_storage.object_storage.s3_secret  }}'
+  register: _custom_s3_configuration
+
+- name: Check s3 secret data format
+  set_fact:
+    s3_secret_data_avaiable: true
+  when:
+    - _custom_s3_configuration is defined
+    - _custom_s3_configuration.resources is defined
+    - _custom_s3_configuration.resources[0] is defined
+    - _custom_s3_configuration.resources[0].data is defined
+
+- name: Fail if s3 secret object is an unexpected format
+  fail:
+    msg: "Cannot read the data for secret {{ pulp_storage.object_storage.s3_secret  }}"
+  when:
+    - not s3_secret_data_avaiable
+
+- name: Check if s3-access-key-id is found
+  set_fact:
+    s3_access_key_id_available: true
+  when:
+    - s3_secret_data_avaiable
+    - _custom_s3_configuration.resources[0].data['s3-access-key-id'] is defined
+    - _custom_s3_configuration.resources[0].data['s3-access-key-id'] | length
+
+- name: Check if s3-secret-access-key is found
+  set_fact:
+    s3_secret_access_key_available: true
+  when:
+    - s3_secret_data_avaiable
+    - _custom_s3_configuration.resources[0].data['s3-secret-access-key'] is defined
+    - _custom_s3_configuration.resources[0].data['s3-secret-access-key'] | length
+
+- name: Check if s3-bucket-name is found
+  set_fact:
+    s3_bucket_name_available: true
+  when:
+    - s3_secret_data_avaiable
+    - _custom_s3_configuration.resources[0].data['s3-bucket-name'] is defined
+    - _custom_s3_configuration.resources[0].data['s3-bucket-name'] | length
+
+- name: Check if s3-region is found
+  set_fact:
+    s3_region_available: true
+  when:
+    - s3_secret_data_avaiable
+    - _custom_s3_configuration.resources[0].data['s3-region'] is defined
+    - _custom_s3_configuration.resources[0].data['s3-region'] | length
+
+- name: Check if s3-endpoint is found
+  set_fact:
+    s3_endpoint_available: true
+  when:
+    - s3_secret_data_avaiable
+    - _custom_s3_configuration.resources[0].data['s3-endpoint'] is defined
+    - _custom_s3_configuration.resources[0].data['s3-endpoint'] | length
+
+- name: Fail if required s3 secret items are not present
+  fail:
+    msg: "Secret {{ pulp_storage.object_storage.s3_secret  }} is missing required configuration data."
+  when:
+    - s3_secret_data_avaiable
+    - not s3_access_key_id_available
+    - not s3_secret_access_key_available
+    - not s3_bucket_name_available
+    - not (s3_region_available or s3_endpoint_available)
+
+- name: Store s3 access key
+  set_fact:
+    s3_access_key_id: "{{ _custom_s3_configuration['resources'][0]['data']['s3-access-key-id'] | b64decode }}"
+
+- name: Store s3 secret
+  set_fact:
+    s3_secret_access_key: "{{ _custom_s3_configuration['resources'][0]['data']['s3-secret-access-key'] | b64decode }}"
+
+- name: Store s3 bucket name
+  set_fact:
+    s3_bucket_name: "{{ _custom_s3_configuration['resources'][0]['data']['s3-bucket-name'] | b64decode }}"
+
+- name: Store s3 bucket path
+  set_fact:
+    object_storage_path: "{{ _custom_s3_configuration['resources'][0]['data']['s3-bucket-path'] | b64decode }}"
+  when:
+    - s3_secret_data_avaiable
+    - _custom_s3_configuration.resources[0].data['s3-bucket-path'] is defined
+    - _custom_s3_configuration.resources[0].data['s3-bucket-path'] | length
+
+- name: Store s3 region
+  set_fact:
+    s3_region: "{{ _custom_s3_configuration['resources'][0]['data']['s3-region'] | b64decode }}"
+  when:
+    - s3_region_available
+
+- name: Store s3 endpoint
+  set_fact:
+    s3_endpoint: "{{ _custom_s3_configuration['resources'][0]['data']['s3-endpoint'] | b64decode }}"
+  when:
+    - s3_endpoint_available
+
+- name: Add s3 access key id to s3 settings
+  set_fact:
+    s3_access_key_id_dict : "{'AWS_ACCESS_KEY_ID': '{{ s3_access_key_id }}' }"
+
+- name: Add s3 secret key to s3 settings
+  set_fact:
+    s3_secret_access_key_dict : "{'AWS_SECRET_ACCESS_KEY': '{{ s3_secret_access_key }}' }"
+
+- name: Add s3 bucket to s3 settings
+  set_fact:
+    s3_bucket_name_dict : "{'AWS_STORAGE_BUCKET_NAME': '{{ s3_bucket_name }}' }"
+
+- name: Add s3 bucket path to s3 settings
+  set_fact:
+    s3_bucket_path_dict : "{'MEDIA_ROOT': '{{ object_storage_path }}' }"
+
+- name: Add s3 region to s3 settings
+  set_fact:
+    s3_region_dict : "{'AWS_S3_REGION_NAME': '{{ s3_region }}' }"
+  when: s3_region is defined
+
+- name: Add s3 endpoint to s3 settings
+  set_fact:
+    s3_endpoint_dict : "{'AWS_S3_ENDPOINT_URL': '{{ s3_endpoint }}' }"
+  when: s3_endpoint is defined
+
+- name: merge s3_access_key_id with settings
+  set_fact:
+    default_s3_settings: "{{ default_s3_settings|combine(s3_access_key_id_dict) }}"
+
+- name: merge s3_secret_access_key with settings
+  set_fact:
+    default_s3_settings: "{{ default_s3_settings|combine(s3_secret_access_key_dict) }}"
+
+- name: merge s3_bucket_name with settings
+  set_fact:
+    default_s3_settings: "{{ default_s3_settings|combine(s3_bucket_name_dict) }}"
+
+- name: merge s3_bucket_path with settings
+  set_fact:
+    default_s3_settings: "{{ default_s3_settings|combine(s3_bucket_path_dict) }}"
+
+- name: merge s3_region with settings
+  set_fact:
+    default_s3_settings: "{{ default_s3_settings|combine(s3_region_dict) }}"
+  when: s3_region_dict is defined
+
+- name: merge s3_endpoint with settings
+  set_fact:
+    default_s3_settings: "{{ default_s3_settings|combine(s3_endpoint_dict) }}"
+  when: s3_endpoint_dict is defined
+
+- name: merge default_s3_settings with settings
+  set_fact:
+    pulp_default_settings: "{{ pulp_default_settings|combine(default_s3_settings) }}"

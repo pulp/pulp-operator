@@ -3,10 +3,11 @@ kind: Pulp
 metadata:
   name: example-pulp
 spec:
-  pulp_file_storage:
-    # This doesn't really matter for minikube. Single node by design,
-    # but the storage provisioner allows for ReadWriteMany. So let's
-    # stick to our default.
-    access_mode: "ReadWriteMany"
-    # The minikube VM won't go any larger.
-    size: "375Gi"
+  pulp_storage:
+    file:
+      # This doesn't really matter for minikube. Single node by design,
+      # but the storage provisioner allows for ReadWriteMany. So let's
+      # stick to our default.
+      access_mode: "ReadWriteMany"
+      # The minikube VM won't go any larger.
+      size: "375Gi"

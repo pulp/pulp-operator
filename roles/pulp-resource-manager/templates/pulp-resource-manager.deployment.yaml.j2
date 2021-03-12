@@ -27,9 +27,11 @@ spec:
             items:
               - path: settings.py
                 key: settings.py
+{% if file_storage %}
         - name: pulp-file-storage
           persistentVolumeClaim:
             claimName: pulp-file-storage
+{% endif %}
       containers:
         - name: pulp-resource-manager
           image: "{{ registry }}/{{ project }}/{{ image }}:{{ tag }}"
@@ -48,6 +50,8 @@ spec:
           volumeMounts:
             - name: {{ meta.name }}-pulp-server
               mountPath: "/etc/pulp/"
+{% if file_storage %}
             - name: pulp-file-storage
               readOnly: false
               mountPath: "/var/lib/pulp"
+{% endif %}

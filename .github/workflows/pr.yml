@@ -107,12 +107,12 @@ jobs:
         if: failure()
         run: |
           sudo docker images
-          sudo kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
-          sudo kubectl logs -l app=pulp-api --tail=10000
-          sudo kubectl logs -l app=pulp-content --tail=10000
-          sudo kubectl logs -l app=pulp-worker --tail=10000
-          sudo kubectl logs -l app=pulp-resource-manager --tail=10000
-          sudo kubectl logs -l app=pulp-web --tail=10000
+          sudo -E kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
+          sudo -E kubectl logs -l app=pulp-api --tail=10000
+          sudo -E kubectl logs -l app=pulp-content --tail=10000
+          sudo -E kubectl logs -l app=pulp-worker --tail=10000
+          sudo -E kubectl logs -l app=pulp-resource-manager --tail=10000
+          sudo -E kubectl logs -l app=pulp-web --tail=10000
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
       # - name: Debugging example (uncomment when needed)
       #   if: failure()
@@ -152,7 +152,10 @@ jobs:
           minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
         # now you can run kubectl to see the pods in the cluster
       - name: Try the cluster !
-        run: kubectl get pods -A
+        run: |
+          kubectl config view > $PWD/kubeconfig
+          kubectl get pods -A
+          echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
       - name: Setup a minikube docker env
         run: minikube -p minikube docker-env | grep "export" | awk '{$1= ""; print $0}' >> $GITHUB_ENV
       - name: Build Operator
@@ -167,7 +170,10 @@ jobs:
           sudo -E docker images
         shell: bash
       - name: Deploy pulp-operator to K8s
-        run: sudo -E ./up.sh
+        run: |
+          echo $KUBECONFIG
+          cat $KUBECONFIG
+          sudo -E ./up.sh
         shell: bash
       - name: Check and wait pulp-operator deploy
         run: .ci/scripts/pulp-operator-check-and-wait.sh -m
@@ -183,12 +189,12 @@ jobs:
         if: failure()
         run: |
           sudo docker images
-          sudo kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
-          sudo kubectl logs -l app=pulp-api --tail=10000
-          sudo kubectl logs -l app=pulp-content --tail=10000
-          sudo kubectl logs -l app=pulp-worker --tail=10000
-          sudo kubectl logs -l app=pulp-resource-manager --tail=10000
-          sudo kubectl logs -l app=pulp-web --tail=10000
+          sudo -E kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
+          sudo -E kubectl logs -l app=pulp-api --tail=10000
+          sudo -E kubectl logs -l app=pulp-content --tail=10000
+          sudo -E kubectl logs -l app=pulp-worker --tail=10000
+          sudo -E kubectl logs -l app=pulp-resource-manager --tail=10000
+          sudo -E kubectl logs -l app=pulp-web --tail=10000
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
       # - name: Debugging example (uncomment when needed)
       #   if: failure()
@@ -263,12 +269,12 @@ jobs:
         if: failure()
         run: |
           sudo docker images
-          sudo kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
-          sudo kubectl logs -l app=pulp-api --tail=10000
-          sudo kubectl logs -l app=pulp-content --tail=10000
-          sudo kubectl logs -l app=pulp-worker --tail=10000
-          sudo kubectl logs -l app=pulp-resource-manager --tail=10000
-          sudo kubectl logs -l app=pulp-web --tail=10000
+          sudo -E kubectl logs -l name=pulp-operator -c pulp-operator --tail=10000
+          sudo -E kubectl logs -l app=pulp-api --tail=10000
+          sudo -E kubectl logs -l app=pulp-content --tail=10000
+          sudo -E kubectl logs -l app=pulp-worker --tail=10000
+          sudo -E kubectl logs -l app=pulp-resource-manager --tail=10000
+          sudo -E kubectl logs -l app=pulp-web --tail=10000
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
       # - name: Debugging example (uncomment when needed)
       #   if: failure()

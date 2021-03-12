@@ -43,6 +43,9 @@ spec:
                 default: stable
               pulp_settings:
                 description: The pulp settings.
+                properties:
+                  debug:
+                    type: string
                 type: object
               pulp_admin_password_secret:
                   description: Secret where the administrator password can be found
@@ -87,19 +90,33 @@ spec:
               postgres_data_path:
                 description: Path where the PostgreSQL data are located
                 type: string
-              pulp_file_storage:
-                description: Configuration for the persistentVolumeClaim for /var/lib/pulp.
+              pulp_storage:
+                description: Configuration for the storage to be utilized
                 properties:
-                  access_mode:
-                    description: The file storage access mode.
-                    type: string
-                    default: ReadWriteMany
-                    enum:
-                      - ReadWriteMany
-                      - ReadWriteOnce
-                  size:
-                    description: The size of the file storage; for example 100Gi.
-                    type: string
+                  file:
+                    description: Configuration for the persistentVolumeClaim for /var/lib/pulp.
+                    properties:
+                      access_mode:
+                        description: The file storage access mode.
+                        type: string
+                        default: ReadWriteMany
+                        enum:
+                          - ReadWriteMany
+                          - ReadWriteOnce
+                      size:
+                        description: The size of the file storage; for example 100Gi.
+                        type: string
+                    type: object
+                  object_storage:
+                    description: Configuration for the object storage.
+                    properties:
+                      s3_secret:
+                        description: The secret for S3 compliant object storage configuration.
+                        type: string
+                      azure_secret:
+                        description: The secret for Azure blob storage configuration.
+                        type: string
+                    type: object
                 type: object
               pulp_hostname:
                 description: The hostname of the instance

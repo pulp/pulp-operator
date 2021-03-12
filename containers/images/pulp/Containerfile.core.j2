@@ -47,10 +47,12 @@ RUN		dnf -y update && \
 # Need to install optional dep, rhsm, for pulp-certguard
 RUN pip install rhsm
 
-RUN mkdir -p /etc/pulp
-RUN mkdir -p /var/lib/pulp/media
+RUN mkdir -p /etc/pulp \
+			 /var/lib/pulp/media \
+			 /var/lib/pulp/assets \
+			 /var/lib/pulp/tmp
 
-RUN pip install gunicorn django-storages[boto3]
+RUN pip install gunicorn django-storages[boto3,azure]
 {% if s3_test is defined %}
 # Hacking botocore (https://github.com/boto/botocore/pull/1990):
 RUN sed -i "s/hasattr(body, 'read')/getattr(body, '_size', None)/g" $(pip show botocore | grep -i location | awk '{ print $2 }')/botocore/handlers.py

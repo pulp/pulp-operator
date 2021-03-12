@@ -29,3 +29,31 @@ ingress_tls_secret: ''
 # credentials to deploy
 #
 route_tls_secret: ''
+
+file_storage: true
+
+object_storage_path: ''
+
+s3_secret_data_avaiable: false
+s3_access_key_id_available: false
+s3_secret_access_key_available: false
+s3_bucket_name_available: false
+s3_region_available: false
+s3_endpoint_available: false
+
+default_s3_settings:
+  AWS_DEFAULT_ACL: "@none None"
+  S3_USE_SIGV4: true
+  AWS_S3_SIGNATURE_VERSION: "s3v4"
+  AWS_S3_ADDRESSING_STYLE: "path"
+  DEFAULT_FILE_STORAGE: "storages.backends.s3boto3.S3Boto3Storage"
+
+azure_secret_data_avaiable: false
+azure_account_name_available: false
+azure_account_key_available: false
+azure_container_available: false
+
+default_azure_settings:
+  AZURE_URL_EXPIRATION_SECS: 60
+  AZURE_OVERWRITE_FILES: "True"
+  DEFAULT_FILE_STORAGE: "storages.backends.azure_storage.AzureStorage"
