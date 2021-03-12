@@ -26,3 +26,5 @@ route_tls_termination_mechanism: edge
 route_tls_secret: ''
 
 ca_trust_bundle: "/etc/pki/tls/certs/ca-bundle.crt"
+
+pulp_webserver_static_dir: "/www/data"

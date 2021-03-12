@@ -37,6 +37,10 @@ spec:
                 description: The image name (repo name) for the pulp image.
                 type: string
                 default: pulp
+              image_web:
+                description: The image name (repo name) for the pulp webserver image.
+                type: string
+                default: pulp-web
               tag:
                 description: The image tag for the pulp image.
                 type: string
