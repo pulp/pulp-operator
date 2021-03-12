@@ -11,7 +11,7 @@ on:
     - cron: '00 3 * * *'
 jobs:
   insta:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -72,7 +72,7 @@ jobs:
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
 
   components:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -144,7 +144,7 @@ jobs:
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
 
   galaxy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -220,7 +220,7 @@ jobs:
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
 
   molecule:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -255,7 +255,7 @@ jobs:
           docker exec -it osdk-test-control-plane journalctl -S today --no-pager
 
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     needs: [insta, components, molecule]
     steps:
       - uses: actions/checkout@v2
