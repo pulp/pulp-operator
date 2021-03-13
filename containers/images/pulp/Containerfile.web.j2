@@ -1,13 +1,24 @@
 FROM {{ registry | default('quay.io') }}/{{ project | default('pulp') }}/{{ item.value.base_image_name | default('pulp') }}:{{ item.value.tag | default('latest') }} as builder
 
-RUN mkdir -p /etc/nginx/pulp
+RUN mkdir -p /etc/nginx/pulp \
+             /www/data
 {% for plugin in item.value.plugin_snippets %}
 RUN ln /usr/local/lib/python{{ item.value.python_version }}/site-packages/{{ plugin }}/app/webserver_snippets/nginx.conf /etc/nginx/pulp/{{ plugin }}.conf
 {% endfor %}
 
+{% if item.value.base_image_name == "galaxy" %}
+RUN cp -fr /usr/local/lib/python{{ item.value.python_version }}/site-packages/galaxy_ng/app/static/galaxy_ng/. /www/data
+{% endif %}
+
+
 FROM nginx:latest
 
-RUN mkdir -p /etc/nginx/pulp
+RUN mkdir -p /etc/nginx/pulp \
+             /www/data
 WORKDIR /etc/nginx/pulp
 COPY --from=builder /etc/nginx/pulp .
+{% if item.value.base_image_name == "galaxy" %}
+WORKDIR /www/data
+COPY --from=builder /www/data .
+{% endif %}
 WORKDIR /

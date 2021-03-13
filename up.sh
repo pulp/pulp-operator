@@ -16,6 +16,8 @@ else
     echo "$0: ERROR 1: Cannot find kubectl"
 fi
 
+KUBE_ASSETS_DIR=${KUBE_ASSETS_DIR:-".ci/assets/kubernetes"}
+
 # TODO: Check if these should only ever be run once; or require
 # special logic to update
 # The Custom Resource (and any ConfigMaps) do not.
@@ -25,7 +27,23 @@ if [[ -e deploy/crds/pulpproject_v1beta1_pulp_cr.yaml ]]; then
 elif [[ "$CI_TEST" == "true" ]]; then
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.ci.yaml
   echo "Will deploy admin password secret for testing ..."
-  $KUBECTL apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
+  $KUBECTL apply -f $KUBE_ASSETS_DIR/pulp-admin-password.secret.yaml
+elif [[ "$CI_TEST" == "aws" ]]; then
+  CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.object_storage.aws.yaml
+  echo "Will deploy admin password secret for testing ..."
+  $KUBECTL apply -f $KUBE_ASSETS_DIR/pulp-admin-password.secret.yaml
+  echo "Will deploy object storage secret for testing ..."
+  $KUBECTL apply -f $KUBE_ASSETS_DIR/pulp-object-storage.aws.secret.yaml
+elif [[ "$CI_TEST" == "azure" ]]; then
+  CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.object_storage.azure.yaml
+  echo "Will deploy admin password secret for testing ..."
+  $KUBECTL apply -f $KUBE_ASSETS_DIR/pulp-admin-password.secret.yaml
+  echo "Will deploy object storage secret for testing ..."
+  $KUBECTL apply -f $KUBE_ASSETS_DIR/pulp-object-storage.azure.secret.yaml
+elif [[ "$CI_TEST" == "galaxy" ]]; then
+  CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.galaxy.ci.yaml
+  echo "Will deploy admin password secret for testing ..."
+  $KUBECTL apply -f $KUBE_ASSETS_DIR/pulp-admin-password.secret.yaml
 elif [[ "$(hostname)" == "pulp-demo"* ]]; then
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.pulp-demo.yaml
 else

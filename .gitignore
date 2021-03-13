@@ -9,4 +9,9 @@ Pipfile.lock
 
 # Ignore generated container files
 containers/images/pulp/Containerfile.core.p*
+containers/images/pulp/Containerfile.core.g*
 containers/images/pulp/Containerfile.web.p*
+containers/images/pulp/Containerfile.web.g*
+
+# Ignore testing directory
+testing/*

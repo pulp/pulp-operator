@@ -72,6 +72,10 @@ data:
             # Gunicorn docs suggest this value.
             keepalive_timeout 5;
 
+            # static files that can change dynamically, or are needed for TLS
+            # purposes are served through the webserver.
+            root {{ pulp_webserver_static_dir }};
+
             location /pulp/content/ {
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                 proxy_set_header X-Forwarded-Proto $scheme;

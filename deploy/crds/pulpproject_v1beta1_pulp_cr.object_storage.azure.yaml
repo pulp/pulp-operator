@@ -1,0 +1,14 @@
+apiVersion: pulp.pulpproject.org/v1beta1
+kind: Pulp
+metadata:
+  name: example-pulp
+spec:
+  tag: "latest"
+  ingress_type: Ingress
+  pulp_admin_password_secret: "example-pulp-admin-password"
+  pulp_settings:
+    debug: "True"
+  pulp_storage:
+    object_storage:
+      azure_secret: example-pulp-object-storage
+
