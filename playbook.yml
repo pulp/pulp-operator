@@ -39,3 +39,4 @@
     - pulp-worker
     - pulp-web
     - pulp-routes
+    - pulp-status

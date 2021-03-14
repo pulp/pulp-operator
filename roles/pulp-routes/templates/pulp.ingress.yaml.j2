@@ -17,7 +17,7 @@ spec:
           - path: /
             backend:
               serviceName: '{{ meta.name }}-web-svc'
-              servicePort: 80
+              servicePort: 24880
 {% if ingress_tls_secret %}
   tls:
     - hosts:

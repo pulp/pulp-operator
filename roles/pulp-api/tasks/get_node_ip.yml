@@ -9,13 +9,13 @@
 
 - name: Set node address for ingress
   set_fact:
-    node_address: "{{ web_protocol }}://{{ pulp_hostname }}"
+    content_origin: "{{ web_protocol }}://{{ pulp_hostname }}"
   when:
     - ingress_type|lower == "ingress"
 
 - name: Set node address for route
   set_fact:
-    node_address: "{{ web_protocol }}://{{ route_host }}"
+    content_origin: "{{ web_protocol }}://{{ route_host }}"
   when:
     - ingress_type|lower == "route"
 
@@ -25,31 +25,31 @@
     kind: Node
   register: k8s_nodes
   when:
-    - node_address is not defined
+    - content_origin is not defined
 
 - name: DEBUG Show k8s_nodes
   debug:
     msg: "{{ k8s_nodes }}"
   when:
-    - node_address is not defined
+    - content_origin is not defined
 
 - name: Set node address
   set_fact:
-    node_address: "http://{{ k8s_nodes.resources[0].status.addresses[0].address }}:24816"
+    content_origin: "http://{{ k8s_nodes.resources[0].status.addresses[0].address }}:24880"
   when:
-    - node_address is not defined
+    - content_origin is not defined
 
 - name: Set content_origin
   set_fact:
-    node_address: "{'content_origin': '{{ node_address }}' }"
+    content_origin_dict: "{'content_origin': '{{ content_origin }}' }"
 
-- name: DEBUG Show node_address
+- name: DEBUG Show content_origin_dict
   debug:
-    msg: "{{ node_address }}"
+    msg: "{{ content_origin_dict }}"
 
 - name: merge content_origin with settings
   set_fact:
-    pulp_default_settings: "{{ pulp_default_settings|combine(node_address) }}"
+    pulp_default_settings: "{{ pulp_default_settings|combine(content_origin_dict) }}"
 
 - name: DEBUG Show content_origin
   debug:
