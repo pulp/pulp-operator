@@ -19,7 +19,7 @@ cd $GITHUB_WORKSPACE
 echo "Test pulp/pulpcore images"
 sudo -E ./up.sh
 .ci/scripts/pulp-operator-check-and-wait.sh $KUBE_FLAG
-.ci/scripts/pulp_file-tests.sh -m
+.ci/scripts/retry.sh 3 ".ci/scripts/pulp_file-tests.sh -m"
 
 docker images
 

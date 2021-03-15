@@ -16,9 +16,11 @@ spec:
       labels:
         app: "{{ deployment_type }}-api"
     spec:
+{% if is_k8s %}
       securityContext:
         runAsUser: 0
         fsGroup: 0
+{% endif %}
       volumes:
         - name: {{ meta.name }}-pulp-server
           secret:

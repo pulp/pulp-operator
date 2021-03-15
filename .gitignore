@@ -15,3 +15,5 @@ containers/images/pulp/Containerfile.web.g*
 
 # Ignore testing directory
 testing/*
+
+Containerfile.bundle

@@ -8,7 +8,5 @@ spec:
   pulp_admin_password_secret: "example-pulp-admin-password"
   pulp_settings:
     debug: "True"
-  pulp_storage:
-    object_storage:
-      azure_secret: example-pulp-object-storage
-
+  pulp_storage_type: Azure
+  pulp_object_storage_azure_secret: example-pulp-object-storage

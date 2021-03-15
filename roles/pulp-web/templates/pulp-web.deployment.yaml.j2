@@ -32,14 +32,14 @@ spec:
 {% endif %}
           ports:
             - protocol: TCP
-              containerPort: 80
+              containerPort: 8080
 {% if ingress_type | lower == 'route' and route_tls_termination_mechanism | lower == 'passthrough' %}
             - containerPort: 443
 {% endif %}
           livenessProbe:
             httpGet:
               path: pulp/api/v3/status/
-              port: 80
+              port: 8080
               scheme: HTTP
             failureThreshold: 5
             initialDelaySeconds: 60
@@ -48,7 +48,7 @@ spec:
           readinessProbe:
             httpGet:
               path: pulp/api/v3/status/
-              port: 80
+              port: 8080
               scheme: HTTP
             failureThreshold: 10
             initialDelaySeconds: 30

@@ -8,9 +8,9 @@ spec:
   tag: "latest"
   ingress_type: Ingress
   pulp_admin_password_secret: "example-pulp-admin-password"
-  pulp_storage:
-    file:
-      # k3s local-path requires this
-      access_mode: "ReadWriteOnce"
-      # We have a little over 10GB free on GHA VMs/instances
-      size: "10Gi"
+  pulp_storage_type: File
+  pulp_file_storage:
+    # k3s local-path requires this
+    access_mode: "ReadWriteOnce"
+    # We have a little over 10GB free on GHA VMs/instances
+    size: "10Gi"

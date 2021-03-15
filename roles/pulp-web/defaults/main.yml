@@ -27,4 +27,5 @@ route_tls_secret: ''
 
 ca_trust_bundle: "/etc/pki/tls/certs/ca-bundle.crt"
 
-pulp_webserver_static_dir: "/www/data"
+pulp_webserver_static_dir: "/opt/app-root/src"
+pulp_nginx_conf_dir: "/opt/app-root/etc/nginx.d"
