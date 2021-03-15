@@ -1,0 +1,51 @@
+---
+- name: Set apiVersion and kind variables
+  set_fact:
+    api_version: '{{ hostvars["localhost"]["inventory_file"].split("/")[4:6] | join("/")  }}'
+    kind: '{{ hostvars["localhost"]["inventory_file"].split("/")[6]  }}'
+
+- name: Update admin password status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ meta.name }}"
+    namespace: "{{ meta.namespace }}"
+    status:
+      adminPasswordSecret: "{{ pulp_admin_password_secret_obj['resources'][0]['metadata']['name'] }}"
+
+- name: Update version status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ meta.name }}"
+    namespace: "{{ meta.namespace }}"
+    status:
+      deployedVersion: "{{ tag }}"
+
+- name: Update image status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ meta.name }}"
+    namespace: "{{ meta.namespace }}"
+    status:
+      deployedImage: "{{ registry }}/{{ project }}/{{ image }}:{{ tag }}"
+
+- block:
+    - name: Retrieve route URL
+      community.kubernetes.k8s_info:
+        kind: Route
+        namespace: '{{ meta.namespace }}'
+        name: '{{ meta.name }}'
+      register: route_url
+
+    - name: Update URL status
+      operator_sdk.util.k8s_status:
+        api_version: '{{ api_version }}'
+        kind: "{{ kind }}"
+        name: "{{ meta.name }}"
+        namespace: "{{ meta.namespace }}"
+        status:
+          webURL: "https://{{ route_url['resources'][0]['status']['ingress'][0]['host'] }}"
+
+  when: ingress_type | lower == 'route'

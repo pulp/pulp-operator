@@ -17,6 +17,7 @@ nav:
       - Pulp Routes: roles/pulp-routes.md
       - Pulp Worker: roles/pulp-worker.md
       - Pulp Web: roles/pulp-web.md
+      - Pulp Status: roles/pulp-status.md
       - Postgres: roles/postgres.md
       - Redis: roles/redis.md
   - Changelog: CHANGES.md
