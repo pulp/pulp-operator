@@ -11,14 +11,12 @@ RUN cp -fr /usr/local/lib/python{{ item.value.python_version }}/site-packages/ga
 {% endif %}
 
 
-FROM nginx:latest
+FROM centos/nginx-116-centos7:1.16
 
-RUN mkdir -p /etc/nginx/pulp \
-             /www/data
-WORKDIR /etc/nginx/pulp
-COPY --from=builder /etc/nginx/pulp .
 {% if item.value.base_image_name == "galaxy" %}
-WORKDIR /www/data
 COPY --from=builder /www/data .
 {% endif %}
-WORKDIR /
+COPY --from=builder /etc/nginx/pulp/*.conf "${NGINX_CONFIGURATION_PATH}"/
+
+# Run script uses standard ways to run the application
+CMD nginx -g "daemon off;"

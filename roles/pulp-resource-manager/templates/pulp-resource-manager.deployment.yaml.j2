@@ -16,10 +16,11 @@ spec:
       labels:
         app: "{{ deployment_type }}-resource-manager"
     spec:
+{% if is_k8s %}
       securityContext:
         runAsUser: 0
         fsGroup: 0
-      #serviceAccountName: "{{ project_name }}-anyuid"
+{% endif %}
       volumes:
         - name: {{ meta.name }}-pulp-server
           secret:
@@ -31,6 +32,9 @@ spec:
         - name: pulp-file-storage
           persistentVolumeClaim:
             claimName: pulp-file-storage
+{% else %}
+        - name: pulp-tmp-file-storage
+          emptyDir: {}
 {% endif %}
       containers:
         - name: pulp-resource-manager
@@ -50,8 +54,11 @@ spec:
           volumeMounts:
             - name: {{ meta.name }}-pulp-server
               mountPath: "/etc/pulp/"
-{% if file_storage %}
+{% if file_storage %}              
             - name: pulp-file-storage
               readOnly: false
               mountPath: "/var/lib/pulp"
+{% else %}
+            - name: pulp-tmp-file-storage
+              mountPath: "/var/lib/pulp/tmp"
 {% endif %}

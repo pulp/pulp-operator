@@ -14,5 +14,7 @@ spec:
       targetPort: 24816
       name: pulp-content-24816
       port: 24816
+{% if ingress_type|lower == "none" %}
       nodePort: 24816
   type: NodePort
+{% endif %}

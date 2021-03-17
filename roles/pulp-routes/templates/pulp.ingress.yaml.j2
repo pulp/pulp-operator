@@ -38,7 +38,7 @@ spec:
   host: {{ route_host }}
 {% endif %}
   port:
-    targetPort: '{{ (route_tls_termination_mechanism | lower == "passthrough") | ternary("https", "http") }}'
+    targetPort: '{{ (route_tls_termination_mechanism | lower == "passthrough") | ternary("pulp-web-8443", "pulp-web-8080") }}'
   tls:
     insecureEdgeTerminationPolicy: Redirect
     termination: {{ route_tls_termination_mechanism | lower }}

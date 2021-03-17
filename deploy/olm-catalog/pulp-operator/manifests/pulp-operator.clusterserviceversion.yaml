@@ -1,0 +1,391 @@
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: |-
+      [
+        {
+          "apiVersion": "pulp.pulpproject.org/v1beta1",
+          "kind": "Pulp",
+          "metadata": {
+            "name": "example-pulp",
+            "namespace": "example-pulp"
+          },
+          "spec": {
+            "tag": "latest",
+            "pulp_storage_type": "File",
+            "pulp_file_storage": {
+              "size": "50Gi"
+            }
+          }
+        }
+      ]
+    capabilities: Basic Install
+    operators.operatorframework.io/builder: operator-sdk-v0.19.4
+    operators.operatorframework.io/project_layout: ansible
+  name: pulp-operator.v0.2.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: A Pulp Instance
+      kind: Pulp
+      name: pulps.pulp.pulpproject.org
+      version: v1beta1
+      specDescriptors:
+      - displayName: Hostname
+        path: pulp_hostname
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - displayName: Admin password secret
+        path: pulp_admin_password_secret
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:io.kubernetes:Secret
+      - displayName: Database configuration secret
+        path: postgres_configuration_secret
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:io.kubernetes:Secret
+      - displayName: Database initialization arguments
+        path: postgres_initdb_args
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Database host authentication method
+        path: postgres_host_auth_method
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Database image
+        path: postgres_image
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Database resource requirements
+        path: postgres_resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+      - displayName: Database data path
+        path: postgres_data_path
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Database storage class
+        path: postgres_storage_class
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Ingress Type
+        path: ingress_type
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:select:none
+        - urn:alm:descriptor:com.tectonic.ui:select:Ingress
+        - urn:alm:descriptor:com.tectonic.ui:select:Route
+      - displayName: Pulp Ingress Annotations
+        path: ingress_annotations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
+      - displayName: Pulp Ingress TLS Secret
+        path: ingress_tls_secret
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:io.kubernetes:Secret
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
+      - displayName: Route DNS host
+        path: route_host
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route
+      - displayName: Route TLS termination mechanism
+        path: route_tls_termination_mechanism
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:select:Edge
+        - urn:alm:descriptor:com.tectonic.ui:select:Passthrough
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route
+      - displayName: Route TLS credential secret
+        path: route_tls_secret
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:io.kubernetes:Secret
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route
+      - displayName: Pulp Storage Configuration
+        path: pulp_storage
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Pulp Storage Type
+        path: pulp_storage_type
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:select:File
+        - urn:alm:descriptor:com.tectonic.ui:select:S3
+        - urn:alm:descriptor:com.tectonic.ui:select:Azure
+      - displayName: Pulp File Storage Configuration
+        path: pulp_file_storage
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:pulp_storage_type:File
+      - displayName: Pulp S3 Storage Secret
+        path: pulp_object_storage_s3_secret
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:io.kubernetes:Secret
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:pulp_storage_type:S3
+      - displayName: Pulp Azure Storage Secret
+        path: pulp_object_storage_azure_secret
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:io.kubernetes:Secret
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:pulp_storage_type:Azure
+      - displayName: Pulp Settings
+        path: pulp_settings
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Pulp API Configuration
+        path: pulp_api
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Pulp Content Configuration
+        path: pulp_content
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Pulp Resource Manager Configuration
+        path: pulp_resource_manager
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Pulp Worker Configuration
+        path: pulp_worker
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Pulp Web Server Configuration
+        path: pulp_web
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Deployment Type
+        path: deployment_type
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Pulp Registry
+        path: registry
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Pulp project
+        path: project
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Pulp Image
+        path: image
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Pulp Web Server Image
+        path: image_web
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Pulp Image Tag
+        path: tag
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Certificate Authorirty Trust Bundle
+        path: ca_trust_bundle
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+    statusDescriptors:
+      - displayName: URL
+        description: Route to access the instance deployed
+        path: webURL
+        x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+      - displayName: Admin Password
+        description: Admin password for the instance deployed
+        path: adminPasswordSecret
+        x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+      - displayName: Version
+        description: Version of the instance deployed
+        path: deployedVersion
+        x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+      - displayName: Image
+        description: Image of the instance deployed
+        path: deployedImage
+        x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+  description: Pulp operator
+  displayName: Pulp
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - route.openshift.io
+          resources:
+          - routes
+          - routes/custom-host
+          verbs:
+          - '*'
+        - apiGroups:
+          - ""
+          - rbac.authorization.k8s.io
+          resources:
+          - pods
+          - services
+          - services/finalizers
+          - endpoints
+          - persistentvolumeclaims
+          - events
+          - configmaps
+          - secrets
+          - roles
+          - rolebindings
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - apps
+          - extensions
+          resources:
+          - deployments
+          - daemonsets
+          - replicasets
+          - statefulsets
+          - ingresses
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - monitoring.coreos.com
+          resources:
+          - servicemonitors
+          verbs:
+          - get
+          - create
+        - apiGroups:
+          - apps
+          resourceNames:
+          - pulp-operator
+          resources:
+          - deployments/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          verbs:
+          - get
+        - apiGroups:
+          - apps
+          resources:
+          - replicasets
+          - deployments
+          verbs:
+          - get
+        - apiGroups:
+          - pulp.pulpproject.org
+          resources:
+          - '*'
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        serviceAccountName: pulp-operator
+      deployments:
+      - name: pulp-operator
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              name: pulp-operator
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                name: pulp-operator
+            spec:
+              containers:
+              - env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.annotations['olm.targetNamespaces']
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: OPERATOR_NAME
+                  value: pulp-operator
+                - name: ANSIBLE_GATHERING
+                  value: explicit
+                image: quay.io/pulp/pulp-operator:latest
+                imagePullPolicy: Always
+                livenessProbe:
+                  httpGet:
+                    path: /healthz
+                    port: 6789
+                  initialDelaySeconds: 5
+                  periodSeconds: 3
+                name: pulp-operator
+                resources: {}
+                volumeMounts:
+                - mountPath: /tmp/ansible-operator/runner
+                  name: runner
+              serviceAccountName: pulp-operator
+              volumes:
+              - emptyDir: {}
+                name: runner
+    strategy: deployment
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - pulp
+  links:
+  - name: Pulp Operator
+    url: https://github.com/pulp/pulp-operator
+  maintainers:
+  - email: pulp-list@redhat.com
+    name: Pulp Community
+  maturity: alpha
+  provider:
+    name: Pulp Community
+    url: https://github.com/pulp/pulp-operator
+  version: 0.2.0

@@ -19,29 +19,32 @@ metadata:
   # PostgreSQL container settings secret.
 # postgres_configuration_secret: pg_secret_name
   # Configuration for the persistentVolumeClaim for /var/lib/pulp
-# pulp_storage:
-#   file:
+# pulp_storage_type: File
+  # Select storage type: File, S3, Azure
+# pulp_file_storage:
       # If your K8s cluster is only 1 node, and its StorageClass /
-      # provisioner does not support ReadWriteMany, then you must change
-      # this to "ReadWriteOnce".
-      #
-      # If your K8s cluster is multiple nodes, and does not support
-      # ReadWriteMany, then pulp-operator is currently incompatible.
-      #
-      # Reference on which support ReadWriteMany:
-      # https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes
-#       access_mode: "ReadWriteMany"
+    # provisioner does not support ReadWriteMany, then you must change
+    # this to "ReadWriteOnce".
+    #
+    # If your K8s cluster is multiple nodes, and does not support
+    # ReadWriteMany, then pulp-operator is currently incompatible.
+    #
+    # Reference on which support ReadWriteMany:
+    # https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes
+#   access_mode: "ReadWriteMany"
 
-      # How much space do you want to give Pulp for storing content under
-      # /var/lib/pulp ?
-      # https://docs.pulpproject.org/en/3.0/nightly/installation/configuration.html#media-root
+    # How much space do you want to give Pulp for storing content under
+    # /var/lib/pulp ?
+    # https://docs.pulpproject.org/en/3.0/nightly/installation/configuration.html#media-root
 
-      # For reference, epel7 x86_64 is currently (2019-07) 30G. So 100G
-      # should be sufficient for a test deployment with only the RPM
-      # content plugin.
-#     size: "100Gi"
-#   object_storage:
-#     s3_secret: "s3secret"
+    # For reference, epel7 x86_64 is currently (2019-07) 30G. So 100G
+    # should be sufficient for a test deployment with only the RPM
+    # content plugin.
+#   size: "100Gi"
+# pulp_object_storage_s3_secret: example-pulp-object-storage
+  # Configuration for S3 credentals
+# pulp_object_storage_azure_secret: example-pulp-object-storage
+  # Configuration for Azure credentals
   # Values below are set in roles rather than in playbook.yaml
 # pulp_api:
 #   replicas: 1

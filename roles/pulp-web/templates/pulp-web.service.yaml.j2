@@ -11,8 +11,10 @@ spec:
     app: pulp-web
   ports:
     - protocol: TCP
-      targetPort: 80
-      name: pulp-web-80
+      targetPort: 8080
+      name: pulp-web-8080
       port: 24880
+{% if ingress_type|lower == "none" %}
       nodePort: 24880
   type: NodePort
+{% endif %}

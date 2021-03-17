@@ -1,0 +1,9 @@
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: my-pulp-catalog
+  namespace: openshift-marketplace
+spec:
+  sourceType: grpc
+  image: quay.io/pulp/pulp-index:0.0.1

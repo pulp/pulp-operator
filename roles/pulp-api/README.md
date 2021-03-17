@@ -24,12 +24,12 @@ Role Variables
 * `project`: The project name e.g. user or org name at the container registry.
 * `image`: The image name.
 * `tag`: The tag name.
-* `pulp_storage`: A dict for specifying storage configuration.
-    * `file`: A dict for specifying a persistent volume claim for pulp-file.
-        * `access_mode`: The access mode for the volume.
-        * `size`: The storage size.
-    * `object_storage`: A dict for specifying s3 compliant object storage configuation.
-        * `s3_secret`: The kubernetes secret with s3 configuration information.
+* `pulp_storage_type`: A string for specifying storage configuration type.
+* `pulp_file_storage`: A dict for specifying a persistent volume claim for pulp-file.
+    * `access_mode`: The access mode for the volume.
+    * `size`: The storage size.
+* `pulp_object_storage_s3_secret`:The kubernetes secret with s3 storage configuration information.
+* `pulp_object_storage_azure_secret`:The kubernetes secret with Azure blob storage configuration information.
 
 Dependencies
 ------------

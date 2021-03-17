@@ -34,7 +34,7 @@ data:
 
         {% if route_tls_termination_mechanism | lower == 'passthrough' %}
         server {
-            listen 80 default_server;
+            listen 8080 default_server;
             server_name _;
 
             # Redirect all HTTP links to the matching HTTPS page
@@ -44,8 +44,8 @@ data:
 
         server {
         {% if route_tls_termination_mechanism | lower == 'passthrough' %}
-            listen 443 default_server deferred ssl;
-            listen [::]:443 default_server deferred ssl;
+            listen 8443 default_server deferred ssl;
+            listen [::]:8443 default_server deferred ssl;
 
             ssl_certificate /etc/nginx/pki/web.crt;
             ssl_certificate_key /etc/nginx/pki/web.key;
@@ -59,8 +59,8 @@ data:
             ssl_prefer_server_ciphers on;
         {% else %}
             # Gunicorn docs suggest the use of the "deferred" directive on Linux.
-            listen 80 default_server deferred;
-            listen [::]:80 default_server deferred;
+            listen 8080 default_server deferred;
+            listen [::]:8080 default_server deferred;
         {% endif %}
 
             # If you have a domain name, this is where to add it
@@ -107,7 +107,7 @@ data:
                 proxy_pass http://pulp-api;
             }
 
-            include pulp/*.conf;
+            include {{ pulp_nginx_conf_dir }}/*.conf;
 
             location / {
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

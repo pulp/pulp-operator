@@ -57,3 +57,6 @@ default_azure_settings:
   AZURE_URL_EXPIRATION_SECS: 60
   AZURE_OVERWRITE_FILES: "True"
   DEFAULT_FILE_STORAGE: "storages.backends.azure_storage.AzureStorage"
+
+is_k8s: false
+is_openshift: false
