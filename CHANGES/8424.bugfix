@@ -1,0 +1,1 @@
+Fix storage option check so that Azure Blob Storage can be used as a backend

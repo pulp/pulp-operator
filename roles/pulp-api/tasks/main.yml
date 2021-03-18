@@ -5,7 +5,7 @@
 - set_fact:
     file_storage: false
   when:
-    - pulp_object_storage_s3_secret is defined or pulp_object_storage_s3_secret is defined
+    - pulp_object_storage_s3_secret is defined or pulp_object_storage_azure_secret is defined
 
 - name: pulp-file-storage persistent volume claim
   community.kubernetes.k8s:
