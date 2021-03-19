@@ -34,6 +34,7 @@ spec:
       kind: Pulp
       name: pulps.pulp.pulpproject.org
       version: v1beta1
+      displayName: Pulp
       specDescriptors:
       - displayName: Hostname
         path: pulp_hostname
