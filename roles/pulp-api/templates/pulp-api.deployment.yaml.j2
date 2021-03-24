@@ -38,6 +38,9 @@ spec:
         - name: pulp-file-storage
           persistentVolumeClaim:
             claimName: pulp-file-storage
+{% else %}
+        - name: pulp-tmp-file-storage
+          emptyDir: {}
 {% endif %}
       containers:
         - name: pulp-api
@@ -88,4 +91,7 @@ spec:
             - name: pulp-file-storage
               readOnly: false
               mountPath: "/var/lib/pulp"
+{% else %}
+            - name: pulp-tmp-file-storage
+              mountPath: "/var/lib/pulp/tmp"
 {% endif %}

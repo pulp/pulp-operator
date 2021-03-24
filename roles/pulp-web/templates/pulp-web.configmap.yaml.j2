@@ -8,6 +8,7 @@ metadata:
     app: '{{ deployment_type }}'
 data:
   nginx_conf: |
+    error_log /dev/stdout info;
     worker_processes 1;
     events {
         worker_connections 1024;  # increase if you have lots of clients
@@ -15,6 +16,7 @@ data:
     }
 
     http {
+        access_log /dev/stdout;
         include mime.types;
         # fallback in case we can't determine a type
         default_type application/octet-stream;
