@@ -36,6 +36,8 @@ spec:
         - name: pulp-tmp-file-storage
           emptyDir: {}
 {% endif %}
+        - name: {{ meta.name }}-ansible-tmp
+          emptyDir: {}
       containers:
         - name: pulp-worker
           image: "{{ registry }}/{{ project }}/{{ image }}:{{ tag }}"
@@ -52,6 +54,8 @@ spec:
             - name: REDIS_SERVICE_PORT
               value: "{{ pulp_default_settings.redis_port }}"
           volumeMounts:
+            - name: {{ meta.name }}-ansible-tmp
+              mountPath: "/.ansible/tmp/"
             - name: {{ meta.name }}-pulp-server
               mountPath: "/etc/pulp/"
 {% if file_storage %}
