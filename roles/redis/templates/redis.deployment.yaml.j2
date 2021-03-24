@@ -22,12 +22,12 @@ spec:
           imagePullPolicy: "IfNotPresent"
           volumeMounts:
             - readOnly: false
-              mountPath: /var/lib/redis
-              name: redis-data
+              mountPath: /data
+              name: '{{ meta.name }}-redis-data'
           ports:
             - protocol: TCP
               containerPort: 6379
       volumes:
-        - name: redis-data
+        - name: '{{ meta.name }}-redis-data'
           persistentVolumeClaim:
-            claimName: redis-data
+            claimName: '{{ meta.name }}-redis-data'
