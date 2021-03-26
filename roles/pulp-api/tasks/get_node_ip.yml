@@ -12,12 +12,28 @@
     content_origin: "{{ web_protocol }}://{{ pulp_hostname }}"
   when:
     - ingress_type|lower == "ingress"
+    - pulp_hostname is defined
+
+- name: Fail if pulp_hostname is not defined when ingress is specified
+  fail:
+    msg: "The hostname must be specified when using ingress_type {{ ingress_type }}."
+  when:
+    - ingress_type|lower == "ingress"
+    - pulp_hostname is not defined
 
 - name: Set node address for route
   set_fact:
     content_origin: "{{ web_protocol }}://{{ route_host }}"
   when:
     - ingress_type|lower == "route"
+    - route_host is defined
+
+- name: Fail if route_host is not defined when route is specified
+  fail:
+    msg: "The route_host must be specified when using ingress_type {{ ingress_type }}."
+  when:
+    - ingress_type|lower == "route"
+    - route_host is not defined
 
 - name: Look up the 1st address of the 1st node
   k8s_info:

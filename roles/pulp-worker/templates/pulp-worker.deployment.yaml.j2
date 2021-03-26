@@ -66,3 +66,6 @@ spec:
             - name: pulp-tmp-file-storage
               mountPath: "/var/lib/pulp/tmp"
 {% endif %}
+{% if pulp_worker.resource_requirements is defined %}
+          resources: {{ pulp_worker.resource_requirements }}
+{% endif %}

@@ -39,6 +39,9 @@ spec:
           imagePullPolicy: "IfNotPresent"
           # We set args, not command, so as to not override the entrypoint script
           args: ["pulp-content"]
+{% if pulp_content.resource_requirements is defined %}
+          resources: {{ pulp_content.resource_requirements }}
+{% endif %}
           env:
             - name: POSTGRES_SERVICE_HOST
               value: "{{ postgres_host }}"

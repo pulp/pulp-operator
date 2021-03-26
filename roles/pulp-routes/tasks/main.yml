@@ -5,3 +5,6 @@
     definition: "{{ lookup('template', 'templates/' + item + '.ingress.yaml.j2') | from_yaml }}"
   with_items:
     - pulp
+  when:
+    - ingress_type is defined
+    - ('route' == ingress_type|lower) or ('ingress' == ingress_type|lower)

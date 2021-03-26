@@ -1,2 +1,7 @@
 ---
 redis_image: redis:latest
+
+redis_resource_requirements:
+  requests:
+    cpu: 200m
+    memory: 512Mi

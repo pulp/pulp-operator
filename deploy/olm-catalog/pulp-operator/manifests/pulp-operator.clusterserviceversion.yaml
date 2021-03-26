@@ -151,26 +151,67 @@ spec:
         path: pulp_settings
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: In-memory data store resource requirements
+        path: redis_resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
       - displayName: Pulp API Configuration
         path: pulp_api
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Pulp API log level
+        path: pulp_api.log_level
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Pulp API resource requirements
+        path: pulp_api.resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
       - displayName: Pulp Content Configuration
         path: pulp_content
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Pulp Content log level
+        path: pulp_content.log_level
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Pulp Content resource requirements
+        path: pulp_content.resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
       - displayName: Pulp Resource Manager Configuration
         path: pulp_resource_manager
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Pulp Resource Manager resource requirements
+        path: pulp_resource_manager.resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
       - displayName: Pulp Worker Configuration
         path: pulp_worker
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Pulp Worker resource requirements
+        path: pulp_worker.resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
       - displayName: Pulp Web Server Configuration
         path: pulp_web
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Pulp Web Server resource requirements
+        path: pulp_web.resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
       - displayName: Deployment Type
         path: deployment_type
         x-descriptors:
