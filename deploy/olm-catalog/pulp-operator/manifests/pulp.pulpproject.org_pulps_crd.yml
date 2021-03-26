@@ -157,6 +157,28 @@ spec:
               route_tls_secret:
                 description: Secret where the TLS related credentials are stored
                 type: string
+              redis_resource_requirements:
+                description: Resource requirements for the Redis container
+                properties:
+                  requests:
+                    properties:
+                      cpu:
+                        type: string
+                      memory:
+                        type: string
+                      storage:
+                        type: string
+                    type: object
+                  limits:
+                    properties:
+                      cpu:
+                        type: string
+                      memory:
+                        type: string
+                      storage:
+                        type: string
+                    type: object
+                type: object
               pulp_web:
                 description: The pulp web deployment.
                 properties:
@@ -165,6 +187,28 @@ spec:
                     type: integer
                     default: 1
                     format: int32
+                  resource_requirements:
+                    description: Resource requirements for the pulp web container
+                    properties:
+                      requests:
+                        properties:
+                          cpu:
+                            type: string
+                          memory:
+                            type: string
+                          storage:
+                            type: string
+                        type: object
+                      limits:
+                        properties:
+                          cpu:
+                            type: string
+                          memory:
+                            type: string
+                          storage:
+                            type: string
+                        type: object
+                    type: object
                 type: object
               pulp_api:
                 description: The pulp api deployment.
@@ -184,6 +228,28 @@ spec:
                       - WARNING
                       - ERROR
                       - CRITICAL
+                  resource_requirements:
+                    description: Resource requirements for the pulp api container
+                    properties:
+                      requests:
+                        properties:
+                          cpu:
+                            type: string
+                          memory:
+                            type: string
+                          storage:
+                            type: string
+                        type: object
+                      limits:
+                        properties:
+                          cpu:
+                            type: string
+                          memory:
+                            type: string
+                          storage:
+                            type: string
+                        type: object
+                    type: object
                 type: object
               pulp_content:
                 description: The pulp content deployment.
@@ -203,6 +269,28 @@ spec:
                       - WARNING
                       - ERROR
                       - CRITICAL
+                  resource_requirements:
+                    description: Resource requirements for the pulp content container
+                    properties:
+                      requests:
+                        properties:
+                          cpu:
+                            type: string
+                          memory:
+                            type: string
+                          storage:
+                            type: string
+                        type: object
+                      limits:
+                        properties:
+                          cpu:
+                            type: string
+                          memory:
+                            type: string
+                          storage:
+                            type: string
+                        type: object
+                    type: object
                 type: object
               pulp_worker:
                 description: The pulp worker deployment.
@@ -212,6 +300,28 @@ spec:
                     type: integer
                     default: 2
                     format: int32
+                  resource_requirements:
+                    description: Resource requirements for the pulp worker container
+                    properties:
+                      requests:
+                        properties:
+                          cpu:
+                            type: string
+                          memory:
+                            type: string
+                          storage:
+                            type: string
+                        type: object
+                      limits:
+                        properties:
+                          cpu:
+                            type: string
+                          memory:
+                            type: string
+                          storage:
+                            type: string
+                        type: object
+                    type: object
                 type: object
               pulp_resource_manager:
                 description: The pulp resource manager deployment.
@@ -221,6 +331,28 @@ spec:
                     type: integer
                     default: 1
                     format: int32
+                  resource_requirements:
+                    description: Resource requirements for the pulp resource manager container
+                    properties:
+                      requests:
+                        properties:
+                          cpu:
+                            type: string
+                          memory:
+                            type: string
+                          storage:
+                            type: string
+                        type: object
+                      limits:
+                        properties:
+                          cpu:
+                            type: string
+                          memory:
+                            type: string
+                          storage:
+                            type: string
+                        type: object
+                    type: object
                 type: object
             type: object
           status:

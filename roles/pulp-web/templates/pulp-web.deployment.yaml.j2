@@ -54,6 +54,9 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
+{% if pulp_web.resource_requirements is defined %}
+          resources: {{ pulp_web.resource_requirements }}
+{% endif %}
       volumes:
         - name: {{ meta.name }}-nginx-conf
           configMap:

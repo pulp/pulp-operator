@@ -12,3 +12,21 @@ spec:
     access_mode: "ReadWriteOnce"
     # We have a little over 10GB free on GHA VMs/instances
     size: "10Gi"
+  pulp_content:
+    replicas: 1
+    resource_requirements:
+      requests:
+        cpu: 150m
+        memory: 256Mi
+  pulp_worker:
+    replicas: 1
+    resource_requirements:
+      requests:
+        cpu: 150m
+        memory: 256Mi
+  pulp_web:
+    replicas: 1
+    resource_requirements:
+      requests:
+        cpu: 100m
+        memory: 256Mi

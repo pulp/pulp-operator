@@ -1,6 +1,10 @@
 ---
 pulp_web:
   replicas: 1
+  resource_requirements:
+    requests:
+      cpu: 200m
+      memory: 512Mi
 
 ingress_type: none
 

@@ -1,3 +1,7 @@
 ---
 pulp_worker:
   replicas: 2
+  resource_requirements:
+    requests:
+      cpu: 200m
+      memory: 512Mi

@@ -78,6 +78,9 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
+{% if pulp_api.resource_requirements is defined %}
+          resources: {{ pulp_api.resource_requirements }}
+{% endif %}
           volumeMounts:
             - name: {{ meta.name }}-pulp-server
               mountPath: "/etc/pulp/settings.py"

@@ -27,6 +27,9 @@ spec:
           ports:
             - protocol: TCP
               containerPort: 6379
+{% if redis_resource_requirements is defined %}
+          resources: {{ redis_resource_requirements }}
+{% endif %}
       volumes:
         - name: '{{ meta.name }}-redis-data'
           persistentVolumeClaim:

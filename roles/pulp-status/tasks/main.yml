@@ -1,4 +1,26 @@
 ---
+
+- name: Get the resource pod information.
+  k8s_info:
+    kind: Pod
+    namespace: '{{ meta.namespace }}'
+    label_selectors:
+      - "app=pulp-web"
+  register: pulp_pods
+  until: "pulp_pods['resources'][0]['status']['phase'] == 'Running'"
+  delay: 5
+  retries: 100
+
+- name: Set the resource pod name as a variable.
+  set_fact:
+    pulp_web_pod_name: "{{ pulp_pods['resources'][0]['metadata']['name'] }}"
+
+- name: Check that status and it returns a status 200
+  uri:
+    url: 'http://{{ meta.name }}-web-svc:24880/pulp/api/v3/status/'
+  delay: 5
+  retries: 10
+
 - name: Set apiVersion and kind variables
   set_fact:
     api_version: '{{ hostvars["localhost"]["inventory_file"].split("/")[4:6] | join("/")  }}'
