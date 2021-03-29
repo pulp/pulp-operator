@@ -237,14 +237,6 @@ jobs:
         run: kubectl get pods -A
       - name: Setup a minikube docker env
         run: minikube -p minikube docker-env | grep "export" | awk '{$1= ""; print $0}' >> $GITHUB_ENV
-      - name: Build galaxy image
-        run: |
-          cd $GITHUB_WORKSPACE/containers/
-          cp $GITHUB_WORKSPACE/.ci/ansible/galaxy/vars.yaml vars/vars.yaml
-          sed -i "s/podman/docker/g" common_tasks.yaml
-          pip install ansible
-          ansible-playbook -v build.yaml
-        shell: bash
       - name: Build Operator
         run: |
           echo ::group::SDK
@@ -252,18 +244,19 @@ jobs:
           sudo wget https://github.com/operator-framework/operator-sdk/releases/download/$CURRENT_VERSION/operator-sdk-$CURRENT_VERSION-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
           sudo chmod +x /usr/local/bin/operator-sdk
           echo ::endgroup::
-          sed -i "s/image: pulp/image: galaxy/g" playbook.yml
           sed -i "s/image_web: pulp-web/image_web: galaxy-web/g" playbook.yml
-          sed -i "s/# image: pulp/image: galaxy/g" deploy/crds/pulpproject_v1beta1_pulp_cr.ci.yaml
           eval $(minikube -p minikube docker-env)
           sudo -E operator-sdk build quay.io/pulp/pulp-operator:latest
           sudo -E docker images
         shell: bash
       - name: Deploy pulp-operator to K8s
-        run: sudo -E ./up.sh
+        run: sudo -E CI_TEST=galaxy ./up.sh
         shell: bash
       - name: Check and wait pulp-operator deploy
         run: .ci/scripts/pulp-operator-check-and-wait.sh -m
+        shell: bash
+      - name: Test
+        run: sudo -E .ci/scripts/galaxy_ng-tests.sh -m
         shell: bash
       - name: After failure
         if: failure()
