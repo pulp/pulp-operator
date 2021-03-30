@@ -41,6 +41,8 @@ spec:
 {% else %}
         - name: pulp-tmp-file-storage
           emptyDir: {}
+        - name: pulp-assets-file-storage
+          emptyDir: {}
 {% endif %}
       containers:
         - name: pulp-api
@@ -97,4 +99,6 @@ spec:
 {% else %}
             - name: pulp-tmp-file-storage
               mountPath: "/var/lib/pulp/tmp"
+            - name: pulp-assets-file-storage
+              mountPath: "/var/lib/pulp/assets"
 {% endif %}
