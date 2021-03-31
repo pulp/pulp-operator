@@ -121,30 +121,29 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route
       - displayName: Pulp Storage Configuration
         path: pulp_storage
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Pulp Storage Type
         path: pulp_storage_type
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:select:File
         - urn:alm:descriptor:com.tectonic.ui:select:S3
         - urn:alm:descriptor:com.tectonic.ui:select:Azure
       - displayName: Pulp File Storage Configuration
         path: pulp_file_storage
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:pulp_storage_type:File
+      - displayName: Pulp File Storage Configuration
+        path: pulp_file_storage.access_mode
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:pulp_storage_type:File
+        - urn:alm:descriptor:com.tectonic.ui:select:ReadWriteMany
       - displayName: Pulp S3 Storage Secret
         path: pulp_object_storage_s3_secret
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:pulp_storage_type:S3
       - displayName: Pulp Azure Storage Secret
         path: pulp_object_storage_azure_secret
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:pulp_storage_type:Azure
       - displayName: Pulp Settings
