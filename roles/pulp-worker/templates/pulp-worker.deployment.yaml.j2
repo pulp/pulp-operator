@@ -5,16 +5,16 @@ metadata:
   name: "{{ meta.name }}-worker"
   namespace: "{{ project_name }}"
   labels:
-    app: "{{ deployment_type }}-worker"
+    app: "{{ meta.name }}-{{ deployment_type }}-worker"
 spec:
   replicas: {{ pulp_worker.replicas }}
   selector:
     matchLabels:
-      app: "{{ deployment_type }}-worker"
+      app: "{{ meta.name }}-{{ deployment_type }}-worker"
   template:
     metadata:
       labels:
-        app: "{{ deployment_type }}-worker"
+        app: "{{ meta.name }}-{{ deployment_type }}-worker"
     spec:
 {% if is_k8s %}
       securityContext:
@@ -31,7 +31,7 @@ spec:
 {% if file_storage %}
         - name: pulp-file-storage
           persistentVolumeClaim:
-            claimName: pulp-file-storage
+            claimName: {{ meta.name }}-pulp-file-storage
 {% else %}
         - name: pulp-tmp-file-storage
           emptyDir: {}
