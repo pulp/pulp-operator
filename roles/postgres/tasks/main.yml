@@ -1,4 +1,25 @@
 ---
+
+- name: Obtain custom resource information
+  set_fact:
+    custom_resource: "{{ hostvars[inventory_hostname][custom_resource_key] }}"
+    custom_resource_status: "{{ hostvars[inventory_hostname][custom_resource_key]['status'] }}"
+
+
+- name: Record migrant database secret
+  set_fact:
+    recorded_db_migration_secret: "{{ custom_resource_status['migrantDatabaseConfigurationSecret'] }}"
+  when:
+    - custom_resource_status['migrantDatabaseConfigurationSecret'] is defined
+
+- name: Check if data migration has been performed
+  set_fact:
+    database_status_present: true
+  when:
+    - recorded_db_migration_secret is defined
+    - postgres_migrant_configuration_secret is defined
+    - recorded_db_migration_secret == postgres_migrant_configuration_secret
+
 - name: Check for specified PostgreSQL configuration
   k8s_info:
     kind: Secret
@@ -13,6 +34,22 @@
     namespace: '{{ meta.namespace }}'
     name: '{{ meta.name }}-postgres-configuration'
   register: _default_pg_config_resources
+
+- name: Check for old PostgreSQL configuration secret
+  k8s_info:
+    kind: Secret
+    namespace: '{{ meta.namespace }}'
+    name: '{{ postgres_migrant_configuration_secret }}'
+  register: old_pg_config
+  when: postgres_migrant_configuration_secret | length
+
+- name: Set proper database name when migrating from old deployment
+  set_fact:
+    database_name: "{{ old_pg_config['resources'][0]['data']['database'] | b64decode }}"
+    database_username: "{{ old_pg_config['resources'][0]['data']['username'] | b64decode }}"
+  when:
+    - old_pg_config['resources'] is defined
+    - old_pg_config['resources'] | length
 
 - name: Set PostgreSQL configuration
   set_fact:
@@ -51,3 +88,11 @@
     postgres_database: "{{ pg_config['resources'][0]['data']['database'] | b64decode }}"
     postgres_port: "{{ pg_config['resources'][0]['data']['port'] | b64decode }}"
     postgres_host: "{{ pg_config['resources'][0]['data']['host'] | b64decode }}"
+
+
+- name: Migrate data from old Openshift instance
+  import_tasks: migrate_data.yml
+  when:
+    - old_pg_config['resources'] is defined
+    - old_pg_config['resources'] | length
+    - not database_status_present

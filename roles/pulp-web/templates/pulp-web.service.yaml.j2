@@ -5,10 +5,10 @@ metadata:
   name: "{{ meta.name }}-web-svc"
   namespace: "{{ project_name }}"
   labels:
-    app: pulp-web
+    app: "{{ meta.name }}-{{ deployment_type }}-web"
 spec:
   selector:
-    app: pulp-web
+    app: "{{ meta.name }}-{{ deployment_type }}-web"
   ports:
     - protocol: TCP
       targetPort: 8080

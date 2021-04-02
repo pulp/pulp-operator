@@ -5,16 +5,16 @@ metadata:
   name: "{{ meta.name }}-web"
   namespace: "{{ project_name }}"
   labels:
-    app: pulp-web
+    app: "{{ meta.name }}-{{ deployment_type }}-web"
 spec:
   replicas: {{ pulp_web.replicas }}
   selector:
     matchLabels:
-      app: pulp-web
+      app: "{{ meta.name }}-{{ deployment_type }}-web"
   template:
     metadata:
       labels:
-        app: pulp-web
+        app: "{{ meta.name }}-{{ deployment_type }}-web"
     spec:
       containers:
         - name: pulp-web

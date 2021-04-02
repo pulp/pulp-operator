@@ -15,6 +15,7 @@ rules:
   - ""
   resources:
   - pods
+  - pods/log
   - services
   - services/finalizers
   - endpoints
@@ -75,6 +76,19 @@ rules:
   - deployments
   verbs:
   - get
+- apiGroups:
+    - apps
+  resources:
+    - deployments/scale
+  verbs:
+    - patch
+- apiGroups:
+    - ""
+  resources:
+    - pods/exec
+  verbs:
+    - create
+    - get
 - apiGroups:
   - pulp.pulpproject.org
   resources:

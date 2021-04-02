@@ -5,16 +5,16 @@ metadata:
   name: "{{ meta.name }}-api"
   namespace: "{{ project_name }}"
   labels:
-    app: "{{ deployment_type }}-api"
+    app: "{{ meta.name }}-{{ deployment_type }}-api"
 spec:
   replicas: {{ pulp_api.replicas }}
   selector:
     matchLabels:
-      app: "{{ deployment_type }}-api"
+      app: "{{ meta.name }}-{{ deployment_type }}-api"
   template:
     metadata:
       labels:
-        app: "{{ deployment_type }}-api"
+        app: "{{ meta.name }}-{{ deployment_type }}-api"
     spec:
 {% if is_k8s %}
       securityContext:
@@ -37,7 +37,7 @@ spec:
 {% if file_storage %}
         - name: pulp-file-storage
           persistentVolumeClaim:
-            claimName: pulp-file-storage
+            claimName: {{ meta.name }}-pulp-file-storage
 {% else %}
         - name: pulp-tmp-file-storage
           emptyDir: {}

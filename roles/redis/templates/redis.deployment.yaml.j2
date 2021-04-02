@@ -5,16 +5,16 @@ metadata:
   name: "{{ meta.name }}-redis"
   namespace: "{{ project_name }}"
   labels:
-    app: '{{ deployment_type }}-redis'
+    app: '{{ meta.name }}-{{ deployment_type }}-redis'
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: '{{ deployment_type }}-redis'
+      app: '{{ meta.name }}-{{ deployment_type }}-redis'
   template:
     metadata:
       labels:
-        app: '{{ deployment_type }}-redis'
+        app: '{{ meta.name }}-{{ deployment_type }}-redis'
     spec:
       containers:
         - name: redis

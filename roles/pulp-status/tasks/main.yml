@@ -1,11 +1,28 @@
 ---
 
+- name: Set apiVersion and kind variables
+  set_fact:
+    api_version: '{{ hostvars["localhost"]["inventory_file"].split("/")[4:6] | join("/")  }}'
+    kind: '{{ hostvars["localhost"]["inventory_file"].split("/")[6]  }}'
+
+- name: Update migrantDatabaseConfigurationSecret status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ meta.name }}"
+    namespace: "{{ meta.namespace }}"
+    status:
+      migrantDatabaseConfigurationSecret: "{{ postgres_migrated_from_secret }}"
+  when:
+    - postgres_migrated_from_secret is defined
+    - postgres_migrated_from_secret | length
+
 - name: Get the resource pod information.
   k8s_info:
     kind: Pod
     namespace: '{{ meta.namespace }}'
     label_selectors:
-      - "app=pulp-web"
+      - "app={{ meta.name }}-{{ deployment_type }}-web"
   register: pulp_pods
   until: "pulp_pods['resources'][0]['status']['phase'] == 'Running'"
   delay: 5
@@ -20,11 +37,6 @@
     url: 'http://{{ meta.name }}-web-svc:24880/pulp/api/v3/status/'
   delay: 5
   retries: 10
-
-- name: Set apiVersion and kind variables
-  set_fact:
-    api_version: '{{ hostvars["localhost"]["inventory_file"].split("/")[4:6] | join("/")  }}'
-    kind: '{{ hostvars["localhost"]["inventory_file"].split("/")[6]  }}'
 
 - name: Update admin password status
   operator_sdk.util.k8s_status:
