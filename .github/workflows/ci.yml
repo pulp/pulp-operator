@@ -32,12 +32,6 @@ jobs:
           echo "IMG=quay.io/pulp/pulp-operator:latest" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
         shell: bash
-      - name: Install minikube
-        id: minikube
-        uses: CodingNagger/minikube-setup-action@v1.0.2
-        with:
-          minikube-version: '1.17.1'
-          k8s-version: '1.20.2'
       - name: Start minikube
         run: |
           minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
@@ -93,12 +87,6 @@ jobs:
           echo "IMG=quay.io/pulp/pulp-operator:latest" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
         shell: bash
-      - name: Install minikube
-        id: minikube
-        uses: CodingNagger/minikube-setup-action@v1.0.2
-        with:
-          minikube-version: '1.17.1'
-          k8s-version: '1.20.2'
       - name: Start minikube
         run: |
           minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
@@ -165,12 +153,6 @@ jobs:
           echo "IMG=quay.io/pulp/pulp-operator:latest" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
         shell: bash
-      - name: Install minikube
-        id: minikube
-        uses: CodingNagger/minikube-setup-action@v1.0.2
-        with:
-          minikube-version: '1.17.1'
-          k8s-version: '1.20.2'
       - name: Start minikube
         run: |
           minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
@@ -270,12 +252,6 @@ jobs:
           echo "IMG=quay.io/pulp/pulp-operator:latest" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
         shell: bash
-      - name: Install minikube
-        id: minikube
-        uses: CodingNagger/minikube-setup-action@v1.0.2
-        with:
-          minikube-version: '1.17.1'
-          k8s-version: '1.20.2'
       - name: Start minikube
         run: |
           minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
