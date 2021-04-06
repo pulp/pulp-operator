@@ -3,3 +3,8 @@
   group: pulp.pulpproject.org
   kind: Pulp
   playbook: playbook.yml
+
+- version: v1beta1
+  group: pulp.pulpproject.org
+  kind: PulpBackup
+  role: backup

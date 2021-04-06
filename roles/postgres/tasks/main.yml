@@ -5,7 +5,6 @@
     custom_resource: "{{ hostvars[inventory_hostname][custom_resource_key] }}"
     custom_resource_status: "{{ hostvars[inventory_hostname][custom_resource_key]['status'] }}"
 
-
 - name: Record migrant database secret
   set_fact:
     recorded_db_migration_secret: "{{ custom_resource_status['migrantDatabaseConfigurationSecret'] }}"

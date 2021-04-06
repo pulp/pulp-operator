@@ -1,0 +1,18 @@
+---
+# Required: specify name of pulp deployment to backup from
+pulp_name: ''
+
+# Specify a pre-created PVC (name) to backup to
+pulp_backup_pvc: ''
+
+# Size of backup PVC if created dynamically
+pulp_backup_size: ''
+
+# Specify storage class to determine how to dynamically create PVC's with
+pulp_backup_storage_class: ''
+
+# Secret Names
+pulp_admin_password_secret: "{{ pulp_name }}-admin-password"
+postgres_configuration_secret: "{{ pulp_name }}-postgres-configuration"
+
+custom_resource_key: '_pulp_pulpproject_org_pulpbackup'

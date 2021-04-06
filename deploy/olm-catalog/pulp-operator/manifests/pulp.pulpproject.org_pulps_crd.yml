@@ -18,6 +18,8 @@ spec:
       status: {}
     schema:
       openAPIV3Schema:
+        type: object
+        x-kubernetes-preserve-unknown-fields: true
         description: Schema validation for the Pulp CRD
         properties:
           spec:
@@ -369,6 +371,9 @@ spec:
               adminPasswordSecret:
                 description: Admin password of the deployed instance
                 type: string
+              databaseConfigruationSecret:
+                description: Database configuration secret used by the deployed instance
+                type: string
               deployedVersion:
                 description: Version of the deployed instance
                 type: string
@@ -393,5 +398,3 @@ spec:
                   type: object
                 type: array
             type: object
-        type: object
-        x-kubernetes-preserve-unknown-fields: true

@@ -1,0 +1,25 @@
+---
+
+- name: Obtain custom resource information
+  set_fact:
+    custom_resource: "{{ hostvars[inventory_hostname][custom_resource_key] }}"
+    custom_resource_status: "{{ hostvars[inventory_hostname][custom_resource_key]['status'] }}"
+
+- block:
+    - include_tasks: init.yml
+
+    - include_tasks: postgres.yml
+
+    - include_tasks: secrets.yml
+
+    - name: Set flag signifying this backup was successful
+      set_fact:
+        pulp_backup_complete: "{{ _backup_dir }}"
+
+    - include_tasks: cleanup.yml
+
+  when:
+    - custom_resource_status['pulpBackupDirectory'] is not defined
+
+- name: Update status variables
+  include_tasks: update_status.yml

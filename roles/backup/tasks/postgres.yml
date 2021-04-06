@@ -1,0 +1,94 @@
+---
+
+- name: Check for specified PostgreSQL configuration
+  k8s_info:
+    kind: Secret
+    namespace: '{{ meta.namespace }}'
+    name: '{{ postgres_configuration_secret }}'
+  register: _custom_pg_config_resources
+  when: postgres_configuration_secret | length
+
+- name: Check for default PostgreSQL configuration
+  k8s_info:
+    kind: Secret
+    namespace: '{{ meta.namespace }}'
+    name: '{{ pulp_name }}-postgres-configuration'
+  register: _default_pg_config_resources
+
+- name: Set PostgreSQL configuration
+  set_fact:
+    pg_config: '{{ _custom_pg_config_resources["resources"] | default([]) | length | ternary(_custom_pg_config_resources, _default_pg_config_resources) }}'
+
+- name: Store Database Configuration
+  set_fact:
+    postgres_user: "{{ pg_config['resources'][0]['data']['username'] | b64decode }}"
+    postgres_pass: "{{ pg_config['resources'][0]['data']['password'] | b64decode }}"
+    postgres_database: "{{ pg_config['resources'][0]['data']['database'] | b64decode }}"
+    postgres_port: "{{ pg_config['resources'][0]['data']['port'] | b64decode }}"
+    postgres_host: "{{ pg_config['resources'][0]['data']['host'] | b64decode }}"
+
+- name: Default label selector to custom resource generated postgres
+  set_fact:
+    postgres_label_selector: "app={{ pulp_name }}-{{ deployment_type }}-postgres"
+  when: postgres_label_selector is not defined
+
+- name: Get the postgres pod information
+  k8s_info:
+    kind: Pod
+    namespace: '{{ meta.namespace }}'
+    label_selectors:
+      - "{{ postgres_label_selector }}"
+  register: postgres_pod
+  until: "postgres_pod['resources'][0]['status']['phase'] == 'Running'"
+  delay: 5
+  retries: 60
+
+- name: Set the resource pod name as a variable.
+  set_fact:
+    postgres_pod_name: "{{ postgres_pod['resources'][0]['metadata']['name'] }}"
+
+- name: Determine the timestamp for the backup once for all nodes
+  set_fact:
+    now: '{{ lookup("pipe", "date +%F-%T") }}'
+
+- name: Set backup directory name
+  set_fact:
+    _backup_dir: "/backups/pulp-openshift-backup-{{ now }}"
+
+- name: Create directory for backup
+  community.kubernetes.k8s_exec:
+    namespace: "{{ meta.namespace }}"
+    pod: "{{ meta.name }}-db-management"
+    command: >-
+      mkdir -p {{ _backup_dir }}
+
+- name: Precreate file for database dump
+  community.kubernetes.k8s_exec:
+    namespace: "{{ meta.namespace }}"
+    pod: "{{ meta.name }}-db-management"
+    command: >-
+      touch {{ _backup_dir }}/pulp.db
+
+- name: Set permissions on file for database dump
+  community.kubernetes.k8s_exec:
+    namespace: "{{ meta.namespace }}"
+    pod: "{{ meta.name }}-db-management"
+    command: >-
+      chmod 0600 {{ _backup_dir }}/pulp.db
+
+- name: Set pg_dump command
+  set_fact:
+    pgdump: >-
+      pg_dump --clean --create
+      -h {{ postgres_host }}
+      -U {{ postgres_user }}
+      -d {{ postgres_database }}
+      -p {{ postgres_port }}
+
+- name: Write pg_dump to backup on PVC
+  community.kubernetes.k8s_exec:
+    namespace: "{{ meta.namespace }}"
+    pod: "{{ meta.name }}-db-management"
+    command: >-
+      bash -c "PGPASSWORD={{ postgres_pass }} {{ pgdump }} > {{ _backup_dir }}/pulp.db"
+  register: data_migration
