@@ -1,0 +1,11 @@
+---
+apiVersion: pulp.pulpproject.org/v1beta
+kind: PulpBackup
+metadata:
+  name: example-pulpbackup
+spec:
+  pulp_name: ''
+  pulp_backup_pvc: ''
+  pulp_backup_size: ''
+  pulp_backup_storage_class: ''
+  postgres_label_selector: ''

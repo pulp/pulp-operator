@@ -268,6 +268,11 @@ spec:
         path: adminPasswordSecret
         x-descriptors:
           - urn:alm:descriptor:io.kubernetes:Secret
+      - displayName: Database configuration
+        description: Configuration secret for current deployed database
+        path: databaseConfigruationSecret
+        x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
       - displayName: Version
         description: Version of the instance deployed
         path: deployedVersion
@@ -283,6 +288,47 @@ spec:
         path: migrantDatabaseConfigurationSecret
         x-descriptors:
           - urn:alm:descriptor:io.kubernetes:Secret
+    - description: A Pulp Backup Instance
+      kind: PulpBackup
+      name: pulpbackups.pulp.pulpproject.org
+      version: v1beta1
+      displayName: Pulp Backup
+      specDescriptors:
+      - displayName: Pulp Custom Resource Name
+        path: pulp_name
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - displayName: Pulp Backup Persistent Volume Claim
+        path: pulp_backup_pvc
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Pulp Backup PVC Size
+        path: pulp_backup_size
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Pulp Backup PVC Storage Class
+        path: pulp_backup_storage_class
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Database Backup Label Selector
+        path: postgres_label_selector
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      statusDescriptors:
+      - displayName: Backup Claim
+        description: The persistent volume claim name used during backup
+        path: pulpBackupClaim
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - displayName: Backup Directory
+        description: The directory data is backed up to on the PVC
+        path: pulpBackupDirectory
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
   description: Pulp operator
   displayName: Pulp
   icon:

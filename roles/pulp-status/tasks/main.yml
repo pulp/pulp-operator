@@ -47,6 +47,15 @@
     status:
       adminPasswordSecret: "{{ pulp_admin_password_secret_obj['resources'][0]['metadata']['name'] }}"
 
+- name: Update database configuration status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ meta.name }}"
+    namespace: "{{ meta.namespace }}"
+    status:
+      databaseConfigruationSecret: "{{ _pg_config['resources'][0]['metadata']['name'] }}"
+
 - name: Update version status
   operator_sdk.util.k8s_status:
     api_version: '{{ api_version }}'

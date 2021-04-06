@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ meta.name }}-backup-claim
+  namespace: {{ meta.namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+{% if pulp_backup_storage_class != '' %}
+  storageClassName: {{ pulp_backup_storage_class }}
+{% endif %}
+  resources:
+    requests:
+      storage: {{ pulp_backup_size | default('5Gi', true) }}
