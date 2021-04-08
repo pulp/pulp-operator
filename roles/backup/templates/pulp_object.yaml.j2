@@ -3,7 +3,7 @@ apiVersion: '{{ pulp_api_version }}'
 kind: Pulp
 metadata:
 {% raw %}
-  name: '{{ meta.name }}'
+  name: '{{ pulp_name }}'
   namespace: '{{ meta.namespace }}'
 {% endraw %}
 spec: {{ pulp_spec }}

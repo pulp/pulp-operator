@@ -1,7 +1,7 @@
 ---
 
 - name: Delete any existing management pod
-  community.kubernetes.k8s:
+  k8s:
     name: "{{ meta.name }}-db-management"
     kind: Pod
     namespace: "{{ meta.namespace }}"
@@ -46,19 +46,13 @@
     backup_pvc: "{{ pulp_backup_pvc | default(_default_backup_pvc, true) }}"
 
 - name: Create persistent volume claim for backup
-  community.kubernetes.k8s:
+  k8s:
     state: present
     definition: "{{ lookup('template', 'templates/' + item + '.pvc.yaml.j2') | from_yaml }}"
   with_items:
     - backup
   when:
     - pulp_backup_pvc == '' or pulp_backup_pvc is not defined
-
-- name: Create management pod from templated deployment config
-  community.kubernetes.k8s:
-    state: present
-    definition: "{{ lookup('template', 'templates/management-pod.yaml.j2') | from_yaml }}"
-    wait: true
 
 - name: Get Pulp custom resource object
   k8s_info:
@@ -98,3 +92,62 @@
     - pulp_status['databaseConfigruationSecret'] is defined
     - pulp_status['databaseConfigruationSecret'] | length
 
+- name: Set pulp storage type if found
+  set_fact:
+    pulp_storage_type: "{{ pulp_status['storageType'] }}"
+  when:
+    - pulp_status['storageType'] is defined
+    - pulp_status['storageType'] | length
+
+- name: Set pulp file storage claim if found
+  set_fact:
+    pulp_storage_claim: "{{ pulp_status['storagePersistentVolumeClaim'] }}"
+  when:
+    - pulp_status['storagePersistentVolumeClaim'] is defined
+    - pulp_status['storagePersistentVolumeClaim'] | length
+
+- name: Set pulp object storage secret if found
+  set_fact:
+    pulp_storage_secret: "{{ pulp_status['storageSecret'] }}"
+  when:
+    - pulp_status['storageSecret'] is defined
+    - pulp_status['storageSecret'] | length
+
+- name: Get PVC information
+  k8s_info:
+    kind: PersistentVolumeClaim
+    namespace: '{{ meta.namespace }}'
+    name: '{{ pulp_storage_claim }}'
+  register: _storage_claim
+  when: pulp_storage_claim is defined
+
+- name: Set storage claim access mode
+  set_fact:
+    pvc_access_mode: "{{ _storage_claim['resources'][0]['spec']['accessModes'][0] }}"
+  when:
+    - _storage_claim['resources'][0]['spec'] is defined
+    - _storage_claim['resources'][0]['spec']['accessModes'] is defined
+    - _storage_claim['resources'][0]['spec']['accessModes'][0] is defined
+    - _storage_claim['resources'][0]['spec']['accessModes'][0] | length
+
+- name: Surface error to user
+  block:
+    - name: Set error message
+      set_fact:
+        error_msg: "PersistentVolumeClaim accessMode {{ pvc_access_mode }} is not supported for backup, must be ReadWriteMany."
+
+    - name: Handle error
+      import_tasks: error_handling.yml
+
+    - name: Fail if file storge claim access mode is not ReadWriteMany
+      fail:
+        msg: " {{ error_msg }}"
+  when:
+    - pvc_access_mode is defined
+    - pvc_access_mode | lower != "readwritemany"
+
+- name: Create management pod from templated deployment config
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'templates/management-pod.yaml.j2') | from_yaml }}"
+    wait: true

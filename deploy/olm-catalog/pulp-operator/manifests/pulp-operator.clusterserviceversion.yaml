@@ -273,6 +273,21 @@ spec:
         path: databaseConfigruationSecret
         x-descriptors:
           - urn:alm:descriptor:io.kubernetes:Secret
+      - displayName: Storage Type
+        description: The type of storage being used by the deployed instance
+        path: storageType
+        x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+      - displayName: File Storage
+        description: The name of the persistent volume claim used for storage
+        path: storagePersistentVolumeClaim
+        x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+      - displayName: Objectstorage Secret
+        description: Configuration secret for objectstorage
+        path: storageSecret
+        x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
       - displayName: Version
         description: Version of the instance deployed
         path: deployedVersion
@@ -327,6 +342,11 @@ spec:
       - displayName: Backup Directory
         description: The directory data is backed up to on the PVC
         path: pulpBackupDirectory
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - displayName: Deployment Storage Type
+        description: The deployment storage type
+        path: pulpDeploymentStorageType
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
   description: Pulp operator

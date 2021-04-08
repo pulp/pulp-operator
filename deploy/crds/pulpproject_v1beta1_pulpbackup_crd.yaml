@@ -51,6 +51,9 @@ spec:
                 pulpBackupDirectory:
                   description: The directory data is backed up to on the PVC
                   type: string
+                pulpDeploymentStorageType:
+                  description: The deployment storage type
+                  type: string
                 conditions:
                   description: The resulting conditions when a Service Telemetry is instantiated
                   items:

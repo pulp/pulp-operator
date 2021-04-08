@@ -5,7 +5,7 @@
     kind: '{{ hostvars["localhost"]["inventory_file"].split("/")[6]  }}'
 
 # The backup directory in this status can be referenced when restoring
-- name: Update Pulp Backup status
+- name: Update backup directory status
   operator_sdk.util.k8s_status:
     api_version: '{{ api_version }}'
     kind: "{{ kind }}"
@@ -15,8 +15,8 @@
       pulpBackupDirectory: "{{ _backup_dir }}"
   when: pulp_backup_complete is defined
 
-# The backup directory in this status can be referenced when restoring
-- name: Update Pulp Backup status
+# The backup PVC in this status can be referenced when restoring
+- name: Update backup PVC status
   operator_sdk.util.k8s_status:
     api_version: '{{ api_version }}'
     kind: "{{ kind }}"
@@ -25,3 +25,14 @@
     status:
       pulpBackupClaim: "{{ backup_pvc }}"
   when: pulp_backup_complete is defined
+
+# The backup around storage type in this status can be referenced when restoring
+- name: Update deployment storage type status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ meta.name }}"
+    namespace: "{{ meta.namespace }}"
+    status:
+      pulpDeploymentStorageType: "{{ pulp_storage_type }}"
+  when: pulp_storage_type is defined
