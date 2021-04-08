@@ -56,6 +56,35 @@
     status:
       databaseConfigruationSecret: "{{ _pg_config['resources'][0]['metadata']['name'] }}"
 
+- name: Update storage type status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ meta.name }}"
+    namespace: "{{ meta.namespace }}"
+    status:
+      storageType: "{{ pulp_storage_type | capitalize }}"
+
+- name: Update file storage pvc name status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ meta.name }}"
+    namespace: "{{ meta.namespace }}"
+    status:
+      storagePersistentVolumeClaim: "{{ meta.name }}-pulp-file-storage"
+  when: file_storage
+
+- name: Update object storage secret name status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ meta.name }}"
+    namespace: "{{ meta.namespace }}"
+    status:
+      storageSecret: "{{ object_storage_secret }}"
+  when: not file_storage
+
 - name: Update version status
   operator_sdk.util.k8s_status:
     api_version: '{{ api_version }}'
@@ -76,7 +105,7 @@
 
 - block:
     - name: Retrieve route URL
-      community.kubernetes.k8s_info:
+      k8s_info:
         kind: Route
         namespace: '{{ meta.namespace }}'
         name: '{{ meta.name }}'

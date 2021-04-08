@@ -12,6 +12,9 @@
 
     - include_tasks: secrets.yml
 
+    - include_tasks: storage.yml
+      when: pulp_storage_type | lower == 'file'
+
     - name: Set flag signifying this backup was successful
       set_fact:
         pulp_backup_complete: "{{ _backup_dir }}"

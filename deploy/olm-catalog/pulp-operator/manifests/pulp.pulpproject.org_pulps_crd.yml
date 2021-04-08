@@ -374,6 +374,15 @@ spec:
               databaseConfigruationSecret:
                 description: Database configuration secret used by the deployed instance
                 type: string
+              storageType:
+                description: The type of storage being used by the deployed instance
+                type: string
+              storagePersistentVolumeClaim:
+                description: The name of the persistent volume claim used for storage
+                type: string
+              storageSecret:
+                description: The name of the secret used for object storage
+                type: string
               deployedVersion:
                 description: Version of the deployed instance
                 type: string

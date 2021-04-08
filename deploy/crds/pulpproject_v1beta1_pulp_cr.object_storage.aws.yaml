@@ -10,4 +10,21 @@ spec:
     debug: "True"
   pulp_storage_type: S3
   pulp_object_storage_s3_secret: example-pulp-object-storage
-
+  pulp_content:
+    replicas: 1
+    resource_requirements:
+      requests:
+        cpu: 150m
+        memory: 256Mi
+  pulp_worker:
+    replicas: 1
+    resource_requirements:
+      requests:
+        cpu: 150m
+        memory: 256Mi
+  pulp_web:
+    replicas: 1
+    resource_requirements:
+      requests:
+        cpu: 100m
+        memory: 256Mi

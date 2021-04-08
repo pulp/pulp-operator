@@ -16,3 +16,7 @@ pulp_admin_password_secret: "{{ pulp_name }}-admin-password"
 postgres_configuration_secret: "{{ pulp_name }}-postgres-configuration"
 
 custom_resource_key: '_pulp_pulpproject_org_pulpbackup'
+
+database_type: 'unmanaged'
+
+azure_container_path: ''
