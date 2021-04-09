@@ -5,16 +5,28 @@ metadata:
   name: "{{ meta.name }}-api"
   namespace: "{{ project_name }}"
   labels:
-    app: "{{ meta.name }}-{{ deployment_type }}-api"
+    app.kubernetes.io/name: '{{ deployment_type }}-api'
+    app.kubernetes.io/instance: '{{ deployment_type }}-api-{{ meta.name }}'
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: '{{ deployment_type }}'
+    app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
 spec:
   replicas: {{ pulp_api.replicas }}
   selector:
     matchLabels:
-      app: "{{ meta.name }}-{{ deployment_type }}-api"
+      app.kubernetes.io/name: '{{ deployment_type }}-api'
+      app.kubernetes.io/instance: '{{ deployment_type }}-api-{{ meta.name }}'
+      app.kubernetes.io/component: api
+      app.kubernetes.io/part-of: '{{ deployment_type }}'
+      app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
   template:
     metadata:
       labels:
-        app: "{{ meta.name }}-{{ deployment_type }}-api"
+        app.kubernetes.io/name: '{{ deployment_type }}-api'
+        app.kubernetes.io/instance: '{{ deployment_type }}-api-{{ meta.name }}'
+        app.kubernetes.io/component: api
+        app.kubernetes.io/part-of: '{{ deployment_type }}'
+        app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
     spec:
 {% if is_k8s %}
       securityContext:
@@ -22,9 +34,9 @@ spec:
         fsGroup: 0
 {% endif %}
       volumes:
-        - name: {{ meta.name }}-pulp-server
+        - name: {{ meta.name }}-server
           secret:
-            secretName: {{ meta.name }}-pulp-server
+            secretName: {{ meta.name }}-server
             items:
               - path: settings.py
                 key: settings.py
@@ -37,7 +49,7 @@ spec:
 {% if file_storage %}
         - name: pulp-file-storage
           persistentVolumeClaim:
-            claimName: {{ meta.name }}-pulp-file-storage
+            claimName: {{ meta.name }}-file-storage
 {% else %}
         - name: pulp-tmp-file-storage
           emptyDir: {}
@@ -84,7 +96,7 @@ spec:
           resources: {{ pulp_api.resource_requirements }}
 {% endif %}
           volumeMounts:
-            - name: {{ meta.name }}-pulp-server
+            - name: {{ meta.name }}-server
               mountPath: "/etc/pulp/settings.py"
               subPath: settings.py
               readOnly: true

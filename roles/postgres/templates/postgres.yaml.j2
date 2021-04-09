@@ -6,11 +6,21 @@ metadata:
   name: '{{ meta.name }}-postgres'
   namespace: '{{ meta.namespace }}'
   labels:
-    app: '{{ meta.name }}-{{ deployment_type }}-postgres'
+    app.kubernetes.io/name: 'postgres'
+    app.kubernetes.io/instance: 'postgres-{{ meta.name }}'
+    app.kubernetes.io/component: database
+    app.kubernetes.io/version: '{{ postgres_version }}'
+    app.kubernetes.io/part-of: '{{ deployment_type }}'
+    app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
 spec:
   selector:
     matchLabels:
-      app: '{{ meta.name }}-{{ deployment_type }}-postgres'
+      app.kubernetes.io/name: 'postgres'
+      app.kubernetes.io/instance: 'postgres-{{ meta.name }}'
+      app.kubernetes.io/component: database
+      app.kubernetes.io/version: '{{ postgres_version }}'
+      app.kubernetes.io/part-of: '{{ deployment_type }}'
+      app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
   serviceName: '{{ meta.name }}'
   replicas: 1
   updateStrategy:
@@ -18,7 +28,12 @@ spec:
   template:
     metadata:
       labels:
-        app: '{{ meta.name }}-{{ deployment_type }}-postgres'
+        app.kubernetes.io/name: 'postgres'
+        app.kubernetes.io/instance: 'postgres-{{ meta.name }}'
+        app.kubernetes.io/component: database
+        app.kubernetes.io/version: '{{ postgres_version }}'
+        app.kubernetes.io/part-of: '{{ deployment_type }}'
+        app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
     spec:
       containers:
         - image: '{{ postgres_image }}'
@@ -71,10 +86,20 @@ metadata:
   name: '{{ meta.name }}-postgres'
   namespace: '{{ meta.namespace }}'
   labels:
-    app: '{{ meta.name }}-{{ deployment_type }}-postgres'
+    app.kubernetes.io/name: 'postgres'
+    app.kubernetes.io/instance: 'postgres-{{ meta.name }}'
+    app.kubernetes.io/component: database
+    app.kubernetes.io/version: '{{ postgres_version }}'
+    app.kubernetes.io/part-of: '{{ deployment_type }}'
+    app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
 spec:
   ports:
     - port: 5432
   clusterIP: None
   selector:
-    app: '{{ meta.name }}-{{ deployment_type }}-postgres'
+    app.kubernetes.io/name: 'postgres'
+    app.kubernetes.io/instance: 'postgres-{{ meta.name }}'
+    app.kubernetes.io/component: database
+    app.kubernetes.io/version: '{{ postgres_version }}'
+    app.kubernetes.io/part-of: '{{ deployment_type }}'
+    app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'

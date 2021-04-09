@@ -22,7 +22,7 @@
     kind: Pod
     namespace: '{{ meta.namespace }}'
     label_selectors:
-      - "app={{ meta.name }}-{{ deployment_type }}-web"
+      - "app.kubernetes.io/instance=nginx-{{ meta.name }}"
   register: pulp_pods
   until: "pulp_pods['resources'][0]['status']['phase'] == 'Running'"
   delay: 5
@@ -72,7 +72,7 @@
     name: "{{ meta.name }}"
     namespace: "{{ meta.namespace }}"
     status:
-      storagePersistentVolumeClaim: "{{ meta.name }}-pulp-file-storage"
+      storagePersistentVolumeClaim: "{{ meta.name }}-file-storage"
   when: file_storage
 
 - name: Update object storage secret name status

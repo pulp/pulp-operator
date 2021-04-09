@@ -3,15 +3,20 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pulp-operator
+  labels:
+    app.kubernetes.io/name: pulp-operator
+    app.kubernetes.io/component: operator
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: pulp-operator
+      app.kubernetes.io/name: pulp-operator
+      app.kubernetes.io/component: operator
   template:
     metadata:
       labels:
-        name: pulp-operator
+        app.kubernetes.io/name: pulp-operator
+        app.kubernetes.io/component: operator
     spec:
       serviceAccountName: pulp-operator
       containers:
