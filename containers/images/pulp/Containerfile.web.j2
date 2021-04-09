@@ -13,6 +13,10 @@ RUN cp -fr /usr/local/lib/python{{ item.value.python_version }}/site-packages/ga
 
 FROM centos/nginx-116-centos7:1.16
 
+{% if quay_expire is defined %}
+LABEL quay.expires-after={{ quay_expire }}d
+{% endif %}
+
 {% if item.value.base_image_name == "galaxy" %}
 COPY --from=builder /www/data .
 {% endif %}

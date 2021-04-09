@@ -13,10 +13,18 @@ cd $GITHUB_WORKSPACE/containers/
 cp $GITHUB_WORKSPACE/.ci/ansible/vars.yaml vars/vars.yaml
 sed -i "s/podman/docker/g" common_tasks.yaml
 pip install ansible
-ansible-playbook -v build.yaml
+
+if [[ -z "${QUAY_EXPIRE+x}" ]]; then
+  ansible-playbook -v build.yaml
+else
+  ansible-playbook -v build.yaml --extra-vars "quay_expire=${QUAY_EXPIRE}"
+fi
 cd $GITHUB_WORKSPACE
 
 echo "Test pulp/pulpcore images"
+if [[ -n "${QUAY_EXPIRE}" ]]; then
+  echo "LABEL quay.expires-after=${QUAY_EXPIRE}d" >> ./build/Dockerfile
+fi
 sudo -E ./up.sh
 .ci/scripts/pulp-operator-check-and-wait.sh $KUBE_FLAG
 .ci/scripts/retry.sh 3 ".ci/scripts/pulp_file-tests.sh -m"

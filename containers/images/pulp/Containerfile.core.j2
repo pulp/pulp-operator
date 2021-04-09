@@ -1,5 +1,9 @@
 FROM registry.fedoraproject.org/fedora:33
 
+{% if quay_expire is defined %}
+LABEL quay.expires-after={{ quay_expire }}d
+{% endif %}
+
 # https://superuser.com/questions/959380/how-do-i-install-generate-all-locales-on-fedora
 # This may not be necessary anymore because Fedora 30, unlike CentOS 7, has
 # glibc subpackages like glibc-langpack-en.

@@ -280,6 +280,21 @@ jobs:
           git clone --depth=1 https://github.com/pulp/pulp_file.git
           .ci/scripts/deploy.sh -m
         shell: bash
+      - id: latest_release
+        uses: pozetroninc/github-action-get-latest-release@master
+        with:
+          repository: ${{ github.repository }}
+          excludes: draft
+      - name: Define QUAY_IMAGE_TAG environment variable
+        run: |
+          echo "QUAY_IMAGE_TAG=${{steps.latest_release.outputs.release}}-$(date +%j)" >> $GITHUB_ENV
+          echo "QUAY_EXPIRE=14" >> $GITHUB_ENV
+        shell: bash
+      - name: Deploy tagged nightly build
+        run: |
+          git clone --depth=1 https://github.com/pulp/pulp_file.git
+          .ci/scripts/deploy.sh -m
+        shell: bash
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
