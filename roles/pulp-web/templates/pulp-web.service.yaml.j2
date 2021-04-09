@@ -5,10 +5,18 @@ metadata:
   name: "{{ meta.name }}-web-svc"
   namespace: "{{ project_name }}"
   labels:
-    app: "{{ meta.name }}-{{ deployment_type }}-web"
+    app.kubernetes.io/name: 'nginx'
+    app.kubernetes.io/instance: 'nginx-{{ meta.name }}'
+    app.kubernetes.io/component: webserver
+    app.kubernetes.io/part-of: '{{ deployment_type }}'
+    app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
 spec:
   selector:
-    app: "{{ meta.name }}-{{ deployment_type }}-web"
+    app.kubernetes.io/name: 'nginx'
+    app.kubernetes.io/instance: 'nginx-{{ meta.name }}'
+    app.kubernetes.io/component: webserver
+    app.kubernetes.io/part-of: '{{ deployment_type }}'
+    app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
   ports:
     - protocol: TCP
       targetPort: 8080

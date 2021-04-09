@@ -5,16 +5,28 @@ metadata:
   name: "{{ meta.name }}-redis"
   namespace: "{{ project_name }}"
   labels:
-    app: '{{ meta.name }}-{{ deployment_type }}-redis'
+    app.kubernetes.io/name: 'redis'
+    app.kubernetes.io/instance: 'redis-{{ meta.name }}'
+    app.kubernetes.io/component: cache
+    app.kubernetes.io/part-of: '{{ deployment_type }}'
+    app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: '{{ meta.name }}-{{ deployment_type }}-redis'
+      app.kubernetes.io/name: 'redis'
+      app.kubernetes.io/instance: 'redis-{{ meta.name }}'
+      app.kubernetes.io/component: cache
+      app.kubernetes.io/part-of: '{{ deployment_type }}'
+      app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
   template:
     metadata:
       labels:
-        app: '{{ meta.name }}-{{ deployment_type }}-redis'
+        app.kubernetes.io/name: 'redis'
+        app.kubernetes.io/instance: 'redis-{{ meta.name }}'
+        app.kubernetes.io/component: cache
+        app.kubernetes.io/part-of: '{{ deployment_type }}'
+        app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
     spec:
       containers:
         - name: redis

@@ -2,8 +2,14 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: {{ meta.name }}-db-management
+  name: {{ meta.name }}-backup-manager
   namespace: {{ meta.namespace }}
+  labels:
+    app.kubernetes.io/name: '{{ deployment_type }}-backup-manager'
+    app.kubernetes.io/instance: '{{ deployment_type }}-backup-manager-{{ meta.name }}'
+    app.kubernetes.io/component: backup-manager
+    app.kubernetes.io/part-of: '{{ deployment_type }}'
+    app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
 spec:
   containers:
   - name: {{ meta.name }}-db-management

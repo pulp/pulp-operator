@@ -3,12 +3,12 @@
 # After copying secret files to the PVC, delete the local tmp copies
 - name: Clean up _secrets directory
   file:
-    path: "{{ playbook_dir }}/_secrets"
+    path: "{{ secrets_dir.path }}"
     state: absent
 
 - name: Delete any existing management pod
   k8s:
-    name: "{{ meta.name }}-db-management"
+    name: "{{ meta.name }}-backup-manager"
     kind: Pod
     namespace: "{{ meta.namespace }}"
     state: absent

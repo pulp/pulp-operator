@@ -5,16 +5,28 @@ metadata:
   name: "{{ meta.name }}-web"
   namespace: "{{ project_name }}"
   labels:
-    app: "{{ meta.name }}-{{ deployment_type }}-web"
+    app.kubernetes.io/name: 'nginx'
+    app.kubernetes.io/instance: 'nginx-{{ meta.name }}'
+    app.kubernetes.io/component: webserver
+    app.kubernetes.io/part-of: '{{ deployment_type }}'
+    app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
 spec:
   replicas: {{ pulp_web.replicas }}
   selector:
     matchLabels:
-      app: "{{ meta.name }}-{{ deployment_type }}-web"
+      app.kubernetes.io/name: 'nginx'
+      app.kubernetes.io/instance: 'nginx-{{ meta.name }}'
+      app.kubernetes.io/component: webserver
+      app.kubernetes.io/part-of: '{{ deployment_type }}'
+      app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
   template:
     metadata:
       labels:
-        app: "{{ meta.name }}-{{ deployment_type }}-web"
+        app.kubernetes.io/name: 'nginx'
+        app.kubernetes.io/instance: 'nginx-{{ meta.name }}'
+        app.kubernetes.io/component: webserver
+        app.kubernetes.io/part-of: '{{ deployment_type }}'
+        app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
     spec:
       containers:
         - name: pulp-web

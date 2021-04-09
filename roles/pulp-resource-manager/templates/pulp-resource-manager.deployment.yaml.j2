@@ -5,16 +5,28 @@ metadata:
   name: "{{ meta.name }}-resource-manager"
   namespace: "{{ project_name }}"
   labels:
-    app: "{{ meta.name }}-{{ deployment_type }}-resource-manager"
+    app.kubernetes.io/name: '{{ deployment_type }}-resource-manager'
+    app.kubernetes.io/instance: '{{ deployment_type }}-resource-manager-{{ meta.name }}'
+    app.kubernetes.io/component: resource-manager
+    app.kubernetes.io/part-of: '{{ deployment_type }}'
+    app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
 spec:
   replicas: {{ pulp_resource_manager.replicas }}
   selector:
     matchLabels:
-      app: "{{ meta.name }}-{{ deployment_type }}-resource-manager"
+      app.kubernetes.io/name: '{{ deployment_type }}-resource-manager'
+      app.kubernetes.io/instance: '{{ deployment_type }}-resource-manager-{{ meta.name }}'
+      app.kubernetes.io/component: resource-manager
+      app.kubernetes.io/part-of: '{{ deployment_type }}'
+      app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
   template:
     metadata:
       labels:
-        app: "{{ meta.name }}-{{ deployment_type }}-resource-manager"
+        app.kubernetes.io/name: '{{ deployment_type }}-resource-manager'
+        app.kubernetes.io/instance: '{{ deployment_type }}-resource-manager-{{ meta.name }}'
+        app.kubernetes.io/component: resource-manager
+        app.kubernetes.io/part-of: '{{ deployment_type }}'
+        app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
     spec:
 {% if is_k8s %}
       securityContext:
@@ -22,16 +34,16 @@ spec:
         fsGroup: 0
 {% endif %}
       volumes:
-        - name: {{ meta.name }}-pulp-server
+        - name: {{ meta.name }}-server
           secret:
-            secretName: {{ meta.name }}-pulp-server
+            secretName: {{ meta.name }}-server
             items:
               - path: settings.py
                 key: settings.py
 {% if file_storage %}
         - name: pulp-file-storage
           persistentVolumeClaim:
-            claimName: {{ meta.name }}-pulp-file-storage
+            claimName: {{ meta.name }}-file-storage
 {% else %}
         - name: pulp-tmp-file-storage
           emptyDir: {}
@@ -52,7 +64,7 @@ spec:
             - name: REDIS_SERVICE_PORT
               value: "{{ pulp_default_settings.redis_port }}"
           volumeMounts:
-            - name: {{ meta.name }}-pulp-server
+            - name: {{ meta.name }}-server
               mountPath: "/etc/pulp/"
 {% if file_storage %}              
             - name: pulp-file-storage
