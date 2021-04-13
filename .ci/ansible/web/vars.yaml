@@ -1,0 +1,22 @@
+images:
+  - pulp_web_master:
+      image_name: pulp-web
+      tag: latest
+      container_file: Containerfile.web
+      base_image_name: pulp
+      python_version: "3.9"
+      plugin_snippets:
+        - pulp_ansible
+        - pulp_container
+  - galaxy_web_master:
+      image_name: galaxy-web
+      tag: latest
+      container_file: Containerfile.web
+      base_image_name: galaxy
+      python_version: "3.9"
+      plugin_snippets:
+        - pulp_ansible
+        - pulp_container
+        - galaxy_ng
+registry: quay.io
+project: pulp
