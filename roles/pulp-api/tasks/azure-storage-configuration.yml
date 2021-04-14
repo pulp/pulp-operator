@@ -3,7 +3,7 @@
   k8s_info:
     kind: Secret
     namespace: '{{ meta.namespace }}'
-    name: '{{ pulp_object_storage_azure_secret  }}'
+    name: '{{ object_storage_azure_secret  }}'
   register: _custom_azure_configuration
 
 - name: Check azure secret data format
@@ -17,7 +17,7 @@
 
 - name: Fail if azure secret object is an unexpected format
   fail:
-    msg: "Cannot read the data for secret {{ pulp_object_storage_azure_secret  }}"
+    msg: "Cannot read the data for secret {{ object_storage_azure_secret  }}"
   when:
     - not azure_secret_data_avaiable
 
@@ -47,7 +47,7 @@
 
 - name: Fail if required azure secret items are not present
   fail:
-    msg: "Secret {{ pulp_object_storage_azure_secret  }} is missing required configuration data."
+    msg: "Secret {{ object_storage_azure_secret  }} is missing required configuration data."
   when:
     - azure_secret_data_avaiable
     - not azure_account_name_available
@@ -108,4 +108,4 @@
 
 - name: merge default_azure_settings with settings
   set_fact:
-    pulp_default_settings: "{{ pulp_default_settings|combine(default_azure_settings) }}"
+    default_settings: "{{ default_settings|combine(default_azure_settings) }}"

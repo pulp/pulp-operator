@@ -4,4 +4,4 @@ kind: PulpBackup
 metadata:
   name: example-pulpbackup
 spec:
-  pulp_name: example-pulp
+  deployment_name: example-pulp

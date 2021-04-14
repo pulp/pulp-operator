@@ -9,17 +9,17 @@
 
 - name: Set node address for ingress
   set_fact:
-    content_origin: "{{ web_protocol }}://{{ pulp_hostname }}"
+    content_origin: "{{ web_protocol }}://{{ hostname }}"
   when:
     - ingress_type|lower == "ingress"
-    - pulp_hostname is defined
+    - hostname is defined
 
-- name: Fail if pulp_hostname is not defined when ingress is specified
+- name: Fail if hostname is not defined when ingress is specified
   fail:
     msg: "The hostname must be specified when using ingress_type {{ ingress_type }}."
   when:
     - ingress_type|lower == "ingress"
-    - pulp_hostname is not defined
+    - hostname is not defined
 
 - name: Set node address for route
   set_fact:
@@ -65,8 +65,8 @@
 
 - name: merge content_origin with settings
   set_fact:
-    pulp_default_settings: "{{ pulp_default_settings|combine(content_origin_dict) }}"
+    default_settings: "{{ default_settings|combine(content_origin_dict) }}"
 
 - name: DEBUG Show content_origin
   debug:
-    msg: "{{ pulp_default_settings.content_origin }}"
+    msg: "{{ default_settings.content_origin }}"

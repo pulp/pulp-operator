@@ -3,7 +3,7 @@
   k8s_info:
     kind: Secret
     namespace: '{{ meta.namespace }}'
-    name: '{{ pulp_object_storage_s3_secret  }}'
+    name: '{{ object_storage_s3_secret  }}'
   register: _custom_s3_configuration
 
 - name: Check s3 secret data format
@@ -17,7 +17,7 @@
 
 - name: Fail if s3 secret object is an unexpected format
   fail:
-    msg: "Cannot read the data for secret {{ pulp_object_storage_s3_secret  }}"
+    msg: "Cannot read the data for secret {{ object_storage_s3_secret  }}"
   when:
     - not s3_secret_data_avaiable
 
@@ -63,7 +63,7 @@
 
 - name: Fail if required s3 secret items are not present
   fail:
-    msg: "Secret {{ pulp_object_storage_s3_secret  }} is missing required configuration data."
+    msg: "Secret {{ object_storage_s3_secret  }} is missing required configuration data."
   when:
     - s3_secret_data_avaiable
     - not s3_access_key_id_available
@@ -157,4 +157,4 @@
 
 - name: merge default_s3_settings with settings
   set_fact:
-    pulp_default_settings: "{{ pulp_default_settings|combine(default_s3_settings) }}"
+    default_settings: "{{ default_settings|combine(default_s3_settings) }}"

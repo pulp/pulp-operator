@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/part-of: '{{ deployment_type }}'
     app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
 spec:
-  replicas: {{ pulp_web.replicas }}
+  replicas: {{ web.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: 'nginx'
@@ -29,7 +29,7 @@ spec:
         app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
     spec:
       containers:
-        - name: pulp-web
+        - name: web
           image: "{{ registry }}/{{ project }}/{{ image_web }}:{{ tag }}"
           imagePullPolicy: "IfNotPresent"
           volumeMounts:
@@ -66,8 +66,8 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
-{% if pulp_web.resource_requirements is defined %}
-          resources: {{ pulp_web.resource_requirements }}
+{% if web.resource_requirements is defined %}
+          resources: {{ web.resource_requirements }}
 {% endif %}
       volumes:
         - name: {{ meta.name }}-nginx-conf

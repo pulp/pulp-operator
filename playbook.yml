@@ -6,7 +6,7 @@
     - operator_sdk.util
   vars:
     project_name: "{{ meta.namespace }}"
-    pulp_default_settings:
+    default_settings:
       databases:
         default:
           HOST: "{{ postgres_host }}"
@@ -26,8 +26,8 @@
     image: pulp
     image_web: pulp-web
     tag: stable
-    pulp_storage_type: File
-    pulp_file_storage:
+    storage_type: File
+    file_storage:
       access_mode: "ReadWriteMany"
       size: "100Gi"
   roles:

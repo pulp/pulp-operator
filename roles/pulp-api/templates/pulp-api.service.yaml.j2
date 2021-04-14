@@ -20,7 +20,7 @@ spec:
   ports:
     - protocol: TCP
       targetPort: 24817
-      name: pulp-api-24817
+      name: api-24817
       port: 24817
 {% if ingress_type|lower == "none" %}
       nodePort: 24817

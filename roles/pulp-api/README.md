@@ -11,10 +11,10 @@ Requires the `openshift` Python library to interact with Kubernetes: `pip instal
 Role Variables
 --------------
 
-* `pulp_api`: A dictionary of pulp-api configuration
+* `api`: A dictionary of pulp-api configuration
     * `replicas`: Number of pod replicas.
     * `log_level`: The desired log level.
-* `pulp_default_settings`: A nested dictionary that will be combined with custom values from the user's
+* `default_settings`: A nested dictionary that will be combined with custom values from the user's
     `setting.py`. The keys of this dictionary are variable names, and the values should be expressed using the
     [Dynaconf syntax](https://dynaconf.readthedocs.io/en/latest/guides/environment_variables.html#precedence-and-type-casting)
     Please see [pulpcore configuration docs](https://docs.pulpproject.org/en/master/nightly/installation/configuration.html#id2)
@@ -24,12 +24,12 @@ Role Variables
 * `project`: The project name e.g. user or org name at the container registry.
 * `image`: The image name.
 * `tag`: The tag name.
-* `pulp_storage_type`: A string for specifying storage configuration type.
-* `pulp_file_storage`: A dict for specifying a persistent volume claim for pulp-file.
+* `storage_type`: A string for specifying storage configuration type.
+* `file_storage`: A dict for specifying a persistent volume claim for pulp-file.
     * `access_mode`: The access mode for the volume.
     * `size`: The storage size.
-* `pulp_object_storage_s3_secret`:The kubernetes secret with s3 storage configuration information.
-* `pulp_object_storage_azure_secret`:The kubernetes secret with Azure blob storage configuration information.
+* `object_storage_s3_secret`:The kubernetes secret with s3 storage configuration information.
+* `object_storage_azure_secret`:The kubernetes secret with Azure blob storage configuration information.
 
 Dependencies
 ------------

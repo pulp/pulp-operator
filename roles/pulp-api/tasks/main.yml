@@ -3,14 +3,14 @@
     secret_key: "{{ lookup('password', '/dev/null length=50 chars=ascii_letters') }}"
 
 - set_fact:
-    object_storage_secret: "{{ pulp_object_storage_s3_secret }}"
+    object_storage_secret: "{{ object_storage_s3_secret }}"
   when:
-    - pulp_object_storage_s3_secret is defined
+    - object_storage_s3_secret is defined
 
 - set_fact:
-    object_storage_secret: "{{ pulp_object_storage_azure_secret }}"
+    object_storage_secret: "{{ object_storage_azure_secret }}"
   when:
-    - pulp_object_storage_azure_secret is defined
+    - object_storage_azure_secret is defined
 
 - set_fact:
     file_storage: false
@@ -29,15 +29,15 @@
     file: s3-storage-configuration.yml
   when:
     - not file_storage
-    - pulp_object_storage_s3_secret is defined
-    - pulp_object_storage_s3_secret | length
+    - object_storage_s3_secret is defined
+    - object_storage_s3_secret | length
 
 - include_tasks:
     file: azure-storage-configuration.yml
   when:
     - not file_storage
-    - pulp_object_storage_azure_secret is defined
-    - pulp_object_storage_azure_secret | length
+    - object_storage_azure_secret is defined
+    - object_storage_azure_secret | length
 
 # Workaround being unable to do the following, for the subsequent task:
 # when: (pulp_settings is not defined) or
@@ -62,7 +62,7 @@
 
 - name: Combining pulp_settings
   set_fact:
-    pulp_combined_settings: "{{ pulp_default_settings|combine(raw_pulp_settings, recursive=True) if pulp_settings is defined and pulp_settings is not none else pulp_default_settings }}"
+    pulp_combined_settings: "{{ default_settings|combine(raw_pulp_settings, recursive=True) if pulp_settings is defined and pulp_settings is not none else default_settings }}"
 
 - name: pulp-server secret
   k8s:

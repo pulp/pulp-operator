@@ -13,16 +13,16 @@
     - include_tasks: secrets.yml
 
     - include_tasks: storage.yml
-      when: pulp_storage_type | lower == 'file'
+      when: storage_type | lower == 'file'
 
     - name: Set flag signifying this backup was successful
       set_fact:
-        pulp_backup_complete: "{{ _backup_dir }}"
+        backup_complete: "{{ _backup_dir }}"
 
     - include_tasks: cleanup.yml
 
   when:
-    - custom_resource_status['pulpBackupDirectory'] is not defined
+    - custom_resource_status['backupDirectory'] is not defined
 
 - name: Update status variables
   include_tasks: update_status.yml

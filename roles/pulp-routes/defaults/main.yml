@@ -4,4 +4,4 @@
 #
 route_host: ''
 
-pulp_hostname: '{{ deployment_type }}.example.com'
+hostname: '{{ deployment_type }}.example.com'

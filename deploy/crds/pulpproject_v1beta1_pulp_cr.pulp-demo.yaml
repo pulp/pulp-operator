@@ -3,8 +3,8 @@ kind: Pulp
 metadata:
   name: example-pulp
 spec:
-  pulp_storage_type: File
-  pulp_file_storage:
+  storage_type: File
+  file_storage:
     # This doesn't really matter for minikube. Single node by design,
     # but the storage provisioner allows for ReadWriteMany. So let's
     # stick to our default.

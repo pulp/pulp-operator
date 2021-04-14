@@ -1,5 +1,5 @@
 ---
-pulp_api:
+api:
   replicas: 1
   log_level: INFO
   resource_requirements:
@@ -13,14 +13,14 @@ raw_spec: "{{ vars['_pulp_pulpproject_org_pulp']['spec'] }}"
 
 # Secret to lookup that provide the admin password
 #
-pulp_admin_password_secret: ''
+admin_password_secret: ''
 
 # Host to create the root with.
 # If not specific will default to <instance-name>-<namespace>-<routerCanonicalHostname>
 #
 route_host: ''
 
-pulp_hostname: '{{ deployment_type }}.example.com'
+hostname: '{{ deployment_type }}.example.com'
 
 web_protocol: 'http'
 

@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/part-of: '{{ deployment_type }}'
     app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
 spec:
-  replicas: {{ pulp_api.replicas }}
+  replicas: {{ api.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: '{{ deployment_type }}-api'
@@ -44,20 +44,20 @@ spec:
           secret:
             secretName: {{ meta.name }}-admin-password
             items:
-              - path: pulp-admin-password
+              - path: admin-password
                 key: password
 {% if file_storage %}
-        - name: pulp-file-storage
+        - name: file-storage
           persistentVolumeClaim:
             claimName: {{ meta.name }}-file-storage
 {% else %}
-        - name: pulp-tmp-file-storage
+        - name: tmp-file-storage
           emptyDir: {}
-        - name: pulp-assets-file-storage
+        - name: assets-file-storage
           emptyDir: {}
 {% endif %}
       containers:
-        - name: pulp-api
+        - name: api
           image: "{{ registry }}/{{ project }}/{{ image }}:{{ tag }}"
           imagePullPolicy: "IfNotPresent"
           # We set args, not command, so as to not override the entrypoint script
@@ -70,7 +70,7 @@ spec:
             - name: REDIS_SERVICE_HOST
               value: "{{ meta.name }}-redis"
             - name: REDIS_SERVICE_PORT
-              value: "{{ pulp_default_settings.redis_port }}"
+              value: "{{ default_settings.redis_port }}"
           ports:
             - protocol: TCP
               containerPort: 24817
@@ -92,8 +92,8 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
-{% if pulp_api.resource_requirements is defined %}
-          resources: {{ pulp_api.resource_requirements }}
+{% if api.resource_requirements is defined %}
+          resources: {{ api.resource_requirements }}
 {% endif %}
           volumeMounts:
             - name: {{ meta.name }}-server
@@ -102,15 +102,15 @@ spec:
               readOnly: true
             - name: {{ meta.name }}-admin-password
               mountPath: "/etc/pulp/pulp-admin-password"
-              subPath: pulp-admin-password
+              subPath: admin-password
               readOnly: true
 {% if file_storage %}
-            - name: pulp-file-storage
+            - name: file-storage
               readOnly: false
               mountPath: "/var/lib/pulp"
 {% else %}
-            - name: pulp-tmp-file-storage
+            - name: tmp-file-storage
               mountPath: "/var/lib/pulp/tmp"
-            - name: pulp-assets-file-storage
+            - name: assets-file-storage
               mountPath: "/var/lib/pulp/assets"
 {% endif %}

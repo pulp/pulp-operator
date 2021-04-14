@@ -11,7 +11,7 @@ Requires the `openshift` Python library to interact with Kubernetes: `pip instal
 Role Variables
 --------------
 
-* `pulp_content`: A dictionary of pulp-content configuration
+* `content`: A dictionary of pulp-content configuration
     * `replicas`: Number of pod replicas.
     * `log_level`: The desired log level.
 * `registry`: The container registry.

@@ -1,5 +1,7 @@
 ---
-pulp_worker:
+deployment_type: pulp
+
+worker:
   replicas: 2
   resource_requirements:
     requests:

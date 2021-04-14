@@ -13,9 +13,9 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-{% if pulp_backup_storage_class != '' %}
-  storageClassName: {{ pulp_backup_storage_class }}
+{% if backup_storage_class != '' %}
+  storageClassName: {{ backup_storage_class }}
 {% endif %}
   resources:
     requests:
-      storage: {{ pulp_backup_size | default('5Gi', true) }}
+      storage: {{ backup_size | default('5Gi', true) }}

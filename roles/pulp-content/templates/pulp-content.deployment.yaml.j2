@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/part-of: '{{ deployment_type }}'
     app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
 spec:
-  replicas: {{ pulp_content.replicas }}
+  replicas: {{ content.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: '{{ deployment_type }}-content'
@@ -41,18 +41,18 @@ spec:
               - path: settings.py
                 key: settings.py
 {% if file_storage %}
-        - name: pulp-file-storage
+        - name: file-storage
           persistentVolumeClaim:
             claimName: {{ meta.name }}-file-storage
 {% endif %}
       containers:
-        - name: pulp-content
+        - name: content
           image: "{{ registry }}/{{ project }}/{{ image }}:{{ tag }}"
           imagePullPolicy: "IfNotPresent"
           # We set args, not command, so as to not override the entrypoint script
           args: ["pulp-content"]
-{% if pulp_content.resource_requirements is defined %}
-          resources: {{ pulp_content.resource_requirements }}
+{% if content.resource_requirements is defined %}
+          resources: {{ content.resource_requirements }}
 {% endif %}
           env:
             - name: POSTGRES_SERVICE_HOST
@@ -62,7 +62,7 @@ spec:
             - name: REDIS_SERVICE_HOST
               value: "{{ meta.name }}-redis"
             - name: REDIS_SERVICE_PORT
-              value: "{{ pulp_default_settings.redis_port }}"
+              value: "{{ default_settings.redis_port }}"
           ports:
             - protocol: TCP
               containerPort: 24816
@@ -70,7 +70,7 @@ spec:
             - name: {{ meta.name }}-server
               mountPath: "/etc/pulp/"
 {% if file_storage %}
-            - name: pulp-file-storage
+            - name: file-storage
               readOnly: false
               mountPath: "/var/lib/pulp"
 {% endif %}

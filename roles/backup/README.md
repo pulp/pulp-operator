@@ -13,10 +13,10 @@ Requires the `openshift` Python library to interact with Kubernetes: `pip instal
 Role Variables
 --------------
 
-* `pulp_name`: The name of the pulp custom resource to backup
-* `pulp_backup_pvc`: The name of the PVC to uses for backup
-* `pulp_backup_size`: The size of storage for the PVC created by operator if one is not supplied
-* `pulp_backup_storage_class`: The storage class to be used for the backup PVC
+* `deployment_name`: The name of the pulp custom resource to backup
+* `backup_pvc`: The name of the PVC to uses for backup
+* `backup_size`: The size of storage for the PVC created by operator if one is not supplied
+* `backup_storage_class`: The storage class to be used for the backup PVC
 * `postgres_configuration_secret`: The postgres_configuration_secret
 
 
