@@ -6,26 +6,26 @@ spec:
   image: galaxy
   image_web: "galaxy-web"
   tag: "latest"
-  pulp_admin_password_secret: "example-pulp-admin-password"
-  pulp_storage_type: File
-  pulp_file_storage:
+  admin_password_secret: "example-pulp-admin-password"
+  storage_type: File
+  file_storage:
     # k3s local-path requires this
     access_mode: "ReadWriteOnce"
     # We have a little over 10GB free on GHA VMs/instances
     size: "10Gi"
-  pulp_content:
+  content:
     replicas: 1
     resource_requirements:
       requests:
         cpu: 150m
         memory: 256Mi
-  pulp_worker:
+  worker:
     replicas: 1
     resource_requirements:
       requests:
         cpu: 150m
         memory: 256Mi
-  pulp_web:
+  web:
     replicas: 1
     resource_requirements:
       requests:

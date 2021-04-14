@@ -12,8 +12,8 @@
     name: "{{ meta.name }}"
     namespace: "{{ meta.namespace }}"
     status:
-      pulpBackupDirectory: "{{ _backup_dir }}"
-  when: pulp_backup_complete is defined
+      backupDirectory: "{{ _backup_dir }}"
+  when: backup_complete is defined
 
 # The backup PVC in this status can be referenced when restoring
 - name: Update backup PVC status
@@ -23,8 +23,8 @@
     name: "{{ meta.name }}"
     namespace: "{{ meta.namespace }}"
     status:
-      pulpBackupClaim: "{{ backup_pvc }}"
-  when: pulp_backup_complete is defined
+      backupClaim: "{{ backup_pvc }}"
+  when: backup_complete is defined
 
 # The backup around storage type in this status can be referenced when restoring
 - name: Update deployment storage type status
@@ -34,5 +34,5 @@
     name: "{{ meta.name }}"
     namespace: "{{ meta.namespace }}"
     status:
-      pulpDeploymentStorageType: "{{ pulp_storage_type }}"
-  when: pulp_storage_type is defined
+      deploymentStorageType: "{{ storage_type }}"
+  when: storage_type is defined

@@ -1,9 +1,9 @@
 ---
-apiVersion: '{{ pulp_api_version }}'
+apiVersion: '{{ api_version }}'
 kind: Pulp
 metadata:
 {% raw %}
-  name: '{{ pulp_name }}'
+  name: '{{ deployment_name }}'
   namespace: '{{ meta.namespace }}'
 {% endraw %}
-spec: {{ pulp_spec }}
+spec: {{ spec }}

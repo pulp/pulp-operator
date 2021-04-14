@@ -5,24 +5,24 @@ metadata:
 spec:
   tag: "latest"
   ingress_type: Ingress
-  pulp_admin_password_secret: "example-pulp-admin-password"
-  pulp_settings:
+  admin_password_secret: "example-pulp-admin-password"
+  settings:
     debug: "True"
-  pulp_storage_type: S3
-  pulp_object_storage_s3_secret: example-pulp-object-storage
-  pulp_content:
+  storage_type: S3
+  object_storage_s3_secret: example-pulp-object-storage
+  content:
     replicas: 1
     resource_requirements:
       requests:
         cpu: 150m
         memory: 256Mi
-  pulp_worker:
+  worker:
     replicas: 1
     resource_requirements:
       requests:
         cpu: 150m
         memory: 256Mi
-  pulp_web:
+  web:
     replicas: 1
     resource_requirements:
       requests:

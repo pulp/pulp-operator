@@ -12,7 +12,7 @@
   k8s_info:
     kind: Secret
     namespace: '{{ meta.namespace }}'
-    name: '{{ pulp_name }}-postgres-configuration'
+    name: '{{ deployment_name }}-postgres-configuration'
   register: _default_pg_config_resources
 
 - name: Set PostgreSQL configuration
@@ -29,7 +29,7 @@
 
 - name: Default label selector to custom resource generated postgres
   set_fact:
-    postgres_label_selector: "app.kubernetes.io/instance=postgres-{{ pulp-name }}"
+    postgres_label_selector: "app.kubernetes.io/instance=postgres-{{ deployment_name }}"
   when: postgres_label_selector is not defined
 
 - name: Get the postgres pod information
@@ -53,7 +53,7 @@
 
 - name: Set backup directory name
   set_fact:
-    _backup_dir: "/backups/pulp-openshift-backup-{{ now }}"
+    _backup_dir: "/backups/openshift-backup-{{ now }}"
 
 - name: Create directory for backup
   k8s_exec:

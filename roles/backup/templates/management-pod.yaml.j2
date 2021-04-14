@@ -20,8 +20,8 @@ spec:
     - name: {{ meta.name }}-backup
       mountPath: /backups
       readOnly: false
-{% if pulp_storage_claim is defined %}
-    - name: pulp-file-storage
+{% if storage_claim is defined %}
+    - name: file-storage
       readOnly: false
       mountPath: "/var/lib/pulp"
 {% endif %}
@@ -30,9 +30,9 @@ spec:
       persistentVolumeClaim:
         claimName: {{ backup_pvc }}
         readOnly: false
-{% if pulp_storage_claim is defined %}
-    - name: pulp-file-storage
+{% if storage_claim is defined %}
+    - name: file-storage
       persistentVolumeClaim:
-        claimName: {{ pulp_storage_claim }}
+        claimName: {{ storage_claim }}
 {% endif %}
   restartPolicy: Never

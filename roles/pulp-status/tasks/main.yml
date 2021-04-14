@@ -45,7 +45,7 @@
     name: "{{ meta.name }}"
     namespace: "{{ meta.namespace }}"
     status:
-      adminPasswordSecret: "{{ pulp_admin_password_secret_obj['resources'][0]['metadata']['name'] }}"
+      adminPasswordSecret: "{{ admin_password_secret_obj['resources'][0]['metadata']['name'] }}"
 
 - name: Update database configuration status
   operator_sdk.util.k8s_status:
@@ -63,7 +63,7 @@
     name: "{{ meta.name }}"
     namespace: "{{ meta.namespace }}"
     status:
-      storageType: "{{ pulp_storage_type | capitalize }}"
+      storageType: "{{ storage_type | capitalize }}"
 
 - name: Update file storage pvc name status
   operator_sdk.util.k8s_status:

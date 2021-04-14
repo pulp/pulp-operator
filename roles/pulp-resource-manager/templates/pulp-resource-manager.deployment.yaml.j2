@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/part-of: '{{ deployment_type }}'
     app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
 spec:
-  replicas: {{ pulp_resource_manager.replicas }}
+  replicas: {{ resource_manager.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: '{{ deployment_type }}-resource-manager'
@@ -41,15 +41,15 @@ spec:
               - path: settings.py
                 key: settings.py
 {% if file_storage %}
-        - name: pulp-file-storage
+        - name: file-storage
           persistentVolumeClaim:
             claimName: {{ meta.name }}-file-storage
 {% else %}
-        - name: pulp-tmp-file-storage
+        - name: tmp-file-storage
           emptyDir: {}
 {% endif %}
       containers:
-        - name: pulp-resource-manager
+        - name: resource-manager
           image: "{{ registry }}/{{ project }}/{{ image }}:{{ tag }}"
           imagePullPolicy: "IfNotPresent"
           # We set args, not command, so as to not override the entrypoint script
@@ -62,18 +62,18 @@ spec:
             - name: REDIS_SERVICE_HOST
               value: "{{ meta.name }}-redis"
             - name: REDIS_SERVICE_PORT
-              value: "{{ pulp_default_settings.redis_port }}"
+              value: "{{ default_settings.redis_port }}"
           volumeMounts:
             - name: {{ meta.name }}-server
               mountPath: "/etc/pulp/"
 {% if file_storage %}              
-            - name: pulp-file-storage
+            - name: file-storage
               readOnly: false
               mountPath: "/var/lib/pulp"
 {% else %}
-            - name: pulp-tmp-file-storage
+            - name: tmp-file-storage
               mountPath: "/var/lib/pulp/tmp"
 {% endif %}
-{% if pulp_resource_manager.resource_requirements is defined %}
-          resources: {{ pulp_resource_manager.resource_requirements }}
+{% if resource_manager.resource_requirements is defined %}
+          resources: {{ resource_manager.resource_requirements }}
 {% endif %}

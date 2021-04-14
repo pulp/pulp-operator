@@ -15,13 +15,13 @@ metadata:
 # pulp_settings:
 #    debug: "True"
   # The pulp adminstrator password secret.
-# pulp_admin_password_secret:
+# admin_password_secret:
   # PostgreSQL container settings secret.
 # postgres_configuration_secret: pg_secret_name
   # Configuration for the persistentVolumeClaim for /var/lib/pulp
-# pulp_storage_type: File
+# storage_type: File
   # Select storage type: File, S3, Azure
-# pulp_file_storage:
+# file_storage:
       # If your K8s cluster is only 1 node, and its StorageClass /
     # provisioner does not support ReadWriteMany, then you must change
     # this to "ReadWriteOnce".
@@ -41,20 +41,20 @@ metadata:
     # should be sufficient for a test deployment with only the RPM
     # content plugin.
 #   size: "100Gi"
-# pulp_object_storage_s3_secret: example-pulp-object-storage
+# object_storage_s3_secret: example-pulp-object-storage
   # Configuration for S3 credentals
-# pulp_object_storage_azure_secret: example-pulp-object-storage
+# object_storage_azure_secret: example-pulp-object-storage
   # Configuration for Azure credentals
   # Values below are set in roles rather than in playbook.yaml
-# pulp_api:
+# api:
 #   replicas: 1
 #   log_level: INFO
-# pulp_content:
+# content:
 #   replicas: 2
 #   log_level: INFO
-# pulp_worker:
+# worker:
 #   replicas: 2
-# pulp_resource_manager:
+# resource_manager:
     # Waiting on this to be implemented:
     # https://pulp.plan.io/issues/3707
 #   replicas: 1

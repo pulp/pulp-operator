@@ -53,7 +53,7 @@ spec:
                   debug:
                     type: string
                 type: object
-              pulp_admin_password_secret:
+              admin_password_secret:
                   description: Secret where the administrator password can be found
                   type: string
               postgres_configuration_secret:
@@ -102,7 +102,7 @@ spec:
               postgres_label_selector:
                 description: Label selector used to identify postgres pod for executing migration
                 type: string
-              pulp_storage_type:
+              storage_type:
                 description: Configuration for the storage type to be utilized
                 type: string
                 enum:
@@ -112,7 +112,7 @@ spec:
                   - S3
                   - azure
                   - Azure
-              pulp_file_storage:
+              file_storage:
                 description: Configuration for the persistentVolumeClaim for /var/lib/pulp.
                 properties:
                   access_mode:
@@ -126,13 +126,13 @@ spec:
                     description: The size of the file storage; for example 100Gi.
                     type: string
                 type: object
-              pulp_object_storage_s3_secret:
+              object_storage_s3_secret:
                 description: The secret for S3 compliant object storage configuration.
                 type: string
-              pulp_object_storage_azure_secret:
+              object_storage_azure_secret:
                 description: The secret for Azure blob storage configuration.
                 type: string
-              pulp_hostname:
+              hostname:
                 description: The hostname of the instance
                 type: string
               ingress_type:
@@ -187,7 +187,7 @@ spec:
                         type: string
                     type: object
                 type: object
-              pulp_web:
+              web:
                 description: The pulp web deployment.
                 properties:
                   replicas:
@@ -218,7 +218,7 @@ spec:
                         type: object
                     type: object
                 type: object
-              pulp_api:
+              api:
                 description: The pulp api deployment.
                 properties:
                   replicas:
@@ -259,7 +259,7 @@ spec:
                         type: object
                     type: object
                 type: object
-              pulp_content:
+              content:
                 description: The pulp content deployment.
                 properties:
                   replicas:
@@ -300,7 +300,7 @@ spec:
                         type: object
                     type: object
                 type: object
-              pulp_worker:
+              worker:
                 description: The pulp worker deployment.
                 properties:
                   replicas:
@@ -331,7 +331,7 @@ spec:
                         type: object
                     type: object
                 type: object
-              pulp_resource_manager:
+              resource_manager:
                 description: The pulp resource manager deployment.
                 properties:
                   replicas:

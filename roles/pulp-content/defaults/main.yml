@@ -1,5 +1,5 @@
 ---
-pulp_content:
+content:
   replicas: 2
   log_level: INFO
   resource_requirements:
