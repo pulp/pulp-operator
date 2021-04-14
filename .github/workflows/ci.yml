@@ -291,9 +291,7 @@ jobs:
           echo "QUAY_EXPIRE=14" >> $GITHUB_ENV
         shell: bash
       - name: Deploy tagged nightly build
-        run: |
-          git clone --depth=1 https://github.com/pulp/pulp_file.git
-          .ci/scripts/deploy.sh -m
+        run: .ci/scripts/deploy.sh -m
         shell: bash
         env:
           PY_COLORS: '1'
