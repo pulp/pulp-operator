@@ -1,0 +1,112 @@
+---
+
+- name: Look up details for the backup
+  k8s_info:
+    api_version: "{{ backup_api_version }}"
+    kind: "{{ backup_kind }}"
+    name: "{{ backup_name }}"
+    namespace: "{{ meta.namespace }}"
+  register: this_backup
+
+- name: Surface error to user
+  block:
+    - name: Set error message
+      set_fact:
+        error_msg: "Cannot read the backup data for {{ backup_kind }} {{ backup_name  }}."
+
+    - name: Handle error
+      import_tasks: error_handling.yml
+
+    - name: Fail early if pvc is defined but does not exist
+      fail:
+        msg: "{{ error_msg }}"
+  when:
+    - this_backup['resources'] | length == 0
+    - this_backup['resources'][0] is not defined
+    - this_backup['resources'][0]['status'] is not defined
+    - this_backup['resources'][0]['status']['deploymentName'] is not defined
+    - this_backup['resources'][0]['status']['backupClaim'] is not defined
+    - this_backup['resources'][0]['status']['backupDirectory'] is not defined
+    - this_backup['resources'][0]['status']['deploymentStorageType'] is not defined
+    - this_backup['resources'][0]['status']['adminPasswordSecret'] is not defined
+    - this_backup['resources'][0]['status']['databaseConfigurationSecret'] is not defined
+
+- name: Set backup facts
+  set_fact:
+    deployment_name: "{{ this_backup['resources'][0]['status']['deploymentName'] }}"
+    backup_pvc: "{{ this_backup['resources'][0]['status']['backupClaim'] }}"
+    backup_dir: "{{ this_backup['resources'][0]['status']['backupDirectory'] }}"
+    storage_type: "{{ this_backup['resources'][0]['status']['deploymentStorageType'] }}"
+    admin_passowrd_name: "{{ this_backup['resources'][0]['status']['adminPasswordSecret'] }}"
+    db_secret_name: "{{ this_backup['resources'][0]['status']['databaseConfigurationSecret'] }}"
+
+- name: Set optional backup facts
+  set_fact:
+    storage_secret: "{{ this_backup['resources'][0]['status']['objectStorageConfigurationSecret'] }}"
+  when:
+    - this_backup['resources'][0]['status']['objectStorageConfigurationSecret'] is defined
+
+# Check to make sure provided pvc exists, error loudly if not.  Otherwise, the management pod will just stay in pending state forever.
+- name: Check provided PVC exists
+  k8s_info:
+    name: "{{ backup_pvc }}"
+    kind: PersistentVolumeClaim
+    namespace: "{{ meta.namespace }}"
+  register: provided_pvc
+  when:
+    - backup_pvc != ''
+
+- name: Surface error to user
+  block:
+    - name: Set error message
+      set_fact:
+        error_msg: "{{ backup_pvc }} does not exist, restore cannot be performed."
+
+    - name: Handle error
+      import_tasks: error_handling.yml
+
+    - name: Fail early if pvc is defined but does not exist
+      fail:
+        msg: "{{ error_msg }}"
+  when:
+    - backup_pvc != ''
+    - provided_pvc.resources | length == 0
+
+- name: Delete any existing management pod
+  k8s:
+    name: "{{ meta.name }}-backup-manager"
+    kind: Pod
+    namespace: "{{ meta.namespace }}"
+    state: absent
+    force: true
+    wait: true
+
+- name: Create management pod from templated deployment config
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'templates/management-pod.yaml.j2') | from_yaml }}"
+    wait: true
+
+- name: Check to make sure backup directory exists on PVC
+  k8s_exec:
+    namespace: "{{ meta.namespace }}"
+    pod: "{{ meta.name }}-backup-manager"
+    command: >-
+      bash -c "stat {{ backup_dir }}"
+  register: stat_backup_dir
+
+- name: Error if backup dir is missing
+  block:
+    - name: Set error message
+      set_fact:
+        error_msg: "{{ backup_dir }} does not exist on PersistentVolumeClaim {{ backup_pvc }}, restore cannot be performed."
+
+    - name: Handle error
+      import_tasks: error_handling.yml
+
+    - name: Fail early if backup dir provided does not exist
+      fail:
+        msg: "{{ error_msg }}"
+  when:
+    - backup_dir != ''
+    - backup_dir not in stat_backup_dir.stdout

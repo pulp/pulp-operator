@@ -8,3 +8,8 @@
   group: pulp.pulpproject.org
   kind: PulpBackup
   role: backup
+
+- version: v1beta1
+  group: pulp.pulpproject.org
+  kind: PulpRestore
+  role: restore

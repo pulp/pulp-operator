@@ -2,7 +2,7 @@
 
 - name: Delete any existing management pod
   k8s:
-    name: "{{ meta.name }}-db-management"
+    name: "{{ meta.name }}-backup-manager"
     kind: Pod
     namespace: "{{ meta.namespace }}"
     state: absent
@@ -43,7 +43,9 @@
 # by default, it will re-use the old pvc if already created (unless pvc is provided)
 - name: Set PVC to use for backup
   set_fact:
-    backup_pvc: "{{ backup_pvc | default(_default_backup_pvc, true) }}"
+    backup_claim: "{{ backup_pvc | default(_default_backup_pvc, true) }}"
+  when:
+    - backup_pvc == '' or backup_pvc is not defined
 
 - name: Create persistent volume claim for backup
   k8s:
@@ -72,7 +74,7 @@
 
 - name: Set user specified spec
   set_fact:
-    spec: "{{ _pulp['spec'] }}"
+    cr_spec: "{{ _pulp['spec'] }}"
 
 - name: Set pulp status
   set_fact:
@@ -87,10 +89,10 @@
 
 - name: Set pulp database configuration secret if found
   set_fact:
-    postgres_configuration_secret: "{{ status['databaseConfigruationSecret'] }}"
+    postgres_configuration_secret: "{{ status['databaseConfigurationSecret'] }}"
   when:
-    - status['databaseConfigruationSecret'] is defined
-    - status['databaseConfigruationSecret'] | length
+    - status['databaseConfigurationSecret'] is defined
+    - status['databaseConfigurationSecret'] | length
 
 - name: Set pulp storage type if found
   set_fact:

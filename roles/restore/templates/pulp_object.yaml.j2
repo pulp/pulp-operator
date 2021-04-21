@@ -2,8 +2,6 @@
 apiVersion: '{{ api_version }}'
 kind: Pulp
 metadata:
-{% raw %}
   name: '{{ deployment_name }}'
   namespace: '{{ meta.namespace }}'
-{% endraw %}
-spec: {{ spec }}
+spec: {{ cr_spec }}

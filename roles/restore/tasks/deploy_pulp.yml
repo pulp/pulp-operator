@@ -1,0 +1,26 @@
+---
+
+- name: Set apiVersion and kind variables
+  set_fact:
+    api_version: '{{ hostvars["localhost"]["inventory_file"].split("/")[4:6] | join("/")  }}'
+
+- name: Get object definition from pvc
+  k8s_exec:
+    namespace: "{{ meta.namespace }}"
+    pod: "{{ meta.name }}-backup-manager"
+    command: >-
+      bash -c "cat '{{ backup_dir }}/cr_object'"
+  register: cr_object
+
+- name: Set custom resource spec variable from backup
+  set_fact:
+    cr_spec: "{{ cr_object.stdout }}"
+
+- name: Deploy object
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'pulp_object.yaml.j2') }}"
+    wait: true
+    wait_condition:
+      type: "Running"
+      status: "True"

@@ -3,7 +3,7 @@
 - name: Create directory for backup content files
   k8s_exec:
     namespace: "{{ meta.namespace }}"
-    pod: "{{ meta.name }}-db-management"
+    pod: "{{ meta.name }}-backup-manager"
     command: >-
       mkdir -p {{ _backup_dir }}/pulp/
 
@@ -12,10 +12,10 @@
     copy_cmd: >-
       cp -fr /var/lib/pulp/. {{ _backup_dir }}/pulp
 
-- name: Write pg_dump to backup on PVC
+- name: Write content files to backup on PVC
   k8s_exec:
     namespace: "{{ meta.namespace }}"
-    pod: "{{ meta.name }}-db-management"
+    pod: "{{ meta.name }}-backup-manager"
     command: >-
       bash -c "{{ copy_cmd }}"
   register: file_copy

@@ -92,20 +92,20 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - displayName: Ingress Type
+      - displayName: Ingress type
         path: ingress_type
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:select:none
         - urn:alm:descriptor:com.tectonic.ui:select:Ingress
         - urn:alm:descriptor:com.tectonic.ui:select:Route
-      - displayName: Pulp Ingress Annotations
+      - displayName: Ingress annotations
         path: ingress_annotations
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:text
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
-      - displayName: Pulp Ingress TLS Secret
+      - displayName: Ingress TLS secret
         path: ingress_tls_secret
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
@@ -130,32 +130,32 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route
-      - displayName: Pulp Storage Type
+      - displayName: Storage type
         path: storage_type
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:select:File
         - urn:alm:descriptor:com.tectonic.ui:select:S3
         - urn:alm:descriptor:com.tectonic.ui:select:Azure
-      - displayName: Pulp File Storage Configuration
+      - displayName: File storage configuration
         path: file_storage
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File
-      - displayName: Pulp File Storage Configuration
+      - displayName: File storage access mode
         path: file_storage.access_mode
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File
         - urn:alm:descriptor:com.tectonic.ui:select:ReadWriteMany
-      - displayName: Pulp S3 Storage Secret
+      - displayName: S3 storage secret
         path: object_storage_s3_secret
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:S3
-      - displayName: Pulp Azure Storage Secret
+      - displayName: Azure storage secret
         path: object_storage_azure_secret
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:Azure
-      - displayName: Pulp Settings
+      - displayName: Pulp settings
         path: pulp_settings
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
@@ -165,92 +165,92 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
-      - displayName: Pulp API Configuration
+      - displayName: API server configuration
         path: api
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Pulp API log level
+      - displayName: API server log level
         path: api.log_level
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - displayName: Pulp API resource requirements
+      - displayName: API server resource requirements
         path: api.resource_requirements
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
-      - displayName: Pulp Content Configuration
+      - displayName: Content server configuration
         path: content
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Pulp Content log level
+      - displayName: Content server log level
         path: content.log_level
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - displayName: Pulp Content resource requirements
+      - displayName: Content server resource requirements
         path: content.resource_requirements
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
-      - displayName: Pulp Resource Manager Configuration
+      - displayName: Resource manager configuration
         path: resource_manager
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Pulp Resource Manager resource requirements
+      - displayName: Resource manager resource requirements
         path: resource_manager.resource_requirements
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
-      - displayName: Pulp Worker Configuration
+      - displayName: Worker configuration
         path: worker
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Pulp Worker resource requirements
+      - displayName: Worker resource requirements
         path: worker.resource_requirements
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
-      - displayName: Pulp Web Server Configuration
+      - displayName: Web server configuration
         path: web
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Pulp Web Server resource requirements
+      - displayName: Web server resource requirements
         path: web.resource_requirements
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
-      - displayName: Deployment Type
+      - displayName: Deployment type
         path: deployment_type
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - displayName: Pulp Registry
+      - displayName: Container registry
         path: registry
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - displayName: Pulp project
+      - displayName: Container project
         path: project
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - displayName: Pulp Image
+      - displayName: Container image
         path: image
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - displayName: Pulp Web Server Image
+      - displayName: Web Server image
         path: image_web
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - displayName: Pulp Image Tag
+      - displayName: Image tag
         path: tag
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - displayName: Certificate Authorirty Trust Bundle
+      - displayName: Certificate authorirty trust bundle
         path: ca_trust_bundle
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
@@ -261,27 +261,27 @@ spec:
         path: webURL
         x-descriptors:
           - urn:alm:descriptor:org.w3:link
-      - displayName: Admin Password
+      - displayName: Admin password
         description: Admin password for the instance deployed
         path: adminPasswordSecret
         x-descriptors:
           - urn:alm:descriptor:io.kubernetes:Secret
       - displayName: Database configuration
         description: Configuration secret for current deployed database
-        path: databaseConfigruationSecret
+        path: databaseConfigurationSecret
         x-descriptors:
           - urn:alm:descriptor:io.kubernetes:Secret
-      - displayName: Storage Type
+      - displayName: Storage type
         description: The type of storage being used by the deployed instance
         path: storageType
         x-descriptors:
           - urn:alm:descriptor:com.tectonic.ui:text
-      - displayName: File Storage
+      - displayName: File storage
         description: The name of the persistent volume claim used for storage
         path: storagePersistentVolumeClaim
         x-descriptors:
           - urn:alm:descriptor:com.tectonic.ui:text
-      - displayName: Objectstorage Secret
+      - displayName: Objectstorage secret
         description: Configuration secret for objectstorage
         path: storageSecret
         x-descriptors:
@@ -296,7 +296,7 @@ spec:
         path: deployedImage
         x-descriptors:
           - urn:alm:descriptor:com.tectonic.ui:text
-      - displayName: Migrated Database
+      - displayName: Migrated database
         description: Configuration secret for previously deployed database
         path: migrantDatabaseConfigurationSecret
         x-descriptors:
@@ -307,44 +307,85 @@ spec:
       version: v1beta1
       displayName: Pulp Backup
       specDescriptors:
-      - displayName: Pulp Custom Resource Name
+      - displayName: Deployment name
         path: deployment_name
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
-      - displayName: Pulp Backup Persistent Volume Claim
+      - displayName: Backup persistent volume claim
         path: backup_pvc
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Pulp Backup PVC Size
+      - displayName: Backup PVC size
         path: backup_size
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Pulp Backup PVC Storage Class
+      - displayName: Backup PVC storage class
         path: backup_storage_class
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Database Backup Label Selector
+      - displayName: Database backup label selector
         path: postgres_label_selector
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
       statusDescriptors:
-      - displayName: Backup Claim
+      - displayName: Deployment name
+        description: The name of the deployment that was backed up
+        path: deploymentName
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - displayName: Backup claim
         description: The persistent volume claim name used during backup
-        path: pulpBackupClaim
+        path: backupClaim
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
-      - displayName: Backup Directory
+      - displayName: Backup directory
         description: The directory data is backed up to on the PVC
-        path: pulpBackupDirectory
+        path: backupDirectory
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
-      - displayName: Deployment Storage Type
+      - displayName: Deployment storage type
         description: The deployment storage type
-        path: pulpDeploymentStorageType
+        path: deploymentStorageType
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - displayName: Administrator password secret
+        description: Secret for current administrator for deployment
+        path: adminPasswordSecret
+        x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+      - displayName: Database configuration
+        description: Configuration secret for current deployed database
+        path: databaseConfigurationSecret
+        x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+      - displayName: Objectstorage configuration
+        description: Configuration secret for current deployed objectstorage
+        path: objectStorageConfigurationSecret
+        x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+    - description: A Pulp Restore Instance
+      kind: PulpRestore
+      name: pulprestores.pulp.pulpproject.org
+      version: v1beta1
+      displayName: Pulp Restore
+      specDescriptors:
+      - displayName: Backup name
+        path: backup_name
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - displayName: Database restore label selector
+        path: postgres_label_selector
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      statusDescriptors:
+      - displayName: Restore status
+        description: The state of the restore
+        path: restoreComplete
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
   description: Pulp operator

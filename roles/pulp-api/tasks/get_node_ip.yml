@@ -43,12 +43,6 @@
   when:
     - content_origin is not defined
 
-- name: DEBUG Show k8s_nodes
-  debug:
-    msg: "{{ k8s_nodes }}"
-  when:
-    - content_origin is not defined
-
 - name: Set node address
   set_fact:
     content_origin: "http://{{ k8s_nodes.resources[0].status.addresses[0].address }}:24880"

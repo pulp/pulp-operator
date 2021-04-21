@@ -54,7 +54,7 @@
     name: "{{ meta.name }}"
     namespace: "{{ meta.namespace }}"
     status:
-      databaseConfigruationSecret: "{{ _pg_config['resources'][0]['metadata']['name'] }}"
+      databaseConfigurationSecret: "{{ _pg_config['resources'][0]['metadata']['name'] }}"
 
 - name: Update storage type status
   operator_sdk.util.k8s_status:
