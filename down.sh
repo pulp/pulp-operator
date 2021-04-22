@@ -28,6 +28,7 @@ $KUBECTL delete -f deploy/cluster_role_binding.yaml
 $KUBECTL delete -f deploy/crds/pulpproject_v1beta1_pulp_cr.default.yaml
 $KUBECTL delete -f deploy/crds/pulpproject_v1beta1_pulp_crd.yaml
 $KUBECTL delete -f deploy/crds/pulpproject_v1beta1_pulpbackup_crd.yaml
+$KUBECTL delete -f deploy/crds/pulpproject_v1beta1_pulprestore_crd.yaml
 
 if [[ "$CI_TEST" == "true" ]]; then
   $KUBECTL delete -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml

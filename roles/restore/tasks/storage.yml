@@ -1,0 +1,33 @@
+---
+
+- name: Set the resource pod name as a variable.
+  set_fact:
+    storage_claim: "{{ deployment_name }}-file-storage"
+
+- name: Delete any existing management pod
+  k8s:
+    name: "{{ meta.name }}-backup-manager"
+    kind: Pod
+    namespace: "{{ meta.namespace }}"
+    state: absent
+    force: true
+    wait: true
+
+- name: Create management pod from templated deployment config
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'templates/management-pod.yaml.j2') | from_yaml }}"
+    wait: true
+
+- name: Set file copy command
+  set_fact:
+    copy_cmd: >-
+      cp -fr {{ backup_dir }}/pulp/. /var/lib/pulp
+
+- name: Write content files from backup on PVC
+  k8s_exec:
+    namespace: "{{ meta.namespace }}"
+    pod: "{{ meta.name }}-backup-manager"
+    command: >-
+      bash -c "{{ copy_cmd }}"
+  register: file_copy

@@ -44,6 +44,9 @@ spec:
                 - required: ["deployment_name"]
             status:
               properties:
+                deploymentName:
+                  description: Name of the deployment backed up
+                  type: string
                 backupClaim:
                   description: The PVC name used for the backup
                   type: string
@@ -52,6 +55,15 @@ spec:
                   type: string
                 deploymentStorageType:
                   description: The deployment storage type
+                  type: string
+                adminPasswordSecret:
+                  description: Administrator password secret used by the deployed instance
+                  type: string
+                databaseConfigurationSecret:
+                  description: Database configuration secret used by the deployed instance
+                  type: string
+                objectStorageConfigurationSecret:
+                  description: Objectstorage configuration secret used by the deployed instance
                   type: string
                 conditions:
                   description: The resulting conditions when a Service Telemetry is instantiated

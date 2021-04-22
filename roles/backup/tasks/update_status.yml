@@ -4,8 +4,20 @@
     api_version: '{{ hostvars["localhost"]["inventory_file"].split("/")[4:6] | join("/")  }}'
     kind: '{{ hostvars["localhost"]["inventory_file"].split("/")[6]  }}'
 
-# The backup directory in this status can be referenced when restoring
+# The deployment name in this status can be referenced when restoring
 - name: Update backup directory status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ meta.name }}"
+    namespace: "{{ meta.namespace }}"
+    status:
+      deploymentName: "{{ deployment_name }}"
+  when: backup_complete is defined
+
+
+# The backup directory in this status can be referenced when restoring
+- name: Update deployment name status
   operator_sdk.util.k8s_status:
     api_version: '{{ api_version }}'
     kind: "{{ kind }}"
@@ -23,10 +35,10 @@
     name: "{{ meta.name }}"
     namespace: "{{ meta.namespace }}"
     status:
-      backupClaim: "{{ backup_pvc }}"
+      backupClaim: "{{ backup_claim }}"
   when: backup_complete is defined
 
-# The backup around storage type in this status can be referenced when restoring
+# The backup  storage type in this status can be referenced when restoring
 - name: Update deployment storage type status
   operator_sdk.util.k8s_status:
     api_version: '{{ api_version }}'
@@ -36,3 +48,36 @@
     status:
       deploymentStorageType: "{{ storage_type }}"
   when: storage_type is defined
+
+# The backup admin password secret in this status can be referenced when restoring
+- name: Update admin password secret name status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ meta.name }}"
+    namespace: "{{ meta.namespace }}"
+    status:
+      adminPasswordSecret: "{{ admin_password_secret }}"
+  when: admin_password_secret is defined
+
+# The backup database secret in this status can be referenced when restoring
+- name: Update database secret name status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ meta.name }}"
+    namespace: "{{ meta.namespace }}"
+    status:
+      databaseConfigurationSecret: "{{ postgres_configuration_secret }}"
+  when: postgres_configuration_secret is defined
+
+# The backup objectstorage secret in this status can be referenced when restoring
+- name: Update objectstorage secret name status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ meta.name }}"
+    namespace: "{{ meta.namespace }}"
+    status:
+      objectStorageConfigurationSecret: "{{ storage_secret }}"
+  when: storage_secret is defined

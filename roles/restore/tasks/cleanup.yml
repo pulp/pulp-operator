@@ -1,0 +1,9 @@
+---
+
+- name: Delete any existing management pod
+  k8s:
+    name: "{{ meta.name }}-backup-manager"
+    kind: Pod
+    namespace: "{{ meta.namespace }}"
+    state: absent
+    force: true

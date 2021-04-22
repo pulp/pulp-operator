@@ -1,0 +1,9 @@
+---
+
+deployment_type: "pulp"
+postgres_image: postgres:12
+
+custom_resource_key: '_pulp_pulpproject_org_pulprestore'
+
+backup_api_version: 'v1beta1'
+backup_kind: 'PulpBackup'

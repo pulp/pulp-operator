@@ -23,6 +23,7 @@ KUBE_ASSETS_DIR=${KUBE_ASSETS_DIR:-".ci/assets/kubernetes"}
 # The Custom Resource (and any ConfigMaps) do not.
 $KUBECTL apply -f deploy/crds/pulpproject_v1beta1_pulp_crd.yaml
 $KUBECTL apply -f deploy/crds/pulpproject_v1beta1_pulpbackup_crd.yaml
+$KUBECTL apply -f deploy/crds/pulpproject_v1beta1_pulprestore_crd.yaml
 if [[ -e deploy/crds/pulpproject_v1beta1_pulp_cr.yaml ]]; then
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.yaml
 elif [[ "$CI_TEST" == "true" ]]; then

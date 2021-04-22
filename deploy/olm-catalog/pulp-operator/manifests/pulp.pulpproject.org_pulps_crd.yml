@@ -371,7 +371,7 @@ spec:
               adminPasswordSecret:
                 description: Admin password of the deployed instance
                 type: string
-              databaseConfigruationSecret:
+              databaseConfigurationSecret:
                 description: Database configuration secret used by the deployed instance
                 type: string
               storageType:
