@@ -28,10 +28,14 @@ spec:
         app.kubernetes.io/part-of: '{{ deployment_type }}'
         app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
     spec:
+{% if affinity is defined and affinity.node_affinity is defined %}
+      affinity:
+        nodeAffinity: {{ affinity.node_affinity }}
+{% endif %}
       containers:
         - name: web
           image: "{{ registry }}/{{ project }}/{{ image_web }}:{{ tag }}"
-          imagePullPolicy: "IfNotPresent"
+          imagePullPolicy: "{{ image_pull_policy }}"
           volumeMounts:
             - name: {{ meta.name }}-nginx-conf
               mountPath: /etc/nginx/nginx.conf

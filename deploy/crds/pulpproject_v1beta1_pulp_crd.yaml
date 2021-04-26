@@ -48,6 +48,7 @@ spec:
                 type: string
                 default: stable
               pulp_settings:
+                x-kubernetes-preserve-unknown-fields: true
                 description: The pulp settings.
                 properties:
                   debug:
@@ -173,6 +174,22 @@ spec:
               container_token_secret:
                 description: Secret where the container token certificates are stored
                 type: string
+              image_pull_policy:
+                description: Image pull policy for container image
+                type: string
+                default: IfNotPresent
+                enum:
+                  - IfNotPresent
+                  - Always
+                  - Never
+              affinity:
+                description: Defines various deployment affinities
+                properties:
+                  node_affinity:
+                    x-kubernetes-preserve-unknown-fields: true
+                    description: Defines the node affinity for the deployment
+                    type: object
+                type: object
               redis_resource_requirements:
                 description: Resource requirements for the Redis container
                 properties:
