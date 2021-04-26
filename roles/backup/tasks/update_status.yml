@@ -71,6 +71,17 @@
       databaseConfigurationSecret: "{{ postgres_configuration_secret }}"
   when: postgres_configuration_secret is defined
 
+# The backup container token secret in this status can be referenced when restoring
+- name: Update container token secret name status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ meta.name }}"
+    namespace: "{{ meta.namespace }}"
+    status:
+      containerTokenSecret: "{{ container_token_secret }}"
+  when: container_token_secret is defined
+
 # The backup objectstorage secret in this status can be referenced when restoring
 - name: Update objectstorage secret name status
   operator_sdk.util.k8s_status:

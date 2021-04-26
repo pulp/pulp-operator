@@ -1,0 +1,1 @@
+Container registry capabilities will be disable by default in Galaxy when running on Kubernetes/OpenShift

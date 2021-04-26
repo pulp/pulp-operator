@@ -65,6 +65,9 @@ spec:
                 objectStorageConfigurationSecret:
                   description: Objectstorage configuration secret used by the deployed instance
                   type: string
+                containerTokenSecret:
+                  description: Container token configuration secret used by the deployed instance
+                  type: string
                 conditions:
                   description: The resulting conditions when a Service Telemetry is instantiated
                   items:

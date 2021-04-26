@@ -52,6 +52,11 @@ spec:
                 properties:
                   debug:
                     type: string
+                  GALAXY_FEATURE_FLAGS:
+                    properties:
+                      execution_environments:
+                        type: string
+                    type: object
                 type: object
               admin_password_secret:
                   description: Secret where the administrator password can be found
@@ -164,6 +169,9 @@ spec:
                   - passthrough
               route_tls_secret:
                 description: Secret where the TLS related credentials are stored
+                type: string
+              container_token_secret:
+                description: Secret where the container token certificates are stored
                 type: string
               redis_resource_requirements:
                 description: Resource requirements for the Redis container
@@ -390,7 +398,10 @@ spec:
                 description: URL of the image used for the deployed instance
                 type: string
               migrantDatabaseConfigurationSecret:
-                description: The configuration secret used for migrating an old deployment.
+                description: The configuration secret used for migrating an old deployment
+                type: string
+              containerTokenSecret:
+                description: The name of the secret used for container token authentication
                 type: string
               conditions:
                 description: The resulting conditions when a Service Telemetry is instantiated

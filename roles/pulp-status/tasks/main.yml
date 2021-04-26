@@ -85,6 +85,16 @@
       storageSecret: "{{ object_storage_secret }}"
   when: not file_storage
 
+- name: Update container token secret name status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ meta.name }}"
+    namespace: "{{ meta.namespace }}"
+    status:
+      containerTokenSecret: "{{ container_token_secret }}"
+  when: container_token_secret is defined
+
 - name: Update version status
   operator_sdk.util.k8s_status:
     api_version: '{{ api_version }}'
