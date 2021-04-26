@@ -115,6 +115,13 @@
     - status['storageSecret'] is defined
     - status['storageSecret'] | length
 
+- name: Set container token secret if found
+  set_fact:
+    container_token_secret: "{{ status['containerTokenSecret'] }}"
+  when:
+    - status['containerTokenSecret'] is defined
+    - status['containerTokenSecret'] | length
+
 - name: Get PVC information
   k8s_info:
     kind: PersistentVolumeClaim

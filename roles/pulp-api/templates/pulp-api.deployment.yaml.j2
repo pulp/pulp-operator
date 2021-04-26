@@ -56,6 +56,16 @@ spec:
         - name: assets-file-storage
           emptyDir: {}
 {% endif %}
+{% if container_token_secret is defined %}
+        - name: {{ meta.name }}-container-auth-certs
+          secret:
+            secretName: {{ container_token_secret }}
+            items:
+              - path: container_auth_public_key.pem
+                key: container_auth_public_key.pem
+              - path: container_auth_private_key.pem
+                key: container_auth_private_key.pem
+{% endif %}
       containers:
         - name: api
           image: "{{ registry }}/{{ project }}/{{ image }}:{{ tag }}"
@@ -113,4 +123,14 @@ spec:
               mountPath: "/var/lib/pulp/tmp"
             - name: assets-file-storage
               mountPath: "/var/lib/pulp/assets"
+{% endif %}
+{% if container_token_secret is defined %}
+            - name: {{ meta.name }}-container-auth-certs
+              mountPath: "/etc/pulp/keys/container_auth_private_key.pem"
+              subPath: container_auth_private_key.pem
+              readOnly: true
+            - name: {{ meta.name }}-container-auth-certs
+              mountPath: "/etc/pulp/keys/container_auth_public_key.pem"
+              subPath: container_auth_public_key.pem
+              readOnly: true
 {% endif %}

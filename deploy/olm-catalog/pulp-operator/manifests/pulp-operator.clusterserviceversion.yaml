@@ -301,6 +301,11 @@ spec:
         path: migrantDatabaseConfigurationSecret
         x-descriptors:
           - urn:alm:descriptor:io.kubernetes:Secret
+      - displayName: Container token configuration
+        description: Configuration secret for container token authentication
+        path: containerTokenSecret
+        x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
     - description: A Pulp Backup Instance
       kind: PulpBackup
       name: pulpbackups.pulp.pulpproject.org
@@ -365,6 +370,11 @@ spec:
       - displayName: Objectstorage configuration
         description: Configuration secret for current deployed objectstorage
         path: objectStorageConfigurationSecret
+        x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+      - displayName: Container token configuration
+        description: Configuration secret for container token authentication
+        path: containerTokenSecret
         x-descriptors:
           - urn:alm:descriptor:io.kubernetes:Secret
     - description: A Pulp Restore Instance

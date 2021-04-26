@@ -10,6 +10,7 @@
 - name: Set node address for ingress
   set_fact:
     content_origin: "{{ web_protocol }}://{{ hostname }}"
+    token_server: "{{ web_protocol }}://{{ hostname }}/token/"
   when:
     - ingress_type|lower == "ingress"
     - hostname is defined
@@ -24,6 +25,7 @@
 - name: Set node address for route
   set_fact:
     content_origin: "{{ web_protocol }}://{{ route_host }}"
+    token_server: "{{ web_protocol }}://{{ route_host }}/token/"
   when:
     - ingress_type|lower == "route"
     - route_host is defined
@@ -46,12 +48,13 @@
 - name: Set node address
   set_fact:
     content_origin: "http://{{ k8s_nodes.resources[0].status.addresses[0].address }}:24880"
+    token_server: "http://{{ k8s_nodes.resources[0].status.addresses[0].address }}:24880/token/"
   when:
     - content_origin is not defined
 
 - name: Set content_origin
   set_fact:
-    content_origin_dict: "{'content_origin': '{{ content_origin }}' }"
+    content_origin_dict: "{'content_origin': '{{ content_origin }}', 'token_server': '{{ token_server }}' }"
 
 - name: DEBUG Show content_origin_dict
   debug:
