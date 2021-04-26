@@ -155,6 +155,23 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:Azure
+      - displayName: Image pull policy
+        description: Image pull policy for container image
+        path: image_pull_policy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Deployment Affinity
+        description: The deployment affinity
+        path: affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Node Affinity
+        description: Node affinity is a group of node affinity scheduling
+        path: affinity.node_affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:nodeAffinity
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Pulp settings
         path: pulp_settings
         x-descriptors:

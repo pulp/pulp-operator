@@ -28,6 +28,10 @@ spec:
         app.kubernetes.io/part-of: '{{ deployment_type }}'
         app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
     spec:
+{% if affinity is defined and affinity.node_affinity is defined %}
+      affinity:
+        nodeAffinity: {{ affinity.node_affinity }}
+{% endif %}
 {% if is_k8s %}
       securityContext:
         runAsUser: 0
@@ -51,7 +55,7 @@ spec:
       containers:
         - name: resource-manager
           image: "{{ registry }}/{{ project }}/{{ image }}:{{ tag }}"
-          imagePullPolicy: "IfNotPresent"
+          imagePullPolicy: "{{ image_pull_policy }}"
           # We set args, not command, so as to not override the entrypoint script
           args: ["pulp-resource-manager"]
           env:
