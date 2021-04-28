@@ -242,6 +242,11 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Custom Resource Key
+        path: custom_resource_key
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - displayName: Container registry
         path: registry
         x-descriptors:
@@ -353,6 +358,11 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Custom Resource Key
+        path: custom_resource_key
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       statusDescriptors:
       - displayName: Deployment name
         description: The name of the deployment that was backed up
@@ -406,6 +416,11 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:text
       - displayName: Database restore label selector
         path: postgres_label_selector
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Custom Resource Key
+        path: custom_resource_key
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden

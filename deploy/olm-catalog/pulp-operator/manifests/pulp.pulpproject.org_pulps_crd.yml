@@ -27,6 +27,9 @@ spec:
               deployment_type:
                 description: Name of the deployment type
                 type: string
+              custom_resource_key:
+                description: custom_resource_key
+                type: string
               registry:
                 description: The container image registry to use for pulling images.
                 type: string
