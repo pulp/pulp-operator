@@ -43,38 +43,38 @@ spec:
         - image: '{{ postgres_image }}'
           name: postgres
           env:
-            # For tower_postgres_image based on rhel8/postgresql-12
+            # For postgres_image based on rhel8/postgresql-12
             - name: POSTGRESQL_DATABASE
               valueFrom:
                 secretKeyRef:
-                  name: '{{ meta.name }}-postgres-configuration'
+                  name: '{{ postgres_configuration_secret }}'
                   key: database
             - name: POSTGRESQL_USER
               valueFrom:
                 secretKeyRef:
-                  name: '{{ meta.name }}-postgres-configuration'
+                  name: '{{ postgres_configuration_secret }}'
                   key: username
             - name: POSTGRESQL_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: '{{ meta.name }}-postgres-configuration'
+                  name: '{{ postgres_configuration_secret }}'
                   key: password
 
-            # For tower_postgres_image based on postgres
+            # For postgres_image based on postgres
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:
-                  name: '{{ meta.name }}-postgres-configuration'
+                  name: '{{ postgres_configuration_secret }}'
                   key: database
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: '{{ meta.name }}-postgres-configuration'
+                  name: '{{ postgres_configuration_secret }}'
                   key: username
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: '{{ meta.name }}-postgres-configuration'
+                  name: '{{ postgres_configuration_secret }}'
                   key: password
             - name: PGDATA
               value: '{{ postgres_data_path }}'
@@ -83,7 +83,7 @@ spec:
             - name: POSTGRES_HOST_AUTH_METHOD
               value: '{{ postgres_host_auth_method }}'
           ports:
-            - containerPort: 5432
+            - containerPort: {{ postgres_port | default('5432')}}
               name: postgres
           volumeMounts:
             - name: postgres

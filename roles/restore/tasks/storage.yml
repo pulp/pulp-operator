@@ -8,7 +8,7 @@
   k8s:
     name: "{{ meta.name }}-backup-manager"
     kind: Pod
-    namespace: "{{ meta.namespace }}"
+    namespace: "{{ backup_pvc_namespace }}"
     state: absent
     force: true
     wait: true
@@ -26,7 +26,7 @@
 
 - name: Write content files from backup on PVC
   k8s_exec:
-    namespace: "{{ meta.namespace }}"
+    namespace: "{{ backup_pvc_namespace }}"
     pod: "{{ meta.name }}-backup-manager"
     command: >-
       bash -c "{{ copy_cmd }}"

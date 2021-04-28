@@ -6,7 +6,7 @@
 
 - name: Get object definition from pvc
   k8s_exec:
-    namespace: "{{ meta.namespace }}"
+    namespace: "{{ backup_pvc_namespace }}"
     pod: "{{ meta.name }}-backup-manager"
     command: >-
       bash -c "cat '{{ backup_dir }}/cr_object'"
@@ -15,6 +15,20 @@
 - name: Set custom resource spec variable from backup
   set_fact:
     cr_spec: "{{ cr_object.stdout }}"
+    cr_spec_strip: "{ "
+    admin_str: "admin_password_secret: {{ admin_password_name }}"
+
+- name: Strip end characters from spec
+  set_fact:
+    cr_spec_strip: "{{ cr_object.stdout[:-2] + ', '}}"
+  when:
+    - cr_object.stdout | length > 1
+    - not 'admin_password_secret' in cr_object.stdout
+
+- name: Set custom resource spec variable from backup
+  set_fact:
+    cr_spec: "{{ cr_spec_strip + admin_str + '}\n' }}"
+  when: not 'admin_password_secret' in cr_object.stdout
 
 - name: Deploy object
   k8s:
@@ -24,3 +38,13 @@
     wait_condition:
       type: "Running"
       status: "True"
+
+- name: Remove ownerReferences to prevent garbage collection of new CR
+  k8s:
+    definition:
+      apiVersion: '{{ api_version }}'
+      kind: Pulp
+      metadata:
+        name: '{{ deployment_name }}'
+        namespace: '{{ meta.namespace }}'
+        ownerReferences: null

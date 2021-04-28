@@ -46,7 +46,7 @@ spec:
                 key: settings.py
         - name: {{ meta.name }}-admin-password
           secret:
-            secretName: {{ meta.name }}-admin-password
+            secretName: {{ admin_password_name }}
             items:
               - path: admin-password
                 key: password

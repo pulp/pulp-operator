@@ -57,21 +57,21 @@
 
 - name: Create directory for backup
   k8s_exec:
-    namespace: "{{ meta.namespace }}"
+    namespace: "{{ backup_pvc_namespace }}"
     pod: "{{ meta.name }}-backup-manager"
     command: >-
       mkdir -p {{ _backup_dir }}
 
 - name: Precreate file for database dump
   k8s_exec:
-    namespace: "{{ meta.namespace }}"
+    namespace: "{{ backup_pvc_namespace}}"
     pod: "{{ meta.name }}-backup-manager"
     command: >-
       touch {{ _backup_dir }}/pulp.db
 
 - name: Set permissions on file for database dump
   k8s_exec:
-    namespace: "{{ meta.namespace }}"
+    namespace: "{{ backup_pvc_namespace }}"
     pod: "{{ meta.name }}-backup-manager"
     command: >-
       chmod 0600 {{ _backup_dir }}/pulp.db
@@ -87,7 +87,7 @@
 
 - name: Write pg_dump to backup on PVC
   k8s_exec:
-    namespace: "{{ meta.namespace }}"
+    namespace: "{{ backup_pvc_namespace }}"
     pod: "{{ meta.name }}-backup-manager"
     command: >-
       bash -c "PGPASSWORD={{ postgres_pass }} {{ pgdump }} > {{ _backup_dir }}/pulp.db"
