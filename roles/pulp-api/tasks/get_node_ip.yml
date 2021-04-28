@@ -54,7 +54,12 @@
 
 - name: Set content_origin
   set_fact:
-    content_origin_dict: "{'content_origin': '{{ content_origin }}', 'token_server': '{{ token_server }}' }"
+    content_origin_dict: "{ 'content_origin': '{{ content_origin }}' }"
+
+- name: Set token_server and other container default settings
+  set_fact:
+    token_server_dict: "{ 'token_server': '{{ token_server }}', 'token_auth_disable': 'False', 'token_signature_algorithm': 'ES256','public_key_path': '/etc/pulp/keys/container_auth_public_key.pem', 'private_key_path': '/etc/pulp/keys/container_auth_private_key.pem', 'galaxy_feature_flags': { 'execution_environments': 'True' }  }"
+  when: container_token_secret is defined
 
 - name: DEBUG Show content_origin_dict
   debug:
@@ -63,6 +68,11 @@
 - name: merge content_origin with settings
   set_fact:
     default_settings: "{{ default_settings|combine(content_origin_dict) }}"
+
+- name: merge token_server with settings
+  set_fact:
+    default_settings: "{{ default_settings|combine(token_server_dict) }}"
+  when: container_token_secret is defined
 
 - name: DEBUG Show content_origin
   debug:
