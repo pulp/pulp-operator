@@ -28,6 +28,9 @@ spec:
                 deployment_name:
                   description: Name of the deployment to be backed up
                   type: string
+                custom_resource_key:
+                  description: custom_resource_key
+                  type: string
                 backup_pvc:
                   description: Name of the PVC to be used for storing the backup
                   type: string

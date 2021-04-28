@@ -26,6 +26,9 @@ spec:
             spec:
               type: object
               properties:
+                custom_resource_key:
+                  description: custom_resource_key
+                  type: string
                 backup_name:
                   description: Name of the backup custom resource
                   type: string
