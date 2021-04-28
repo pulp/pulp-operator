@@ -20,9 +20,6 @@
       redis_host: "{{ meta.name }}-redis"
       redis_port: 6379
       redis_password: ""
-      TOKEN_SIGNATURE_ALGORITHM: "ES256"
-      PUBLIC_KEY_PATH: "/etc/pulp/keys/container_auth_public_key.pem"
-      PRIVATE_KEY_PATH: "/etc/pulp/keys/container_auth_private_key.pem"
       GALAXY_FEATURE_FLAGS:
         execution_environments: ""
     deployment_state: present
