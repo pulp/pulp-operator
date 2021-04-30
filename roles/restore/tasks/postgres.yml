@@ -6,7 +6,9 @@
     namespace: '{{ meta.namespace }}'
     name: '{{ db_secret_name }}'
   register: _custom_pg_config_resources
-  when: db_secret_name | length
+  when:
+    - db_secret_name is defined
+    - db_secret_name | length
 
 - name: Check for default PostgreSQL configuration
   k8s_info:
@@ -68,7 +70,7 @@
 
 - name: Restore database dump to the new postgresql container
   k8s_exec:
-    namespace: "{{ meta.namespace }}"
+    namespace: "{{ backup_pvc_namespace }}"
     pod: "{{ meta.name }}-backup-manager"
     command: |
       bash -c """

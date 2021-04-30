@@ -34,8 +34,11 @@ spec:
                 backup_pvc:
                   description: Name of the PVC to be used for storing the backup
                   type: string
-                backup_size:
-                  description: Size of PVC
+                backup_pvc_namespace:
+                  description: Namespace PVC is in
+                  type: string
+                backup_storage_requirements:
+                  description: Storage requirements for the backup
                   type: string
                 backup_storage_class:
                   description: Storage class to use when creating PVC for backup
@@ -52,6 +55,9 @@ spec:
                   type: string
                 backupClaim:
                   description: The PVC name used for the backup
+                  type: string
+                backupNamespace:
+                  description: The namespace used for the backup claim
                   type: string
                 backupDirectory:
                   description: The directory data is backed up to on the PVC

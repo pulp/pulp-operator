@@ -6,6 +6,6 @@ metadata:
 spec:
   deployment_name: ''
   backup_pvc: ''
-  backup_size: ''
+  backup_storage_requirements: ''
   backup_storage_class: ''
   postgres_label_selector: ''

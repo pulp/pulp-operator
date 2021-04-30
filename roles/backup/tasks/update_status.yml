@@ -15,7 +15,6 @@
       deploymentName: "{{ deployment_name }}"
   when: backup_complete is defined
 
-
 # The backup directory in this status can be referenced when restoring
 - name: Update deployment name status
   operator_sdk.util.k8s_status:
@@ -36,6 +35,17 @@
     namespace: "{{ meta.namespace }}"
     status:
       backupClaim: "{{ backup_claim }}"
+  when: backup_complete is defined
+
+# The backup PVC namespace in this status can be referenced when restoring
+- name: Update backup PVC namespace status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ meta.name }}"
+    namespace: "{{ meta.namespace }}"
+    status:
+      backupNamespace: "{{ backup_pvc_namespace }}"
   when: backup_complete is defined
 
 # The backup  storage type in this status can be referenced when restoring

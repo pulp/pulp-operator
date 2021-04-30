@@ -4,9 +4,10 @@ deployment_name: ''
 
 # Specify a pre-created PVC (name) to backup to
 backup_pvc: ''
+backup_pvc_namespace: "{{ meta.namespace }}"
 
 # Size of backup PVC if created dynamically
-backup_size: ''
+backup_storage_requirements: ''
 
 # Specify storage class to determine how to dynamically create PVC's with
 backup_storage_class: ''

@@ -4,7 +4,7 @@
   k8s:
     name: "{{ meta.name }}-backup-manager"
     kind: Pod
-    namespace: "{{ meta.namespace }}"
+    namespace: "{{ backup_pvc_namespace }}"
     state: absent
     force: true
     wait: true
@@ -14,7 +14,7 @@
   k8s_info:
     name: "{{ backup_pvc }}"
     kind: PersistentVolumeClaim
-    namespace: "{{ meta.namespace }}"
+    namespace: "{{ backup_pvc_namespace }}"
   register: provided_pvc
   when:
     - backup_pvc != ''
@@ -38,14 +38,12 @@
 # If backup_pvc is defined, use in management-pod.yml.j2
 - name: Set default pvc name
   set_fact:
-    _default_backup_pvc: "{{ meta.name }}-backup-claim"
+    _default_backup_pvc: "{{ deployment_name }}-backup-claim"
 
 # by default, it will re-use the old pvc if already created (unless pvc is provided)
 - name: Set PVC to use for backup
   set_fact:
     backup_claim: "{{ backup_pvc | default(_default_backup_pvc, true) }}"
-  when:
-    - backup_pvc == '' or backup_pvc is not defined
 
 - name: Create persistent volume claim for backup
   k8s:

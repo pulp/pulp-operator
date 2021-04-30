@@ -15,7 +15,7 @@ Role Variables
 
 * `deployment_name`: The name of the pulp custom resource to backup
 * `backup_pvc`: The name of the PVC to uses for backup
-* `backup_size`: The size of storage for the PVC created by operator if one is not supplied
+* `backup_storage_requirements`: The size of storage for the PVC created by operator if one is not supplied
 * `backup_storage_class`: The storage class to be used for the backup PVC
 * `postgres_configuration_secret`: The postgres_configuration_secret
 

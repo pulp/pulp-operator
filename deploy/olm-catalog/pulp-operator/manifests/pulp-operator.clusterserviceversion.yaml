@@ -353,8 +353,13 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Backup PVC size
-        path: backup_size
+      - displayName: Backup persistent volume claim namespace
+        path: backup_pvc_namespace
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Backup PVC storage requirements
+        path: backup_storage_requirements
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
         - urn:alm:descriptor:com.tectonic.ui:advanced
@@ -382,6 +387,11 @@ spec:
       - displayName: Backup claim
         description: The persistent volume claim name used during backup
         path: backupClaim
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - displayName: Backup claim namespace
+        description: The persistent volume claim namespace used during backup
+        path: backupNamespace
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
       - displayName: Backup directory
@@ -424,6 +434,30 @@ spec:
         path: backup_name
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
+      - displayName: Deployment name
+        path: deployment_name
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - displayName: Backup persistent volume claim
+        path: backup_pvc
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Backup persistent volume claim namespace
+        path: backup_pvc_namespace
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Backup directory in the persistent volume claim
+        path: backup_dir
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Configuration for the storage type utilized in the backup
+        path: storage_type
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Database restore label selector
         path: postgres_label_selector
         x-descriptors:

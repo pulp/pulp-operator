@@ -10,7 +10,8 @@ postgres_storage_class: ''
 postgres_data_path: '/var/lib/postgresql/data/pgdata'
 
 # Secret to lookup that provide the PostgreSQL configuration
-postgres_configuration_secret: ''
+postgres_configuration_secret: '{{ meta.name }}-postgres-configuration'
+
 
 # Secret to lookup that provide the PostgreSQL configuration for old database
 postgres_migrant_configuration_secret: ''
