@@ -1,2 +1,12 @@
 ---
 postgres_migrated_from_secret: ''
+
+ingress_type: none
+
+# The TLS termination mechanism to use to access
+# the services. Supported mechanism are: edge, passthrough
+#
+route_tls_termination_mechanism: edge
+
+status_protocol: 'http'
+status_port: '24880'

@@ -5,3 +5,10 @@
 route_host: ''
 
 hostname: '{{ deployment_type }}.example.com'
+
+
+# Add annotations to the ingress. Specify as literal block. E.g.:
+# ingress_annotations: |
+#   kubernetes.io/ingress.class: nginx
+#   nginx.ingress.kubernetes.io/proxy-connect-timeout: 60s
+ingress_annotations: ''

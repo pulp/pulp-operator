@@ -10,6 +10,10 @@ metadata:
     app.kubernetes.io/component: webserver
     app.kubernetes.io/part-of: '{{ deployment_type }}'
     app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
+{% if ingress_type | lower == 'loadbalancer' and loadbalancer_annotations %}
+  annotations:
+    {{ loadbalancer_annotations | indent(width=4) }}
+{% endif %}
 spec:
   selector:
     app.kubernetes.io/name: 'nginx'
@@ -18,11 +22,33 @@ spec:
     app.kubernetes.io/part-of: '{{ deployment_type }}'
     app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
   ports:
-    - protocol: TCP
+{% if ingress_type | lower != 'loadbalancer' and loadbalancer_protocol | lower != 'https' %}
+    - port: 24880
+      protocol: TCP
       targetPort: 8080
       name: web-8080
-      port: 24880
-{% if ingress_type|lower == "none" %}
-      nodePort: 24880
+{% endif %}
+{% if ingress_type | lower == 'route' and route_tls_termination_mechanism | lower == 'passthrough' %}
+    - port: 443
+      protocol: TCP
+      targetPort: 8443
+      name: web-8443
+{% endif %}
+{% if ingress_type | lower == 'loadbalancer' and loadbalancer_protocol | lower == 'https' %}
+    - port: {{ loadbalancer_port }}
+      protocol: TCP
+      targetPort: 8080
+      name: web-8443
+{% elif ingress_type | lower == 'loadbalancer' and loadbalancer_protocol | lower != 'https' %}
+    - port: {{ loadbalancer_port }}
+      protocol: TCP
+      targetPort: 8080
+      name: web-8080
+{% endif %}
+{% if ingress_type | lower == "loadbalancer" %}
+  type: LoadBalancer
+{% elif ingress_type != "none" %}
   type: NodePort
+{% else %}
+  type: ClusterIP
 {% endif %}
