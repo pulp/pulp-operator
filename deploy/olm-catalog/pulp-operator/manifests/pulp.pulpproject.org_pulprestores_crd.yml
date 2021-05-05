@@ -26,6 +26,12 @@ spec:
             spec:
               type: object
               properties:
+                backup_source:
+                  description: backup source
+                  type: string
+                  enum:
+                    - CR
+                    - PVC
                 custom_resource_key:
                   description: custom_resource_key
                   type: string

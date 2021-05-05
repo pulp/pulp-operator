@@ -46,8 +46,8 @@ spec:
                 postgres_label_selector:
                   description: Label selector used to identify postgres pod for executing migration
                   type: string
-              oneOf:
-                - required: ["deployment_name"]
+              required:
+                - deployment_name
             status:
               properties:
                 deploymentName:
