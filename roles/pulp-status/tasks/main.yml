@@ -32,9 +32,17 @@
   set_fact:
     pulp_web_pod_name: "{{ pulp_pods['resources'][0]['metadata']['name'] }}"
 
+- name: Set the status protocol and port
+  set_fact:
+    status_protocol: "https"
+    status_port: "8443"
+  when:
+    - ingress_type | lower == 'route'
+    - route_tls_termination_mechanism | lower == 'passthrough'
+
 - name: Check that status and it returns a status 200
   uri:
-    url: 'http://{{ meta.name }}-web-svc:24880/pulp/api/v3/status/'
+    url: '{{ status_protocol }}://{{ meta.name }}-web-svc:{{ status_port }}/pulp/api/v3/status/'
   delay: 5
   retries: 10
 

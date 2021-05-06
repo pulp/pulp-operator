@@ -50,13 +50,18 @@ spec:
             - protocol: TCP
               containerPort: 8080
 {% if ingress_type | lower == 'route' and route_tls_termination_mechanism | lower == 'passthrough' %}
-            - containerPort: 443
+            - containerPort: 8443
 {% endif %}
           livenessProbe:
             httpGet:
               path: pulp/api/v3/status/
+{% if ingress_type | lower == 'route' and route_tls_termination_mechanism | lower == 'passthrough' %}
+              port: 8443
+              scheme: HTTPS
+{% else %}
               port: 8080
               scheme: HTTP
+{% endif %}
             failureThreshold: 5
             initialDelaySeconds: 60
             periodSeconds: 10
@@ -64,8 +69,13 @@ spec:
           readinessProbe:
             httpGet:
               path: pulp/api/v3/status/
+{% if ingress_type | lower == 'route' and route_tls_termination_mechanism | lower == 'passthrough' %}
+              port: 8443
+              scheme: HTTPS
+{% else %}
               port: 8080
               scheme: HTTP
+{% endif %}
             failureThreshold: 10
             initialDelaySeconds: 30
             periodSeconds: 10
