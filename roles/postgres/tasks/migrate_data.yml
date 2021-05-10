@@ -39,18 +39,19 @@
 - name: Set pg_dump command
   set_fact:
     pgdump: >-
-      pg_dump --clean --create
+      pg_dump
       -h {{ migrant_postgres_host }}
       -U {{ migrant_postgres_user }}
       -d {{ migrant_postgres_database }}
       -p {{ migrant_postgres_port }}
+      -F custom
 
 - name: Set pg_restore command
   set_fact:
     psql_restore: >-
-      psql -U {{ postgres_user }}
+      pg_restore --clean --if-exists
+      -U {{ postgres_user }}
       -d {{ postgres_database }}
-      -p {{ postgres_port }}
 
 - name: Stream backup from pg_dump to the new postgresql container
   k8s_exec:
