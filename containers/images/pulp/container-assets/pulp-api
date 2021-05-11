@@ -14,6 +14,7 @@ django-admin collectstatic --noinput
 django-admin migrate --noinput
 django-admin migrate auth --noinput
 
+bash +x
 ADMIN_PASSWORD_FILE=/etc/pulp/pulp-admin-password
 if [[ -f "$ADMIN_PASSWORD_FILE" ]]; then
    echo "pulp admin can be initialized."
@@ -23,6 +24,7 @@ fi
 if [ -n "${PULP_ADMIN_PASSWORD}" ]; then
     django-admin reset-admin-password --password "${PULP_ADMIN_PASSWORD}"
 fi
+bash -x
 
 mkdir -p /var/lib/pulp/media \
          /var/lib/pulp/assets \
