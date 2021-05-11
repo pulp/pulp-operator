@@ -16,3 +16,6 @@ spec:
       storage: "{{ file_storage.size }}"
   accessModes:
     - "{{ file_storage.access_mode }}"
+{% if file_storage.storage_class is defined %}
+  storageClassName: '{{ file_storage.storage_class }}'
+{% endif %}

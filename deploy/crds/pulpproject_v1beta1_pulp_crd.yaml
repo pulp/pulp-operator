@@ -131,6 +131,9 @@ spec:
                   size:
                     description: The size of the file storage; for example 100Gi.
                     type: string
+                  storage_class:
+                    description: Storage class to use for the file persistentVolumeClaim
+                    type: string
                 type: object
               object_storage_s3_secret:
                 description: The secret for S3 compliant object storage configuration.
