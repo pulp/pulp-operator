@@ -15,7 +15,7 @@ QUAY_REPO_NAME=${QUAY_REPO_NAME:-pulp-operator}
 # The image tag
 QUAY_IMAGE_TAG=${QUAY_IMAGE_TAG:-latest}
 
-QUAY_BOT_USERNAME=${QUAY_BOT_USERNAME:-pulp+github}
+QUAY_BOT_USERNAME=${QUAY_BOT_USERNAME:-fabricio_aguiar}
 
 # Reference: https://adriankoshka.github.io/blog/posts/travis-and-quay/
 echo "$QUAY_BOT_PASSWORD" | docker login -u "$QUAY_BOT_USERNAME" --password-stdin quay.io

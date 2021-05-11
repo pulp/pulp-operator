@@ -231,7 +231,6 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: [insta, components, molecule, galaxy]
     steps:
       - uses: actions/checkout@v2
         with:
