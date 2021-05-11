@@ -166,6 +166,14 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File
         - urn:alm:descriptor:com.tectonic.ui:select:ReadWriteMany
+      - displayName: File storage size
+        path: file_storage.size
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File
+      - displayName: File storage class
+        path: file_storage.storage_class
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File
       - displayName: S3 storage secret
         path: object_storage_s3_secret
         x-descriptors:
