@@ -10,7 +10,7 @@ images:
       image_name: pulp
       tag: latest
       container_file: Containerfile.core
-      pulpcore: git+https://github.com/pulp/pulpcore.git@3.12#egg=pulpcore
+      pulpcore: git+https://github.com/pulp/pulpcore.git#egg=pulpcore
       plugins:
         - "git+https://github.com/pulp/pulp-certguard.git"
         - "git+https://github.com/pulp/pulp_file.git"
