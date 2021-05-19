@@ -617,6 +617,13 @@ spec:
           - patch
           - update
           - watch
+        - apiGroups:
+          - ""
+          resources:
+          - nodes
+          verbs:
+          - get
+          - list
         serviceAccountName: pulp-operator
       deployments:
       - name: pulp-operator
