@@ -68,3 +68,7 @@ if [[ -z "${QUAY_EXPIRE+x}" ]]; then
   eval $(minikube -p minikube docker-env)
   sudo -E $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
 fi
+
+QUAY_IMAGE_TAG=$(python -c 'import yaml; print(yaml.safe_load(open("deploy/olm-catalog/pulp-operator/manifests/pulp-operator.clusterserviceversion.yaml"))["spec"]["version"])')
+docker build -f bundle.Dockerfile -t quay.io/pulp/pulp-operator-bundle:${QUAY_IMAGE_TAG} .
+sudo -E QUAY_REPO_NAME=pulp-operator-bundle $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
