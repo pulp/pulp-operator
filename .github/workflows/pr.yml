@@ -226,7 +226,6 @@ jobs:
           sudo wget https://github.com/operator-framework/operator-sdk/releases/download/$CURRENT_VERSION/operator-sdk-$CURRENT_VERSION-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
           sudo chmod +x /usr/local/bin/operator-sdk
           echo ::endgroup::
-          sed -i "s/image_web: pulp-web/image_web: galaxy-web/g" playbook.yml
           eval $(minikube -p minikube docker-env)
           sudo -E operator-sdk build quay.io/pulp/pulp-operator:latest
           sudo -E docker images
