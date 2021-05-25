@@ -55,20 +55,20 @@ fi
 
 docker images
 
-echo "Deploy pulp latest"
-sudo -E QUAY_REPO_NAME=pulp $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
-
-echo "Deploy pulpcore latest"
-sudo -E QUAY_REPO_NAME=pulpcore $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
-
-echo "Deploy pulp-web latest"
-sudo -E QUAY_REPO_NAME=pulp-web $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
-
 if [[ "$CI_TEST" == "galaxy" ]]; then
   echo "Deploy galaxy latest"
   sudo -E QUAY_REPO_NAME=galaxy $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
   echo "Deploy galaxy-web latest"
   sudo -E QUAY_REPO_NAME=galaxy-web $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
+else
+  echo "Deploy pulp latest"
+  sudo -E QUAY_REPO_NAME=pulp $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
+
+  echo "Deploy pulpcore latest"
+  sudo -E QUAY_REPO_NAME=pulpcore $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
+
+  echo "Deploy pulp-web latest"
+  sudo -E QUAY_REPO_NAME=pulp-web $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
 fi
 
 if [[ -z "${QUAY_EXPIRE+x}" ]]; then
