@@ -6,15 +6,5 @@ images:
       pulpcore: git+https://github.com/pulp/pulpcore.git@3.11#egg=pulpcore
       plugins:
         - "git+https://github.com/ansible/galaxy_ng.git"
-  - galaxy_web_master:
-      image_name: galaxy-web
-      tag: latest
-      container_file: Containerfile.web
-      base_image_name: galaxy
-      python_version: "3.9"
-      plugin_snippets:
-        - pulp_ansible
-        - pulp_container
-        - galaxy_ng
 registry: quay.io
 project: pulp

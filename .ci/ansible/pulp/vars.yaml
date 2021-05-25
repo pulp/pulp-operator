@@ -19,12 +19,5 @@ images:
         - "git+https://github.com/pulp/pulp_deb.git"
         - "git+https://github.com/pulp/pulp_python.git"
         - "git+https://github.com/pulp/pulp_rpm.git"
-  - galaxy_master:
-      image_name: galaxy
-      tag: latest
-      container_file: Containerfile.core
-      pulpcore: git+https://github.com/pulp/pulpcore.git@3.11#egg=pulpcore
-      plugins:
-        - "git+https://github.com/ansible/galaxy_ng.git"
 registry: quay.io
 project: pulp
