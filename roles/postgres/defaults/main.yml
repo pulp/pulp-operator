@@ -6,7 +6,7 @@ postgres_image: postgres:12
 postgres_resource_requirements:
   requests:
     storage: 8Gi
-postgres_storage_class: ''
+
 postgres_data_path: '/var/lib/postgresql/data/pgdata'
 
 # Secret to lookup that provide the PostgreSQL configuration

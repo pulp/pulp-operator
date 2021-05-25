@@ -95,7 +95,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
-{% if postgres_storage_class != '' %}
+{% if postgres_storage_class is defined %}
         storageClassName: '{{ postgres_storage_class }}'
 {% endif %}
         resources: {{ postgres_resource_requirements }}

@@ -279,7 +279,11 @@ jobs:
           echo "CI_TEST=true" >> $GITHUB_ENV
         shell: bash
       - name: Install
-        run: pip3 install molecule[docker,lint]==3.2.3 openshift==0.11.0 jmespath
+        run: |
+          pip install --upgrade pip
+          sudo apt remove ansible
+          pip install "ansible<4.0" molecule[docker,lint]==3.2.3 openshift==0.11.0 jmespath pipdeptree
+          pipdeptree
       - name: Molecule
         run: .ci/scripts/molecule.sh
         shell: bash
