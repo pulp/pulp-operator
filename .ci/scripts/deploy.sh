@@ -13,7 +13,7 @@ cd $GITHUB_WORKSPACE/containers/
 if [[ "$CI_TEST" == "galaxy" ]]; then
   cp $GITHUB_WORKSPACE/.ci/ansible/galaxy/vars.yaml vars/vars.yaml
 else
-  cp $GITHUB_WORKSPACE/.ci/ansible/vars.yaml vars/vars.yaml
+  cp $GITHUB_WORKSPACE/.ci/ansible/pulp/vars.yaml vars/vars.yaml
 fi
 sed -i "s/podman/docker/g" common_tasks.yaml
 pip install ansible
@@ -29,7 +29,11 @@ cd $GITHUB_WORKSPACE
 
 echo "Build web images"
 cd $GITHUB_WORKSPACE/containers/
-cp $GITHUB_WORKSPACE/.ci/ansible/web/vars.yaml vars/vars.yaml
+if [[ "$CI_TEST" == "galaxy" ]]; then
+  cp $GITHUB_WORKSPACE/.ci/ansible/galaxy/web/vars.yaml vars/vars.yaml
+else
+  cp $GITHUB_WORKSPACE/.ci/ansible/pulp/web/vars.yaml vars/vars.yaml
+fi
 sed -i "s/podman/docker/g" common_tasks.yaml
 
 if [[ -z "${QUAY_EXPIRE+x}" ]]; then
