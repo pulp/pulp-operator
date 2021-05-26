@@ -38,7 +38,7 @@ ingress_tls_secret: ''
 #
 route_tls_secret: ''
 
-file_storage: true
+is_file_storage: true
 
 object_storage_path: ''
 

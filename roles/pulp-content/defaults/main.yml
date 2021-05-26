@@ -8,3 +8,4 @@ content:
       memory: 512Mi
 
 ingress_type: none
+is_file_storage: true

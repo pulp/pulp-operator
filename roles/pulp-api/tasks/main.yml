@@ -13,7 +13,7 @@
     - object_storage_azure_secret is defined
 
 - set_fact:
-    file_storage: false
+    is_file_storage: false
   when:
     - object_storage_secret is defined
 

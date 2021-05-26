@@ -50,7 +50,7 @@ spec:
             items:
               - path: admin-password
                 key: password
-{% if file_storage %}
+{% if is_file_storage %}
         - name: file-storage
           persistentVolumeClaim:
             claimName: {{ meta.name }}-file-storage
@@ -118,7 +118,7 @@ spec:
               mountPath: "/etc/pulp/pulp-admin-password"
               subPath: admin-password
               readOnly: true
-{% if file_storage %}
+{% if is_file_storage %}
             - name: file-storage
               readOnly: false
               mountPath: "/var/lib/pulp"
