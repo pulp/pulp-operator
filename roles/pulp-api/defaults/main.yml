@@ -26,6 +26,7 @@ hostname: '{{ deployment_type }}.example.com'
 
 web_protocol: 'http'
 
+ingress_type: none
 # TLS secret for the ingress. The secret either has to exist before hand with
 # the corresponding cert and key or just be an indicator for where an automated
 # process like cert-manager (enabled via annotations) will store the TLS
