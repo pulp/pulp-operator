@@ -44,7 +44,7 @@ spec:
             items:
               - path: settings.py
                 key: settings.py
-{% if file_storage %}
+{% if is_file_storage %}
         - name: file-storage
           persistentVolumeClaim:
             claimName: {{ meta.name }}-file-storage
@@ -70,7 +70,7 @@ spec:
           volumeMounts:
             - name: {{ meta.name }}-server
               mountPath: "/etc/pulp/"
-{% if file_storage %}              
+{% if is_file_storage %}              
             - name: file-storage
               readOnly: false
               mountPath: "/var/lib/pulp"

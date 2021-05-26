@@ -7,3 +7,5 @@ resource_manager:
     requests:
       cpu: 200m
       memory: 512Mi
+
+is_file_storage: true
