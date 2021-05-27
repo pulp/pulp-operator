@@ -23,19 +23,19 @@
     definition: "{{ lookup('template', 'templates/' + item + '.pvc.yaml.j2') | from_yaml }}"
   with_items:
     - pulp-file-storage
-  when: file_storage
+  when: is_file_storage
 
 - include_tasks:
     file: s3-storage-configuration.yml
   when:
-    - not file_storage
+    - not is_file_storage
     - object_storage_s3_secret is defined
     - object_storage_s3_secret | length
 
 - include_tasks:
     file: azure-storage-configuration.yml
   when:
-    - not file_storage
+    - not is_file_storage
     - object_storage_azure_secret is defined
     - object_storage_azure_secret | length
 
