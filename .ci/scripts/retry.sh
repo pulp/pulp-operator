@@ -14,6 +14,10 @@ function retry()
                         echo "Command Fail.."
                         ((n++))
                         echo "retry $n ::"
+                        if [[ $n -ge $try ]]; then
+                          set -eu
+                          $cmd
+                        fi
                         sleep 30;
                         }
 

@@ -3,13 +3,14 @@
 
 KUBE="k3s"
 SERVER=$(hostname)
+WEB_PORT="24817"
 if [[ "$1" == "--minikube" ]] || [[ "$1" == "-m" ]]; then
   KUBE="minikube"
   SERVER="localhost"
   if [[ "$CI_TEST" == "true" ]]; then
-    SVC_NAME="example-pulp-api-svc"
-    API_PORT="24817"
-    kubectl port-forward service/$SVC_NAME $API_PORT:$API_PORT &
+    SVC_NAME="example-pulp-web-svc"
+    WEB_PORT="24880"
+    kubectl port-forward service/$SVC_NAME $WEB_PORT:$WEB_PORT &
   fi
 fi
 
@@ -19,7 +20,8 @@ login admin
 password password\
 " > ~/.netrc
 
-export BASE_ADDR="http://$SERVER:24817"
+export BASE_ADDR="http://$SERVER:$WEB_PORT"
+echo $BASE_ADDR
 
 pushd pulp_file/docs/_scripts
 # Let's only do sync tests.
