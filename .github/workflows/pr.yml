@@ -263,10 +263,10 @@ jobs:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
-      - name: Set up Python 3.7
+      - name: Set up Python 3.9
         uses: actions/setup-python@v1
         with:
-          python-version: '3.7'
+          python-version: '3.9'
       - name: Install httpie
         run: |
           echo ::group::HTTPIE
@@ -281,7 +281,9 @@ jobs:
         run: |
           pip install --upgrade pip
           sudo apt remove ansible
-          pip install "ansible<4.0" molecule[docker,lint]==3.2.3 openshift==0.11.0 jmespath pipdeptree
+          pip install ansible molecule[docker,lint] six openshift==0.11.0 jmespath pipdeptree
+          ansible-galaxy collection install --force community.docker
+          ansible --version
           pipdeptree
       - name: Molecule
         run: .ci/scripts/molecule.sh
