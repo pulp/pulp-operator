@@ -209,6 +209,9 @@ spec:
                   - IfNotPresent
                   - Always
                   - Never
+              image_pull_secret:
+                description: The image pull secret
+                type: string
               affinity:
                 description: Defines various deployment affinities
                 properties:

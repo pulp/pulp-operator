@@ -207,6 +207,12 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Image pull secret
+        description: Image pull secret for container images
+        path: image_pull_secret
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:imagePullSecret
       - displayName: Deployment Affinity
         description: The deployment affinity
         path: affinity

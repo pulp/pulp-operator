@@ -27,6 +27,7 @@
     project: pulp
     image: pulp
     image_web: pulp-web
+    image_pull_secret: ""
     tag: stable
     storage_type: File
     file_storage:
