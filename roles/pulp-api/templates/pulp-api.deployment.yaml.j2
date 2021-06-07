@@ -28,6 +28,10 @@ spec:
         app.kubernetes.io/part-of: '{{ deployment_type }}'
         app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
     spec:
+{% if image_pull_secret %}
+      imagePullSecrets:
+        - name: {{ image_pull_secret }}
+{% endif %}
 {% if affinity is defined and affinity.node_affinity is defined %}
       affinity:
         nodeAffinity: {{ affinity.node_affinity }}
