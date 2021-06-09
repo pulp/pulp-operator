@@ -42,7 +42,7 @@
 
 - name: Check that status and it returns a status 200
   uri:
-    url: '{{ status_protocol }}://{{ meta.name }}-web-svc:{{ status_port }}/pulp/api/v3/status/'
+    url: '{{ status_protocol }}://{{ meta.name }}-web-svc.{{ meta.namespace }}.svc.cluster.local:{{ status_port }}/pulp/api/v3/status/'
   delay: 5
   retries: 10
 
