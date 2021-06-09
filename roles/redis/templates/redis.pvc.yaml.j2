@@ -16,3 +16,6 @@ spec:
       storage: 1Gi
   accessModes:
     - ReadWriteOnce
+{% if redis_storage_class is defined %}
+  storageClassName: '{{ redis_storage_class }}'
+{% endif %}
