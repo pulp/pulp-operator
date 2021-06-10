@@ -49,6 +49,9 @@ spec:
               redis_image:
                 description: The image name for the redis image.
                 type: string
+              redis_storage_class:
+                description: Storage class to use for the Redis PVC
+                type: string
               tag:
                 description: The image tag for the pulp image.
                 type: string
