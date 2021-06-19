@@ -15,7 +15,7 @@ being.
 
 ## OpenShift
 
-Currently pulp-operator is not on the OpenShift catalog, so as a first step we need to create a catalog entry:
+Currently pulp-operator is not available in the OpenShift catalogue, so as a first step you must create a catalogue entry:
 
 ```yaml
 # pulp-catalog-source.yaml
@@ -38,11 +38,11 @@ spec:
 oc apply -f pulp-catalog-source.yaml
 ```
 
-Wait few seconds and refresh OCP page, after that you should be able to see `my-pulp-catalog`
+Wait a few seconds and refresh the OCP page. After the refresh, you can see a `my-pulp-catalog` entry
 on the OperatorHub tab:
 ![OperatorHub tab](images/1.png "Pulp on OperatorHub tab")
 
-Click on `Pulp` and then `Install`:
+Click `Pulp` and then `Install`:
 ![Installing pulp](images/2.png "Installing pulp operator")
 
 ![Installing pulp](images/3.png "Installing pulp operator")
@@ -50,18 +50,18 @@ Click on `Pulp` and then `Install`:
 Create a `Secret` with the `S3` credentials:
 ![S3 credentials Secret](images/4.png "S3 credentials Secret")
 
-Click on `Pulp`:
+Click `Pulp`:
 ![Click on Pulp](images/5.png "Click on Pulp")
 
-Select `S3` as storage type and, on S3 storage secret, type the name of the storage you created before,
+Select `S3` as the storage type and, on `S3 storage secret`, enter the name of the storage you created before,
 e.g. `example-pulp-object-storage`:
 ![S3 credentials on Pulp kind](images/6.png "S3 credentials on Pulp kind")
 
-Click on `Advanced Configuration`,
+Click `Advanced Configuration`,
 select `Route` as Ingress type, fill in the `Route DNS host`, select `Edge` as Route TLS termination mechanism, and click on `Create`:
 ![Advanced Configuration](images/7.png "Advanced Configuration")
 
-Wait few minutes, and pulp-operator should be successfully deployed!
+Wait a few minutes for pulp-operator to be successfully deployed!
 
 You can check your `password` on `Secrets`, `example-pulp-admin-password`:
 ![Admin password Secret](images/8.png "Admin password Secret")
