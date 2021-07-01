@@ -81,7 +81,7 @@
     namespace: "{{ meta.namespace }}"
     status:
       storagePersistentVolumeClaim: "{{ meta.name }}-file-storage"
-  when: file_storage
+  when: is_file_storage
 
 - name: Update object storage secret name status
   operator_sdk.util.k8s_status:
@@ -91,7 +91,7 @@
     namespace: "{{ meta.namespace }}"
     status:
       storageSecret: "{{ object_storage_secret }}"
-  when: not file_storage
+  when: not is_file_storage
 
 - name: Update container token secret name status
   operator_sdk.util.k8s_status:

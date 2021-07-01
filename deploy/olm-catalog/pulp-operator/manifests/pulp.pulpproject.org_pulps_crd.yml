@@ -127,24 +127,20 @@ spec:
                   - S3
                   - azure
                   - Azure
-              file_storage:
-                description: Configuration for the persistentVolumeClaim for /var/lib/pulp.
-                properties:
-                  access_mode:
-                    description: The file storage access mode.
-                    type: string
-                    default: ReadWriteMany
-                    enum:
-                      - ReadWriteMany
-                      - ReadWriteOnce
-                  size:
-                    description: The size of the file storage; for example 100Gi.
-                    default: 100Gi
-                    type: string
-                  storage_class:
-                    description: Storage class to use for the file persistentVolumeClaim
-                    type: string
-                type: object
+              file_storage_access_mode:
+                description: The file storage access mode.
+                type: string
+                default: ReadWriteMany
+                enum:
+                  - ReadWriteMany
+                  - ReadWriteOnce
+              file_storage_size:
+                description: The size of the file storage; for example 100Gi.
+                default: 100Gi
+                type: string
+              file_storage_storage_class:
+                description: Storage class to use for the file persistentVolumeClaim
+                type: string
               object_storage_s3_secret:
                 description: The secret for S3 compliant object storage configuration.
                 type: string

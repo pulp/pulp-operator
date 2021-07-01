@@ -25,9 +25,8 @@ Role Variables
 * `image`: The image name.
 * `tag`: The tag name.
 * `storage_type`: A string for specifying storage configuration type.
-* `file_storage`: A dict for specifying a persistent volume claim for pulp-file.
-    * `access_mode`: The access mode for the volume.
-    * `size`: The storage size.
+* `file_storage_access_mode`: The access mode for the volume.
+* `file_storage_size`: The storage size.
 * `object_storage_s3_secret`:The kubernetes secret with s3 storage configuration information.
 * `object_storage_azure_secret`:The kubernetes secret with Azure blob storage configuration information.
 

@@ -21,26 +21,25 @@ metadata:
   # Configuration for the persistentVolumeClaim for /var/lib/pulp
 # storage_type: File
   # Select storage type: File, S3, Azure
-# file_storage:
-      # If your K8s cluster is only 1 node, and its StorageClass /
-    # provisioner does not support ReadWriteMany, then you must change
-    # this to "ReadWriteOnce".
-    #
-    # If your K8s cluster is multiple nodes, and does not support
-    # ReadWriteMany, then pulp-operator is currently incompatible.
-    #
-    # Reference on which support ReadWriteMany:
-    # https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes
-#   access_mode: "ReadWriteMany"
+  # If your K8s cluster is only 1 node, and its StorageClass /
+  # provisioner does not support ReadWriteMany, then you must change
+  # this to "ReadWriteOnce".
+  #
+  # If your K8s cluster is multiple nodes, and does not support
+  # ReadWriteMany, then pulp-operator is currently incompatible.
+  #
+  # Reference on which support ReadWriteMany:
+  # https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes
+# file_storage_access_mode: "ReadWriteMany"
 
-    # How much space do you want to give Pulp for storing content under
-    # /var/lib/pulp ?
-    # https://docs.pulpproject.org/en/3.0/nightly/installation/configuration.html#media-root
+  # How much space do you want to give Pulp for storing content under
+  # /var/lib/pulp ?
+  # https://docs.pulpproject.org/en/3.0/nightly/installation/configuration.html#media-root
 
-    # For reference, epel7 x86_64 is currently (2019-07) 30G. So 100G
-    # should be sufficient for a test deployment with only the RPM
-    # content plugin.
-#   size: "100Gi"
+  # For reference, epel7 x86_64 is currently (2019-07) 30G. So 100G
+  # should be sufficient for a test deployment with only the RPM
+  # content plugin.
+# file_storage_size: "100Gi"
 # object_storage_s3_secret: example-pulp-object-storage
   # Configuration for S3 credentals
 # object_storage_azure_secret: example-pulp-object-storage
