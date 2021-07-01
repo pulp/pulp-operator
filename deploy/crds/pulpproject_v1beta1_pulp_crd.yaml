@@ -136,6 +136,7 @@ spec:
                       - ReadWriteOnce
                   size:
                     description: The size of the file storage; for example 100Gi.
+                    default: 100Gi
                     type: string
                   storage_class:
                     description: Storage class to use for the file persistentVolumeClaim
