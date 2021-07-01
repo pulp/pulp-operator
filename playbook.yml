@@ -37,10 +37,10 @@
   roles:
     - postgres
     - redis
+    - pulp-routes
     - pulp-api
     - pulp-content
     - pulp-resource-manager
     - pulp-worker
     - pulp-web
-    - pulp-routes
     - pulp-status

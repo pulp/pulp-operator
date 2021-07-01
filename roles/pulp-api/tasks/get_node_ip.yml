@@ -22,20 +22,27 @@
     - ingress_type|lower == "ingress"
     - hostname is not defined
 
+- block:
+    - name: Retrieve route URL
+      k8s_info:
+        kind: Route
+        namespace: '{{ meta.namespace }}'
+        name: '{{ meta.name }}'
+      register: route_url
+
+    - name: Update URL status
+      set_fact:
+        web_url: "https://{{ route_url['resources'][0]['status']['ingress'][0]['host'] }}"
+
+  when: ingress_type | lower == 'route'
+
+
 - name: Set node address for route
   set_fact:
-    content_origin: "{{ web_protocol }}://{{ route_host }}"
-    token_server: "{{ web_protocol }}://{{ route_host }}/token/"
+    content_origin: "{{ web_url }}"
+    token_server: "{{ web_url }}/token/"
   when:
     - ingress_type|lower == "route"
-    - route_host is defined
-
-- name: Fail if route_host is not defined when route is specified
-  fail:
-    msg: "The route_host must be specified when using ingress_type {{ ingress_type }}."
-  when:
-    - ingress_type|lower == "route"
-    - route_host is not defined
 
 - name: Look up the 1st address of the 1st node
   k8s_info:
