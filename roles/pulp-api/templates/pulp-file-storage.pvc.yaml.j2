@@ -11,13 +11,13 @@ metadata:
     app.kubernetes.io/part-of: '{{ deployment_type }}'
     app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
 spec:
-{% if file_storage.size is defined %}
+{% if file_storage_size is defined %}
   resources:
     requests:
-      storage: "{{ file_storage.size }}"
+      storage: "{{ file_storage_size }}"
 {% endif %}
   accessModes:
-    - "{{ file_storage.access_mode }}"
-{% if file_storage.storage_class is defined %}
-  storageClassName: '{{ file_storage.storage_class }}'
+    - "{{ file_storage_access_mode }}"
+{% if file_storage_storage_class is defined %}
+  storageClassName: '{{ file_storage_storage_class }}'
 {% endif %}

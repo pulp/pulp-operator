@@ -15,9 +15,8 @@ metadata:
           "spec": {
             "tag": "latest",
             "storage_type": "File",
-            "file_storage": {
-              "size": "50Gi"
-            }
+            "file_storage_size": "50Gi",
+            "file_storage_access_mode": "ReadWriteMany",
           }
         },
         {
@@ -174,21 +173,17 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:select:File
         - urn:alm:descriptor:com.tectonic.ui:select:S3
         - urn:alm:descriptor:com.tectonic.ui:select:Azure
-      - displayName: File storage configuration
-        path: file_storage
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File
       - displayName: File storage access mode
-        path: file_storage.access_mode
+        path: file_storage_access_mode
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File
         - urn:alm:descriptor:com.tectonic.ui:select:ReadWriteMany
       - displayName: File storage size
-        path: file_storage.size
+        path: file_storage_size
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File
       - displayName: File storage class
-        path: file_storage.storage_class
+        path: file_storage_storage_class
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File
       - displayName: S3 storage secret

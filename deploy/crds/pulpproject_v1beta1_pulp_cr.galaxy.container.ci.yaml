@@ -13,11 +13,10 @@ spec:
     GALAXY_FEATURE_FLAGS:
       execution_environments: "True"
   storage_type: File
-  file_storage:
-    # k3s local-path requires this
-    access_mode: "ReadWriteOnce"
-    # We have a little over 10GB free on GHA VMs/instances
-    size: "10Gi"
+  # k3s local-path requires this
+  file_storage_access_mode: "ReadWriteOnce"
+  # We have a little over 10GB free on GHA VMs/instances
+  file_storage_size: "10Gi"
   content:
     replicas: 1
     resource_requirements:
