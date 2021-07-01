@@ -7,6 +7,7 @@
     migrant_postgres_database: "{{ old_pg_config['resources'][0]['data']['database'] | b64decode }}"
     migrant_postgres_port: "{{ old_pg_config['resources'][0]['data']['port'] | b64decode }}"
     migrant_postgres_host: "{{ old_pg_config['resources'][0]['data']['host'] | b64decode }}"
+  no_log: true
 
 - name: Default label selector to custom resource generated postgres
   set_fact:
@@ -45,6 +46,7 @@
       -d {{ migrant_postgres_database }}
       -p {{ migrant_postgres_port }}
       -F custom
+  no_log: true
 
 - name: Set pg_restore command
   set_fact:
@@ -52,6 +54,7 @@
       pg_restore --clean --if-exists
       -U {{ postgres_user }}
       -d {{ postgres_database }}
+  no_log: true
 
 - name: Stream backup from pg_dump to the new postgresql container
   k8s_exec:
@@ -64,6 +67,7 @@
       echo 'Successful'
       """
   register: data_migration
+  no_log: true
   failed_when: "'Successful' not in data_migration['stdout']"
 
 - name: Set flag signifying that this instance has been migrated
