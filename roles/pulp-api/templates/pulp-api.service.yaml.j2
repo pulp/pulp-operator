@@ -22,7 +22,3 @@ spec:
       targetPort: 24817
       name: api-24817
       port: 24817
-{% if ingress_type|lower == "nodeport" %}
-      nodePort: 24817
-  type: NodePort
-{% endif %}

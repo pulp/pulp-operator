@@ -16,8 +16,10 @@ BASE_ADDR="http://$SERVER:24817"
 REPOS=( "published" "staging" "rejected" "community" "rh-certified" )
 REPO_RESULTS=()
 
+sleep 10
+
 TOKEN=$(curl --location --request POST "$BASE_ADDR/api/galaxy/v3/auth/token/" --header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ=' --silent | python3 -c "import sys, json; print(json.load(sys.stdin)['token'])")
-# echo $TOKEN
+echo $TOKEN
 
 for repo in "${REPOS[@]}"
 do
