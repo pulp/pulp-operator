@@ -16,10 +16,10 @@
           PASSWORD: "{{ postgres_pass }}"
           PORT: "{{ postgres_port }}"
           CONN_MAX_AGE: 0
-      debug: "True"
       redis_host: "{{ meta.name }}-redis"
       redis_port: 6379
       redis_password: ""
+      USE_NEW_WORKER_TYPE: "False"
       GALAXY_FEATURE_FLAGS:
         execution_environments: ""
     deployment_state: present
@@ -30,16 +30,15 @@
     image_pull_secret: ""
     tag: stable
     storage_type: File
-    file_storage:
-      access_mode: "ReadWriteMany"
-      size: "100Gi"
+    file_storage_access_mode: "ReadWriteMany"
+    file_storage_size: "100Gi"
   roles:
     - postgres
     - redis
+    - pulp-routes
     - pulp-api
     - pulp-content
     - pulp-resource-manager
     - pulp-worker
     - pulp-web
-    - pulp-routes
     - pulp-status

@@ -4,7 +4,6 @@
     definition: "{{ lookup('template', '/'.join([deploy_dir, item])) }}"
     namespace: '{{ namespace }}'
     state: '{{ state }}'
-    wait: yes
   with_items:
     - service_account.yaml
     - role.yaml
