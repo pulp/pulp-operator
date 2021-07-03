@@ -1,0 +1,1 @@
+Fix Nodeport flow to create ports in standard range and only on the web service. Also allows node_ip discover based on where the pod is running.

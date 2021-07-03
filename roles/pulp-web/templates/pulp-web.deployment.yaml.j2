@@ -40,6 +40,13 @@ spec:
         - name: web
           image: "{{ registry }}/{{ project }}/{{ image_web }}:{{ tag }}"
           imagePullPolicy: "{{ image_pull_policy }}"
+{% if ingress_type | lower == 'nodeport' %}
+          env:
+            - name: NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+{% endif %}
           volumeMounts:
             - name: {{ meta.name }}-nginx-conf
               mountPath: /etc/nginx/nginx.conf
@@ -67,9 +74,9 @@ spec:
               scheme: HTTP
 {% endif %}
             failureThreshold: 5
-            initialDelaySeconds: 60
+            initialDelaySeconds: 90
             periodSeconds: 10
-            timeoutSeconds: 5
+            timeoutSeconds: 10
           readinessProbe:
             httpGet:
               path: pulp/api/v3/status/
@@ -81,9 +88,9 @@ spec:
               scheme: HTTP
 {% endif %}
             failureThreshold: 10
-            initialDelaySeconds: 30
+            initialDelaySeconds: 60
             periodSeconds: 10
-            timeoutSeconds: 5
+            timeoutSeconds: 10
 {% if web.resource_requirements is defined %}
           resources: {{ web.resource_requirements }}
 {% endif %}

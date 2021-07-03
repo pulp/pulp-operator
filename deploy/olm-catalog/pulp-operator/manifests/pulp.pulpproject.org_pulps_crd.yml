@@ -198,6 +198,9 @@ spec:
               route_tls_secret:
                 description: Secret where the TLS related credentials are stored
                 type: string
+              nodeport_port:
+                description: Provide requested port value
+                type: string
               container_token_secret:
                 description: Secret where the container token certificates are stored
                 type: string

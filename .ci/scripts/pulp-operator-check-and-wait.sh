@@ -52,11 +52,11 @@ echo "Waiting for services to come up ..."
 # So check for the services being up 1st.
 for tries in {0..90}; do
   services=$(sudo -E $KUBECTL get services)
-  if [[ $(echo "$services" | grep -c NodePort) > 1 ]]; then
+  if [[ $(echo "$services" | grep -c NodePort) > 0 ]]; then
     # parse string like this. 30805 is the external port
     # pulp-api-svc     NodePort    10.43.170.79   <none>        24817:30805/TCP   0s
-    API_PORT=$( echo "$services" | awk -F '[ :/]+' '/pulp-api/{print $6}')
-    SVC_NAME=$( echo "$services" | awk -F '[ :/]+' '/pulp-api/{print $1}')
+    API_PORT=$( echo "$services" | awk -F '[ :/]+' '/pulp-web/{print $5}')
+    SVC_NAME=$( echo "$services" | awk -F '[ :/]+' '/pulp-web/{print $1}')
     echo "SERVICES:"
     echo "$services"
     break

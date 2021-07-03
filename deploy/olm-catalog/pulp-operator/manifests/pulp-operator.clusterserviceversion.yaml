@@ -167,6 +167,12 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route
+      - displayName: Nodeport port
+        path: nodeport_port
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:NodePort
       - displayName: Storage type
         path: storage_type
         x-descriptors:

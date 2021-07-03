@@ -48,7 +48,9 @@ spec:
 {% if ingress_type | lower == "loadbalancer" %}
   type: LoadBalancer
 {% elif ingress_type|lower == "nodeport" %}
-      nodePort: 24880
+{% if nodeport_port is defined %}
+      nodePort: {{ nodeport_port }}
+{% endif %}
   type: NodePort
 {% else %}
   type: ClusterIP

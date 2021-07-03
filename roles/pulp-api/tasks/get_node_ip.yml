@@ -31,7 +31,7 @@
         name: '{{ meta.name }}'
       register: route_url
 
-    - name: Update URL status
+    - name: Capture web URL
       set_fact:
         web_url: "https://{{ route_url['resources'][0]['status']['ingress'][0]['host'] }}"
 
@@ -46,19 +46,56 @@
   when:
     - ingress_type|lower == "route"
 
-- name: Look up the 1st address of the 1st node
-  k8s_info:
-    api_version: v1
-    kind: Node
-  register: k8s_nodes
-  when:
-    - content_origin is not defined
+- block:
+    - name: Retrieve service node port
+      k8s_info:
+        kind: Service
+        namespace: '{{ meta.namespace }}'
+        name: '{{ meta.name }}-web-svc'
+      register: web_service
+      when:
+        - nodeport_port is not defined
 
-- name: Set node address
+    - name: Store nodeport from service
+      set_fact:
+        nodeport_port: "{{ web_service['resources'][0]['spec']['ports'][0]['nodePort'] }}"
+      when:
+        - nodeport_port is not defined
+
+    - name: DEBUG Show nodeport_port
+      debug:
+        msg: "{{ nodeport_port }}"
+
+    - name: Retrieve web pod
+      k8s_info:
+        kind: Pod
+        namespace: "{{ meta.namespace }}"
+        label_selectors:
+          - "app.kubernetes.io/instance = nginx-{{ meta.name }}"
+      register: web_pod
+
+    - name: Store node ip from pod ENV
+      set_fact:
+        node_ip: "{{ web_pod['resources'][0]['status']['hostIP'] }}"
+
+    - name: DEBUG Show node_ip
+      debug:
+        msg: "{{ node_ip }}"
+
+    - name: Set node address
+      set_fact:
+        content_origin: "http://{{ node_ip }}:{{ nodeport_port }}"
+        ansible_api_hostname: "http://{{ node_ip }}:{{ nodeport_port }}"
+        token_server: "http://{{ node_ip }}:{{ nodeport_port }}/token/"
+
+  when:
+    - ingress_type | lower == 'nodeport'
+
+- name: Set svc.cluster.local address
   set_fact:
-    content_origin: "http://{{ k8s_nodes.resources[0].status.addresses[0].address }}:24880"
-    ansible_api_hostname: "http://{{ k8s_nodes.resources[0].status.addresses[0].address }}:24880"
-    token_server: "http://{{ k8s_nodes.resources[0].status.addresses[0].address }}:24880/token/"
+    content_origin: "http://{{ meta.name }}-web-svc.{{ meta.namespace }}.svc.cluster.local:24880"
+    ansible_api_hostname: "http://{{ meta.name }}-web-svc.{{ meta.namespace }}.svc.cluster.local:24880"
+    token_server: "http://{{ meta.name }}-web-svc.{{ meta.namespace }}.svc.cluster.local:24880/token/"
   when:
     - content_origin is not defined
 
