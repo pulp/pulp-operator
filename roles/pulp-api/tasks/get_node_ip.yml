@@ -101,7 +101,7 @@
 
 - name: Set content_origin
   set_fact:
-    content_origin_dict: "{ 'content_origin': '{{ content_origin }}', 'ansible_api_hostname': '{{ ansible_api_hostname }}' }"
+    content_origin_dict: "{ 'content_origin': '{{ content_origin }}', 'ansible_api_hostname': '{{ ansible_api_hostname }}', 'x_pulp_content_host': '{{ content_host }}', 'x_pulp_content_port': '{{ content_port }}' }"
 
 - name: Set token_server and other container default settings
   set_fact:
