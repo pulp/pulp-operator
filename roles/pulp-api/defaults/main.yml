@@ -17,6 +17,10 @@ admin_password_secret: ''
 
 admin_password_name: '{{ meta.name }}-admin-password'
 
+# Set content host
+content_host: '{{ meta.name }}-content-svc'
+content_port: '24816'
+
 # Host to create the root with.
 # If not specific will default to <instance-name>-<namespace>-<routerCanonicalHostname>
 #
