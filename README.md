@@ -75,10 +75,8 @@ Documentation: https://pulp-operator.readthedocs.io/en/latest/
 
 Issue Tracker: https://pulp.plan.io
 
-User mailing list: https://www.redhat.com/mailman/listinfo/pulp-list
+We have enabled [GitHub Discussions](https://github.com/pulp/community/discussions).
 
-Developer mailing list: https://www.redhat.com/mailman/listinfo/pulp-dev
+Join [**#pulp** on Matrix](https://matrix.to/#/!HWvLQmBGVPfJfTQBAu:matrix.org?via=libera.chat&via=matrix.org&via=ctrl-c.liu.se) for User support
 
-User questions welcome in #pulp on FreeNode IRC server.
-
-Developer discussion in #pulp-dev on FreeNode IRC server
+Join [**#pulp-dev** on Matrix](https://matrix.to/#/!aVApiNMtnstWbwDcVU:matrix.org?via=libera.chat&via=matrix.org&via=ctrl-c.liu.se) for Developer discussion.
