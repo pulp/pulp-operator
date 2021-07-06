@@ -52,7 +52,7 @@ fi
 sudo -E ./up.sh
 .ci/scripts/pulp-operator-check-and-wait.sh $KUBE_FLAG
 if [[ "$CI_TEST" == "galaxy" ]]; then
-  .ci/scripts/galaxy_ng-tests.sh -m
+  CI_TEST=true .ci/scripts/galaxy_ng-tests.sh -m
 else
   .ci/scripts/retry.sh 3 ".ci/scripts/pulp_file-tests.sh -m"
 fi
