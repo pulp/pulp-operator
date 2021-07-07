@@ -5,6 +5,7 @@
     namespace: '{{ meta.namespace }}'
     name: '{{ object_storage_s3_secret  }}'
   register: _custom_s3_configuration
+  no_log: true
 
 - name: Check s3 secret data format
   set_fact:
@@ -74,10 +75,12 @@
 - name: Store s3 access key
   set_fact:
     s3_access_key_id: "{{ _custom_s3_configuration['resources'][0]['data']['s3-access-key-id'] | b64decode }}"
+  no_log: true
 
 - name: Store s3 secret
   set_fact:
     s3_secret_access_key: "{{ _custom_s3_configuration['resources'][0]['data']['s3-secret-access-key'] | b64decode }}"
+  no_log: true
 
 - name: Store s3 bucket name
   set_fact:
@@ -106,10 +109,12 @@
 - name: Add s3 access key id to s3 settings
   set_fact:
     s3_access_key_id_dict : "{'AWS_ACCESS_KEY_ID': '{{ s3_access_key_id }}' }"
+  no_log: true
 
 - name: Add s3 secret key to s3 settings
   set_fact:
     s3_secret_access_key_dict : "{'AWS_SECRET_ACCESS_KEY': '{{ s3_secret_access_key }}' }"
+  no_log: true
 
 - name: Add s3 bucket to s3 settings
   set_fact:
@@ -132,29 +137,36 @@
 - name: merge s3_access_key_id with settings
   set_fact:
     default_s3_settings: "{{ default_s3_settings|combine(s3_access_key_id_dict) }}"
+  no_log: true
 
 - name: merge s3_secret_access_key with settings
   set_fact:
     default_s3_settings: "{{ default_s3_settings|combine(s3_secret_access_key_dict) }}"
+  no_log: true
 
 - name: merge s3_bucket_name with settings
   set_fact:
     default_s3_settings: "{{ default_s3_settings|combine(s3_bucket_name_dict) }}"
+  no_log: true
 
 - name: merge s3_bucket_path with settings
   set_fact:
     default_s3_settings: "{{ default_s3_settings|combine(s3_bucket_path_dict) }}"
+  no_log: true
 
 - name: merge s3_region with settings
   set_fact:
     default_s3_settings: "{{ default_s3_settings|combine(s3_region_dict) }}"
+  no_log: true
   when: s3_region_dict is defined
 
 - name: merge s3_endpoint with settings
   set_fact:
     default_s3_settings: "{{ default_s3_settings|combine(s3_endpoint_dict) }}"
+  no_log: true
   when: s3_endpoint_dict is defined
 
 - name: merge default_s3_settings with settings
   set_fact:
     default_settings: "{{ default_settings|combine(default_s3_settings) }}"
+  no_log: true
