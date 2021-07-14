@@ -19,7 +19,6 @@
       redis_host: "{{ meta.name }}-redis"
       redis_port: 6379
       redis_password: ""
-      USE_NEW_WORKER_TYPE: "False"
       GALAXY_FEATURE_FLAGS:
         execution_environments: ""
     deployment_state: present

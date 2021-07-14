@@ -3,6 +3,14 @@
 /usr/bin/wait_on_postgres.py
 /usr/bin/wait_on_database_migrations.sh
 
-# TODO: Set ${PULP_WORKER_NUMBER} to the Pod Number
-# In the meantime, the hostname provides uniqueness.
-exec rq worker --url "redis://${REDIS_SERVICE_HOST}:${REDIS_SERVICE_PORT}" -w "pulpcore.tasking.worker.PulpWorker" -c "pulpcore.rqconfig"
+NEW_TASKING_SYSTEM=$(python3 -c "import sys; from packaging.version import parse; from pulpcore.app.apps import PulpAppConfig; print('yes' if parse(PulpAppConfig.version) >= parse('3.13.0.dev0') else 'no')")
+echo $NEW_TASKING_SYSTEM
+
+if [[ "$NEW_TASKING_SYSTEM" == "no" ]]; then
+    # TODO: Set ${PULP_WORKER_NUMBER} to the Pod Number
+    # In the meantime, the hostname provides uniqueness.
+    exec rq worker --url "redis://${REDIS_SERVICE_HOST}:${REDIS_SERVICE_PORT}" -w "pulpcore.tasking.worker.PulpWorker" -c "pulpcore.rqconfig"
+else
+    export PATH /usr/local/bin:/usr/bin/
+    /usr/local/bin/pulpcore-worker
+fi

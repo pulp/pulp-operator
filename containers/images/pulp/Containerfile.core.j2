@@ -49,7 +49,7 @@ RUN		dnf -y update && \
 		dnf clean all
 
 # Need to install optional dep, rhsm, for pulp-certguard
-RUN pip install rhsm "click<8.0"
+RUN pip install rhsm
 
 RUN mkdir -p /etc/pulp \
 			 /var/lib/pulp/media \
