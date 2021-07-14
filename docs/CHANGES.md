@@ -13,6 +13,56 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+0.3.0 (2021-07-14)
+
+Features
+--------
+
+- Enable container based database migration support
+  [#8472](https://pulp.plan.io/issues/8472)
+- Enable backup of database and secrets associated with Pulp custom resource
+  [#8473](https://pulp.plan.io/issues/8473)
+- Enable backup of storage associated with Pulp custom resource
+  [#8474](https://pulp.plan.io/issues/8474)
+- Enable restore of deployment associated with Pulp custom resource backup
+  [#8513](https://pulp.plan.io/issues/8513)
+- Add additional backup and restore flexibility to allow for restore from only a PVC
+  [#8630](https://pulp.plan.io/issues/8630)
+- Allow user to specify the storage class for the Redis PVC
+  [#8877](https://pulp.plan.io/issues/8877)
+
+
+Bugfixes
+--------
+
+- Allow user to specify empty string for PostgreSQL PVC storage class
+  [#8733](https://pulp.plan.io/issues/8733)
+- Update nodeport templating in API and Content services
+  [#8810](https://pulp.plan.io/issues/8810)
+- Fix collision on file_storage fact usage after pulp prefix cleanup
+  [#8832](https://pulp.plan.io/issues/8832)
+- Fix Nodeport flow to create ports in standard range and only on the web service. Also allows node_ip discover based on where the pod is running.
+  [#8833](https://pulp.plan.io/issues/8833)
+- Resolve Pulp status correctly when deployed in a separate namespace
+  [#8880](https://pulp.plan.io/issues/8880)
+
+
+Improved Documentation
+----------------------
+
+- Document how to deploy Pulp on OpenShift
+  [#8836](https://pulp.plan.io/issues/8836)
+
+
+Misc
+----
+
+- [#8530](https://pulp.plan.io/issues/8530), [#8563](https://pulp.plan.io/issues/8563), [#8598](https://pulp.plan.io/issues/8598)
+
+
+----
+
+
 0.2.0 (2021-03-26)
 ==================
 
