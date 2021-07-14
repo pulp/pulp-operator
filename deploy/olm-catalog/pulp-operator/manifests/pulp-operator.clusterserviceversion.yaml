@@ -40,7 +40,7 @@ metadata:
     repository: https://github.com/pulp/pulp-operator
     operators.operatorframework.io/builder: operator-sdk-v0.19.4
     operators.operatorframework.io/project_layout: ansible
-  name: pulp-operator.v0.3.0
+  name: pulp-operator.v0.4.0.dev
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -777,4 +777,4 @@ spec:
   provider:
     name: Pulp Community
     url: https://github.com/pulp/pulp-operator
-  version: 0.3.0
+  version: 0.4.0.dev
