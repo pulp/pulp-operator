@@ -1,1 +1,1 @@
-pymdown-extensions
+mkdocs pymdown-extensions
