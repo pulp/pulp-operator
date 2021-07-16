@@ -8,5 +8,6 @@ images:
       plugin_snippets:
         - pulp_ansible
         - pulp_container
+        - pulp_python
 registry: quay.io
 project: pulp
