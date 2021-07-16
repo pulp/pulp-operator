@@ -23,6 +23,24 @@ password password\
 export BASE_ADDR="http://$SERVER:$WEB_PORT"
 echo $BASE_ADDR
 
+if [ -z "$(pip freeze | grep pulp-cli)" ]; then
+  echo "Installing pulp-cli"
+  pip install pulp-cli[pygments]
+fi
+
+if [ ! -f ~/.config/pulp/settings.toml ]; then
+  echo "Configuring pulp-cli"
+  mkdir -p ~/.config/pulp
+  cat > ~/.config/pulp/cli.toml << EOF
+[cli]
+base_url = "$BASE_ADDR"
+verify_ssl = false
+format = "json"
+EOF
+fi
+
+cat ~/.config/pulp/cli.toml | tee ~/.config/pulp/settings.toml
+
 pushd pulp_file/docs/_scripts
 # Let's only do sync tests.
 # So as to check that Pulp can work in containers, including writing to disk.
