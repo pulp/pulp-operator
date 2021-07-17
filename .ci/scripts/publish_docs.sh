@@ -24,7 +24,7 @@ pip3 install -r docs/doc_requirements.txt
 eval "$(ssh-agent -s)" #start the ssh agent
 ssh-add ~/.ssh/pulp-infra
 
-make site
+mkdocs build
 
 # publish to docs.pulpproject.org/pulp_operator
 rsync -avzh site/ doc_builder_pulp_operator@docs.pulpproject.org:/var/www/docs.pulpproject.org/pulp_operator/
