@@ -293,6 +293,11 @@ jobs:
           git clone --depth=1 https://github.com/pulp/pulp_file.git
           CI_TEST=${{ matrix.CI_TEST }} .ci/scripts/deploy.sh -m
         shell: bash
+      - name: Add stable images
+        if: github.event_name == 'schedule'
+        run: |
+          pip install aiohttp packaging PyYAML sh
+          CI_TEST=${{ matrix.CI_TEST }} python3 .ci/scripts/images.py
       - name: Define QUAY_IMAGE_TAG environment variable
         run: |
           pip install PyYAML
