@@ -1,7 +1,7 @@
 site_name: Pulp Operator
 site_description: Pulp Operator
 site_author: Pulp Team
-site_url: https://pulp-operator.readthedocs.io/
+site_url: https://docs.pulpproject.org/pulp_operator/
 repo_name: pulp/pulp-operator
 repo_url: https://github.com/pulp/pulp-operator
 theme: readthedocs
