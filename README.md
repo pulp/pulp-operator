@@ -71,7 +71,7 @@ descriptions of all the fields and how they are used.
 
 # Get Help
 
-Documentation: https://pulp-operator.readthedocs.io/en/latest/
+Documentation: https://docs.pulpproject.org/pulp_operator/
 
 Issue Tracker: https://pulp.plan.io
 
