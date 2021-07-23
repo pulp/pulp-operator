@@ -20,10 +20,10 @@ jobs:
           fetch-depth: 0
           repository: ${{ steps.head_repo_name.outputs.repo }}
           ref: ${{ github.event.pull_request.head.sha }}
-      - name: Set up Python 3.7
+      - name: Set up Python 3.8
         uses: actions/setup-python@v1
         with:
-          python-version: '3.7'
+          python-version: '3.8'
       - name: Check commit message
         if: github.event_name == 'pull_request'
         env:
@@ -59,10 +59,10 @@ jobs:
           fetch-depth: 0
           repository: ${{ steps.head_repo_name.outputs.repo }}
           ref: ${{ github.event.pull_request.head.sha }}
-      - name: Set up Python 3.7
+      - name: Set up Python 3.8
         uses: actions/setup-python@v1
         with:
-          python-version: '3.7'
+          python-version: '3.8'
       - name: Install httpie
         run: |
           echo ::group::HTTPIE
@@ -121,10 +121,10 @@ jobs:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
-      - name: Set up Python 3.7
+      - name: Set up Python 3.8
         uses: actions/setup-python@v1
         with:
-          python-version: '3.7'
+          python-version: '3.8'
       - name: Install httpie
         run: |
           echo ::group::HTTPIE
@@ -197,10 +197,10 @@ jobs:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
-      - name: Set up Python 3.7
+      - name: Set up Python 3.8
         uses: actions/setup-python@v1
         with:
-          python-version: '3.7'
+          python-version: '3.8'
       - name: Install httpie
         run: |
           echo ::group::HTTPIE
