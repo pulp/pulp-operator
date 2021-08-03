@@ -113,6 +113,13 @@
     - status['storageSecret'] is defined
     - status['storageSecret'] | length
 
+- name: Set DB fields encryption secret if found
+  set_fact:
+    db_fields_encryption_secret: "{{ status['dbFieldsEncryptionSecret'] }}"
+  when:
+    - status['dbFieldsEncryptionSecret'] is defined
+    - status['dbFieldsEncryptionSecret'] | length
+
 - name: Set container token secret if found
   set_fact:
     container_token_secret: "{{ status['containerTokenSecret'] }}"

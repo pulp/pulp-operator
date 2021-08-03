@@ -346,6 +346,11 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: DB fields encryption
+        path: db_fields_encryption_secret
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:io.kubernetes:Secret
       statusDescriptors:
       - displayName: URL
         description: Route to access the instance deployed
@@ -390,6 +395,11 @@ spec:
       - displayName: Migrated database
         description: Configuration secret for previously deployed database
         path: migrantDatabaseConfigurationSecret
+        x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+      - displayName: DB fields encryption configuration
+        description: Configuration secret for encrypting DB fields
+        path: dbFieldsEncryptionSecret
         x-descriptors:
           - urn:alm:descriptor:io.kubernetes:Secret
       - displayName: Container token configuration
@@ -476,6 +486,11 @@ spec:
       - displayName: Objectstorage configuration
         description: Configuration secret for current deployed objectstorage
         path: objectStorageConfigurationSecret
+        x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+      - displayName: DB fields encryption configuration
+        description: Configuration secret for encrypting DB fields
+        path: dbFieldsEncryptionSecret
         x-descriptors:
           - urn:alm:descriptor:io.kubernetes:Secret
       - displayName: Container token configuration

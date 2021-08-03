@@ -72,6 +72,9 @@ spec:
                 objectStorageConfigurationSecret:
                   description: Objectstorage configuration secret used by the deployed instance
                   type: string
+                dbFieldsEncryptionSecret:
+                  description: DB fields encryption configuration secret used by deployed instance
+                  type: string
                 containerTokenSecret:
                   description: Container token configuration secret used by the deployed instance
                   type: string

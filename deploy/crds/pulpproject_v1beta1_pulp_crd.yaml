@@ -201,6 +201,9 @@ spec:
               container_token_secret:
                 description: Secret where the container token certificates are stored
                 type: string
+              db_fields_encryption_secret:
+                description: Secret where the Fernet symmetric encryption key is stored
+                type: string
               image_pull_policy:
                 description: Image pull policy for container image
                 type: string
@@ -446,6 +449,9 @@ spec:
                 type: string
               migrantDatabaseConfigurationSecret:
                 description: The configuration secret used for migrating an old deployment
+                type: string
+              dbFieldsEncryptionSecret:
+                description: The name of the secret used for encrypting DB fields
                 type: string
               containerTokenSecret:
                 description: The name of the secret used for container token authentication

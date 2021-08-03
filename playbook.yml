@@ -7,6 +7,7 @@
   vars:
     project_name: "{{ meta.namespace }}"
     default_settings:
+      db_encryption_key: "/etc/pulp/keys/database_fields.symmetric.key"
       databases:
         default:
           HOST: "{{ postgres_host }}"
