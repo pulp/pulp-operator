@@ -1,0 +1,34 @@
+---
+- name: Set default DB fields encryption secret name
+  set_fact:
+    db_fields_encryption_secret: '{{ meta.name }}-db-fields-encryption'
+  when: db_fields_encryption_secret is undefined
+
+- name: Check for specified DB fields encryption configuration
+  k8s_info:
+    kind: Secret
+    namespace: '{{ meta.namespace }}'
+    name: '{{ db_fields_encryption_secret }}'
+  register: _db_fields_encryption_secret
+  no_log: true
+
+- block:
+    - name: Generate Pulp Database Encryption Key
+      shell: >-
+        set -o pipefail &&
+        python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+      register: _db_fields_encryption_key
+      no_log: true
+
+    - name: Store DB fields encryption key
+      set_fact:
+        db_fields_encryption_key: _db_fields_encryption_key.stdout
+      no_log: true
+
+    - name: Create DB fields encryption secret
+      k8s:
+        apply: true
+        definition: "{{ lookup('template', 'pulp-db-fields-encryption.secret.yaml.j2') }}"
+      no_log: true
+
+  when: not _db_fields_encryption_secret['resources'] | default([]) | length

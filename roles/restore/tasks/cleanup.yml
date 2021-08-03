@@ -50,6 +50,20 @@
     - storage_secret is defined
     - storage_secret | length
 
+- name: Remove ownerReferences from DB fields encryption secret to avoid garbage collection
+  k8s:
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: '{{ db_fields_encryption_secret }}'
+        namespace: '{{ meta.namespace }}'
+        ownerReferences: null
+  no_log: true
+  when:
+    - db_fields_encryption_secret is defined
+    - db_fields_encryption_secret | length
+
 - name: Remove ownerReferences from container token secret to avoid garbage collection
   k8s:
     definition:

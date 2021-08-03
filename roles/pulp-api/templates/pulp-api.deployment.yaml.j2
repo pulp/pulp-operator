@@ -54,6 +54,12 @@ spec:
             items:
               - path: admin-password
                 key: password
+        - name: {{ meta.name }}-db-fields-encryption
+          secret:
+            secretName: {{ db_fields_encryption_secret }}
+            items:
+              - path: database_fields.symmetric.key
+                key: database_fields.symmetric.key
 {% if is_file_storage %}
         - name: file-storage
           persistentVolumeClaim:
@@ -121,6 +127,10 @@ spec:
             - name: {{ meta.name }}-admin-password
               mountPath: "/etc/pulp/pulp-admin-password"
               subPath: admin-password
+              readOnly: true
+            - name: {{ meta.name }}-db-fields-encryption
+              mountPath: "/etc/pulp/keys/database_fields.symmetric.key"
+              subPath: database_fields.symmetric.key
               readOnly: true
 {% if is_file_storage %}
             - name: file-storage

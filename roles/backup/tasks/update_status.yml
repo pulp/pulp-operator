@@ -81,6 +81,17 @@
       databaseConfigurationSecret: "{{ postgres_configuration_secret }}"
   when: postgres_configuration_secret is defined
 
+# The backup db fields encryption secret in this status can be referenced when restoring
+- name: Update DB fields encryption secret name status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ meta.name }}"
+    namespace: "{{ meta.namespace }}"
+    status:
+      dbFieldsEncryptionSecret: "{{ db_fields_encryption_secret }}"
+  when: db_fields_encryption_secret is defined
+
 # The backup container token secret in this status can be referenced when restoring
 - name: Update container token secret name status
   operator_sdk.util.k8s_status:
