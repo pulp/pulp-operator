@@ -97,8 +97,8 @@ jobs:
           FORKED_REPOSITORY: ${{ steps.head_repo_name.outputs.repo }}
         run: sudo -E insta-demo/pulp-insta-demo.sh -m
         shell: bash
-      - name: After failure
-        if: failure()
+      - name: Logs
+        if: always()
         run: |
           sudo docker images
           sudo -E kubectl logs -l app.kubernetes.io/name=pulp-operator -c pulp-operator --tail=10000
@@ -107,7 +107,7 @@ jobs:
           sudo -E kubectl logs -l app.kubernetes.io/name=pulp-worker --tail=10000
           sudo -E kubectl logs -l app.kubernetes.io/name=pulp-resource-manager --tail=10000
           sudo -E kubectl logs -l app.kubernetes.io/name=pulp-web --tail=10000
-          http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
+          http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/
       # - name: Debugging example (uncomment when needed)
       #   if: failure()
       #   uses: mxschmitt/action-tmate@v3
@@ -173,8 +173,8 @@ jobs:
         shell: bash
         env:
           PY_COLORS: '1'
-      - name: After failure
-        if: failure()
+      - name: Logs
+        if: always()
         run: |
           sudo docker images
           sudo -E kubectl logs -l app.kubernetes.io/name=pulp-operator -c pulp-operator --tail=10000
@@ -183,7 +183,7 @@ jobs:
           sudo -E kubectl logs -l app.kubernetes.io/name=pulp-worker --tail=10000
           sudo -E kubectl logs -l app.kubernetes.io/name=pulp-resource-manager --tail=10000
           sudo -E kubectl logs -l app.kubernetes.io/name=pulp-web --tail=10000
-          http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
+          http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/
       # - name: Debugging example (uncomment when needed)
       #   if: failure()
       #   uses: mxschmitt/action-tmate@v3
@@ -239,8 +239,8 @@ jobs:
       - name: Test
         run: sudo -E .ci/scripts/galaxy_ng-tests.sh -m
         shell: bash
-      - name: After failure
-        if: failure()
+      - name: Logs
+        if: always()
         run: |
           sudo docker images
           sudo -E kubectl logs -l app.kubernetes.io/name=pulp-operator -c pulp-operator --tail=10000
@@ -249,7 +249,7 @@ jobs:
           sudo -E kubectl logs -l app.kubernetes.io/name=pulp-worker --tail=10000
           sudo -E kubectl logs -l app.kubernetes.io/name=pulp-resource-manager --tail=10000
           sudo -E kubectl logs -l app.kubernetes.io/name=pulp-web --tail=10000
-          http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
+          http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/
       # - name: Debugging example (uncomment when needed)
       #   if: failure()
       #   uses: mxschmitt/action-tmate@v3
