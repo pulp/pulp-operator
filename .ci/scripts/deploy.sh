@@ -1,63 +1,38 @@
 #!/bin/bash -e
 #!/usr/bin/env bash
 
-KUBE_FLAG=""
+DEPLOY_FLAG=""
 if
-  [ "$1" = "--minikube" ] || [ "$1" = "-m" ]; then
-  KUBE_FLAG="-m"
+  [ "$1" = "--index" ] || [ "$1" = "-i" ]; then
+  DEPLOY_FLAG="-i"
 fi
 
+if [[ "$DEPLOY_FLAG" == "-i" ]]; then
+  echo "Deploy pulp-operator"
+  eval $(minikube -p minikube docker-env)
+  sudo -E $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
+  export QUAY_IMAGE_TAG=$(python -c 'import yaml; print(yaml.safe_load(open("deploy/olm-catalog/pulp-operator/manifests/pulp-operator.clusterserviceversion.yaml"))["spec"]["version"])')
+  sed -i "s/\.dev//g" deploy/olm-catalog/pulp-operator/manifests/pulp-operator.clusterserviceversion.yaml
 
-echo "Build pulp/pulpcore images"
-cd $GITHUB_WORKSPACE/containers/
-if [[ "$CI_TEST" == "galaxy" ]]; then
-  cp $GITHUB_WORKSPACE/.ci/ansible/galaxy/vars.yaml vars/vars.yaml
-else
-  cp $GITHUB_WORKSPACE/.ci/ansible/pulp/vars.yaml vars/vars.yaml
-fi
-sed -i "s/podman/docker/g" common_tasks.yaml
-pip install ansible
 
-if [[ -z "${QUAY_EXPIRE+x}" ]]; then
-  ansible-playbook -v build.yaml
-else
-  sed -i "s/latest/${QUAY_IMAGE_TAG}/g" vars/vars.yaml
-  echo "Building tag: ${QUAY_IMAGE_TAG}"
-  ansible-playbook -v build.yaml --extra-vars "quay_expire=${QUAY_EXPIRE}"
-fi
-cd $GITHUB_WORKSPACE
+  echo $QUAY_IMAGE_TAG
+  docker tag quay.io/pulp/pulp-operator:latest quay.io/pulp/pulp-operator:$QUAY_IMAGE_TAG
+  sudo -E $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
+  docker build -f bundle.Dockerfile -t quay.io/pulp/pulp-operator-bundle:${QUAY_IMAGE_TAG} .
+  sudo -E QUAY_REPO_NAME=pulp-operator-bundle $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
 
-echo "Build web images"
-cd $GITHUB_WORKSPACE/containers/
-if [[ "$CI_TEST" == "galaxy" ]]; then
-  cp $GITHUB_WORKSPACE/.ci/ansible/galaxy/web/vars.yaml vars/vars.yaml
-else
-  cp $GITHUB_WORKSPACE/.ci/ansible/pulp/web/vars.yaml vars/vars.yaml
-fi
-sed -i "s/podman/docker/g" common_tasks.yaml
 
-if [[ -z "${QUAY_EXPIRE+x}" ]]; then
-  ansible-playbook -v build.yaml
-else
-  sed -i "s/latest/${QUAY_IMAGE_TAG}/g" vars/vars.yaml
-  echo "Building tag: ${QUAY_IMAGE_TAG}"
-  ansible-playbook -v build.yaml --extra-vars "quay_expire=${QUAY_EXPIRE}"
-fi
-cd $GITHUB_WORKSPACE
+  wget https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest-4.7/opm-linux.tar.gz
+  tar xvf opm-linux.tar.gz
+  sudo mv opm /usr/local/bin/opm
+  sudo chmod +x /usr/local/bin/opm
 
-echo "Test pulp/pulpcore images"
-if [[ -n "${QUAY_EXPIRE}" ]]; then
-  echo "LABEL quay.expires-after=${QUAY_EXPIRE}d" >> ./build/Dockerfile
-fi
-sudo -E ./up.sh
-.ci/scripts/pulp-operator-check-and-wait.sh $KUBE_FLAG
-if [[ "$CI_TEST" == "galaxy" ]]; then
-  CI_TEST=true .ci/scripts/galaxy_ng-tests.sh -m
-else
-  .ci/scripts/retry.sh 3 ".ci/scripts/pulp_file-tests.sh -m"
-fi
 
-docker images
+  opm index add -c docker --bundles quay.io/pulp/pulp-operator-bundle:${QUAY_IMAGE_TAG} --tag quay.io/pulp/pulp-index:${QUAY_IMAGE_TAG}
+  sudo -E QUAY_REPO_NAME=pulp-index $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
+  docker images
+  exit
+fi
 
 if [[ "$CI_TEST" == "galaxy" ]]; then
   echo "Deploy galaxy latest"
@@ -73,29 +48,6 @@ else
 
   echo "Deploy pulp-web latest"
   sudo -E QUAY_REPO_NAME=pulp-web $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
-fi
-
-if [[ -z "${QUAY_EXPIRE+x}" ]]; then
-  echo "Deploy pulp-operator"
-  eval $(minikube -p minikube docker-env)
-  sudo -E $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
-  export QUAY_IMAGE_TAG=$(python -c 'import yaml; print(yaml.safe_load(open("deploy/olm-catalog/pulp-operator/manifests/pulp-operator.clusterserviceversion.yaml"))["spec"]["version"])')
-  sed -i "s/\.dev//g" deploy/olm-catalog/pulp-operator/manifests/pulp-operator.clusterserviceversion.yaml
-
-
-  echo $QUAY_IMAGE_TAG
-  docker build -f bundle.Dockerfile -t quay.io/pulp/pulp-operator-bundle:${QUAY_IMAGE_TAG} .
-  sudo -E QUAY_REPO_NAME=pulp-operator-bundle $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
-
-
-  wget https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest-4.7/opm-linux.tar.gz
-  tar xvf opm-linux.tar.gz
-  sudo mv opm /usr/local/bin/opm
-  sudo chmod +x /usr/local/bin/opm
-
-
-  opm index add -c docker --bundles quay.io/pulp/pulp-operator-bundle:${QUAY_IMAGE_TAG} --tag quay.io/pulp/pulp-index:${QUAY_IMAGE_TAG}
-  sudo -E QUAY_REPO_NAME=pulp-index $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
 fi
 
 docker images
