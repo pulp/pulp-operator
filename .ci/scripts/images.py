@@ -64,7 +64,9 @@ async def get_compatible_plugins(pulpcore_releases, total_releases=1):
                 if plugin_version == latest_plugin_version:
                     plugin_requirements = pypi_data["info"]["requires_dist"]
                 else:
-                    req_data = await get_pypi_data(PYPI_ROOT.format(f"{plugin}/{plugin_version}"))
+                    req_data = await get_pypi_data(
+                        PYPI_ROOT.format(f"{plugin}/{plugin_version}")
+                    )
                     plugin_requirements = req_data["info"]["requires_dist"]
                 if "pulpcore-plugin" in str(plugin_requirements):
                     break
@@ -84,68 +86,77 @@ async def get_compatible_plugins(pulpcore_releases, total_releases=1):
         return images
 
 
+def to_deploy(images, tag):
+    path = "$GITHUB_WORKSPACE/.ci/scripts/quay-push.sh"
+    for image in images:
+        line = f'sudo -E QUAY_REPO_NAME={image} QUAY_IMAGE_TAG="{tag}" \{path}'
+        os.system(f"echo {line} >> .ci/scripts/deploy.sh")
+        stable = f"quay.io/pulp/{image}:stable"
+        os.system(f"echo 'docker tag {image}:{tag} {stable}' >> .ci/scripts/deploy.sh")
+        line = f'sudo -E QUAY_REPO_NAME={image} QUAY_IMAGE_TAG="stable" \{path}'
+        os.system(f"echo {line} >> .ci/scripts/deploy.sh")
+
+
 def save_vars(image, tag, pulpcore, plugins):
     if image == "pulp":
         pulp_vars = yaml.safe_load(open(".ci/ansible/pulp/vars.yaml"))
-        pulp_vars["images"].append({
-            'pulp_stable': {
-                'image_name': 'pulp',
-                'tag': tag,
-                'container_file': 'Containerfile.core',
-                'pulpcore': pulpcore,
-                'plugins': plugins,
+        pulp_vars["images"].append(
+            {
+                "pulp_stable": {
+                    "image_name": "pulp",
+                    "tag": tag,
+                    "container_file": "Containerfile.core",
+                    "pulpcore": pulpcore,
+                    "plugins": plugins,
+                }
             }
-        })
+        )
         pulp_web_vars = yaml.safe_load(open(".ci/ansible/pulp/web/vars.yaml"))
-        pulp_web_vars["images"].append({
-            'pulp_web_stable': {
-                'image_name': 'pulp-web',
-                'tag': tag,
-                'container_file': 'Containerfile.web',
-                'base_image_name': 'pulp',
-                'python_version': '3.9',
-                'plugin_snippets': PULP_PLUGINS_WITH_WEBSERVER_SNIPPETS,
+        pulp_web_vars["images"].append(
+            {
+                "pulp_web_stable": {
+                    "image_name": "pulp-web",
+                    "tag": tag,
+                    "container_file": "Containerfile.web",
+                    "base_image_name": "pulp",
+                    "python_version": "3.9",
+                    "plugin_snippets": PULP_PLUGINS_WITH_WEBSERVER_SNIPPETS,
+                }
             }
-        })
+        )
         yaml.dump(pulp_vars, open(".ci/ansible/pulp/vars.yaml", "w"))
         yaml.dump(pulp_web_vars, open(".ci/ansible/pulp/web/vars.yaml", "w"))
-
-        path = "$GITHUB_WORKSPACE/.ci/scripts/quay-push.sh"
-        line = f'sudo -E QUAY_REPO_NAME=pulp QUAY_IMAGE_TAG="{tag}" \{path}'
-        os.system(f"echo {line} >> .ci/scripts/deploy.sh")
-        line = f'sudo -E QUAY_REPO_NAME=pulp-web QUAY_IMAGE_TAG="{tag}" \{path}'
-        os.system(f"echo {line} >> .ci/scripts/deploy.sh")
+        to_deploy(["pulp", "pulp-web"], tag)
 
     if image == "galaxy":
         galaxy_vars = yaml.safe_load(open(".ci/ansible/galaxy/vars.yaml"))
-        galaxy_vars["images"].append({
-            'galaxy_stable': {
-                'image_name': 'galaxy',
-                'tag': tag,
-                'container_file': 'Containerfile.core',
-                'pulpcore': pulpcore,
-                'plugins': plugins,
+        galaxy_vars["images"].append(
+            {
+                "galaxy_stable": {
+                    "image_name": "galaxy",
+                    "tag": tag,
+                    "container_file": "Containerfile.core",
+                    "pulpcore": pulpcore,
+                    "plugins": plugins,
+                }
             }
-        })
+        )
         galaxy_web_vars = yaml.safe_load(open(".ci/ansible/galaxy/web/vars.yaml"))
-        galaxy_web_vars["images"].append({
-            'galaxy_web_stable': {
-                'image_name': 'galaxy-web',
-                'tag': tag,
-                'container_file': 'Containerfile.web',
-                'base_image_name': 'galaxy',
-                'python_version': '3.9',
-                'plugin_snippets': GALAXY_PLUGINS_WITH_WEBSERVER_SNIPPETS,
+        galaxy_web_vars["images"].append(
+            {
+                "galaxy_web_stable": {
+                    "image_name": "galaxy-web",
+                    "tag": tag,
+                    "container_file": "Containerfile.web",
+                    "base_image_name": "galaxy",
+                    "python_version": "3.9",
+                    "plugin_snippets": GALAXY_PLUGINS_WITH_WEBSERVER_SNIPPETS,
+                }
             }
-        })
+        )
         yaml.dump(galaxy_vars, open(".ci/ansible/galaxy/vars.yaml", "w"))
         yaml.dump(galaxy_web_vars, open(".ci/ansible/galaxy/web/vars.yaml", "w"))
-
-        path = "$GITHUB_WORKSPACE/.ci/scripts/quay-push.sh"
-        line = f'sudo -E QUAY_REPO_NAME=galaxy QUAY_IMAGE_TAG="{tag}" \{path}'
-        os.system(f"echo {line} >> .ci/scripts/deploy.sh")
-        line = f'sudo -E QUAY_REPO_NAME=galaxy-web QUAY_IMAGE_TAG="{tag}" \{path}'
-        os.system(f"echo {line} >> .ci/scripts/deploy.sh")
+        to_deploy(["galaxy", "galaxy-web"], tag)
 
 
 if __name__ == "__main__":
@@ -153,13 +164,15 @@ if __name__ == "__main__":
     if ci_test == "galaxy":
         galaxy_url = PYPI_ROOT.format("galaxy_ng")
         response = asyncio.run(get_pypi_data(galaxy_url))
-        pulpcore_req = [r for r in response["info"]["requires_dist"] if "pulpcore" in r][0]
+        pulpcore_req = [
+            r for r in response["info"]["requires_dist"] if "pulpcore" in r
+        ][0]
         pulpcore_req = pulpcore_req.replace(" (", "").replace(")", "")
         save_vars(
             image="galaxy",
             tag=response["info"]["version"],
             pulpcore=f'"{pulpcore_req}"',
-            plugins=[f"galaxy_ng=={response['info']['version']}"]
+            plugins=[f"galaxy_ng=={response['info']['version']}"],
         )
         print(f"galaxy_ng=={response['info']['version']} {pulpcore_req}")
     else:
@@ -172,6 +185,6 @@ if __name__ == "__main__":
                 image="pulp",
                 tag=response["info"]["version"],
                 pulpcore=f"pulpcore=={response['info']['version']}",
-                plugins=plugins
+                plugins=plugins,
             )
             print(f"pulpcore=={response['info']['version']} {plugins}")
