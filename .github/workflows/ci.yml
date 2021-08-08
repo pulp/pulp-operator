@@ -41,7 +41,7 @@ jobs:
       - name: Try the cluster !
         run: kubectl get pods -A
       - name: Setup a minikube docker env
-        run: minikube -p minikube docker-env | grep "export" | awk '{$1= ""; print $0}' >> $GITHUB_ENV
+        run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
       - name: Build Operator
         run: |
           echo ::group::SDK
@@ -49,7 +49,6 @@ jobs:
           sudo wget https://github.com/operator-framework/operator-sdk/releases/download/$CURRENT_VERSION/operator-sdk-$CURRENT_VERSION-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
           sudo chmod +x /usr/local/bin/operator-sdk
           echo ::endgroup::
-          eval $(minikube -p minikube docker-env)
           sudo -E operator-sdk build quay.io/pulp/pulp-operator:latest
           sudo -E docker images
         shell: bash
@@ -68,7 +67,7 @@ jobs:
       - name: Logs
         if: always()
         run: |
-          sudo docker images
+          sudo -E docker images
           .github/workflows/scripts/show_logs.sh
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/
 
@@ -101,7 +100,7 @@ jobs:
       - name: Try the cluster !
         run: kubectl get pods -A
       - name: Setup a minikube docker env
-        run: minikube -p minikube docker-env | grep "export" | awk '{$1= ""; print $0}' >> $GITHUB_ENV
+        run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
       - name: Build Operator
         run: |
           echo ::group::SDK
@@ -109,7 +108,6 @@ jobs:
           sudo wget https://github.com/operator-framework/operator-sdk/releases/download/$CURRENT_VERSION/operator-sdk-$CURRENT_VERSION-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
           sudo chmod +x /usr/local/bin/operator-sdk
           echo ::endgroup::
-          eval $(minikube -p minikube docker-env)
           sudo -E operator-sdk build quay.io/pulp/pulp-operator:latest
           sudo -E docker images
         shell: bash
@@ -138,7 +136,7 @@ jobs:
       - name: Logs
         if: always()
         run: |
-          sudo docker images
+          sudo -E docker images
           .github/workflows/scripts/show_logs.sh
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/
 
@@ -171,7 +169,7 @@ jobs:
       - name: Try the cluster !
         run: kubectl get pods -A
       - name: Setup a minikube docker env
-        run: minikube -p minikube docker-env | grep "export" | awk '{$1= ""; print $0}' >> $GITHUB_ENV
+        run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
       - name: Build Operator
         run: |
           echo ::group::SDK
@@ -179,7 +177,6 @@ jobs:
           sudo wget https://github.com/operator-framework/operator-sdk/releases/download/$CURRENT_VERSION/operator-sdk-$CURRENT_VERSION-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
           sudo chmod +x /usr/local/bin/operator-sdk
           echo ::endgroup::
-          eval $(minikube -p minikube docker-env)
           sudo -E operator-sdk build quay.io/pulp/pulp-operator:latest
           sudo -E docker images
         shell: bash
@@ -204,7 +201,7 @@ jobs:
       - name: Logs
         if: always()
         run: |
-          sudo docker images
+          sudo -E docker images
           .github/workflows/scripts/show_logs.sh
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/
 
@@ -287,7 +284,7 @@ jobs:
       - name: Try the cluster !
         run: kubectl get pods -A
       - name: Setup a minikube docker env
-        run: minikube -p minikube docker-env | grep "export" | awk '{$1= ""; print $0}' >> $GITHUB_ENV
+        run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
       - name: Build Operator
         run: |
           echo ::group::SDK
@@ -295,7 +292,6 @@ jobs:
           sudo wget https://github.com/operator-framework/operator-sdk/releases/download/$CURRENT_VERSION/operator-sdk-$CURRENT_VERSION-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
           sudo chmod +x /usr/local/bin/operator-sdk
           echo ::endgroup::
-          eval $(minikube -p minikube docker-env)
           sudo -E operator-sdk build quay.io/pulp/pulp-operator:latest
           sudo -E docker images
         shell: bash
@@ -314,10 +310,7 @@ jobs:
           CI_TEST=${{ matrix.CI_TEST }} .github/workflows/scripts/build_images.sh
           CI_TEST=${{ matrix.CI_TEST }} .github/workflows/scripts/test_images.sh -m
         shell: bash
-      - name: Deploy Operator images
-        run: CI_TEST=${{ matrix.CI_TEST }} .ci/scripts/deploy.sh -i
-        shell: bash
-      - name: Deploy Pulp/Galaxy images
+      - name: Deploy images
         run: CI_TEST=${{ matrix.CI_TEST }} .ci/scripts/deploy.sh
         shell: bash
       - name: Define QUAY_IMAGE_TAG environment variable
@@ -346,6 +339,6 @@ jobs:
       - name: Logs
         if: always()
         run: |
-          sudo docker images
+          sudo -E docker images
           .github/workflows/scripts/show_logs.sh
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/
