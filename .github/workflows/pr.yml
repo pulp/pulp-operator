@@ -3,6 +3,9 @@ on:
   pull_request:
     branches:
       - '*'
+env:
+  COLORTERM: 'yes'
+  TERM: 'xterm-256color'
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -97,6 +100,15 @@ jobs:
           FORKED_REPOSITORY: ${{ steps.head_repo_name.outputs.repo }}
         run: sudo -E insta-demo/pulp-insta-demo.sh -m
         shell: bash
+      - name: Popeye
+        run: |
+          echo ::group::POPEYE
+          sudo wget https://github.com/derailed/popeye/releases/download/v0.9.7/popeye_Linux_x86_64.tar.gz
+          sudo tar -xvzf popeye_Linux_x86_64.tar.gz
+          sudo mv popeye /usr/local/bin/
+          sudo chmod +x /usr/local/bin/popeye
+          echo ::endgroup::
+          sudo popeye --kubeconfig ~/.kube/config || true
       - name: Logs
         if: always()
         run: |
@@ -166,6 +178,15 @@ jobs:
       - name: Check and wait pulp-operator deploy
         run: .ci/scripts/pulp-operator-check-and-wait.sh -m
         shell: bash
+      - name: Popeye
+        run: |
+          echo ::group::POPEYE
+          sudo wget https://github.com/derailed/popeye/releases/download/v0.9.7/popeye_Linux_x86_64.tar.gz
+          sudo tar -xvzf popeye_Linux_x86_64.tar.gz
+          sudo mv popeye /usr/local/bin/
+          sudo chmod +x /usr/local/bin/popeye
+          echo ::endgroup::
+          sudo popeye --kubeconfig ~/.kube/config || true
       - name: Test all components
         run: |
           git clone --depth=1 https://github.com/pulp/pulp_file.git
@@ -236,6 +257,15 @@ jobs:
       - name: Check and wait pulp-operator deploy
         run: .ci/scripts/pulp-operator-check-and-wait.sh -m
         shell: bash
+      - name: Popeye
+        run: |
+          echo ::group::POPEYE
+          sudo wget https://github.com/derailed/popeye/releases/download/v0.9.7/popeye_Linux_x86_64.tar.gz
+          sudo tar -xvzf popeye_Linux_x86_64.tar.gz
+          sudo mv popeye /usr/local/bin/
+          sudo chmod +x /usr/local/bin/popeye
+          echo ::endgroup::
+          sudo popeye --kubeconfig ~/.kube/config || true
       - name: Test
         run: sudo -E .ci/scripts/galaxy_ng-tests.sh -m
         shell: bash
