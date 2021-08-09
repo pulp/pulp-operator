@@ -279,6 +279,11 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: '3.9'
+      - name: Scan repo with kube-linter
+        uses: stackrox/kube-linter-action@v1.0.2
+        with:
+          directory: deploy
+          config: .ci/assets/kubernetes/.kube-linter.yaml
       - name: Install httpie
         run: |
           echo ::group::HTTPIE

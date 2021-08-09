@@ -34,6 +34,7 @@ rules:
 - apiGroups:
   - apps
   - extensions
+  - networking.k8s.io
   resources:
   - deployments
   - daemonsets

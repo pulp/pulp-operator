@@ -3,9 +3,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pulp-operator
+  annotations:
+    email: pulp-dev@redhat.com
   labels:
     app.kubernetes.io/name: pulp-operator
     app.kubernetes.io/component: operator
+    owner: pulp-dev
 spec:
   replicas: 1
   selector:
@@ -22,6 +25,17 @@ spec:
       containers:
         - name: pulp-operator
           image: "quay.io/pulp/pulp-operator:latest"
+          # securityContext: # FIXME: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+          #   runAsUser: 1000
+          #   runAsNonRoot: true
+          #   readOnlyRootFilesystem: true
+          resources:
+            limits:
+              cpu: 300m
+              memory: 512Mi
+            requests:
+              cpu: 150m
+              memory: 256Mi
           imagePullPolicy: "IfNotPresent"
           volumeMounts:
           - mountPath: /tmp/ansible-operator/runner
@@ -47,6 +61,12 @@ spec:
               port: 6789
             initialDelaySeconds: 15
             periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 6789
+            initialDelaySeconds: 5
+            periodSeconds: 10
       volumes:
         - name: runner
           emptyDir: {}
