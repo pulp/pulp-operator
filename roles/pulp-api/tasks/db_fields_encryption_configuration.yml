@@ -2,6 +2,7 @@
 - name: Set default DB fields encryption secret name
   set_fact:
     db_fields_encryption_secret: '{{ meta.name }}-db-fields-encryption'
+    cacheable: yes
   when: db_fields_encryption_secret is undefined
 
 - name: Check for specified DB fields encryption configuration
@@ -14,15 +15,17 @@
 
 - block:
     - name: Generate Pulp Database Encryption Key
-      shell: >-
-        set -o pipefail &&
-        python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-      register: _db_fields_encryption_key
+      shell: |
+        from cryptography.fernet import Fernet
+        with open("/tmp/fernet", "wb") as key_file:
+            key_file.write(Fernet.generate_key())
+      args:
+        executable: /usr/bin/python3
       no_log: true
 
     - name: Store DB fields encryption key
       set_fact:
-        db_fields_encryption_key: _db_fields_encryption_key.stdout
+        db_fields_encryption_key: "{{ lookup('file', '/tmp/fernet') }}"
       no_log: true
 
     - name: Create DB fields encryption secret
