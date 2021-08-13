@@ -48,6 +48,12 @@ spec:
             items:
               - path: settings.py
                 key: settings.py
+        - name: {{ meta.name }}-db-fields-encryption
+          secret:
+            secretName: {{ db_fields_encryption_secret }}
+            items:
+              - path: database_fields.symmetric.key
+                key: database_fields.symmetric.key
 {% if is_file_storage %}
         - name: file-storage
           persistentVolumeClaim:
@@ -77,6 +83,9 @@ spec:
           volumeMounts:
             - name: {{ meta.name }}-server
               mountPath: "/etc/pulp/"
+            - name: {{ meta.name }}-db-fields-encryption
+              mountPath: "/etc/pulp/keys/"
+              readOnly: true
 {% if is_file_storage %}
             - name: file-storage
               readOnly: false
