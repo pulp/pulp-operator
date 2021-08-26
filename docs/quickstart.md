@@ -27,7 +27,7 @@ metadata:
  namespace: openshift-marketplace
 spec:
  sourceType: grpc
- image: quay.io/pulp/pulp-index:0.2.0
+ image: quay.io/pulp/pulp-index:0.3.0
 
 ```
 
