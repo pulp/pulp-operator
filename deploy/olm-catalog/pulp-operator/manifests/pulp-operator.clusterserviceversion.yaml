@@ -566,24 +566,24 @@ spec:
 
     ## Pulp Operator
 
-    A Kubernetes Operator for Pulp 3.
+    An [Ansible Operator](https://www.ansible.com/blog/ansible-operator) for Pulp 3.
 
-    Pulp Operator is under active development and not production ready yet. The goal is to provide a scalable and robust cluster for Pulp 3. [Pre-built images are hosted on quay.io](https://quay.io/repository/pulp/pulp-operator).
+    Pulp Operator is under active development and not production ready yet. The goal is to provide a scalable and robust cluster for Pulp 3.
 
-    Note that it utilizes a single container image from the pulpcore repo, to run 4 different types of service containers (like pulpcore-api & pulpcore-content). Currently manually built and [hosted on quay.io](https://quay.io/repository/pulp/pulp).
+    Note that Pulp operator uses a [single container image](https://quay.io/repository/pulp/pulp), to run four different types of service containers:
 
-    ## Services
-
-    - **pulpcore-api** - serves REST API, Galaxy APIs (v1, v2, v3, UI), and the container registry API. The number of instances of this service should be scaled as demand requires.  Administrators and users of all of the APIs create demand for this service.
+    - **pulpcore-api** - serves the REST API: Pulp(v3) / Galaxy (v3) API. The number of instances of this service should be scaled as demand requires.  Both administrators and users of all of the APIs put demands on this service.
 
 
-    - **pulpcore-content** - serves content to clients. pulpcore-api redirects clients here to download content. When content is being mirrored from a remote source this service can download that content and stream it to the client the first time the content is requested. The number of instances of this service should be scaled as demand requires. Content consumers create demand for this service.
+    - **pulpcore-content** - serves content to clients. pulpcore-api redirects clients to pulpcore-content to download content. When content is being mirrored from a remote source, this service can download that content and stream it to the client the first time the content is requested. The number of instances of this service should be scaled as demand requires. Content consumers put demands on this service.
 
 
-    - **pulpcore-worker** - performs syncing, importing of content, and other asynchronous operations that required resource locking. The number of instances of this service should be scaled as demand requires. Administrators and content importers create demand for this service.
+    - **pulpcore-worker** - performs syncing, importing of content, and other asynchronous operations that require resource locking. The number of instances of this service should be scaled as demand requires. Administrators and content importers put demands on this service.
 
 
-    - **pulpcore-resource-manager** - all asynchronous work flows through this service. Only a single entity does work, but other instances can be run as hot spares that will take over if the active one fails.
+    - **pulpcore-resource-manager** - all asynchronous work flows through this service. Because `pulpcore-resource-manager` coordinates pulp-workers, it is only possible to run one at a time, but other instances can be run as hot spares that will take over if the active one fails.
+
+    Pulp operator is manually built and [hosted on quay.io](https://quay.io/repository/pulp/pulp-operator).
 
     ## How to File an Issue
 
@@ -608,7 +608,7 @@ spec:
 
     Issue Tracker: [https://pulp.plan.io](https://pulp.plan.io)
 
-    We have enabled [GitHub Discussions](https://github.com/pulp/community/discussions).
+    Forum: [https://discourse.pulpproject.org](https://discourse.pulpproject.org/).
 
     Join [**#pulp** on Matrix](https://matrix.to/#/!HWvLQmBGVPfJfTQBAu:matrix.org?via=libera.chat&via=matrix.org&via=ctrl-c.liu.se) for User support
 

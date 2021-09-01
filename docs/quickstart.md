@@ -12,6 +12,23 @@ Is not considered production ready because pulp-operator is not yet, it hides ev
 and upgrades are not considered. Only suitable as a quick way to evaluate Pulp for the time
 being.
 
+## Kubernetes
+
+Review `deploy/crds/pulpproject_v1beta1_pulp_cr.default.yaml`. If the variables' default values are not correct for your environment, copy to `deploy/crds/pulpproject_v1beta1_pulp_cr.yaml`, uncomment "spec:", and uncomment and adjust the variables.
+
+`./up.sh`
+
+`minikube service list`
+
+or
+
+Get external ports:
+
+`kubectl get services`
+
+Get external IP addresses:
+
+`kubectl get pods -o wide`
 
 ## OpenShift
 
