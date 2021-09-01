@@ -1,58 +1,57 @@
 ![Pulp CI](https://github.com/pulp/pulp-operator/workflows/Pulp%20CI/badge.svg)
 
-# Pulp Operator
+# Pulp
 
-A Kubernetes Operator for Pulp 3, under active development (not production ready yet) by the Pulp team. The goal is to provide a scalable and robust cluster for Pulp 3. [Pre-built images are hosted on quay.io](https://quay.io/repository/pulp/pulp-operator).
+[Pulp](https://pulpproject.org/) is a platform for managing repositories of content, such as software packages, and making them available to a large number of consumers.
 
-Note that it utilizes a single container image from the pulpcore repo, to run 4 different types of service containers (like pulpcore-api & pulpcore-content.) currently manually built and [hosted on quay.io](https://quay.io/repository/pulp/pulp).
+With Pulp you can:
 
-It is currently working towards [Phase 1 of the Kubernetes Operator Capability Model](https://blog.openshift.com/top-kubernetes-operators-advancing-across-the-operator-capability-model/) before being published on OperatorHub, including compatibility with more clusters.
+* Locally mirror all or part of a repository
+* Host your own content in a new repository
+* Manage content from multiple sources in one place
+* Promote content through different repos in an organized way
 
-See [latest slide deck](http://people.redhat.com/mdepaulo/presentations/Introduction%20to%20pulp-operator.pdf) for more info.
+If you have dozens, hundreds, or thousands of software packages and need a better way to manage them, Pulp can help.
 
-## Services
+Pulp is completely free and open-source!
 
-- **pulpcore-api** - serves REST API, Galaxy APIs (v1, v2, v3, UI), and the container registry API. The number of instances of this service should be scaled as demand requires.  Administrators and users of all of the APIs create demand for this service.
+* License: GPLv2+
+* Documentation: [https://docs.pulpproject.org/](https://docs.pulpproject.org/)
+* Source: [https://github.com/pulp/pulpcore/](https://github.com/pulp/pulpcore/)
+* Bugs: [https://pulp.plan.io/projects/pulp](https://pulp.plan.io/projects/pulp)
 
+For more information, check out the project website: [https://pulpproject.org](https://pulpproject.org)
 
-- **pulpcore-content** - serves content to clients. pulpcore-api redirects clients here to download content. When content is being mirrored from a remote source this service can download that content and stream it to the client the first time the content is requested. The number of instances of this service should be scaled as demand requires. Content consumers create demand for this service.
+If you want to evaluate Pulp quickly, try [Pulp in One Container](https://pulpproject.org/pulp-in-one-container/)
 
+## Pulp Operator
 
-- **pulpcore-worker** - performs syncing, importing of content, and other asynchronous operations that required resource locking. The number of instances of this service should be scaled as demand requires. Administrators and content importers create demand for this service.
+An [Ansible Operator](https://www.ansible.com/blog/ansible-operator) for Pulp 3.
 
+Pulp Operator is under active development and not production ready yet. The goal is to provide a scalable and robust cluster for Pulp 3.
 
-- **pulpcore-resource-manager** - all asynchronous work flows through this service. Only a single entity does work, but other instances can be run as hot spares that will take over if the active one fails.
+Note that Pulp operator works with three different types of service containers (the operator itself, the main service and the web service):
 
-## Created with (based on template)
-`operator-sdk new pulp-operator --api-version=pulpproject.org/v1beta1 --kind=Pulp --type=ansible --generate-playbook`
+|           | Operator | Main | Web |
+| --------- | -------- | ---- | --- |
+| **Image** | [pulp-operator](https://quay.io/repository/pulp/pulp-operator?tab=tags) |[pulp](https://quay.io/repository/pulp/pulp?tab=tags) | [pulp-web](https://quay.io/repository/pulp/pulp-web?tab=tags) |
+| **Image** | [pulp-operator](https://quay.io/repository/pulp/pulp-operator?tab=tags) |[galaxy](https://quay.io/repository/pulp/galaxy?tab=tags) | [galaxy-web](https://quay.io/repository/pulp/galaxy-web?tab=tags) |
 
-## Built/pushed with
-`operator-sdk build --image-builder=buildah quay.io/pulp/pulp-operator:latest`
+<br>Pulp operator is manually built and [hosted on quay.io](https://quay.io/repository/pulp/pulp-operator). Read more about the container images [here](https://docs.pulpproject.org/pulp_operator/container/).
 
-`podman login quay.io`
+## Get Help
 
-`podman push quay.io/pulp/pulp-operator:latest`
+Documentation: [https://docs.pulpproject.org/pulp_operator/](https://docs.pulpproject.org/pulp_operator/)
 
-## Usage
+Issue Tracker: [https://pulp.plan.io](https://pulp.plan.io)
 
-Review `deploy/crds/pulpproject_v1beta1_pulp_cr.default.yaml`. If the variables' default values are not correct for your environment, copy to `deploy/crds/pulpproject_v1beta1_pulp_cr.yaml`, uncomment "spec:", and uncomment and adjust the variables.
+Forum: [https://discourse.pulpproject.org/](https://discourse.pulpproject.org/)
 
-`./up.sh`
+Join [**#pulp** on Matrix](https://matrix.to/#/#pulp:matrix.org)
 
-`minikube service list`
+Join [**#pulp-dev** on Matrix](https://matrix.to/#/#pulp-dev:matrix.org) for Developer discussion.
 
-or
-
-Get external ports:
-
-`kubectl get services`
-
-Get external IP addresses:
-
-`kubectl get pods -o wide`
-
-
-# How to File an Issue
+## How to File an Issue
 
 To file a new issue set the Category to `Operator` when filing [here](https://pulp.plan.io/projects/pulp/issues/new).
 
@@ -67,16 +66,3 @@ descriptions of all the fields and how they are used.
 | Category | Operator |
 | Version | The version of operator that you discovered the issue. |
 | OS | The Ansible managed OS. |
-
-
-# Get Help
-
-Documentation: https://docs.pulpproject.org/pulp_operator/
-
-Issue Tracker: https://pulp.plan.io
-
-We have enabled [GitHub Discussions](https://github.com/pulp/community/discussions).
-
-Join [**#pulp** on Matrix](https://matrix.to/#/!HWvLQmBGVPfJfTQBAu:matrix.org?via=libera.chat&via=matrix.org&via=ctrl-c.liu.se) for User support
-
-Join [**#pulp-dev** on Matrix](https://matrix.to/#/!aVApiNMtnstWbwDcVU:matrix.org?via=libera.chat&via=matrix.org&via=ctrl-c.liu.se) for Developer discussion.
