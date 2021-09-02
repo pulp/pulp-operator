@@ -3,7 +3,7 @@ images:
       image_name: galaxy
       tag: latest
       container_file: Containerfile.core
-      pulpcore: git+https://github.com/pulp/pulpcore.git@3.14#egg=pulpcore
+      pulpcore: git+https://github.com/pulp/pulpcore.git@3.15#egg=pulpcore
       plugins:
         - "git+https://github.com/ansible/galaxy_ng.git"
 registry: quay.io
