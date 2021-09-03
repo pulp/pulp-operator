@@ -44,11 +44,6 @@ jobs:
             fi
           done
         shell: bash
-      - name: Scan repo with kube-linter
-        uses: stackrox/kube-linter-action@v1.0.2
-        with:
-          directory: config
-          config: .ci/assets/kubernetes/.kube-linter.yaml
 
   insta:
     runs-on: ubuntu-latest
