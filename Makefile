@@ -12,7 +12,7 @@ endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 # Image URL to use all building/pushing image targets
-IMG ?= quay.io/pulp/pulp-operator:latest
+IMG ?= quay.io/pulp/pulp-operator:devel
 
 all: docker-build
 

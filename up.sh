@@ -21,7 +21,7 @@ KUBE_ASSETS_DIR=${KUBE_ASSETS_DIR:-".ci/assets/kubernetes"}
 echo "Make Install"
 make install
 echo "Make Deploy"
-make deploy IMG=quay.io/pulp/pulp-operator:latest
+make deploy IMG=quay.io/pulp/pulp-operator:devel
 echo "Namespaces"
 $KUBECTL get namespace
 echo "Set context"

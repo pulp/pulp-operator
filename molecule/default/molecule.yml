@@ -30,7 +30,7 @@ provisioner:
         ansible_python_interpreter: '{{ ansible_playbook_python }}'
         config_dir: ${MOLECULE_PROJECT_DIRECTORY}/config
         samples_dir: ${MOLECULE_PROJECT_DIRECTORY}/config/samples
-        operator_image: ${OPERATOR_IMAGE:-"quay.io/pulp/pulp-operator:latest"}
+        operator_image: ${OPERATOR_IMAGE:-"quay.io/pulp/pulp-operator:devel"}
         operator_pull_policy: ${OPERATOR_PULL_POLICY:-"Always"}
         kustomize: ${KUSTOMIZE_PATH:-kustomize}
   env:

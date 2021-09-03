@@ -32,7 +32,7 @@ jobs:
           sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
           echo ::endgroup::
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo "IMG=quay.io/pulp/pulp-operator:latest" >> $GITHUB_ENV
+          echo "IMG=quay.io/pulp/pulp-operator:devel" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
         shell: bash
       - name: Start minikube
@@ -52,7 +52,7 @@ jobs:
         shell: bash
       - name: Build Operator
         run: |
-          sudo -E make docker-build IMG=quay.io/pulp/pulp-operator:latest
+          sudo -E make docker-build IMG=quay.io/pulp/pulp-operator:devel
           sudo -E docker images
         shell: bash
       - name: Test insta-demo
@@ -93,7 +93,7 @@ jobs:
           sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
           echo ::endgroup::
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo "IMG=quay.io/pulp/pulp-operator:latest" >> $GITHUB_ENV
+          echo "IMG=quay.io/pulp/pulp-operator:devel" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
         shell: bash
       - name: Start minikube
@@ -165,7 +165,7 @@ jobs:
           sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
           echo ::endgroup::
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo "IMG=quay.io/pulp/pulp-operator:latest" >> $GITHUB_ENV
+          echo "IMG=quay.io/pulp/pulp-operator:devel" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
         shell: bash
       - name: Start minikube
@@ -186,7 +186,7 @@ jobs:
         shell: bash
       - name: Build Operator
         run: |
-          sudo -E make docker-build IMG=quay.io/pulp/pulp-operator:latest
+          sudo -E make docker-build IMG=quay.io/pulp/pulp-operator:devel
           sudo -E docker images
         shell: bash
       - name: Deploy pulp-operator to K8s
@@ -233,7 +233,7 @@ jobs:
           sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
           echo ::endgroup::
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo "IMG=quay.io/pulp/pulp-operator:latest" >> $GITHUB_ENV
+          echo "IMG=quay.io/pulp/pulp-operator:devel" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
         shell: bash
       - name: Install
@@ -300,7 +300,7 @@ jobs:
           sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
           echo ::endgroup::
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo "IMG=quay.io/pulp/pulp-operator:latest" >> $GITHUB_ENV
+          echo "IMG=quay.io/pulp/pulp-operator:devel" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
         shell: bash
       - name: Start minikube
@@ -321,7 +321,7 @@ jobs:
         shell: bash
       - name: Build Operator
         run: |
-          sudo -E make docker-build IMG=quay.io/pulp/pulp-operator:latest
+          sudo -E make docker-build IMG=quay.io/pulp/pulp-operator:devel
           sudo -E docker images
         shell: bash
       - name: Setting secrets
