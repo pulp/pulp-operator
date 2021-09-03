@@ -9,7 +9,6 @@
       docker_image:
         build:
           path: '{{ project_dir }}'
-          dockerfile: 'build/Dockerfile'
           pull: no
         name: '{{ operator_image }}'
         tag: latest

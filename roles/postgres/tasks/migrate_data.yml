@@ -11,13 +11,13 @@
 
 - name: Default label selector to custom resource generated postgres
   set_fact:
-    postgres_label_selector: "app.kubernetes.io/instance=postgres-{{ meta.name }}"
+    postgres_label_selector: "app.kubernetes.io/instance=postgres-{{ ansible_operator_meta.name }}"
   when: postgres_label_selector is not defined
 
 - name: Get the postgres pod information
   k8s_info:
     kind: Pod
-    namespace: '{{ meta.namespace }}'
+    namespace: '{{ ansible_operator_meta.namespace }}'
     label_selectors:
       - "{{ postgres_label_selector }}"
   register: postgres_pod
@@ -31,11 +31,11 @@
 
 - include: scale_down.yml deployment_name={{ item }}
   with_items:
-    - "{{ meta.name }}-api"
-    - "{{ meta.name }}-content"
-    - "{{ meta.name }}-resource-manager"
-    - "{{ meta.name }}-worker"
-    - "{{ meta.name }}-web"
+    - "{{ ansible_operator_meta.name }}-api"
+    - "{{ ansible_operator_meta.name }}-content"
+    - "{{ ansible_operator_meta.name }}-resource-manager"
+    - "{{ ansible_operator_meta.name }}-worker"
+    - "{{ ansible_operator_meta.name }}-web"
 
 - name: Set pg_dump command
   set_fact:
@@ -58,7 +58,7 @@
 
 - name: Stream backup from pg_dump to the new postgresql container
   k8s_exec:
-    namespace: "{{ meta.namespace }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
     pod: "{{ postgres_pod_name }}"
     command: |
       bash -c """

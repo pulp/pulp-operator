@@ -3,7 +3,7 @@
 - name: Check for specified PostgreSQL configuration
   k8s_info:
     kind: Secret
-    namespace: '{{ meta.namespace }}'
+    namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ db_secret_name }}'
   register: _custom_pg_config_resources
   no_log: true
@@ -14,7 +14,7 @@
 - name: Check for default PostgreSQL configuration
   k8s_info:
     kind: Secret
-    namespace: '{{ meta.namespace }}'
+    namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ deployment_name }}-postgres-configuration'
   register: _default_pg_config_resources
   no_log: true
@@ -41,7 +41,7 @@
 - name: Get the postgres pod information
   k8s_info:
     kind: Pod
-    namespace: '{{ meta.namespace }}'
+    namespace: '{{ ansible_operator_meta.namespace }}'
     label_selectors:
       - "{{ postgres_label_selector }}"
   register: postgres_pod
@@ -76,7 +76,7 @@
 - name: Restore database dump to the new postgresql container
   k8s_exec:
     namespace: "{{ backup_pvc_namespace }}"
-    pod: "{{ meta.name }}-backup-manager"
+    pod: "{{ ansible_operator_meta.name }}-backup-manager"
     command: |
       bash -c """
       set -e -o pipefail

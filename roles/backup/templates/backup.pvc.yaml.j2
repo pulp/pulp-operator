@@ -6,7 +6,7 @@ metadata:
   namespace: {{ backup_pvc_namespace }}
   labels:
     app.kubernetes.io/name: '{{ deployment_type }}-backup-storage'
-    app.kubernetes.io/instance: '{{ deployment_type }}-backup-storage-{{ meta.name }}'
+    app.kubernetes.io/instance: '{{ deployment_type }}-backup-storage-{{ ansible_operator_meta.name }}'
     app.kubernetes.io/component: backup-storage
     app.kubernetes.io/part-of: '{{ deployment_type }}'
     app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'

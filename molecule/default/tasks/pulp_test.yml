@@ -3,23 +3,15 @@
   k8s:
     state: present
     namespace: '{{ namespace }}'
-    definition: "{{ lookup('template', '/'.join([crds_dir, cr_file])) | from_yaml }}"
+    definition: "{{ lookup('template', '/'.join([samples_dir, cr_file])) | from_yaml }}"
+    wait: yes
+    wait_timeout: 300
+    wait_condition:
+      type: Running
+      reason: Successful
+      status: "True"
   vars:
     cr_file: 'pulpproject_v1beta1_pulp_cr.ci.yaml'
-
-- name: Wait 5m for reconciliation to run
-  k8s_info:
-    api_version: '{{ custom_resource.apiVersion }}'
-    kind: '{{ custom_resource.kind }}'
-    namespace: '{{ namespace }}'
-    name: '{{ custom_resource.metadata.name }}'
-  register: cr
-  until:
-    - "'Successful' in (cr | json_query('resources[].status.conditions[].reason'))"
-  delay: 6
-  retries: 50
-  vars:
-    custom_resource: "{{ lookup('template', '/'.join([crds_dir, 'pulpproject_v1beta1_pulp_cr.ci.yaml'])) | from_yaml }}"
 
 - name: Add assertions here
   assert:

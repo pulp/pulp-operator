@@ -2,11 +2,11 @@
 apiVersion: v1
 kind: Deployment
 metadata:
-  name: "{{ meta.name }}-web"
+  name: "{{ ansible_operator_meta.name }}-web"
   namespace: "{{ project_name }}"
   labels:
     app.kubernetes.io/name: 'nginx'
-    app.kubernetes.io/instance: 'nginx-{{ meta.name }}'
+    app.kubernetes.io/instance: 'nginx-{{ ansible_operator_meta.name }}'
     app.kubernetes.io/component: webserver
     app.kubernetes.io/part-of: '{{ deployment_type }}'
     app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
@@ -15,7 +15,7 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: 'nginx'
-      app.kubernetes.io/instance: 'nginx-{{ meta.name }}'
+      app.kubernetes.io/instance: 'nginx-{{ ansible_operator_meta.name }}'
       app.kubernetes.io/component: webserver
       app.kubernetes.io/part-of: '{{ deployment_type }}'
       app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
@@ -23,7 +23,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: 'nginx'
-        app.kubernetes.io/instance: 'nginx-{{ meta.name }}'
+        app.kubernetes.io/instance: 'nginx-{{ ansible_operator_meta.name }}'
         app.kubernetes.io/component: webserver
         app.kubernetes.io/part-of: '{{ deployment_type }}'
         app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
@@ -48,12 +48,12 @@ spec:
                   fieldPath: status.hostIP
 {% endif %}
           volumeMounts:
-            - name: {{ meta.name }}-nginx-conf
+            - name: {{ ansible_operator_meta.name }}-nginx-conf
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
               readOnly: true
 {% if ingress_type | lower == 'route' and route_tls_termination_mechanism | lower == 'passthrough' %}
-            - name: "{{ meta.name }}-nginx-certs"
+            - name: "{{ ansible_operator_meta.name }}-nginx-certs"
               mountPath: "/etc/nginx/pki"
               readOnly: true
 {% endif %}
@@ -95,14 +95,14 @@ spec:
           resources: {{ web.resource_requirements }}
 {% endif %}
       volumes:
-        - name: {{ meta.name }}-nginx-conf
+        - name: {{ ansible_operator_meta.name }}-nginx-conf
           configMap:
-            name: '{{ meta.name }}-{{ deployment_type }}-configmap'
+            name: '{{ ansible_operator_meta.name }}-{{ deployment_type }}-configmap'
             items:
               - key: nginx_conf
                 path: nginx.conf
 {% if ingress_type | lower == 'route' and route_tls_termination_mechanism | lower == 'passthrough' %}
-        - name: "{{ meta.name }}-nginx-certs"
+        - name: "{{ ansible_operator_meta.name }}-nginx-certs"
           secret:
             secretName: "{{ route_tls_secret }}"
             items:

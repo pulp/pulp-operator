@@ -5,7 +5,7 @@
     api_version: "{{ backup_api_version }}"
     kind: "{{ backup_kind }}"
     name: "{{ backup_name }}"
-    namespace: "{{ meta.namespace }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
   register: this_backup
   when:
     - backup_name is defined
@@ -121,7 +121,7 @@
 
 - name: Delete any existing management pod
   k8s:
-    name: "{{ meta.name }}-backup-manager"
+    name: "{{ ansible_operator_meta.name }}-backup-manager"
     kind: Pod
     namespace: "{{ backup_pvc_namespace }}"
     state: absent
@@ -137,7 +137,7 @@
 - name: Check to make sure backup directory exists on PVC
   k8s_exec:
     namespace: "{{ backup_pvc_namespace}}"
-    pod: "{{ meta.name }}-backup-manager"
+    pod: "{{ ansible_operator_meta.name }}-backup-manager"
     command: >-
       bash -c "stat {{ backup_dir }}"
   register: stat_backup_dir

@@ -15,10 +15,10 @@ raw_spec: "{{ vars['_pulp_pulpproject_org_pulp']['spec'] }}"
 #
 admin_password_secret: ''
 
-admin_password_name: '{{ meta.name }}-admin-password'
+admin_password_name: '{{ ansible_operator_meta.name }}-admin-password'
 
 # Set content host
-content_host: '{{ meta.name }}-content-svc'
+content_host: '{{ ansible_operator_meta.name }}-content-svc'
 content_port: '24816'
 
 # Host to create the root with.

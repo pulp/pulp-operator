@@ -16,19 +16,13 @@ else
     echo "$0: ERROR 1: Cannot find kubectl"
 fi
 
-# Remove the containers/pods before everything they depend on.
-$KUBECTL delete -f deploy/operator.yaml
+make undeploy
 
-$KUBECTL delete -f deploy/service_account.yaml
-$KUBECTL delete -f deploy/role.yaml
-$KUBECTL delete -f deploy/cluster_role.yaml
-$KUBECTL delete -f deploy/role_binding.yaml
-$KUBECTL delete -f deploy/cluster_role_binding.yaml
 # It doesn't matter which cr we specify; the metadata up top is the same.
-$KUBECTL delete -f deploy/crds/pulpproject_v1beta1_pulp_cr.default.yaml
-$KUBECTL delete -f deploy/crds/pulpproject_v1beta1_pulp_crd.yaml
-$KUBECTL delete -f deploy/crds/pulpproject_v1beta1_pulpbackup_crd.yaml
-$KUBECTL delete -f deploy/crds/pulpproject_v1beta1_pulprestore_crd.yaml
+$KUBECTL delete -f config/samples/pulpproject_v1beta1_pulp_cr.default.yaml
+$KUBECTL delete -f config/crd/bases/pulpproject_v1beta1_pulp_crd.yaml
+$KUBECTL delete -f config/crd/bases/pulpproject_v1beta1_pulpbackup_crd.yaml
+$KUBECTL delete -f config/crd/bases/pulpproject_v1beta1_pulprestore_crd.yaml
 
 if [[ "$CI_TEST" == "true" ]]; then
   $KUBECTL delete -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml

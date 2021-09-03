@@ -2,7 +2,7 @@
 #!/usr/bin/env bash
 
 echo ::group::OPERATOR_LOGS
-sudo -E kubectl logs -l app.kubernetes.io/name=pulp-operator -c pulp-operator --tail=10000
+sudo -E kubectl logs deployment.apps/pulp-operator-controller-manager -n pulp-operator-system -c manager --tail=10000
 echo ::endgroup::
 
 echo ::group::PULP_API_LOGS

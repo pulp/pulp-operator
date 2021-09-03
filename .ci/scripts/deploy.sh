@@ -20,14 +20,12 @@ fi
 if [[ -z "${QUAY_EXPIRE+x}" ]]; then
   echo "Deploy pulp-operator"
   sudo -E $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
-  export QUAY_IMAGE_TAG=$(python -c 'import yaml; print(yaml.safe_load(open("deploy/olm-catalog/pulp-operator/manifests/pulp-operator.clusterserviceversion.yaml"))["spec"]["version"])')
-  sed -i "s/\.dev//g" deploy/olm-catalog/pulp-operator/manifests/pulp-operator.clusterserviceversion.yaml
-
+  export QUAY_IMAGE_TAG=$(cat Makefile | grep "VERSION ?=" | cut -d' ' -f3)
 
   echo $QUAY_IMAGE_TAG
   docker tag quay.io/pulp/pulp-operator:latest quay.io/pulp/pulp-operator:$QUAY_IMAGE_TAG
   sudo -E $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
-  docker build -f bundle.Dockerfile -t quay.io/pulp/pulp-operator-bundle:${QUAY_IMAGE_TAG} .
+  make bundle-build
   sudo -E QUAY_REPO_NAME=pulp-operator-bundle $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
 
 

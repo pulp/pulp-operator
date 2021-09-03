@@ -42,14 +42,17 @@ jobs:
         run: kubectl get pods -A
       - name: Setup a minikube docker env
         run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
+      - name: Uninstalling GHA kustomize
+        run: |
+          # hack for uninstalling kustomize from GHA
+          mv /usr/local/bin/kustomize /usr/local/bin/ghakustomize
+          make kustomize
+          mv ./bin/kustomize /usr/local/bin/kustomize
+          kustomize version
+        shell: bash
       - name: Build Operator
         run: |
-          echo ::group::SDK
-          CURRENT_VERSION=$(head -1 ./build/Dockerfile  | cut -d ":" -f 2)
-          sudo wget https://github.com/operator-framework/operator-sdk/releases/download/$CURRENT_VERSION/operator-sdk-$CURRENT_VERSION-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
-          sudo chmod +x /usr/local/bin/operator-sdk
-          echo ::endgroup::
-          sudo -E operator-sdk build quay.io/pulp/pulp-operator:latest
+          sudo -E make docker-build IMG=quay.io/pulp/pulp-operator:latest
           sudo -E docker images
         shell: bash
       - name: Test insta-demo
@@ -101,14 +104,17 @@ jobs:
         run: kubectl get pods -A
       - name: Setup a minikube docker env
         run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
+      - name: Uninstalling GHA kustomize
+        run: |
+          # hack for uninstalling kustomize from GHA
+          mv /usr/local/bin/kustomize /usr/local/bin/ghakustomize
+          make kustomize
+          mv ./bin/kustomize /usr/local/bin/kustomize
+          kustomize version
+        shell: bash
       - name: Build Operator
         run: |
-          echo ::group::SDK
-          CURRENT_VERSION=$(head -1 ./build/Dockerfile  | cut -d ":" -f 2)
-          sudo wget https://github.com/operator-framework/operator-sdk/releases/download/$CURRENT_VERSION/operator-sdk-$CURRENT_VERSION-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
-          sudo chmod +x /usr/local/bin/operator-sdk
-          echo ::endgroup::
-          sudo -E operator-sdk build quay.io/pulp/pulp-operator:latest
+          sudo -E make docker-build IMG=quay.io/pulp/pulp-operator:latest
           sudo -E docker images
         shell: bash
       - name: Deploy pulp-operator to K8s
@@ -170,14 +176,17 @@ jobs:
         run: kubectl get pods -A
       - name: Setup a minikube docker env
         run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
+      - name: Uninstalling GHA kustomize
+        run: |
+          # hack for uninstalling kustomize from GHA
+          mv /usr/local/bin/kustomize /usr/local/bin/ghakustomize
+          make kustomize
+          mv ./bin/kustomize /usr/local/bin/kustomize
+          kustomize version
+        shell: bash
       - name: Build Operator
         run: |
-          echo ::group::SDK
-          CURRENT_VERSION=$(head -1 ./build/Dockerfile  | cut -d ":" -f 2)
-          sudo wget https://github.com/operator-framework/operator-sdk/releases/download/$CURRENT_VERSION/operator-sdk-$CURRENT_VERSION-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
-          sudo chmod +x /usr/local/bin/operator-sdk
-          echo ::endgroup::
-          sudo -E operator-sdk build quay.io/pulp/pulp-operator:latest
+          sudo -E make docker-build IMG=quay.io/pulp/pulp-operator:latest
           sudo -E docker images
         shell: bash
       - name: Deploy pulp-operator to K8s
@@ -235,16 +244,33 @@ jobs:
           ansible-galaxy collection install --force community.docker
           ansible --version
           pipdeptree
-      - name: Molecule
+      - name: Uninstalling GHA kustomize
+        run: |
+          # hack for uninstalling kustomize from GHA
+          mv /usr/local/bin/kustomize /usr/local/bin/ghakustomize
+          make kustomize
+          mv ./bin/kustomize /usr/local/bin/kustomize
+          kustomize version
+        shell: bash
+      - name: Molecule test
         run: .ci/scripts/molecule.sh
         shell: bash
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
-      - name: After failure
-        if: failure()
+      - name: Logs
+        if: always()
         run: |
-          docker exec -it osdk-test-control-plane journalctl -S today --no-pager
+          kind export kubeconfig --name osdk-test
+          kubectl logs deployment.apps/osdk-controller-manager -n osdk-test -c manager --tail=10000
+        shell: bash
+      - name: Molecule destroy
+        if: always()
+        run: molecule -v destroy -s kind
+        shell: bash
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
 
   deploy:
     runs-on: ubuntu-latest
@@ -285,14 +311,17 @@ jobs:
         run: kubectl get pods -A
       - name: Setup a minikube docker env
         run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
+      - name: Uninstalling GHA kustomize
+        run: |
+          # hack for uninstalling kustomize from GHA
+          mv /usr/local/bin/kustomize /usr/local/bin/ghakustomize
+          make kustomize
+          mv ./bin/kustomize /usr/local/bin/kustomize
+          kustomize version
+        shell: bash
       - name: Build Operator
         run: |
-          echo ::group::SDK
-          CURRENT_VERSION=$(head -1 ./build/Dockerfile  | cut -d ":" -f 2)
-          sudo wget https://github.com/operator-framework/operator-sdk/releases/download/$CURRENT_VERSION/operator-sdk-$CURRENT_VERSION-x86_64-linux-gnu -O /usr/local/bin/operator-sdk
-          sudo chmod +x /usr/local/bin/operator-sdk
-          echo ::endgroup::
-          sudo -E operator-sdk build quay.io/pulp/pulp-operator:latest
+          sudo -E make docker-build IMG=quay.io/pulp/pulp-operator:latest
           sudo -E docker images
         shell: bash
       - name: Setting secrets

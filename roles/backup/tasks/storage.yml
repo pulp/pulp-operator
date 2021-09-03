@@ -3,7 +3,7 @@
 - name: Create directory for backup content files
   k8s_exec:
     namespace: "{{ backup_pvc_namespace }}"
-    pod: "{{ meta.name }}-backup-manager"
+    pod: "{{ ansible_operator_meta.name }}-backup-manager"
     command: >-
       mkdir -p {{ _backup_dir }}/pulp/
 
@@ -15,7 +15,7 @@
 - name: Write content files to backup on PVC
   k8s_exec:
     namespace: "{{ backup_pvc_namespace }}"
-    pod: "{{ meta.name }}-backup-manager"
+    pod: "{{ ansible_operator_meta.name }}-backup-manager"
     command: >-
       bash -c "{{ copy_cmd }}"
   register: file_copy

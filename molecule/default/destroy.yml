@@ -7,7 +7,7 @@
     - community.kubernetes
 
   tasks:
-    - import_tasks: resources.yml
+    - import_tasks: kustomize.yml
       vars:
         state: absent
 
@@ -18,8 +18,7 @@
         name: '{{ namespace }}'
         state: absent
 
-    - name: Delete Custom Resource Definition
-      k8s:
-        definition: "{{ lookup('file', '/'.join([deploy_dir, 'crds/pulpproject_v1beta1_pulp_crd.yaml'])) }}"
-        state: absent
-        wait: yes
+    - name: Unset pull policy
+      command: '{{ kustomize }} edit remove patch pull_policy/{{ operator_pull_policy }}.yaml'
+      args:
+        chdir: '{{ config_dir }}/testing'

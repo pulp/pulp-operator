@@ -2,7 +2,7 @@
 - name: Check for specified s3 storage configuration
   k8s_info:
     kind: Secret
-    namespace: '{{ meta.namespace }}'
+    namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ object_storage_s3_secret  }}'
   register: _custom_s3_configuration
   no_log: true

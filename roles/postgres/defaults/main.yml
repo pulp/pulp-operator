@@ -10,7 +10,7 @@ postgres_resource_requirements:
 postgres_data_path: '/var/lib/postgresql/data/pgdata'
 
 # Secret to lookup that provide the PostgreSQL configuration
-postgres_configuration_secret: '{{ meta.name }}-postgres-configuration'
+postgres_configuration_secret: '{{ ansible_operator_meta.name }}-postgres-configuration'
 
 
 # Secret to lookup that provide the PostgreSQL configuration for old database

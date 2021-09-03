@@ -1,0 +1,8 @@
+domain: pulpproject.org
+layout: ansible.sdk.operatorframework.io/v1
+projectName: pulp-operator
+resources:
+- group: pulp
+  kind: Pulp
+  version: v1beta1
+version: 3-alpha

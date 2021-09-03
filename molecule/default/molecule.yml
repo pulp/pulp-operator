@@ -17,7 +17,7 @@ provisioner:
   config_options:
     defaults:
       stdout_callback: debug
-      callback_whitelist: profile_tasks
+      callback_enabled: profile_tasks
   lint: |
     set -e
     ansible-lint
@@ -28,11 +28,11 @@ provisioner:
     host_vars:
       localhost:
         ansible_python_interpreter: '{{ ansible_playbook_python }}'
-        build_dir: ${MOLECULE_PROJECT_DIRECTORY}/build
-        deploy_dir: ${MOLECULE_PROJECT_DIRECTORY}/deploy
-        crds_dir: ${MOLECULE_PROJECT_DIRECTORY}/deploy/crds
+        config_dir: ${MOLECULE_PROJECT_DIRECTORY}/config
+        samples_dir: ${MOLECULE_PROJECT_DIRECTORY}/config/samples
         operator_image: ${OPERATOR_IMAGE:-"quay.io/pulp/pulp-operator:latest"}
         operator_pull_policy: ${OPERATOR_PULL_POLICY:-"Always"}
+        kustomize: ${KUSTOMIZE_PATH:-kustomize}
   env:
     K8S_AUTH_KUBECONFIG: ${KUBECONFIG:-"~/.kube/config"}
 verifier:
