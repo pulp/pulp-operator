@@ -23,7 +23,7 @@ if [[ -z "${QUAY_EXPIRE+x}" ]]; then
   export QUAY_IMAGE_TAG=$(cat Makefile | grep "VERSION ?=" | cut -d' ' -f3)
 
   echo $QUAY_IMAGE_TAG
-  docker tag quay.io/pulp/pulp-operator:latest quay.io/pulp/pulp-operator:$QUAY_IMAGE_TAG
+  docker tag quay.io/pulp/pulp-operator:devel quay.io/pulp/pulp-operator:$QUAY_IMAGE_TAG
   sudo -E $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
   make bundle-build
   sudo -E QUAY_REPO_NAME=pulp-operator-bundle $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh

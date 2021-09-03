@@ -34,7 +34,7 @@ metadata:
       ]
     capabilities: Seamless Upgrade
     categories: Integration & Delivery
-    containerImage: quay.io/pulp/pulp-operator:latest
+    containerImage: quay.io/pulp/pulp-operator:devel
     createdAt: "2021-03-26 16:57:40"
     description: Pulp is a platform for managing repositories of software packages and making them available to a large number of consumers.
     operators.operatorframework.io/builder: operator-sdk-v1.3.0
@@ -743,7 +743,7 @@ spec:
                 env:
                 - name: ANSIBLE_GATHERING
                   value: explicit
-                image: quay.io/pulp/pulp-operator:latest
+                image: quay.io/pulp/pulp-operator:devel
                 name: manager
                 resources: {}
               terminationGracePeriodSeconds: 10
