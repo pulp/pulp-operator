@@ -19,7 +19,7 @@ fi
 
 if [[ -z "${QUAY_EXPIRE+x}" ]]; then
   echo "Deploy pulp-operator"
-  sudo -E $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
+  sudo -E QUAY_IMAGE_TAG=devel $GITHUB_WORKSPACE/.ci/scripts/quay-push.sh
   export QUAY_IMAGE_TAG=$(cat Makefile | grep "VERSION ?=" | cut -d' ' -f3)
 
   echo $QUAY_IMAGE_TAG
