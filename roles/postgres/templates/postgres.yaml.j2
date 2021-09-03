@@ -3,11 +3,11 @@
 apiVersion: v1
 kind: StatefulSet
 metadata:
-  name: '{{ meta.name }}-postgres'
-  namespace: '{{ meta.namespace }}'
+  name: '{{ ansible_operator_meta.name }}-postgres'
+  namespace: '{{ ansible_operator_meta.namespace }}'
   labels:
     app.kubernetes.io/name: 'postgres'
-    app.kubernetes.io/instance: 'postgres-{{ meta.name }}'
+    app.kubernetes.io/instance: 'postgres-{{ ansible_operator_meta.name }}'
     app.kubernetes.io/component: database
     app.kubernetes.io/version: '{{ postgres_version }}'
     app.kubernetes.io/part-of: '{{ deployment_type }}'
@@ -16,12 +16,12 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: 'postgres'
-      app.kubernetes.io/instance: 'postgres-{{ meta.name }}'
+      app.kubernetes.io/instance: 'postgres-{{ ansible_operator_meta.name }}'
       app.kubernetes.io/component: database
       app.kubernetes.io/version: '{{ postgres_version }}'
       app.kubernetes.io/part-of: '{{ deployment_type }}'
       app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
-  serviceName: '{{ meta.name }}'
+  serviceName: '{{ ansible_operator_meta.name }}'
   replicas: 1
   updateStrategy:
     type: RollingUpdate
@@ -29,7 +29,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: 'postgres'
-        app.kubernetes.io/instance: 'postgres-{{ meta.name }}'
+        app.kubernetes.io/instance: 'postgres-{{ ansible_operator_meta.name }}'
         app.kubernetes.io/component: database
         app.kubernetes.io/version: '{{ postgres_version }}'
         app.kubernetes.io/part-of: '{{ deployment_type }}'
@@ -109,11 +109,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: '{{ meta.name }}-postgres'
-  namespace: '{{ meta.namespace }}'
+  name: '{{ ansible_operator_meta.name }}-postgres'
+  namespace: '{{ ansible_operator_meta.namespace }}'
   labels:
     app.kubernetes.io/name: 'postgres'
-    app.kubernetes.io/instance: 'postgres-{{ meta.name }}'
+    app.kubernetes.io/instance: 'postgres-{{ ansible_operator_meta.name }}'
     app.kubernetes.io/component: database
     app.kubernetes.io/version: '{{ postgres_version }}'
     app.kubernetes.io/part-of: '{{ deployment_type }}'
@@ -124,7 +124,7 @@ spec:
   clusterIP: None
   selector:
     app.kubernetes.io/name: 'postgres'
-    app.kubernetes.io/instance: 'postgres-{{ meta.name }}'
+    app.kubernetes.io/instance: 'postgres-{{ ansible_operator_meta.name }}'
     app.kubernetes.io/component: database
     app.kubernetes.io/version: '{{ postgres_version }}'
     app.kubernetes.io/part-of: '{{ deployment_type }}'

@@ -1,10 +1,10 @@
 {% if 'ingress' == ingress_type|lower %}
 ---
-apiVersion: extensions/v1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: '{{ meta.name }}-ingress'
-  namespace: '{{ meta.namespace }}'
+  name: '{{ ansible_operator_meta.name }}-ingress'
+  namespace: '{{ ansible_operator_meta.namespace }}'
 {% if ingress_annotations %}
   annotations:
     {{ ingress_annotations | indent(width=4) }}
@@ -15,9 +15,12 @@ spec:
       http:
         paths:
           - path: /
+            pathType: Prefix
             backend:
-              serviceName: '{{ meta.name }}-web-svc'
-              servicePort: 24880
+              service:
+                name: '{{ ansible_operator_meta.name }}-web-svc'
+                port:
+                  number: 24880
 {% if ingress_tls_secret %}
   tls:
     - hosts:
@@ -31,8 +34,8 @@ spec:
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: '{{ meta.name }}'
-  namespace: '{{ meta.namespace }}'
+  name: '{{ ansible_operator_meta.name }}'
+  namespace: '{{ ansible_operator_meta.namespace }}'
 spec:
 {% if route_host != '' %}
   host: {{ route_host }}
@@ -54,7 +57,7 @@ spec:
 {% endif %}
   to:
     kind: Service
-    name: {{ meta.name }}-web-svc
+    name: {{ ansible_operator_meta.name }}-web-svc
     weight: 100
   wildcardPolicy: None
 {% endif %}

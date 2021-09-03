@@ -2,7 +2,7 @@
 
 - name: Delete any existing management pod
   k8s:
-    name: "{{ meta.name }}-backup-manager"
+    name: "{{ ansible_operator_meta.name }}-backup-manager"
     kind: Pod
     namespace: "{{ backup_pvc_namespace }}"
     state: absent
@@ -58,7 +58,7 @@
   k8s_info:
     version: v1beta1
     kind: Pulp
-    namespace: '{{ meta.namespace }}'
+    namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ deployment_name }}'
   register: _custom_resource
 
@@ -130,7 +130,7 @@
 - name: Get PVC information
   k8s_info:
     kind: PersistentVolumeClaim
-    namespace: '{{ meta.namespace }}'
+    namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ storage_claim }}'
   register: _storage_claim
   when: storage_claim is defined

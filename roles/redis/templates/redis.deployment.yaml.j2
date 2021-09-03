@@ -2,11 +2,11 @@
 apiVersion: v1
 kind: Deployment
 metadata:
-  name: "{{ meta.name }}-redis"
+  name: "{{ ansible_operator_meta.name }}-redis"
   namespace: "{{ project_name }}"
   labels:
     app.kubernetes.io/name: 'redis'
-    app.kubernetes.io/instance: 'redis-{{ meta.name }}'
+    app.kubernetes.io/instance: 'redis-{{ ansible_operator_meta.name }}'
     app.kubernetes.io/component: cache
     app.kubernetes.io/part-of: '{{ deployment_type }}'
     app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
@@ -15,7 +15,7 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: 'redis'
-      app.kubernetes.io/instance: 'redis-{{ meta.name }}'
+      app.kubernetes.io/instance: 'redis-{{ ansible_operator_meta.name }}'
       app.kubernetes.io/component: cache
       app.kubernetes.io/part-of: '{{ deployment_type }}'
       app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
@@ -23,7 +23,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: 'redis'
-        app.kubernetes.io/instance: 'redis-{{ meta.name }}'
+        app.kubernetes.io/instance: 'redis-{{ ansible_operator_meta.name }}'
         app.kubernetes.io/component: cache
         app.kubernetes.io/part-of: '{{ deployment_type }}'
         app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
@@ -43,7 +43,7 @@ spec:
           volumeMounts:
             - readOnly: false
               mountPath: /data
-              name: '{{ meta.name }}-redis-data'
+              name: '{{ ansible_operator_meta.name }}-redis-data'
           ports:
             - protocol: TCP
               containerPort: 6379
@@ -51,6 +51,6 @@ spec:
           resources: {{ redis_resource_requirements }}
 {% endif %}
       volumes:
-        - name: '{{ meta.name }}-redis-data'
+        - name: '{{ ansible_operator_meta.name }}-redis-data'
           persistentVolumeClaim:
-            claimName: '{{ meta.name }}-redis-data'
+            claimName: '{{ ansible_operator_meta.name }}-redis-data'

@@ -1,0 +1,24 @@
+# permissions for end users to view pulps.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pulp-viewer-role
+rules:
+- apiGroups:
+  - pulp.pulpproject.org
+  resources:
+  - pulps
+  - pulpbackups
+  - pulprestores
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - pulp.pulpproject.org
+  resources:
+  - pulps/status
+  - pulpbackups/status
+  - pulprestores/status
+  verbs:
+  - get

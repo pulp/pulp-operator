@@ -2,11 +2,11 @@
 apiVersion: v1
 kind: Deployment
 metadata:
-  name: "{{ meta.name }}-worker"
+  name: "{{ ansible_operator_meta.name }}-worker"
   namespace: "{{ project_name }}"
   labels:
     app.kubernetes.io/name: '{{ deployment_type }}-worker'
-    app.kubernetes.io/instance: '{{ deployment_type }}-worker-{{ meta.name }}'
+    app.kubernetes.io/instance: '{{ deployment_type }}-worker-{{ ansible_operator_meta.name }}'
     app.kubernetes.io/component: worker
     app.kubernetes.io/part-of: '{{ deployment_type }}'
     app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
@@ -15,7 +15,7 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: '{{ deployment_type }}-worker'
-      app.kubernetes.io/instance: '{{ deployment_type }}-worker-{{ meta.name }}'
+      app.kubernetes.io/instance: '{{ deployment_type }}-worker-{{ ansible_operator_meta.name }}'
       app.kubernetes.io/component: worker
       app.kubernetes.io/part-of: '{{ deployment_type }}'
       app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
@@ -23,7 +23,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: '{{ deployment_type }}-worker'
-        app.kubernetes.io/instance: '{{ deployment_type }}-worker-{{ meta.name }}'
+        app.kubernetes.io/instance: '{{ deployment_type }}-worker-{{ ansible_operator_meta.name }}'
         app.kubernetes.io/component: worker
         app.kubernetes.io/part-of: '{{ deployment_type }}'
         app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
@@ -42,13 +42,13 @@ spec:
         fsGroup: 0
 {% endif %}
       volumes:
-        - name: {{ meta.name }}-server
+        - name: {{ ansible_operator_meta.name }}-server
           secret:
-            secretName: {{ meta.name }}-server
+            secretName: {{ ansible_operator_meta.name }}-server
             items:
               - path: settings.py
                 key: settings.py
-        - name: {{ meta.name }}-db-fields-encryption
+        - name: {{ ansible_operator_meta.name }}-db-fields-encryption
           secret:
             secretName: {{ db_fields_encryption_secret }}
             items:
@@ -57,12 +57,12 @@ spec:
 {% if is_file_storage %}
         - name: file-storage
           persistentVolumeClaim:
-            claimName: {{ meta.name }}-file-storage
+            claimName: {{ ansible_operator_meta.name }}-file-storage
 {% else %}
         - name: tmp-file-storage
           emptyDir: {}
 {% endif %}
-        - name: {{ meta.name }}-ansible-tmp
+        - name: {{ ansible_operator_meta.name }}-ansible-tmp
           emptyDir: {}
       containers:
         - name: worker
@@ -76,15 +76,15 @@ spec:
             - name: POSTGRES_SERVICE_PORT
               value: "{{ postgres_port }}"
             - name: REDIS_SERVICE_HOST
-              value: "{{ meta.name }}-redis"
+              value: "{{ ansible_operator_meta.name }}-redis"
             - name: REDIS_SERVICE_PORT
               value: "{{ default_settings.redis_port }}"
           volumeMounts:
-            - name: {{ meta.name }}-ansible-tmp
+            - name: {{ ansible_operator_meta.name }}-ansible-tmp
               mountPath: "/.ansible/tmp/"
-            - name: {{ meta.name }}-server
+            - name: {{ ansible_operator_meta.name }}-server
               mountPath: "/etc/pulp/"
-            - name: {{ meta.name }}-db-fields-encryption
+            - name: {{ ansible_operator_meta.name }}-db-fields-encryption
               mountPath: "/etc/pulp/keys/"
               readOnly: true
 {% if is_file_storage %}

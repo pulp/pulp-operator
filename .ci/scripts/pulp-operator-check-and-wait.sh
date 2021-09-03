@@ -46,6 +46,8 @@ else
     echo "$0: ERROR 1: Cannot find kubectl"
 fi
 
+sudo -E $KUBECTL config set-context --current --namespace=pulp-operator-system
+
 echo "Waiting for services to come up ..."
 # Once the services are both up, the pods will be in a Pending state.
 # Before the services are both up, the pods may not exist at all.

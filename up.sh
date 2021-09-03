@@ -18,13 +18,21 @@ fi
 
 KUBE_ASSETS_DIR=${KUBE_ASSETS_DIR:-".ci/assets/kubernetes"}
 
+echo "Make Install"
+make install
+echo "Make Deploy"
+make deploy IMG=quay.io/pulp/pulp-operator:latest
+echo "Namespaces"
+$KUBECTL get namespace
+echo "Set context"
+$KUBECTL config set-context --current --namespace=pulp-operator-system
+echo "Get Deployment"
+$KUBECTL get deployment
+
 # TODO: Check if these should only ever be run once; or require
 # special logic to update
 # The Custom Resource (and any ConfigMaps) do not.
-$KUBECTL apply -f deploy/crds/pulpproject_v1beta1_pulp_crd.yaml
-$KUBECTL apply -f deploy/crds/pulpproject_v1beta1_pulpbackup_crd.yaml
-$KUBECTL apply -f deploy/crds/pulpproject_v1beta1_pulprestore_crd.yaml
-if [[ -e deploy/crds/pulpproject_v1beta1_pulp_cr.yaml ]]; then
+if [[ -e config/samples/pulpproject_v1beta1_pulp_cr.yaml ]]; then
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.yaml
 elif [[ "$CI_TEST" == "true" ]]; then
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.ci.yaml
@@ -55,11 +63,5 @@ elif [[ "$(hostname)" == "pulp-demo"* ]]; then
 else
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.default.yaml
 fi
-echo "Will deploy config Custom Resource deploy/crds/$CUSTOM_RESOURCE"
-$KUBECTL apply -f deploy/crds/$CUSTOM_RESOURCE
-$KUBECTL apply -f deploy/service_account.yaml
-$KUBECTL apply -f deploy/role.yaml
-$KUBECTL apply -f deploy/cluster_role.yaml
-$KUBECTL apply -f deploy/role_binding.yaml
-$KUBECTL apply -f deploy/cluster_role_binding.yaml
-$KUBECTL apply -f deploy/operator.yaml
+echo "Will deploy config Custom Resource config/samples/$CUSTOM_RESOURCE"
+$KUBECTL apply -f config/samples/$CUSTOM_RESOURCE

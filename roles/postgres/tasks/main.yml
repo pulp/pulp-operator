@@ -22,7 +22,7 @@
 - name: Check for specified PostgreSQL configuration
   k8s_info:
     kind: Secret
-    namespace: '{{ meta.namespace }}'
+    namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ postgres_configuration_secret }}'
   register: _custom_pg_config_resources
   no_log: true
@@ -31,15 +31,15 @@
 - name: Check for default PostgreSQL configuration
   k8s_info:
     kind: Secret
-    namespace: '{{ meta.namespace }}'
-    name: '{{ meta.name }}-postgres-configuration'
+    namespace: '{{ ansible_operator_meta.namespace }}'
+    name: '{{ ansible_operator_meta.name }}-postgres-configuration'
   register: _default_pg_config_resources
   no_log: true
 
 - name: Check for old PostgreSQL configuration secret
   k8s_info:
     kind: Secret
-    namespace: '{{ meta.namespace }}'
+    namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ postgres_migrant_configuration_secret }}'
   register: old_pg_config
   no_log: true
@@ -69,8 +69,8 @@
     - name: Read Database Configuration
       k8s_info:
         kind: Secret
-        namespace: '{{ meta.namespace }}'
-        name: '{{ meta.name }}-postgres-configuration'
+        namespace: '{{ ansible_operator_meta.namespace }}'
+        name: '{{ ansible_operator_meta.name }}-postgres-configuration'
       register: _generated_pg_config_resources
       no_log: true
 

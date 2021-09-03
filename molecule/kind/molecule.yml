@@ -17,7 +17,7 @@ provisioner:
   config_options:
     defaults:
       stdout_callback: debug
-      callback_whitelist: profile_tasks
+      callback_enabled: profile_tasks
   playbooks:
     prepare: ../default/prepare.yml
     verify: ../default/verify.yml
@@ -31,13 +31,13 @@ provisioner:
     host_vars:
       localhost:
         ansible_python_interpreter: '{{ ansible_playbook_python }}'
-        build_dir: ${MOLECULE_PROJECT_DIRECTORY}/build
-        deploy_dir: ${MOLECULE_PROJECT_DIRECTORY}/deploy
-        crds_dir: ${MOLECULE_PROJECT_DIRECTORY}/deploy/crds
+        config_dir: ${MOLECULE_PROJECT_DIRECTORY}/config
+        samples_dir: ${MOLECULE_PROJECT_DIRECTORY}/config/samples
         project_dir: ${MOLECULE_PROJECT_DIRECTORY}
         operator_image: testing-operator
         operator_pull_policy: "Never"
         kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+        kustomize: ${KUSTOMIZE_PATH:-kustomize}
   env:
     K8S_AUTH_KUBECONFIG: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
     KUBECONFIG: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
@@ -46,13 +46,3 @@ verifier:
   lint: |
     set -e
     ansible-lint
-scenario:
-  test_sequence:
-    - lint
-    - destroy
-    - dependency
-    - syntax
-    - create
-    - prepare
-    - converge
-    - destroy

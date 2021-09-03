@@ -7,7 +7,7 @@
 - name: Get object definition from pvc
   k8s_exec:
     namespace: "{{ backup_pvc_namespace }}"
-    pod: "{{ meta.name }}-backup-manager"
+    pod: "{{ ansible_operator_meta.name }}-backup-manager"
     command: >-
       bash -c "cat '{{ backup_dir }}/cr_object'"
   register: cr_object
@@ -46,5 +46,5 @@
       kind: Pulp
       metadata:
         name: '{{ deployment_name }}'
-        namespace: '{{ meta.namespace }}'
+        namespace: '{{ ansible_operator_meta.namespace }}'
         ownerReferences: null

@@ -5,7 +5,7 @@
     api_version: v1
     kind: Deployment
     name: "{{ deploy_name }}"
-    namespace: "{{ meta.namespace }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
   register: scale_deployment
 
 - name: Scale down Deployment for migration
@@ -13,6 +13,6 @@
     api_version: v1
     kind: Deployment
     name: "{{ deploy_name }}"
-    namespace: "{{ meta.namespace }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
     replicas: 0
   when: scale_deployment['resources'] | length

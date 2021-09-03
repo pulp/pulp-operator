@@ -7,16 +7,12 @@
     - community.kubernetes
 
   tasks:
-    - name: Create Custom Resource Definition
-      k8s:
-        definition: "{{ lookup('file', '/'.join([deploy_dir, 'crds/pulpproject_v1beta1_pulp_crd.yaml'])) }}"
-
     - name: Create Namespace
       k8s:
         api_version: v1
         kind: Namespace
         name: '{{ namespace }}'
 
-    - import_tasks: resources.yml
+    - import_tasks: kustomize.yml
       vars:
         state: present

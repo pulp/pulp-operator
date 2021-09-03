@@ -6,7 +6,7 @@
 
 - name: Delete any existing management pod
   k8s:
-    name: "{{ meta.name }}-backup-manager"
+    name: "{{ ansible_operator_meta.name }}-backup-manager"
     kind: Pod
     namespace: "{{ backup_pvc_namespace }}"
     state: absent
@@ -27,7 +27,7 @@
 - name: Write content files from backup on PVC
   k8s_exec:
     namespace: "{{ backup_pvc_namespace }}"
-    pod: "{{ meta.name }}-backup-manager"
+    pod: "{{ ansible_operator_meta.name }}-backup-manager"
     command: >-
       bash -c "{{ copy_cmd }}"
   register: file_copy
