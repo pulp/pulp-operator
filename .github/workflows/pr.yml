@@ -44,6 +44,19 @@ jobs:
             fi
           done
         shell: bash
+      - name: Get K8S objects
+        run: |
+          pip install ansible
+          python3 .ci/scripts/linting.py
+          mkdir -p ./lint/operator
+          kustomize build config/default > ./lint/operator/all.yml
+          tree lint
+        shell: bash
+      - name: Scan repo with kube-linter
+        uses: stackrox/kube-linter-action@v1.0.2
+        with:
+          directory: "lint"
+          config: .ci/assets/kubernetes/.kube-linter.yaml
 
   insta:
     runs-on: ubuntu-latest
