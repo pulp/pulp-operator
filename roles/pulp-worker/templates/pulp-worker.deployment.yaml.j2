@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Deployment
 metadata:
   name: "{{ ansible_operator_meta.name }}-worker"
-  namespace: "{{ project_name }}"
+  namespace: "{{ ansible_operator_meta.namespace }}"
   labels:
     app.kubernetes.io/name: '{{ deployment_type }}-worker'
     app.kubernetes.io/instance: '{{ deployment_type }}-worker-{{ ansible_operator_meta.name }}'

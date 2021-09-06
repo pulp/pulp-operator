@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: "{{ ansible_operator_meta.name }}-content-svc"
-  namespace: "{{ project_name }}"
+  namespace: "{{ ansible_operator_meta.namespace }}"
   labels:
     app.kubernetes.io/name: '{{ deployment_type }}-content'
     app.kubernetes.io/instance: '{{ deployment_type }}-content-{{ ansible_operator_meta.name }}'
