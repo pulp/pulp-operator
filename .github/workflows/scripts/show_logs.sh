@@ -1,6 +1,11 @@
 #!/bin/bash -e
 #!/usr/bin/env bash
 
+echo ::group::METRICS
+sudo -E kubectl top pods
+sudo -E kubectl describe node minikube
+echo ::endgroup::
+
 echo ::group::OPERATOR_LOGS
 sudo -E kubectl logs deployment.apps/pulp-operator-controller-manager -n pulp-operator-system -c manager --tail=10000
 echo ::endgroup::
