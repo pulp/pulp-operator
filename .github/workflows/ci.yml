@@ -116,7 +116,7 @@ jobs:
         shell: bash
       - name: Build Operator
         run: |
-          sudo -E make docker-build IMG=quay.io/pulp/pulp-operator:latest
+          sudo -E make docker-build IMG=quay.io/pulp/pulp-operator:devel
           sudo -E docker images
         shell: bash
       - name: Deploy pulp-operator to K8s

@@ -103,6 +103,9 @@ jobs:
           FORKED_REPOSITORY: ${{ steps.head_repo_name.outputs.repo }}
         run: sudo -E insta-demo/pulp-insta-demo.sh -m
         shell: bash
+      - name: Stackrox
+        run: .ci/scripts/stackrox.sh
+        shell: bash
       - name: Popeye
         run: |
           echo ::group::POPEYE
@@ -178,6 +181,9 @@ jobs:
         shell: bash
       - name: Check and wait pulp-operator deploy
         run: .ci/scripts/pulp-operator-check-and-wait.sh -m
+        shell: bash
+      - name: Stackrox
+        run: .ci/scripts/stackrox.sh
         shell: bash
       - name: Popeye
         run: |
@@ -255,6 +261,9 @@ jobs:
         shell: bash
       - name: Check and wait pulp-operator deploy
         run: .ci/scripts/pulp-operator-check-and-wait.sh -m
+        shell: bash
+      - name: Stackrox
+        run: .ci/scripts/stackrox.sh
         shell: bash
       - name: Popeye
         run: |
