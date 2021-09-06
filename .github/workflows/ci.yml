@@ -38,6 +38,7 @@ jobs:
       - name: Start minikube
         run: |
           minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
+          minikube addons enable metrics-server
       - name: Try the cluster !
         run: kubectl get pods -A
       - name: Setup a minikube docker env
@@ -99,6 +100,7 @@ jobs:
       - name: Start minikube
         run: |
           minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
+          minikube addons enable metrics-server
         # now you can run kubectl to see the pods in the cluster
       - name: Try the cluster !
         run: kubectl get pods -A
@@ -171,6 +173,7 @@ jobs:
       - name: Start minikube
         run: |
           minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
+          minikube addons enable metrics-server
         # now you can run kubectl to see the pods in the cluster
       - name: Try the cluster !
         run: kubectl get pods -A
@@ -306,6 +309,7 @@ jobs:
       - name: Start minikube
         run: |
           minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
+          minikube addons enable metrics-server
         # now you can run kubectl to see the pods in the cluster
       - name: Try the cluster !
         run: kubectl get pods -A
