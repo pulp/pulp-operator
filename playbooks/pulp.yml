@@ -5,7 +5,6 @@
     - community.kubernetes
     - operator_sdk.util
   vars:
-    project_name: "{{ ansible_operator_meta.namespace }}"
     default_settings:
       db_encryption_key: "/etc/pulp/keys/database_fields.symmetric.key"
       databases:
