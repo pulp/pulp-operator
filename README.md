@@ -43,26 +43,10 @@ Note that Pulp operator works with three different types of service containers (
 
 Documentation: [https://docs.pulpproject.org/pulp_operator/](https://docs.pulpproject.org/pulp_operator/)
 
-Issue Tracker: [https://pulp.plan.io](https://pulp.plan.io)
+Issue Tracker: [https://github.com/pulp/pulp-operator/issues](https://github.com/pulp/pulp-operator/issues)
 
 Forum: [https://discourse.pulpproject.org/](https://discourse.pulpproject.org/)
 
 Join [**#pulp** on Matrix](https://matrix.to/#/#pulp:matrix.org)
 
 Join [**#pulp-dev** on Matrix](https://matrix.to/#/#pulp-dev:matrix.org) for Developer discussion.
-
-## How to File an Issue
-
-To file a new issue set the Category to `Operator` when filing [here](https://pulp.plan.io/projects/pulp/issues/new).
-
-See [redmine fields](https://docs.pulpproject.org/bugs-features.html#redmine-fields) for more detailed
-descriptions of all the fields and how they are used.
-
-| Field | Instructions |
-| ----- | ----------- |
-| Tracker | For a bug, select `Issue`, for a feature-request, choose `Story` |
-| Subject | Strive to be specific and concise. |
-| Description | This is the most important part! Please see [issue description](https://docs.pulpproject.org/bugs-features.html#issue-description). |
-| Category | Operator |
-| Version | The version of operator that you discovered the issue. |
-| OS | The Ansible managed OS. |

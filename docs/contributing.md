@@ -7,7 +7,7 @@ Pull Request Checklist
 (or let CI run the tests for you if you are certain it is idempotent.)
 If a task cannot be made idempotent, add the tag [molecule-idempotence-notest](https://github.com/ansible-community/molecule/issues/816#issuecomment-573319053).
 2. Unless a change is small or doesn't affect users, create an issue on
-[redmine](https://pulp.plan.io/projects/pulp). Set the Category to `Operator`.
+[github](https://github.com/pulp/pulp-operator/issues/new).
 3. Add [a changelog update.](https://docs.pulpproject.org/contributing/git.html#changelog-update)
 4. Write an excellent [Commit Message.](https://docs.pulpproject.org/contributing/git.html#commit-message)
 Make sure you reference and link to the issue.
