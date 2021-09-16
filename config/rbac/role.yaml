@@ -8,12 +8,18 @@ rules:
   ## Base operator rules
   ##
   - apiGroups:
-    - route.openshift.io
+      - route.openshift.io
     resources:
-    - routes
-    - routes/custom-host
+      - routes
+      - routes/custom-host
     verbs:
-    - '*'
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
   - apiGroups:
       - ""
     resources:
@@ -53,14 +59,14 @@ rules:
       - update
       - watch
   - apiGroups:
-    - ""
+      - ""
     resources:
-    - nodes
+      - nodes
     verbs:
-    - get
-    - list
+      - get
+      - list
   - apiGroups:
-    - apps
+      - apps
     resources:
       - deployments/scale
     verbs:

@@ -1,2 +1,4 @@
 checks:
   addAllBuiltIn: true
+  exclude:
+    - "dangling-service"

@@ -7,6 +7,32 @@ namePrefix: osdk-
 #commonLabels:
 #  someName: someValue
 
+patches:
+  - patch: |-
+      - op: replace
+        path: /subjects/0/namespace
+        value: osdk-test
+    target:
+      kind: RoleBinding
+  - patch: |-
+      - op: replace
+        path: /subjects/0/namespace
+        value: osdk-test
+    target:
+      kind: ClusterRoleBinding
+  - patch: |-
+      - op: replace
+        path: /subjects/0/name
+        value: osdk-sa
+    target:
+      kind: RoleBinding
+  - patch: |-
+      - op: replace
+        path: /subjects/0/name
+        value: osdk-sa
+    target:
+      kind: ClusterRoleBinding
+
 patchesStrategicMerge:
 - manager_image.yaml
 - debug_logs_patch.yaml

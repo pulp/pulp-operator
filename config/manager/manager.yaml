@@ -10,18 +10,30 @@ kind: Deployment
 metadata:
   name: controller-manager
   namespace: system
+  annotations: # About kube-linter checks: https://docs.kubelinter.io/#/generated/checks
+    email: pulp-dev@redhat.com
+    ignore-check.kube-linter.io/minimum-three-replicas: "Operator should be unique"
+    ignore-check.kube-linter.io/no-read-only-root-fs: "Operator needs to generate files"
   labels:
     control-plane: controller-manager
+    app.kubernetes.io/name: pulp-operator
+    app.kubernetes.io/component: operator
+    owner: pulp-dev
 spec:
   selector:
     matchLabels:
       control-plane: controller-manager
   replicas: 1
+  strategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
         control-plane: controller-manager
+        app.kubernetes.io/name: pulp-operator
+        app.kubernetes.io/component: operator
     spec:
+      serviceAccountName: sa
       containers:
         - name: manager
           args:
@@ -38,6 +50,16 @@ spec:
             - name: ANSIBLE_DEBUG_LOGS
               value: 'false'
           image: controller:latest
+          securityContext:
+            runAsUser: 1001
+            runAsNonRoot: true
+          resources:
+            limits:
+              cpu: 800m
+              memory: 256Mi
+            requests:
+              cpu: 1m
+              memory: 6Mi
           livenessProbe:
             httpGet:
               path: /readyz
