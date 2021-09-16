@@ -876,6 +876,8 @@ spec:
                 env:
                 - name: ANSIBLE_GATHERING
                   value: explicit
+                - name: ANSIBLE_DEBUG_LOGS
+                  value: "false"
                 image: quay.io/pulp/pulp-operator:devel
                 livenessProbe:
                   httpGet:
