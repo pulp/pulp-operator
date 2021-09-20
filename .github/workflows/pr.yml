@@ -33,7 +33,7 @@ jobs:
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
         run: |
           echo ::group::REQUESTS
-          pip install requests
+          pip install pygithub
           echo ::endgroup::
           for sha in $(curl $GITHUB_CONTEXT | jq '.[].sha' | sed 's/"//g')
           do

@@ -8,29 +8,27 @@
 import glob
 import os
 import re
-import requests
 import subprocess
 import sys
 
+from github import Github
+
 KEYWORDS = ["fixes", "closes", "re", "ref"]
 NO_ISSUE = "[noissue]"
-STATUSES = ["NEW", "ASSIGNED", "POST", "MODIFIED"]
 CHANGELOG_EXTS = [".feature", ".bugfix", ".doc", ".removal", ".misc"]
 
 sha = sys.argv[1]
 message = subprocess.check_output(["git", "log", "--format=%B", "-n 1", sha]).decode("utf-8")
+g = Github(os.environ.get("GITHUB_TOKEN"))
+repo = g.get_repo("pulp/pulp-operator")
 
 
 def __check_status(issue):
-    response = requests.get("https://pulp.plan.io/issues/{}.json".format(issue))
-    response.raise_for_status()
-    bug_json = response.json()
-    status = bug_json["issue"]["status"]["name"]
-    if status not in STATUSES:
-        sys.exit(
-            "Error: issue #{issue} has invalid status of {status}. Status must be one of "
-            "{statuses}.".format(issue=issue, status=status, statuses=", ".join(STATUSES))
-        )
+    gi = repo.get_issue(int(issue))
+    if gi.pull_request:
+        sys.exit(f"Error: issue #{issue} is a pull request.")
+    if gi.closed_at:
+        sys.exit(f"Error: issue #{issue} is closed.")
 
 
 def __check_changelog(issue):
@@ -50,7 +48,7 @@ if NO_ISSUE in message:
     print("Commit {sha} has no issue attached. Skipping issue check".format(sha=sha[0:7]))
 else:
     regex = r"(?:{keywords})[\s:]+#(\d+)".format(keywords=("|").join(KEYWORDS))
-    pattern = re.compile(regex)
+    pattern = re.compile(regex, re.IGNORECASE)
 
     issues = pattern.findall(message)
 
