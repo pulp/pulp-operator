@@ -7,6 +7,7 @@
     migrant_postgres_database: "{{ old_pg_config['resources'][0]['data']['database'] | b64decode }}"
     migrant_postgres_port: "{{ old_pg_config['resources'][0]['data']['port'] | b64decode }}"
     migrant_postgres_host: "{{ old_pg_config['resources'][0]['data']['host'] | b64decode }}"
+    migrant_postgres_sslmode: "{{ pg_config['resources'][0]['data']['sslmode'] | default('prefer'|b64encode) | b64decode }}"
   no_log: true
 
 - name: Default label selector to custom resource generated postgres

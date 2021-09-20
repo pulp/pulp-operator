@@ -95,6 +95,7 @@
     postgres_database: "{{ pg_config['resources'][0]['data']['database'] | b64decode }}"
     postgres_port: "{{ pg_config['resources'][0]['data']['port'] | b64decode }}"
     postgres_host: "{{ pg_config['resources'][0]['data']['host'] | b64decode }}"
+    postgres_sslmode: "{{ pg_config['resources'][0]['data']['sslmode'] | default('prefer'|b64encode) | b64decode }}"
   no_log: true
 
 - name: Migrate data from old Openshift instance
