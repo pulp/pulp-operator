@@ -15,6 +15,7 @@ Role Variables
     * `username`: User that owns and runs Postgres.
     * `password`: Database password.
     * `admin_password`: Initial password for the Pulp admin.
+    * `sslmode` is valid for `external` databases only. The allowed values are: `prefer`, `disable`, `allow`, `require`, `verify-ca`, `verify-full`.
 
 Dependencies
 ------------
