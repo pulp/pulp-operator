@@ -1,6 +1,6 @@
 # permissions for end users to edit pulps.
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
   name: pulp-editor-role
 rules:
