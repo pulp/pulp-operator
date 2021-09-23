@@ -148,7 +148,7 @@
   block:
     - name: Set error message
       set_fact:
-        error_msg: "PersistentVolumeClaim accessMode {{ pvc_access_mode }} is not supported for backup, must be ReadWriteMany."
+        error_msg: "Can not back up content volume with PersistentVolumeClaim accessMode {{ pvc_access_mode }}, must be ReadWriteMany."
 
     - name: Handle error
       import_tasks: error_handling.yml
