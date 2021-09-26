@@ -4,12 +4,17 @@ kind: Deployment
 metadata:
   name: "{{ ansible_operator_meta.name }}-worker"
   namespace: "{{ ansible_operator_meta.namespace }}"
+  annotations:
+    email: pulp-dev@redhat.com
+    ignore-check.kube-linter.io/no-liveness-probe: "Port isn't exposed"
+    ignore-check.kube-linter.io/no-readiness-probe: "Port isn't exposed"
   labels:
     app.kubernetes.io/name: '{{ deployment_type }}-worker'
     app.kubernetes.io/instance: '{{ deployment_type }}-worker-{{ ansible_operator_meta.name }}'
     app.kubernetes.io/component: worker
     app.kubernetes.io/part-of: '{{ deployment_type }}'
     app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
+    owner: pulp-dev
 spec:
   replicas: {{ worker.replicas }}
   selector:
@@ -64,6 +69,7 @@ spec:
 {% endif %}
         - name: {{ ansible_operator_meta.name }}-ansible-tmp
           emptyDir: {}
+      serviceAccountName: pulp-operator-sa
       containers:
         - name: worker
           image: "{{ registry }}/{{ project }}/{{ image }}:{{ tag }}"

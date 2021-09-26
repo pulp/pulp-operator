@@ -4,12 +4,15 @@ kind: Deployment
 metadata:
   name: "{{ ansible_operator_meta.name }}-web"
   namespace: "{{ ansible_operator_meta.namespace }}"
+  annotations:
+    email: pulp-dev@redhat.com
   labels:
     app.kubernetes.io/name: 'nginx'
     app.kubernetes.io/instance: 'nginx-{{ ansible_operator_meta.name }}'
     app.kubernetes.io/component: webserver
     app.kubernetes.io/part-of: '{{ deployment_type }}'
     app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
+    owner: pulp-dev
 spec:
   replicas: {{ web.replicas }}
   selector:
@@ -36,6 +39,7 @@ spec:
       affinity:
         nodeAffinity: {{ affinity.node_affinity }}
 {% endif %}
+      serviceAccountName: pulp-operator-sa
       containers:
         - name: web
           image: "{{ registry }}/{{ project }}/{{ image_web }}:{{ tag }}"

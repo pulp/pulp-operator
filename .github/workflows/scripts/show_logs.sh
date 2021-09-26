@@ -1,13 +1,23 @@
 #!/bin/bash -e
 #!/usr/bin/env bash
 
-echo ::group::METRICS
-sudo -E kubectl top pods
-sudo -E kubectl describe node minikube
-echo ::endgroup::
+KUBE="minikube"
+if [[ "$1" == "--kind" ]] || [[ "$1" == "-k" ]]; then
+  KUBE="kind"
+  echo "Running $KUBE"
+fi
+
+sudo -E kubectl get pods -o wide
+
+if [[ "$KUBE" == "minikube" ]]; then
+  echo ::group::METRICS
+  sudo -E kubectl top pods
+  sudo -E kubectl describe node minikube
+  echo ::endgroup::
+fi
 
 echo ::group::OPERATOR_LOGS
-sudo -E kubectl logs deployment.apps/pulp-operator-controller-manager -n pulp-operator-system -c manager --tail=10000
+sudo -E kubectl logs -l app.kubernetes.io/name=pulp-operator -c manager --tail=10000
 echo ::endgroup::
 
 echo ::group::PULP_API_LOGS
@@ -27,5 +37,5 @@ sudo -E kubectl logs -l app.kubernetes.io/name=pulp-resource-manager --tail=1000
 echo ::endgroup::
 
 echo ::group::PULP_WEB_LOGS
-sudo -E kubectl logs -l app.kubernetes.io/name=pulp-web --tail=10000
+sudo -E kubectl logs -l app.kubernetes.io/name=nginx --tail=10000
 echo ::endgroup::
