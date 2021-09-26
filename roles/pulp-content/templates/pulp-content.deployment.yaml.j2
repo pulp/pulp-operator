@@ -4,12 +4,17 @@ kind: Deployment
 metadata:
   name: "{{ ansible_operator_meta.name }}-content"
   namespace: "{{ ansible_operator_meta.namespace }}"
+  annotations:
+    email: pulp-dev@redhat.com
+    ignore-check.kube-linter.io/no-liveness-probe: "Temporarily disabled"
+    ignore-check.kube-linter.io/no-readiness-probe: "Temporarily disabled"
   labels:
     app.kubernetes.io/name: '{{ deployment_type }}-content'
     app.kubernetes.io/instance: '{{ deployment_type }}-content-{{ ansible_operator_meta.name }}'
     app.kubernetes.io/component: content-server
     app.kubernetes.io/part-of: '{{ deployment_type }}'
     app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
+    owner: pulp-dev
 spec:
   replicas: {{ content.replicas }}
   selector:
@@ -59,6 +64,7 @@ spec:
           persistentVolumeClaim:
             claimName: {{ ansible_operator_meta.name }}-file-storage
 {% endif %}
+      serviceAccountName: pulp-operator-sa
       containers:
         - name: content
           image: "{{ registry }}/{{ project }}/{{ image }}:{{ tag }}"

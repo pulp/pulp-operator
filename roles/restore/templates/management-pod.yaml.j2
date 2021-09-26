@@ -4,13 +4,17 @@ kind: Pod
 metadata:
   name: {{ ansible_operator_meta.name }}-backup-manager
   namespace: {{ backup_pvc_namespace }}
+  annotations:
+    email: pulp-dev@redhat.com
   labels:
     app.kubernetes.io/name: '{{ deployment_type }}-backup-manager'
     app.kubernetes.io/instance: '{{ deployment_type }}-backup-manager-{{ ansible_operator_meta.name }}'
     app.kubernetes.io/component: backup-manager
     app.kubernetes.io/part-of: '{{ deployment_type }}'
     app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
+    owner: pulp-dev
 spec:
+  serviceAccountName: pulp-operator-sa
   containers:
   - name: {{ ansible_operator_meta.name }}-backup-manager
     image: "{{ postgres_image }}"

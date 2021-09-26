@@ -6,6 +6,9 @@ api:
     requests:
       cpu: 200m
       memory: 512Mi
+    limits:
+      cpu: 800m
+      memory: 1Gi
 
 # Here we use  _pulpproject_org_pulp to get un-modified cr
 # see: https://github.com/operator-framework/operator-sdk/issues/1770

@@ -4,12 +4,17 @@ kind: Deployment
 metadata:
   name: "{{ ansible_operator_meta.name }}-resource-manager"
   namespace: "{{ ansible_operator_meta.namespace }}"
+  annotations:
+    email: pulp-dev@redhat.com
+    ignore-check.kube-linter.io/no-liveness-probe: "Port isn't exposed"
+    ignore-check.kube-linter.io/no-readiness-probe: "Port isn't exposed"
   labels:
     app.kubernetes.io/name: '{{ deployment_type }}-resource-manager'
     app.kubernetes.io/instance: '{{ deployment_type }}-resource-manager-{{ ansible_operator_meta.name }}'
     app.kubernetes.io/component: resource-manager
     app.kubernetes.io/part-of: '{{ deployment_type }}'
     app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
+    owner: pulp-dev
 spec:
   replicas: {{ resource_manager.replicas }}
   selector:
@@ -62,6 +67,7 @@ spec:
         - name: tmp-file-storage
           emptyDir: {}
 {% endif %}
+      serviceAccountName: pulp-operator-sa
       containers:
         - name: resource-manager
           image: "{{ registry }}/{{ project }}/{{ image }}:{{ tag }}"

@@ -15,5 +15,5 @@ if [ ! -e $TARGET ]; then
   tar -xf $TARGET
 fi
 mkdir -p lint
-sudo -E kubectl get pvc,configmap,serviceaccount,secret,ingress,service,deployment,statefulset,hpa,job,cronjob -o yaml > ./lint/k8s-all.yaml
+sudo -E kubectl get pvc,configmap,serviceaccount,secret,networkpolicy,ingress,service,deployment,statefulset,hpa,job,cronjob -o yaml > ./lint/k8s-all.yaml
 ./kube-linter lint ./lint --config .ci/assets/kubernetes/.kube-linter.yaml

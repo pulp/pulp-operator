@@ -103,8 +103,8 @@ jobs:
           FORKED_REPOSITORY: ${{ steps.head_repo_name.outputs.repo }}
         run: sudo -E insta-demo/pulp-insta-demo.sh -m
         shell: bash
-      - name: Stackrox
-        run: .ci/scripts/stackrox.sh
+      - name: KubeLinter
+        run: .ci/scripts/kubelinter.sh
         shell: bash
       - name: Popeye
         run: |
@@ -154,10 +154,7 @@ jobs:
           minikube addons enable metrics-server
         # now you can run kubectl to see the pods in the cluster
       - name: Try the cluster !
-        run: |
-          kubectl config view > $PWD/kubeconfig
-          kubectl get pods -A
-          echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
+        run: kubectl get pods -A
       - name: Setup a minikube docker env
         run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
       - name: Uninstalling GHA kustomize
@@ -174,16 +171,13 @@ jobs:
           sudo -E docker images
         shell: bash
       - name: Deploy pulp-operator to K8s
-        run: |
-          echo $KUBECONFIG
-          cat $KUBECONFIG
-          sudo -E ./up.sh
+        run: sudo -E ./up.sh
         shell: bash
       - name: Check and wait pulp-operator deploy
         run: .ci/scripts/pulp-operator-check-and-wait.sh -m
         shell: bash
-      - name: Stackrox
-        run: .ci/scripts/stackrox.sh
+      - name: KubeLinter
+        run: .ci/scripts/kubelinter.sh
         shell: bash
       - name: Popeye
         run: |
@@ -262,8 +256,8 @@ jobs:
       - name: Check and wait pulp-operator deploy
         run: .ci/scripts/pulp-operator-check-and-wait.sh -m
         shell: bash
-      - name: Stackrox
-        run: .ci/scripts/stackrox.sh
+      - name: KubeLinter
+        run: .ci/scripts/kubelinter.sh
         shell: bash
       - name: Popeye
         run: |
@@ -332,11 +326,16 @@ jobs:
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
+          MOLECULE_VERBOSITY: 2
       - name: Logs
         if: always()
         run: |
           kind export kubeconfig --name osdk-test
-          kubectl logs deployment.apps/osdk-controller-manager -n osdk-test -c manager --tail=10000
+          sudo -E kubectl config set-context --current --namespace=osdk-test
+          sudo -E kubectl port-forward service/example-pulp-web-svc 24880:24880 &
+          sudo -E docker images
+          .github/workflows/scripts/show_logs.sh -k
+          http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/
         shell: bash
       - name: Molecule destroy
         if: always()

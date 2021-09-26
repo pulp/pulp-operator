@@ -5,6 +5,12 @@ kind: Deployment
 metadata:
   name: controller-manager
   namespace: system
+  annotations: # About kube-linter checks: https://docs.kubelinter.io/#/generated/checks
+    ignore-check.kube-linter.io/no-liveness-probe: "Not linting kubebuilder"
+    ignore-check.kube-linter.io/no-readiness-probe: "Not linting kubebuilder"
+    ignore-check.kube-linter.io/run-as-non-root: "Not linting kubebuilder"
+    ignore-check.kube-linter.io/unset-cpu-requirements: "Not linting kubebuilder"
+    ignore-check.kube-linter.io/unset-memory-requirements: "Not linting kubebuilder"
 spec:
   template:
     spec:

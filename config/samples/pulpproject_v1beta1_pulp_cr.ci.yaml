@@ -18,15 +18,24 @@ spec:
       requests:
         cpu: 150m
         memory: 256Mi
+      limits:
+        cpu: 800m
+        memory: 1Gi
   worker:
     replicas: 1
     resource_requirements:
       requests:
         cpu: 150m
         memory: 256Mi
+      limits:
+        cpu: 800m
+        memory: 1Gi
   web:
     replicas: 1
     resource_requirements:
       requests:
         cpu: 100m
         memory: 256Mi
+      limits:
+        cpu: 800m
+        memory: 1Gi
