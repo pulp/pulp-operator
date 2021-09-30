@@ -186,8 +186,9 @@ metadata:
     categories: Integration & Delivery
     containerImage: quay.io/pulp/pulp-operator:devel
     createdAt: "2021-03-26 16:57:40"
-    description: Pulp is a platform for managing repositories of software packages and making them available to a large number of consumers.
-    operators.operatorframework.io/builder: operator-sdk-v1.3.0
+    description: Pulp is a platform for managing repositories of software packages
+      and making them available to a large number of consumers.
+    operators.operatorframework.io/builder: operator-sdk-v1.12.0
     operators.operatorframework.io/project_layout: ansible.sdk.operatorframework.io/v1
     repository: https://github.com/pulp/pulp-operator
   name: pulp-operator.v0.4.0
@@ -751,15 +752,123 @@ spec:
     mediatype: image/svg+xml
   install:
     spec:
-      clusterPermissions:
+      deployments:
+      - name: pulp-operator-controller-manager
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              control-plane: controller-manager
+          strategy:
+            type: RollingUpdate
+          template:
+            metadata:
+              labels:
+                app.kubernetes.io/component: operator
+                app.kubernetes.io/name: pulp-operator
+                control-plane: controller-manager
+            spec:
+              containers:
+              - args:
+                - --secure-listen-address=0.0.0.0:8443
+                - --upstream=http://127.0.0.1:8080/
+                - --logtostderr=true
+                - --v=10
+                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+                name: kube-rbac-proxy
+                ports:
+                - containerPort: 8443
+                  name: https
+                  protocol: TCP
+                resources: {}
+              - args:
+                - --health-probe-bind-address=:6789
+                - --metrics-bind-address=127.0.0.1:8080
+                - --leader-elect
+                - --leader-election-id=pulp-operator
+                env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.annotations['olm.targetNamespaces']
+                - name: ANSIBLE_GATHERING
+                  value: explicit
+                - name: ANSIBLE_DEBUG_LOGS
+                  value: "false"
+                image: quay.io/pulp/pulp-operator:devel
+                livenessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: 6789
+                  initialDelaySeconds: 15
+                  periodSeconds: 20
+                name: manager
+                readinessProbe:
+                  httpGet:
+                    path: /healthz
+                    port: 6789
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                resources:
+                  limits:
+                    cpu: 800m
+                    memory: 256Mi
+                  requests:
+                    cpu: 1m
+                    memory: 6Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  runAsUser: 1001
+              securityContext:
+                runAsNonRoot: true
+              serviceAccountName: pulp-operator-sa
+              terminationGracePeriodSeconds: 10
+      permissions:
       - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - coordination.k8s.io
+          resources:
+          - leases
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
         - apiGroups:
           - route.openshift.io
           resources:
           - routes
           - routes/custom-host
           verbs:
-          - '*'
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
         - apiGroups:
           - ""
           resources:
@@ -843,79 +952,7 @@ spec:
           - subjectaccessreviews
           verbs:
           - create
-        serviceAccountName: default
-      deployments:
-      - name: pulp-operator-controller-manager
-        spec:
-          replicas: 1
-          selector:
-            matchLabels:
-              control-plane: controller-manager
-          strategy: {}
-          template:
-            metadata:
-              labels:
-                control-plane: controller-manager
-            spec:
-              containers:
-              - args:
-                - --secure-listen-address=0.0.0.0:8443
-                - --upstream=http://127.0.0.1:8080/
-                - --logtostderr=true
-                - --v=10
-                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
-                name: kube-rbac-proxy
-                ports:
-                - containerPort: 8443
-                  name: https
-                resources: {}
-              - args:
-                - --metrics-addr=127.0.0.1:8080
-                - --enable-leader-election
-                - --leader-election-id=pulp-operator
-                env:
-                - name: ANSIBLE_GATHERING
-                  value: explicit
-                - name: ANSIBLE_DEBUG_LOGS
-                  value: "false"
-                image: quay.io/pulp/pulp-operator:devel
-                livenessProbe:
-                  httpGet:
-                    path: /readyz
-                    port: 6789
-                  initialDelaySeconds: 15
-                  periodSeconds: 20
-                name: manager
-                readinessProbe:
-                  httpGet:
-                    path: /healthz
-                    port: 6789
-                  initialDelaySeconds: 5
-                  periodSeconds: 10
-                resources: {}
-              terminationGracePeriodSeconds: 10
-      permissions:
-      - rules:
-        - apiGroups:
-          - ""
-          resources:
-          - configmaps
-          verbs:
-          - get
-          - list
-          - watch
-          - create
-          - update
-          - patch
-          - delete
-        - apiGroups:
-          - ""
-          resources:
-          - events
-          verbs:
-          - create
-          - patch
-        serviceAccountName: default
+        serviceAccountName: pulp-operator-sa
     strategy: deployment
   installModes:
   - supported: true

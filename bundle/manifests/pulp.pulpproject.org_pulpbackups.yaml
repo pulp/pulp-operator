@@ -35,7 +35,8 @@ spec:
                 description: Name of the deployment to be backed up
                 type: string
               postgres_label_selector:
-                description: Label selector used to identify postgres pod for executing migration
+                description: Label selector used to identify postgres pod for executing
+                  migration
                 type: string
             required:
             - deployment_name
@@ -55,7 +56,8 @@ spec:
                 description: The namespace used for the backup claim
                 type: string
               conditions:
-                description: The resulting conditions when a Service Telemetry is instantiated
+                description: The resulting conditions when a Service Telemetry is
+                  instantiated
                 items:
                   properties:
                     lastTransitionTime:
@@ -69,13 +71,15 @@ spec:
                   type: object
                 type: array
               containerTokenSecret:
-                description: Container token configuration secret used by the deployed instance
+                description: Container token configuration secret used by the deployed
+                  instance
                 type: string
               databaseConfigurationSecret:
                 description: Database configuration secret used by the deployed instance
                 type: string
               dbFieldsEncryptionSecret:
-                description: DB fields encryption configuration secret used by deployed instance
+                description: DB fields encryption configuration secret used by deployed
+                  instance
                 type: string
               deploymentName:
                 description: Name of the deployment backed up
@@ -84,7 +88,8 @@ spec:
                 description: The deployment storage type
                 type: string
               objectStorageConfigurationSecret:
-                description: Objectstorage configuration secret used by the deployed instance
+                description: Objectstorage configuration secret used by the deployed
+                  instance
                 type: string
             type: object
         type: object
