@@ -18,10 +18,14 @@ spec:
         description: Schema validation for the Pulp CRD
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -223,10 +227,12 @@ spec:
                 description: The arguments to be passed to initialize the database
                 type: string
               postgres_label_selector:
-                description: Label selector used to identify postgres pod for executing migration
+                description: Label selector used to identify postgres pod for executing
+                  migration
                 type: string
               postgres_migrant_configuration_secret:
-                description: Secret where the old database configuration can be found for data migration
+                description: Secret where the old database configuration can be found
+                  for data migration
                 type: string
               postgres_resource_requirements:
                 description: Resource requirements for the PostgreSQL container
@@ -310,7 +316,8 @@ spec:
                     format: int32
                     type: integer
                   resource_requirements:
-                    description: Resource requirements for the pulp resource manager container
+                    description: Resource requirements for the pulp resource manager
+                      container
                     properties:
                       limits:
                         properties:
@@ -430,7 +437,8 @@ spec:
                 description: Admin password of the deployed instance
                 type: string
               conditions:
-                description: The resulting conditions when a Service Telemetry is instantiated
+                description: The resulting conditions when a Service Telemetry is
+                  instantiated
                 items:
                   properties:
                     lastTransitionTime:

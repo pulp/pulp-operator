@@ -34,11 +34,13 @@ spec:
         app.kubernetes.io/component: operator
     spec:
       serviceAccountName: sa
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: manager
           args:
-            - "--enable-leader-election"
-            - "--leader-election-id=pulp-operator"
+          - --leader-elect
+          - --leader-election-id=pulp-operator
           env:
           # Watch one namespace (namespace-scoped).
             - name: WATCH_NAMESPACE
@@ -51,8 +53,8 @@ spec:
               value: 'false'
           image: controller:latest
           securityContext:
+            allowPrivilegeEscalation: false
             runAsUser: 1001
-            runAsNonRoot: true
           resources:
             limits:
               cpu: 800m
