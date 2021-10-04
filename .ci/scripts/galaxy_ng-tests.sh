@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
 KUBE="k3s"
 SERVER=$(hostname)
@@ -12,6 +13,8 @@ if [[ "$1" == "--minikube" ]] || [[ "$1" == "-m" ]]; then
     kubectl port-forward service/$SVC_NAME $WEB_PORT:$WEB_PORT &
   fi
 fi
+
+pip install ansible
 
 BASE_ADDR="http://$SERVER:$WEB_PORT"
 echo $BASE_ADDR
@@ -47,5 +50,66 @@ do
         GALAXY_INIT_RESULT=$ITER
     fi
 done
+
+cat >> ansible.cfg << ANSIBLECFG
+[defaults]
+remote_tmp     = /tmp/ansible
+local_tmp      = /tmp/ansible
+
+[galaxy]
+server_list = community_repo
+
+[galaxy_server.community_repo]
+url=${BASE_ADDR}/api/galaxy/content/inbound-community/
+token=${TOKEN}
+ANSIBLECFG
+
+# Poll a Pulp task until it is finished.
+wait_until_task_finished() {
+    echo "Polling the task until it has reached a final state."
+    local task_url=$1
+    while true
+    do
+        response=$(curl -H "Authorization: Basic YWRtaW46cGFzc3dvcmQ=" -H 'Content-Type: application/json' -H 'Accept: application/json' "$task_url")
+        state=$(jq -r .state <<< "${response}")
+        jq . <<< "${response}"
+        case ${state} in
+            failed|canceled)
+                echo "Task in final state: ${state}"
+                exit 1
+                ;;
+            completed)
+                echo "$task_url complete."
+                break
+                ;;
+            *)
+                echo "Still waiting..."
+                sleep 1
+                ;;
+        esac
+    done
+}
+
+
+echo "Creating community namespace"
+curl -X POST -d '{"name": "community", "groups":[]}' -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization:Token $TOKEN" $BASE_ADDR/api/galaxy/v3/namespaces/
+
+echo "Upload community.kubernetes collection"
+ansible-galaxy collection publish -vvvv -c ./vendor/galaxy.ansible.com/community/kubernetes/community-kubernetes-1.2.1.tar.gz
+
+echo "Check if it was uploaded"
+curl -H "Authorization:Token $TOKEN" $BASE_ADDR/api/galaxy/content/staging/v3/collections/ | jq
+
+echo "Sync collections"
+curl -X PUT -d '{"requirements_file": "collections: \n - pulp.pulp_installer", "url": "https://galaxy.ansible.com/api/"}' -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization:Token $TOKEN" $BASE_ADDR/api/galaxy/content/community/v3/sync/config/ | jq
+TASK_PK=$(curl -X POST -H "Authorization:Token $TOKEN" $BASE_ADDR/api/galaxy/content/community/v3/sync/ | jq -r '.task')
+echo "$BASE_ADDR/pulp/api/v3/tasks/$TASK_PK/"
+wait_until_task_finished "$BASE_ADDR/pulp/api/v3/tasks/$TASK_PK/"
+
+echo "Install pulp.pulp_installer collection"
+mkdir -p /tmp/ci_test
+sed -i "s/inbound-community/community/g" ansible.cfg
+ansible-galaxy collection install -vvvv pulp.pulp_installer -c -p /tmp/ci_test
+tree -L 3 /tmp/ci_test
 
 exit $GALAXY_INIT_RESULT
