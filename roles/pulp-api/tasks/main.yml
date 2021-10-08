@@ -18,12 +18,25 @@
   when:
     - object_storage_secret is defined
 
-- name: pulp-file-storage persistent volume claim
-  k8s:
-    state: "{{ deployment_state }}"
-    definition: "{{ lookup('template', 'templates/' + item + '.pvc.yaml.j2') | from_yaml }}"
-  with_items:
-    - pulp-file-storage
+- name: pulp-file-storage
+  block:
+    - name: pulp-file-storage persistent volume claim
+      k8s:
+        state: "{{ deployment_state }}"
+        definition: "{{ lookup('template', 'templates/' + item + '.pvc.yaml.j2') | from_yaml }}"
+      with_items:
+        - pulp-file-storage
+
+    - name: Remove ownerReferences from pulp-file-storage pvc to avoid garbage collection
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: '{{ ansible_operator_meta.name }}-file-storage'
+            namespace: '{{ ansible_operator_meta.namespace }}'
+            ownerReferences: null
+
   when: is_file_storage
 
 - include_tasks:

@@ -113,3 +113,16 @@
     status:
       objectStorageConfigurationSecret: "{{ storage_secret }}"
   when: storage_secret is defined
+
+- name: Add BackupComplete condition
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: BackupComplete
+        status: "True"
+        reason: Successful
+        message: "The Backup has been completed"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"

@@ -14,6 +14,7 @@ sudo mv ./kind /usr/local/bin/kind
 make kustomize
 kustomize version
 
+sed -i "s/ReadWriteMany/ReadWriteOnce/g" config/samples/pulpproject_v1beta1_pulp_cr.ci.yaml
 find ./roles/*/templates/*.yaml.j2 -exec sed -i 's/pulp-operator-sa/osdk-sa/g' {} \;
 
 echo "Starting molecule test"
