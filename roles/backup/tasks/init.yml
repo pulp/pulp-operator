@@ -54,6 +54,16 @@
   when:
     - backup_pvc == '' or backup_pvc is not defined
 
+- name: Remove ownerReferences from backup-claim pvc to avoid garbage collection
+  k8s:
+    definition:
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: '{{ deployment_name }}-backup-claim'
+        namespace: '{{ backup_pvc_namespace }}'
+        ownerReferences: null
+
 - name: Get Pulp custom resource object
   k8s_info:
     version: v1beta1

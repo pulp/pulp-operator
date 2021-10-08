@@ -4,4 +4,4 @@ kind: PulpRestore
 metadata:
   name: ci-pulprestore
 spec:
-  backup_name: example-pulpbackup
+  backup_name: ci-pulpbackup

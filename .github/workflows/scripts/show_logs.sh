@@ -8,6 +8,7 @@ if [[ "$1" == "--kind" ]] || [[ "$1" == "-k" ]]; then
 fi
 
 sudo -E kubectl get pods -o wide
+sudo -E kubectl get deployments
 
 if [[ "$KUBE" == "minikube" ]]; then
   echo ::group::METRICS
