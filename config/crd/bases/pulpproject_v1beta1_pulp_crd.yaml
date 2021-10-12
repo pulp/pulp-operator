@@ -40,32 +40,20 @@ spec:
               deployment_type:
                 description: Name of the deployment type
                 type: string
-              registry:
-                description: The container image registry to use for pulling images.
-                type: string
-                default: quay.io
-              project:
-                description: The container image registry project for pulling images.
-                type: string
-                default: pulp
               image:
                 description: The image name (repo name) for the pulp image.
                 type: string
-                default: pulp
+                default: quay.io/pulp/pulp:stable
               image_web:
                 description: The image name (repo name) for the pulp webserver image.
                 type: string
-                default: pulp-web
+                default: quay.io/pulp/pulp-web:stable
               redis_image:
                 description: The image name for the redis image.
                 type: string
               redis_storage_class:
                 description: Storage class to use for the Redis PVC
                 type: string
-              tag:
-                description: The image tag for the pulp image.
-                type: string
-                default: stable
               pulp_settings:
                 x-kubernetes-preserve-unknown-fields: true
                 description: The pulp settings.

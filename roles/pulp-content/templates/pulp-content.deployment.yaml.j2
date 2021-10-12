@@ -67,7 +67,7 @@ spec:
       serviceAccountName: pulp-operator-sa
       containers:
         - name: content
-          image: "{{ registry }}/{{ project }}/{{ image }}:{{ tag }}"
+          image: "{{ image }}"
           imagePullPolicy: "{{ image_pull_policy }}"
           # We set args, not command, so as to not override the entrypoint script
           args: ["pulp-content"]

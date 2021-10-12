@@ -119,8 +119,6 @@
     kind: "{{ kind }}"
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
-    status:
-      deployedVersion: "{{ tag }}"
 
 - name: Update image status
   operator_sdk.util.k8s_status:
@@ -129,7 +127,7 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     status:
-      deployedImage: "{{ registry }}/{{ project }}/{{ image }}:{{ tag }}"
+      deployedImage: "{{ image }}"
 
 - block:
     - name: Retrieve route URL
