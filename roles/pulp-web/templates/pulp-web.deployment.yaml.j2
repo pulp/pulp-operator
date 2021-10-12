@@ -42,7 +42,7 @@ spec:
       serviceAccountName: pulp-operator-sa
       containers:
         - name: web
-          image: "{{ registry }}/{{ project }}/{{ image_web }}:{{ tag }}"
+          image: "{{ image_web }}"
           imagePullPolicy: "{{ image_pull_policy }}"
 {% if ingress_type | lower == 'nodeport' %}
           env:
