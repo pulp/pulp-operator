@@ -13,6 +13,48 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+0.4.0 (2021-10-15)
+==================
+
+
+Features
+--------
+
+- Removed tags, registry, and projects so users can add images with custom registries and tags in image override
+  [#218](https://github.com/pulp/pulp-operator/issues/218)
+- Create or import a key for pulp-api to use when encrypting sensitive db fields
+  [#8730](https://pulp.plan.io/issues/8730)
+- Enable new tasking system
+  [#9020](https://pulp.plan.io/issues/9020)
+- Added support to override PosgreSQL sslmode
+  [#9421](https://pulp.plan.io/issues/9421)
+
+
+Bugfixes
+--------
+
+- Ensure default storage for Postgres
+  [#221](https://github.com/pulp/pulp-operator/issues/221)
+
+
+Deprecations and Removals
+-------------------------
+
+- Move from cluster-scoped operator model to namespace-scoped model
+  [#208](https://github.com/pulp/pulp-operator/issues/208)
+- Dropping OCP 4.6 support
+  [#9330](https://pulp.plan.io/issues/9330)
+
+
+Misc
+----
+
+- [#206](https://github.com/pulp/pulp-operator/issues/206), [#209](https://github.com/pulp/pulp-operator/issues/209), [#215](https://github.com/pulp/pulp-operator/issues/215), [#9217](https://pulp.plan.io/issues/9217)
+
+
+----
+
+
 0.3.0 (2021-07-14)
 ==================
 
