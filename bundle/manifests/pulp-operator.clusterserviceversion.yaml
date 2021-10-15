@@ -184,7 +184,7 @@ metadata:
       ]
     capabilities: Seamless Upgrades
     categories: Integration & Delivery
-    containerImage: quay.io/pulp/pulp-operator:v0.4.0.dev
+    containerImage: quay.io/pulp/pulp-operator:v0.4.0
     createdAt: "2021-03-26 16:57:40"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
@@ -815,7 +815,7 @@ spec:
                   value: explicit
                 - name: ANSIBLE_DEBUG_LOGS
                   value: "false"
-                image: quay.io/pulp/pulp-operator:v0.4.0.dev
+                image: quay.io/pulp/pulp-operator:v0.4.0
                 livenessProbe:
                   httpGet:
                     path: /readyz
