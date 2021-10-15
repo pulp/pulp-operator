@@ -81,6 +81,11 @@
     pg_config: '{{ _generated_pg_config_resources["resources"] | default([]) | length | ternary(_generated_pg_config_resources, _pg_config) }}'
   no_log: true
 
+- name: Ensure storage request is set
+  set_fact:
+    postgres_resource_requirements: "{{ postgres_resource_requirements|combine(postgres_default_storage, recursive=True) }}"
+  when: postgres_resource_requirements.requests is undefined or postgres_resource_requirements.requests.storage is undefined
+
 - name: Create Database if no database is specified
   k8s:
     apply: true
