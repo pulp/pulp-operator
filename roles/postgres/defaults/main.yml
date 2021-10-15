@@ -3,9 +3,10 @@ deployment_type: pulp
 
 postgres_version: 12
 postgres_image: postgres:12
-postgres_resource_requirements:
+postgres_default_storage:
   requests:
     storage: 8Gi
+postgres_resource_requirements: {}
 
 postgres_data_path: '/var/lib/postgresql/data/pgdata'
 
