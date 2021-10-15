@@ -1,18 +1,21 @@
 Redis
 =====
 
-A role to setup Pulp 3's redis service.
+A role to setup Pulp 3 redis, yielding the following objects:
+
+* Deployment
+* Service
+* PersistentVolumeClaim
+
+Role Variables
+--------------
+
+* `redis_image`: The redis image name. Default: redis:latest
 
 Requirements
 ------------
 
 Requires the `openshift` Python library to interact with Kubernetes: `pip install openshift`.
-
-Role Variables
---------------
-
-* `registry`: The container registry.
-* `project`: The project name e.g. user or org name at the container registry.
 
 Dependencies
 ------------

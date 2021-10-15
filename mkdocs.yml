@@ -10,16 +10,23 @@ nav:
   - Getting Started: quickstart.md
   - Contributing: contributing.md
   - Containers: container.md
-  - Roles:
-      - Pulp API: roles/pulp-api.md
-      - Pulp Content: roles/pulp-content.md
-      - Pulp Resource Manager: roles/pulp-resource-manager.md
-      - Pulp Routes: roles/pulp-routes.md
-      - Pulp Worker: roles/pulp-worker.md
-      - Pulp Web: roles/pulp-web.md
-      - Pulp Status: roles/pulp-status.md
-      - Postgres: roles/postgres.md
-      - Redis: roles/redis.md
+  - Custom Resources:
+      - Pulp:
+        - API: roles/pulp-api.md
+        - Content: roles/pulp-content.md
+        - Resource Manager: roles/pulp-resource-manager.md
+        - Routes: roles/pulp-routes.md
+        - Worker: roles/pulp-worker.md
+        - Web: roles/pulp-web.md
+        - Status: roles/pulp-status.md
+        - Postgres: roles/postgres.md
+        - Redis: roles/redis.md
+      - Pulp Backup:
+        - Backup: roles/backup.md
+      - Pulp Restore:
+        - Restore: roles/restore.md
   - Changelog: CHANGES.md
 markdown_extensions:
+  - toc:
+      permalink: "#"
   - pymdownx.superfences

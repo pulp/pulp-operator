@@ -1,22 +1,21 @@
 Pulp Worker
 ===========
 
-A role to setup Pulp 3's worker service.
+A role to setup Pulp 3 worker, yielding the following objects:
 
-Requirements
-------------
-
-Requires the `openshift` Python library to interact with Kubernetes: `pip install openshift`.
+* Deployment
 
 Role Variables
 --------------
 
 * `worker`: A dictionary of pulp-worker configuration
     * `replicas`: Number of pod replicas.
-* `registry`: The container registry.
-* `project`: The project name e.g. user or org name at the container registry.
-* `image`: The image name.
-* `tag`: The tag name.
+* `image`: The image name. Default: quay.io/pulp/pulp:stable
+
+Requirements
+------------
+
+Requires the `openshift` Python library to interact with Kubernetes: `pip install openshift`.
 
 Dependencies
 ------------

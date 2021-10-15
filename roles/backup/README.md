@@ -5,11 +5,6 @@ The purpose of this role is to create a backup of your Pulp deployment.  This in
   - backup of the PostgreSQL database
   - custom user config file
 
-Requirements
-------------
-
-Requires the `openshift` Python library to interact with Kubernetes: `pip install openshift`.
-
 Role Variables
 --------------
 
@@ -19,6 +14,10 @@ Role Variables
 * `backup_storage_class`: The storage class to be used for the backup PVC
 * `postgres_configuration_secret`: The postgres_configuration_secret
 
+Requirements
+------------
+
+Requires the `openshift` Python library to interact with Kubernetes: `pip install openshift`.
 
 Dependencies
 ------------

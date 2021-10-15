@@ -36,7 +36,7 @@ IMAGE_TAG_BASE ?= quay.io/pulp/pulp-operator
 BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 
 # Image URL to use all building/pushing image targets
-IMG ?= quay.io/pulp/pulp-operator:devel
+IMG ?= $(IMAGE_TAG_BASE):v$(VERSION)
 
 all: docker-build
 
@@ -122,6 +122,7 @@ bundle: kustomize ## Generate bundle manifests and metadata, then validate gener
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(subst .dev,,$(VERSION)) $(BUNDLE_METADATA_OPTS)
+	sed -i "s|$(IMAGE_TAG_BASE):devel|${IMG}|g" bundle/manifests/pulp-operator.clusterserviceversion.yaml
 	operator-sdk bundle validate ./bundle
 
 .PHONY: bundle-build

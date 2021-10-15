@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: Pulp Team
-  description: A role to setup Pulp 3's Resource Manager service
+  description: A role to setup Pulp 3 Resource Manager service
   issue_tracker_url: https://github.com/pulp/pulp-operator/issues/new
   license: GPL-2.0-or-later
   company: Red Hat

@@ -1,7 +1,9 @@
 Pulp Routes
 ===========
 
-A role to setup Pulp 3's routes service.
+A role to setup Pulp 3 routes, yielding the following objects:
+
+* Ingress/Route
 
 Requirements
 ------------

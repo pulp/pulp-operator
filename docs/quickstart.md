@@ -44,13 +44,13 @@ metadata:
  namespace: openshift-marketplace
 spec:
  sourceType: grpc
- image: quay.io/pulp/pulp-index:0.2.0
+ image: quay.io/pulp/pulp-operator-catalog:v0.4.0.dev
 
 ```
 
 * Refer to [Getting started with the OpenShift CLI](https://docs.openshift.com/container-platform/4.7/cli_reference/openshift_cli/getting-started-cli.html)
 
-* Verify the desired tag for `pulp-index` image [here](https://quay.io/repository/pulp/pulp-index?tab=tags)
+* Verify the desired tag for `pulp-operator-catalog` image [here](https://quay.io/repository/pulp/pulp-operator-catalog?tab=tags)
 ```console
 oc apply -f pulp-catalog-source.yaml
 ```
