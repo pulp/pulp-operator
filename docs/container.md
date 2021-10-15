@@ -98,6 +98,8 @@ with galaxy specific configuration.
 * [Pulp Worker](/roles/pulp-worker/)
 * [Pulp Web](/roles/pulp-web/)
 * [Pulp Status](/roles/pulp-status/)
+* [Backup](/roles/backup/)
+* [Restore](/roles/restore/)
 * [Postgres](/roles/postgres/)
 * [Redis](/roles/redis/)
 

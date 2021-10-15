@@ -39,6 +39,30 @@ Note that Pulp operator works with three different types of service containers (
 
 <br>Pulp operator is manually built and [hosted on quay.io](https://quay.io/repository/pulp/pulp-operator). Read more about the container images [here](https://docs.pulpproject.org/pulp_operator/container/).
 
+## Custom Resource Definitions
+Pulp Operator currently provides three different kinds of [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#custom-resources): Pulp, Pulp Backup and Pulp Restore.
+### Pulp
+Manages the Pulp application and its deployments, services, etc. Through the following ansible roles:
+
+* [API](https://docs.pulpproject.org/pulp_operator/roles/pulp-api/)
+* [Content](https://docs.pulpproject.org/pulp_operator/roles/pulp-content/)
+* [Resource Manager](https://docs.pulpproject.org/pulp_operator/roles/pulp-resource-manager/)
+* [Routes](https://docs.pulpproject.org/pulp_operator/roles/pulp-routes/)
+* [Worker](https://docs.pulpproject.org/pulp_operator/roles/pulp-worker/)
+* [Web](https://docs.pulpproject.org/pulp_operator/roles/pulp-web/)
+* [Status](https://docs.pulpproject.org/pulp_operator/roles/pulp-status/)
+* [Postgres](https://docs.pulpproject.org/pulp_operator/roles/postgres/)
+* [Redis](https://docs.pulpproject.org/pulp_operator/roles/redis/)
+
+### Pulp Backup
+Manages pulp backup through the following ansible role:
+
+* [Backup](https://docs.pulpproject.org/pulp_operator/roles/backup/)
+
+### Pulp Restore
+Manages the restoration of a pulp backup through the following ansible role:
+
+* [Restore](https://docs.pulpproject.org/pulp_operator/roles/restore/)
 ## Get Help
 
 Documentation: [https://docs.pulpproject.org/pulp_operator/](https://docs.pulpproject.org/pulp_operator/)

@@ -1,12 +1,12 @@
 Postgres
 ========
 
-A role to setup Pulp 3's postgres service.
+A role to setup postgres in Pulp 3, yielding the following objects:
 
-Requirements
-------------
-
-Requires the `openshift` Python library to interact with Kubernetes: `pip install openshift`.
+* StatefulSet
+* Service
+* Secret
+    * Stores the DB password
 
 Role Variables
 --------------
@@ -16,6 +16,11 @@ Role Variables
     * `password`: Database password.
     * `admin_password`: Initial password for the Pulp admin.
     * `sslmode` is valid for `external` databases only. The allowed values are: `prefer`, `disable`, `allow`, `require`, `verify-ca`, `verify-full`.
+
+Requirements
+------------
+
+Requires the `openshift` Python library to interact with Kubernetes: `pip install openshift`.
 
 Dependencies
 ------------

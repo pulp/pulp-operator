@@ -1,7 +1,7 @@
 Pulp Web
 ========
 
-A role to update Pulp 3's deployment staus.
+A role to update Pulp 3 deployment status.
 
 Requirements
 ------------

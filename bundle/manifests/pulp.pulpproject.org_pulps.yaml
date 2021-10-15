@@ -151,7 +151,7 @@ spec:
                 description: The hostname of the instance
                 type: string
               image:
-                default: pulp
+                default: quay.io/pulp/pulp:stable
                 description: The image name (repo name) for the pulp image.
                 type: string
               image_pull_policy:
@@ -166,7 +166,7 @@ spec:
                 description: The image pull secret
                 type: string
               image_web:
-                default: pulp-web
+                default: quay.io/pulp/pulp-web:stable
                 description: The image name (repo name) for the pulp webserver image.
                 type: string
               ingress_annotations:
@@ -259,10 +259,6 @@ spec:
               postgres_storage_class:
                 description: Storage class to use for the PostgreSQL PVC
                 type: string
-              project:
-                default: pulp
-                description: The container image registry project for pulling images.
-                type: string
               pulp_settings:
                 description: The pulp settings.
                 properties:
@@ -302,10 +298,6 @@ spec:
                 type: object
               redis_storage_class:
                 description: Storage class to use for the Redis PVC
-                type: string
-              registry:
-                default: quay.io
-                description: The container image registry to use for pulling images.
                 type: string
               resource_manager:
                 description: The pulp resource manager deployment.
@@ -363,10 +355,6 @@ spec:
                 - S3
                 - azure
                 - Azure
-                type: string
-              tag:
-                default: stable
-                description: The image tag for the pulp image.
                 type: string
               web:
                 description: The pulp web deployment.
