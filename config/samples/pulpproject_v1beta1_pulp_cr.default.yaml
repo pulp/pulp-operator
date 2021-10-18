@@ -4,14 +4,8 @@ metadata:
   name: example-pulp
 #spec:
   # The registry to grab the pulp image from.
-# registry: quay.io
-  # The project (organization or user) to grab the pulp image from
-# project: pulp
-  # The image name (repo name) for the pulp image.
-# image: pulp
-  # The image tag for the pulp image. Quotes needed for '.' on certain K8s.
-# tag: "stable"
-  # Pulp settings.
+# image: quay.io/pulp/pulp:stable
+# Pulp settings.
 # pulp_settings:
 #    debug: "True"
   # The pulp adminstrator password secret.

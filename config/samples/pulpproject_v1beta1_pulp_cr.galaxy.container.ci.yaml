@@ -4,9 +4,8 @@ metadata:
   name: galaxy-demo
 spec:
   ingress_type: Ingress
-  image: galaxy
-  image_web: "galaxy-web"
-  tag: "latest"
+  image: quay.io/pulp/galaxy:stable
+  image_web: quay.io/pulp/galaxy-web:stable
   admin_password_secret: "example-pulp-admin-password"
   container_token_secret: "container-auth"
   pulp_settings:

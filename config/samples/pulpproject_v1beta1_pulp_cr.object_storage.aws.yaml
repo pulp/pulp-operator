@@ -1,9 +1,8 @@
 apiVersion: pulp.pulpproject.org/v1beta1
 kind: Pulp
 metadata:
-  name: s3-pulp
+  name: pulp-s3
 spec:
-  tag: "latest"
   ingress_type: Ingress
   admin_password_secret: "example-pulp-admin-password"
   settings:
