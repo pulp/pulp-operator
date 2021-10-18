@@ -1,7 +1,7 @@
 apiVersion: pulp.pulpproject.org/v1beta1
 kind: Pulp
 metadata:
-  name: pulp-demo
+  name: example-pulp
 spec:
   storage_type: File
   # This doesn't really matter for minikube. Single node by design,
@@ -10,3 +10,6 @@ spec:
   file_storage_access_mode: "ReadWriteMany"
   # The minikube VM won't go any larger.
   file_storage_size: "375Gi"
+  # Default images:
+  image: quay.io/pulp/pulp:stable
+  image_web: quay.io/pulp/pulp-web:stable

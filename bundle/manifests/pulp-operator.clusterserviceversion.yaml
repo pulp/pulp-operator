@@ -8,51 +8,14 @@ metadata:
           "apiVersion": "pulp.pulpproject.org/v1beta1",
           "kind": "Pulp",
           "metadata": {
-            "name": "azure-pulp"
+            "name": "example-pulp"
           },
           "spec": {
-            "admin_password_secret": "example-pulp-admin-password",
-            "content": {
-              "replicas": 1,
-              "resource_requirements": {
-                "requests": {
-                  "cpu": "150m",
-                  "memory": "256Mi"
-                }
-              }
-            },
-            "ingress_type": "Ingress",
-            "object_storage_azure_secret": "example-pulp-object-storage",
-            "settings": {
-              "debug": "True"
-            },
-            "storage_type": "Azure",
-            "tag": "latest",
-            "web": {
-              "replicas": 1,
-              "resource_requirements": {
-                "requests": {
-                  "cpu": "100m",
-                  "memory": "256Mi"
-                }
-              }
-            },
-            "worker": {
-              "replicas": 1,
-              "resource_requirements": {
-                "requests": {
-                  "cpu": "150m",
-                  "memory": "256Mi"
-                }
-              }
-            }
-          }
-        },
-        {
-          "apiVersion": "pulp.pulpproject.org/v1beta1",
-          "kind": "Pulp",
-          "metadata": {
-            "name": "example-pulp"
+            "file_storage_access_mode": "ReadWriteMany",
+            "file_storage_size": "375Gi",
+            "image": "quay.io/pulp/pulp:stable",
+            "image_web": "quay.io/pulp/pulp-web:stable",
+            "storage_type": "File"
           }
         },
         {
@@ -75,8 +38,8 @@ metadata:
             },
             "file_storage_access_mode": "ReadWriteMany",
             "file_storage_size": "10Gi",
-            "image": "galaxy",
-            "image_web": "galaxy-web",
+            "image": "quay.io/pulp/galaxy:stable",
+            "image_web": "quay.io/pulp/galaxy-web:stable",
             "ingress_type": "Ingress",
             "pulp_settings": {
               "GALAXY_FEATURE_FLAGS": {
@@ -84,7 +47,6 @@ metadata:
               }
             },
             "storage_type": "File",
-            "tag": "latest",
             "web": {
               "replicas": 1,
               "resource_requirements": {
@@ -109,19 +71,50 @@ metadata:
           "apiVersion": "pulp.pulpproject.org/v1beta1",
           "kind": "Pulp",
           "metadata": {
-            "name": "pulp-demo"
+            "name": "pulp-azure"
           },
           "spec": {
-            "file_storage_access_mode": "ReadWriteMany",
-            "file_storage_size": "375Gi",
-            "storage_type": "File"
+            "admin_password_secret": "example-pulp-admin-password",
+            "content": {
+              "replicas": 1,
+              "resource_requirements": {
+                "requests": {
+                  "cpu": "150m",
+                  "memory": "256Mi"
+                }
+              }
+            },
+            "ingress_type": "Ingress",
+            "object_storage_azure_secret": "example-pulp-object-storage",
+            "settings": {
+              "debug": "True"
+            },
+            "storage_type": "Azure",
+            "web": {
+              "replicas": 1,
+              "resource_requirements": {
+                "requests": {
+                  "cpu": "100m",
+                  "memory": "256Mi"
+                }
+              }
+            },
+            "worker": {
+              "replicas": 1,
+              "resource_requirements": {
+                "requests": {
+                  "cpu": "150m",
+                  "memory": "256Mi"
+                }
+              }
+            }
           }
         },
         {
           "apiVersion": "pulp.pulpproject.org/v1beta1",
           "kind": "Pulp",
           "metadata": {
-            "name": "s3-pulp"
+            "name": "pulp-s3"
           },
           "spec": {
             "admin_password_secret": "example-pulp-admin-password",
@@ -140,7 +133,6 @@ metadata:
               "debug": "True"
             },
             "storage_type": "S3",
-            "tag": "latest",
             "web": {
               "replicas": 1,
               "resource_requirements": {

@@ -73,7 +73,7 @@ jobs:
         run: |
           sudo -E docker images
           .github/workflows/scripts/show_logs.sh
-          http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/
+          http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/ || true
 
   components:
     runs-on: ubuntu-latest
@@ -146,7 +146,7 @@ jobs:
         run: |
           sudo -E docker images
           .github/workflows/scripts/show_logs.sh
-          http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/
+          http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/ || true
 
   galaxy:
     runs-on: ubuntu-latest
@@ -220,7 +220,7 @@ jobs:
         run: |
           sudo -E docker images
           .github/workflows/scripts/show_logs.sh
-          http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/
+          http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/ || true
 
   molecule:
     runs-on: ubuntu-latest
@@ -274,7 +274,7 @@ jobs:
           sudo -E kubectl port-forward service/example-pulp-web-svc 24880:24880 &
           sudo -E docker images
           .github/workflows/scripts/show_logs.sh -k
-          http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/
+          http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/ || true
         shell: bash
       - name: Molecule destroy
         if: always()
@@ -383,4 +383,4 @@ jobs:
         run: |
           sudo -E docker images
           .github/workflows/scripts/show_logs.sh
-          http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/
+          http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/ || true
