@@ -34,8 +34,6 @@ spec:
         app.kubernetes.io/component: operator
     spec:
       serviceAccountName: sa
-      securityContext:
-        runAsNonRoot: true
       containers:
         - name: manager
           args:
@@ -52,9 +50,6 @@ spec:
             - name: ANSIBLE_DEBUG_LOGS
               value: 'false'
           image: controller:latest
-          securityContext:
-            allowPrivilegeEscalation: false
-            runAsUser: 1001
           resources:
             limits:
               cpu: 800m
