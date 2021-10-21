@@ -14,6 +14,7 @@ Role Variables
 * `web`: A dictionary of pulp-web configuration
     * `replicas`: Number of pod replicas.
 * `image_web`: The image name. Default: quay.io/pulp/pulp-web:stable
+* `nginx_client_max_body_size`: Sets the maximum allowed size of the client request body.
 
 Requirements
 ------------
