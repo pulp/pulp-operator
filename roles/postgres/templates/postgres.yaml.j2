@@ -51,7 +51,7 @@ spec:
 {% endif %}
       serviceAccountName: pulp-operator-sa
       containers:
-        - image: '{{ postgres_image }}'
+        - image: '{{ _postgres_image }}'
           name: postgres
           env:
             # For postgres_image based on rhel8/postgresql-12

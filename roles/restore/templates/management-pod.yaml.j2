@@ -17,8 +17,7 @@ spec:
   serviceAccountName: pulp-operator-sa
   containers:
   - name: {{ ansible_operator_meta.name }}-backup-manager
-    image: "{{ postgres_image }}"
-    imagePullPolicy: Always
+    image: "{{ _postgres_image }}"
     command: ["sleep", "infinity"]
     volumeMounts:
     - name: {{ ansible_operator_meta.name }}-backup

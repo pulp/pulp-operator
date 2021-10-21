@@ -1,4 +1,15 @@
 ---
+- name: Set user provided pulp-worker image
+  set_fact:
+    _custom_image: "{{ image }}:{{ image_version }}"
+  when:
+    - image is defined
+    - image_version is defined
+
+- name: Set pulp-worker image URL
+  set_fact:
+    _image: "{{ _custom_image | default(lookup('env', 'RELATED_IMAGE_APP')) }}"
+
 - name: pulp-worker deployment
   k8s:
     state: "{{ deployment_state }}"

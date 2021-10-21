@@ -13,6 +13,18 @@
   with_items:
     - pulp-web
 
+- name: Set user provided pulp-web image
+  set_fact:
+    _custom_image_web: "{{ image_web }}:{{ image_web_version }}"
+  when:
+    - image_web is defined
+    - image_web_version is defined
+
+- name: Set pulp-api image URL
+  set_fact:
+    _image_web: "{{ _custom_image_web | default(lookup('env', 'RELATED_IMAGE_APP_WEB')) }}"
+
+
 - name: pulp-web deployment
   k8s:
     state: "{{ deployment_state }}"
