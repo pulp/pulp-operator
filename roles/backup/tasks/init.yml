@@ -170,6 +170,16 @@
     - pvc_access_mode is defined
     - pvc_access_mode | lower != "readwritemany"
 
+- name: Set user provided postgres image
+  set_fact:
+    _custom_postgres_image: "{{ postgres_image }}"
+  when:
+    - postgres_image is defined
+
+- name: Set Postgres image URL
+  set_fact:
+    _postgres_image: "{{ _custom_postgres_image | default(lookup('env', 'RELATED_IMAGE_POSTGRES')) }}"
+
 - name: Create management pod from templated deployment config
   k8s:
     state: present

@@ -6,6 +6,17 @@
   with_items:
     - pulp-content
 
+- name: Set user provided pulp-content image
+  set_fact:
+    _custom_image: "{{ image }}:{{ image_version }}"
+  when:
+    - image is defined
+    - image_version is defined
+
+- name: Set pulp-content image URL
+  set_fact:
+    _image: "{{ _custom_image | default(lookup('env', 'RELATED_IMAGE_APP')) }}"
+
 - name: pulp-content deployment
   k8s:
     state: "{{ deployment_state }}"

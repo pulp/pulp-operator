@@ -70,7 +70,7 @@ spec:
       serviceAccountName: pulp-operator-sa
       containers:
         - name: resource-manager
-          image: "{{ image }}"
+          image: "{{ _image }}"
           imagePullPolicy: "{{ image_pull_policy }}"
           # We set args, not command, so as to not override the entrypoint script
           args: ["pulp-resource-manager"]

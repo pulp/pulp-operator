@@ -44,7 +44,7 @@ spec:
       serviceAccountName: pulp-operator-sa
       containers:
         - name: redis
-          image: "{{ redis_image }}"
+          image: "{{ _redis_image }}"
           imagePullPolicy: "IfNotPresent"
           volumeMounts:
             - readOnly: false

@@ -13,6 +13,16 @@
   with_items:
     - redis
 
+- name: Set user provided redis image
+  set_fact:
+    _custom_redis_image: "{{ redis_image }}"
+  when:
+    - redis_image is defined
+
+- name: Set Redis image URL
+  set_fact:
+    _redis_image: "{{ _custom_redis_image | default(lookup('env', 'RELATED_IMAGE_REDIS')) }}"
+
 - name: redis deployment
   k8s:
     state: "{{ deployment_state }}"

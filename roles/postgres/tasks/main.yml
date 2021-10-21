@@ -86,6 +86,16 @@
     postgres_resource_requirements: "{{ postgres_resource_requirements|combine(postgres_default_storage, recursive=True) }}"
   when: postgres_resource_requirements.requests is undefined or postgres_resource_requirements.requests.storage is undefined
 
+- name: Set user provided postgres image
+  set_fact:
+    _custom_postgres_image: "{{ postgres_image }}"
+  when:
+    - postgres_image is defined
+
+- name: Set Postgres image URL
+  set_fact:
+    _postgres_image: "{{ _custom_postgres_image | default(lookup('env', 'RELATED_IMAGE_POSTGRES')) }}"
+
 - name: Create Database if no database is specified
   k8s:
     apply: true
