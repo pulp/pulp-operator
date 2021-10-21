@@ -74,6 +74,7 @@ data:
 
             # The default client_max_body_size is 1m. Clients uploading
             # files larger than this will need to chunk said files.
+            client_max_body_size {{ nginx_client_max_body_size }};
 
             # Gunicorn docs suggest this value.
             keepalive_timeout 5;
@@ -100,7 +101,6 @@ data:
                 # redirects, we set the Host: header above already.
                 proxy_redirect off;
                 proxy_pass http://pulp-api;
-                client_max_body_size 10m;
             }
 
             location /auth/login/ {
