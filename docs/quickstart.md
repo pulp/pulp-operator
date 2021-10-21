@@ -32,34 +32,11 @@ Get external IP addresses:
 
 ## OpenShift
 
-Currently pulp-operator is not available in the OpenShift catalogue, so as a first step you must create a catalogue entry:
+Pulp is available on `OperatorHub`, you can find it at the `Integration & Delivery` section:
 
-```yaml
-# pulp-catalog-source.yaml
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: CatalogSource
-metadata:
- name: my-pulp-catalog
- namespace: openshift-marketplace
-spec:
- sourceType: grpc
- image: quay.io/pulp/pulp-operator-catalog:v0.4.0.dev
-
-```
-
-* Refer to [Getting started with the OpenShift CLI](https://docs.openshift.com/container-platform/4.7/cli_reference/openshift_cli/getting-started-cli.html)
-
-* Verify the desired tag for `pulp-operator-catalog` image [here](https://quay.io/repository/pulp/pulp-operator-catalog?tab=tags)
-```console
-oc apply -f pulp-catalog-source.yaml
-```
-
-Wait a few seconds and refresh the OCP page. After the refresh, you can see a `my-pulp-catalog` entry
-on the OperatorHub tab:
 ![OperatorHub tab](images/1.png "Pulp on OperatorHub tab")
 
-Click `Pulp` and then `Install`:
+For installing it, click on: `Pulp Project` and then `Install`:
 ![Installing pulp](images/2.png "Installing pulp operator")
 
 ![Installing pulp](images/3.png "Installing pulp operator")
