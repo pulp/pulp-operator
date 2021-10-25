@@ -814,7 +814,7 @@ spec:
                     port: 6789
                   initialDelaySeconds: 15
                   periodSeconds: 20
-                name: manager
+                name: pulp-manager
                 readinessProbe:
                   httpGet:
                     path: /healthz

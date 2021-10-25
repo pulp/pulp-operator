@@ -35,7 +35,7 @@ spec:
     spec:
       serviceAccountName: sa
       containers:
-        - name: manager
+        - name: pulp-manager
           args:
           - --leader-elect
           - --leader-election-id=pulp-operator

@@ -750,7 +750,7 @@ spec:
                 - name: ANSIBLE_DEBUG_LOGS
                   value: "false"
                 image: quay.io/pulp/pulp-operator:devel
-                name: manager
+                name: pulp-manager
                 resources: {}
               terminationGracePeriodSeconds: 10
       permissions:
