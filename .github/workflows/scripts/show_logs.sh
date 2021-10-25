@@ -18,7 +18,7 @@ if [[ "$KUBE" == "minikube" ]]; then
 fi
 
 echo ::group::OPERATOR_LOGS
-sudo -E kubectl logs -l app.kubernetes.io/name=pulp-operator -c manager --tail=10000
+sudo -E kubectl logs -l app.kubernetes.io/name=pulp-operator -c pulp-manager --tail=10000
 echo ::endgroup::
 
 echo ::group::PULP_API_LOGS
