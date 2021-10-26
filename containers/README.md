@@ -9,7 +9,6 @@ Each image is an all-in-one image that gets called with different commands to as
 * pulp-api
 * pulp-content
 * pulp-worker
-* pulp-resource-manager
 
 The single entrypoint script (which is aware of the command string) should help keep the commands as stable interfaces.
 

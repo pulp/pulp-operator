@@ -33,10 +33,6 @@ echo ::group::PULP_WORKER_LOGS
 sudo -E kubectl logs -l app.kubernetes.io/name=pulp-worker --tail=10000
 echo ::endgroup::
 
-echo ::group::PULP_RESOURCE_MANAGER_LOGS
-sudo -E kubectl logs -l app.kubernetes.io/name=pulp-resource-manager --tail=10000
-echo ::endgroup::
-
 echo ::group::PULP_WEB_LOGS
 sudo -E kubectl logs -l app.kubernetes.io/name=nginx --tail=10000
 echo ::endgroup::

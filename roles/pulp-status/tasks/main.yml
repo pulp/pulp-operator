@@ -43,8 +43,25 @@
 - name: Check that status and it returns a status 200
   uri:
     url: '{{ status_protocol }}://{{ ansible_operator_meta.name }}-web-svc.{{ ansible_operator_meta.namespace }}.svc.cluster.local:{{ status_port }}/pulp/api/v3/status/'
+  register: result
+  until: >
+    result.json is defined and
+    result.json.versions | length
   delay: 5
   retries: 10
+
+- name: Get installed plugins
+  set_fact:
+    installed_plugins: "{{ result.json.versions | items2dict(key_name='component', value_name='version') }}"
+
+- name: Show installed plugins
+  debug:
+    var: installed_plugins
+
+- name: Include resource manager role
+  include_role:
+    name: pulp-resource-manager
+  when: installed_plugins.pulpcore is defined or installed_plugins.core is version('3.16.0', '<')
 
 - name: Update admin password status
   operator_sdk.util.k8s_status:

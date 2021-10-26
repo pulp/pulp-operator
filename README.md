@@ -46,7 +46,6 @@ Manages the Pulp application and its deployments, services, etc. Through the fol
 
 * [API](https://docs.pulpproject.org/pulp_operator/roles/pulp-api/)
 * [Content](https://docs.pulpproject.org/pulp_operator/roles/pulp-content/)
-* [Resource Manager](https://docs.pulpproject.org/pulp_operator/roles/pulp-resource-manager/)
 * [Routes](https://docs.pulpproject.org/pulp_operator/roles/pulp-routes/)
 * [Worker](https://docs.pulpproject.org/pulp_operator/roles/pulp-worker/)
 * [Web](https://docs.pulpproject.org/pulp_operator/roles/pulp-web/)

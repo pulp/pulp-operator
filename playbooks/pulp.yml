@@ -38,6 +38,5 @@
     - pulp-web
     - pulp-api
     - pulp-content
-    - pulp-resource-manager
     - pulp-worker
     - pulp-status
