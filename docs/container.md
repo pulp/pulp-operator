@@ -13,9 +13,6 @@ An all-in-one [pulp](https://github.com/pulp/pulpcore) image that can assume eac
 - **pulpcore-worker** - performs syncing, importing of content, and other asynchronous operations that require resource locking. The number of instances of this service should be scaled as demand requires. _Administrators and content importers put demands on this service_.
 
 
-- **pulpcore-resource-manager** - a different type of `pulp-worker` that plays a coordinating role for the tasking system. All asynchronous work flows through this service. Because `pulpcore-resource-manager` coordinates pulp-workers, it is only possible to run one at a time, but other instances can be run as hot spares that will take over if the active one fails.
-
-
 Currently built with the following plugins:
 
 * [pulp_ansible](https://docs.pulpproject.org/pulp_ansible/)
@@ -62,8 +59,6 @@ An all-in-one [galaxy](https://github.com/ansible/galaxy_ng) image that can assu
 - **pulpcore-worker** - performs syncing, importing of content, and other asynchronous operations that require resource locking. The number of instances of this service should be scaled as demand requires. _Administrators and content importers put demands on this service_.
 
 
-- **pulpcore-resource-manager** - a different type of `pulp-worker` that plays a coordinating role for the tasking system. All asynchronous work flows through this service. Because `pulpcore-resource-manager` coordinates pulp-workers, it is only possible to run one at a time, but other instances can be run as hot spares that will take over if the active one fails.
-
 ### Tags
 
 * `latest`: Built nightly, with master branch of [galaxy](https://github.com/ansible/galaxy_ng).
@@ -93,7 +88,6 @@ with galaxy specific configuration.
 
 * [Pulp API](/roles/pulp-api/)
 * [Pulp Content](/roles/pulp-content/)
-* [Pulp Resource Manager](/roles/pulp-resource-manager/)
 * [Pulp Routes](/roles/pulp-routes/)
 * [Pulp Worker](/roles/pulp-worker/)
 * [Pulp Web](/roles/pulp-web/)
