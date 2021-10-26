@@ -17,7 +17,7 @@
   set_fact:
     _custom_redis_image: "{{ redis_image }}"
   when:
-    - redis_image is defined
+    - redis_image is defined and redis_image != ''
 
 - name: Set Redis image URL
   set_fact:

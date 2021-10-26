@@ -806,6 +806,14 @@ spec:
                   value: explicit
                 - name: ANSIBLE_DEBUG_LOGS
                   value: "false"
+                - name: RELATED_IMAGE_APP
+                  value: quay.io/pulp/pulp:stable
+                - name: RELATED_IMAGE_APP_WEB
+                  value: quay.io/pulp/pulp-web:stable
+                - name: RELATED_IMAGE_REDIS
+                  value: redis:latest
+                - name: RELATED_IMAGE_POSTGRES
+                  value: postgres:12
                 image: quay.io/pulp/pulp-operator:v0.5.0.dev
                 livenessProbe:
                   httpGet:

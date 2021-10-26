@@ -132,7 +132,7 @@
   set_fact:
     _custom_postgres_image: "{{ postgres_image }}"
   when:
-    - postgres_image is defined
+    - postgres_image is defined and postgres_image != ''
 
 - name: Set Postgres image URL
   set_fact:

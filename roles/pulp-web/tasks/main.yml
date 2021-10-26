@@ -17,7 +17,7 @@
   set_fact:
     _custom_image_web: "{{ image_web }}:{{ image_web_version }}"
   when:
-    - image_web is defined
+    - image_web is defined and image_web != ''
     - image_web_version is defined
 
 - name: Set pulp-api image URL
