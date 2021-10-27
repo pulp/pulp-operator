@@ -835,11 +835,6 @@ spec:
                   requests:
                     cpu: 1m
                     memory: 6Mi
-                securityContext:
-                  allowPrivilegeEscalation: false
-                  runAsUser: 1001
-              securityContext:
-                runAsNonRoot: true
               serviceAccountName: pulp-operator-sa
               terminationGracePeriodSeconds: 10
       permissions:
