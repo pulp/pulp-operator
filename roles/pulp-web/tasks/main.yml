@@ -20,10 +20,9 @@
     - image_web is defined and image_web != ''
     - image_web_version is defined
 
-- name: Set pulp-api image URL
+- name: Set pulp-web image URL
   set_fact:
-    _image_web: "{{ _custom_image_web | default(lookup('env', 'RELATED_IMAGE_APP_WEB')) }}"
-
+    _image_web: "{{ _custom_image_web | default(lookup('env', 'RELATED_IMAGE_PULP_WEB')) }}"
 
 - name: pulp-web deployment
   k8s:

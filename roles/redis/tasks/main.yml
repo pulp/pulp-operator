@@ -21,7 +21,7 @@
 
 - name: Set Redis image URL
   set_fact:
-    _redis_image: "{{ _custom_redis_image | default(lookup('env', 'RELATED_IMAGE_REDIS')) }}"
+    _redis_image: "{{ _custom_redis_image | default(lookup('env', 'RELATED_IMAGE_PULP_REDIS')) }}"
 
 - name: redis deployment
   k8s:

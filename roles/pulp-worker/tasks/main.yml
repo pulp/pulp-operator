@@ -8,7 +8,7 @@
 
 - name: Set pulp-worker image URL
   set_fact:
-    _image: "{{ _custom_image | default(lookup('env', 'RELATED_IMAGE_APP')) }}"
+    _image: "{{ _custom_image | default(lookup('env', 'RELATED_IMAGE_PULP')) }}"
 
 - name: pulp-worker deployment
   k8s:
