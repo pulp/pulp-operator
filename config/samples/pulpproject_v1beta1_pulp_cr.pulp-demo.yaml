@@ -11,5 +11,7 @@ spec:
   # The minikube VM won't go any larger.
   file_storage_size: "375Gi"
   # Default images:
-  image: quay.io/pulp/pulp:stable
-  image_web: quay.io/pulp/pulp-web:stable
+  image: quay.io/pulp/pulp
+  image_version: stable
+  image_web: quay.io/pulp/pulp-web
+  image_web_version: stable
