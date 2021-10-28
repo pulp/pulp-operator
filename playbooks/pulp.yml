@@ -24,10 +24,10 @@
       GALAXY_FEATURE_FLAGS:
         execution_environments: ""
     deployment_state: present
-    image: quay.io/pulp/pulp
-    image_version: stable
-    image_web: quay.io/pulp/pulp-web
-    image_web_version: stable
+    _image: quay.io/pulp/pulp
+    _image_version: stable
+    _image_web: quay.io/pulp/pulp-web
+    _image_web_version: stable
     image_pull_policy: IfNotPresent
     image_pull_secret: ""
     storage_type: File
