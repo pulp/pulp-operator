@@ -25,7 +25,8 @@ Role Variables
     Please see [pulpcore configuration docs](https://docs.pulpproject.org/en/master/nightly/installation/configuration.html#id2)
     for documentation on the possible variable names and their values.
     * `debug`: Wether to run pulp in debug mode.
-* `image`: The image name. Default: quay.io/pulp/pulp:stable
+* `image`: The image name. Default: quay.io/pulp/pulp
+* `image_version`: The image tag. Default: stable
 * `storage_type`: A string for specifying storage configuration type.
 * `file_storage_access_mode`: The access mode for the volume.
 * `file_storage_size`: The storage size.

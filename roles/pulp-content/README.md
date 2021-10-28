@@ -12,7 +12,8 @@ Role Variables
 * `content`: A dictionary of pulp-content configuration
     * `replicas`: Number of pod replicas.
     * `log_level`: The desired log level.
-* `image`: The image name. Default: quay.io/pulp/pulp:stable
+* `image`: The image name. Default: quay.io/pulp/pulp
+* `image_version`: The image tag. Default: stable
 
 Requirements
 ------------

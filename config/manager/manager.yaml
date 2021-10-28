@@ -58,7 +58,6 @@ spec:
             - name: RELATED_IMAGE_PULP_POSTGRES
               value: postgres:12
           image: controller:latest
-          imagePullPolicy: Always
           resources:
             limits:
               cpu: 800m

@@ -13,8 +13,10 @@ metadata:
           "spec": {
             "file_storage_access_mode": "ReadWriteMany",
             "file_storage_size": "375Gi",
-            "image": "quay.io/pulp/pulp:stable",
-            "image_web": "quay.io/pulp/pulp-web:stable",
+            "image": "quay.io/pulp/pulp",
+            "image_version": "stable",
+            "image_web": "quay.io/pulp/pulp-web",
+            "image_web_version": "stable",
             "storage_type": "File"
           }
         },
@@ -38,8 +40,10 @@ metadata:
             },
             "file_storage_access_mode": "ReadWriteMany",
             "file_storage_size": "10Gi",
-            "image": "quay.io/pulp/galaxy:stable",
-            "image_web": "quay.io/pulp/galaxy-web:stable",
+            "image": "quay.io/pulp/galaxy",
+            "image_version": "stable",
+            "image_web": "quay.io/pulp/galaxy-web",
+            "image_web_version": "stable",
             "ingress_type": "Ingress",
             "pulp_settings": {
               "GALAXY_FEATURE_FLAGS": {
@@ -871,6 +875,18 @@ spec:
           - create
           - patch
         - apiGroups:
+          - authentication.k8s.io
+          resources:
+          - tokenreviews
+          verbs:
+          - create
+        - apiGroups:
+          - authorization.k8s.io
+          resources:
+          - subjectaccessreviews
+          verbs:
+          - create
+        - apiGroups:
           - route.openshift.io
           resources:
           - routes
@@ -954,18 +970,6 @@ spec:
           - patch
           - update
           - watch
-        - apiGroups:
-          - authentication.k8s.io
-          resources:
-          - tokenreviews
-          verbs:
-          - create
-        - apiGroups:
-          - authorization.k8s.io
-          resources:
-          - subjectaccessreviews
-          verbs:
-          - create
         serviceAccountName: pulp-operator-sa
     strategy: deployment
   installModes:
