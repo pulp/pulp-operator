@@ -1,4 +1,9 @@
 ---
+
+- name: Set default pulp-resource-manager image
+  set_fact:
+    _default_image: "{{ _image }}:{{ _image_version }}"
+
 - name: Set user provided pulp-resource-manager image
   set_fact:
     _custom_image: "{{ image }}:{{ image_version }}"
@@ -8,7 +13,7 @@
 
 - name: Set pulp-resource-manager image URL
   set_fact:
-    _image: "{{ _custom_image | default(lookup('env', 'RELATED_IMAGE_PULP')) }}"
+    _image: "{{ _custom_image | default(lookup('env', 'RELATED_IMAGE_PULP')) | default(_default_image) }}"
 
 - name: pulp-resource-manager deployment
   k8s:

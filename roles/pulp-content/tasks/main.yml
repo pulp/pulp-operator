@@ -6,6 +6,10 @@
   with_items:
     - pulp-content
 
+- name: Set default pulp-content image
+  set_fact:
+    _default_image: "{{ _image }}:{{ _image_version }}"
+
 - name: Set user provided pulp-content image
   set_fact:
     _custom_image: "{{ image }}:{{ image_version }}"
@@ -15,7 +19,7 @@
 
 - name: Set pulp-content image URL
   set_fact:
-    _image: "{{ _custom_image | default(lookup('env', 'RELATED_IMAGE_PULP')) }}"
+    _image: "{{ _custom_image | default(lookup('env', 'RELATED_IMAGE_PULP')) | default(_default_image) }}"
 
 - name: pulp-content deployment
   k8s:

@@ -125,6 +125,10 @@
   - not is_openshift
   - not is_k8s
 
+- name: Set default pulp-api image
+  set_fact:
+    _default_image: "{{ _image }}:{{ _image_version }}"
+
 - name: Set user provided pulp-api image
   set_fact:
     _custom_image: "{{ image }}:{{ image_version }}"
@@ -134,7 +138,7 @@
 
 - name: Set pulp-api image URL
   set_fact:
-    _image: "{{ _custom_image | default(lookup('env', 'RELATED_IMAGE_PULP')) }}"
+    _image: "{{ _custom_image | default(lookup('env', 'RELATED_IMAGE_PULP')) | default(_default_image) }}"
 
 - name: pulp-api deployment
   k8s:

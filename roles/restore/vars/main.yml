@@ -1,7 +1,7 @@
 ---
 
 deployment_type: "pulp"
-postgres_image: postgres:12
+_postgres_image: postgres:12
 
 custom_resource_key: '_pulp_pulpproject_org_pulprestore'
 
