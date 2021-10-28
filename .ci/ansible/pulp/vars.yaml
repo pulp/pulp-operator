@@ -12,6 +12,7 @@ images:
       container_file: Containerfile.core
       pulpcore: git+https://github.com/pulp/pulpcore.git#egg=pulpcore
       plugins:
+        - "git+https://github.com/ansible/galaxy-importer.git"
         - "git+https://github.com/pulp/pulp-certguard.git"
         - "git+https://github.com/pulp/pulp_file.git"
         - "git+https://github.com/pulp/pulp_ansible.git"
