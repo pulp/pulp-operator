@@ -3,8 +3,8 @@ kind: Pulp
 metadata:
   name: example-pulp
 spec:
-  image_version: stable
-  image_web_version: stable
+  image_version: latest
+  image_web_version: latest
   admin_password_secret: "example-pulp-admin-password"
   storage_type: File
   ingress_type: nodeport
