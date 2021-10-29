@@ -21,7 +21,7 @@ Dependencies
 
 collections:
 
-  - community.kubernetes
+  - kubernetes.core
   - operator_sdk.util
 
 License
