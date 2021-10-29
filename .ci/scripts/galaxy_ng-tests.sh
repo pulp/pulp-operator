@@ -60,7 +60,7 @@ local_tmp      = /tmp/ansible
 server_list = community_repo
 
 [galaxy_server.community_repo]
-url=${BASE_ADDR}/api/galaxy/content/inbound-community/
+url=${BASE_ADDR}/api/galaxy/content/inbound-kubernetes/
 token=${TOKEN}
 ANSIBLECFG
 
@@ -84,7 +84,7 @@ wait_until_task_finished() {
                 ;;
             *)
                 echo "Still waiting..."
-                sleep 1
+                sleep 2
                 ;;
         esac
     done
@@ -92,10 +92,10 @@ wait_until_task_finished() {
 
 
 echo "Creating community namespace"
-curl -X POST -d '{"name": "community", "groups":[]}' -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization:Token $TOKEN" $BASE_ADDR/api/galaxy/v3/namespaces/
+curl -X POST -d '{"name": "kubernetes", "groups":[]}' -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization:Token $TOKEN" $BASE_ADDR/api/galaxy/v3/namespaces/
 
-echo "Upload community.kubernetes collection"
-ansible-galaxy collection publish -vvvv -c ./vendor/galaxy.ansible.com/community/kubernetes/community-kubernetes-1.2.1.tar.gz
+echo "Upload kubernetes.core collection"
+ansible-galaxy collection publish -vvvv -c ./vendor/galaxy.ansible.com/kubernetes/core/kubernetes-core-1.2.1.tar.gz
 
 echo "Check if it was uploaded"
 curl -H "Authorization:Token $TOKEN" $BASE_ADDR/api/galaxy/content/staging/v3/collections/ | jq
@@ -108,7 +108,7 @@ wait_until_task_finished "$BASE_ADDR/pulp/api/v3/tasks/$TASK_PK/"
 
 echo "Install pulp.pulp_installer collection"
 mkdir -p /tmp/ci_test
-sed -i "s/inbound-community/community/g" ansible.cfg
+sed -i "s/inbound-kubernetes/community/g" ansible.cfg
 ansible-galaxy collection install -vvvv pulp.pulp_installer -c -p /tmp/ci_test
 tree -L 3 /tmp/ci_test
 

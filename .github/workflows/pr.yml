@@ -313,7 +313,7 @@ jobs:
         run: |
           pip install --upgrade pip
           sudo apt remove ansible
-          pip install ansible==4.0.0 molecule[docker,lint] six openshift==0.11.0 jmespath
+          pip install ansible==4.0.0 molecule[docker,lint] six openshift==0.12.1 jmespath
           ansible-galaxy collection install --force community.docker
           ansible --version
       - name: Uninstalling GHA kustomize
