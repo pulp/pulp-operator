@@ -172,7 +172,7 @@
 
 - name: Set user provided postgres image
   set_fact:
-    _custom_postgres_image: "{{ _postgres_image }}"
+    _custom_postgres_image: "{{ postgres_image }}"
   when:
     - postgres_image is defined and postgres_image != ''
 
