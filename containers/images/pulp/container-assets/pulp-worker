@@ -11,6 +11,6 @@ if [[ "$NEW_TASKING_SYSTEM" == "no" ]]; then
     # In the meantime, the hostname provides uniqueness.
     exec rq worker --url "redis://${REDIS_SERVICE_HOST}:${REDIS_SERVICE_PORT}" -w "pulpcore.tasking.worker.PulpWorker" -c "pulpcore.rqconfig"
 else
-    export PATH /usr/local/bin:/usr/bin/
+    export PATH=/usr/local/bin:/usr/bin/
     /usr/local/bin/pulpcore-worker
 fi
