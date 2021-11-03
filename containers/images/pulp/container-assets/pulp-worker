@@ -12,5 +12,5 @@ if [[ "$NEW_TASKING_SYSTEM" == "no" ]]; then
     exec rq worker --url "redis://${REDIS_SERVICE_HOST}:${REDIS_SERVICE_PORT}" -w "pulpcore.tasking.worker.PulpWorker" -c "pulpcore.rqconfig"
 else
     export PATH=/usr/local/bin:/usr/bin/
-    /usr/local/bin/pulpcore-worker
+    pulpcore-worker
 fi
