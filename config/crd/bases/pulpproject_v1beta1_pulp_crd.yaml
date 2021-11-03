@@ -74,6 +74,9 @@ spec:
                         type: string
                     type: object
                 type: object
+              sso_secret:
+                  description: Secret where Single Sign-on configuration can be found
+                  type: string
               admin_password_secret:
                   description: Secret where the administrator password can be found
                   type: string

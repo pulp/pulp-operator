@@ -354,6 +354,12 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:io.kubernetes:Secret
+      - description: Configuration secret for SSO instance
+        displayName: SSO configuration
+        path: sso_secret
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:io.kubernetes:Secret
       - displayName: Database configuration secret
         path: postgres_configuration_secret
         x-descriptors:
