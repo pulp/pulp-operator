@@ -80,6 +80,12 @@
     pulp_combined_settings: "{{ default_settings|combine(raw_pulp_settings, recursive=True) if pulp_settings is defined and pulp_settings is not none else default_settings }}"
   no_log: true
 
+- include_tasks:
+    file: sso-configuration.yml
+  when:
+    - sso_secret is defined
+    - sso_secret | length
+
 - name: pulp-server secret
   k8s:
     state: "{{ deployment_state }}"
