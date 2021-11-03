@@ -9,7 +9,7 @@
 
 - name: Check s3 secret data format
   set_fact:
-    s3_secret_data_avaiable: true
+    s3_secret_data_available: true
   when:
     - _custom_s3_configuration is defined
     - _custom_s3_configuration.resources is defined
@@ -20,13 +20,13 @@
   fail:
     msg: "Cannot read the data for secret {{ object_storage_s3_secret  }}"
   when:
-    - not s3_secret_data_avaiable
+    - not s3_secret_data_available
 
 - name: Check if s3-access-key-id is found
   set_fact:
     s3_access_key_id_available: true
   when:
-    - s3_secret_data_avaiable
+    - s3_secret_data_available
     - _custom_s3_configuration.resources[0].data['s3-access-key-id'] is defined
     - _custom_s3_configuration.resources[0].data['s3-access-key-id'] | length
 
@@ -34,7 +34,7 @@
   set_fact:
     s3_secret_access_key_available: true
   when:
-    - s3_secret_data_avaiable
+    - s3_secret_data_available
     - _custom_s3_configuration.resources[0].data['s3-secret-access-key'] is defined
     - _custom_s3_configuration.resources[0].data['s3-secret-access-key'] | length
 
@@ -42,7 +42,7 @@
   set_fact:
     s3_bucket_name_available: true
   when:
-    - s3_secret_data_avaiable
+    - s3_secret_data_available
     - _custom_s3_configuration.resources[0].data['s3-bucket-name'] is defined
     - _custom_s3_configuration.resources[0].data['s3-bucket-name'] | length
 
@@ -50,7 +50,7 @@
   set_fact:
     s3_region_available: true
   when:
-    - s3_secret_data_avaiable
+    - s3_secret_data_available
     - _custom_s3_configuration.resources[0].data['s3-region'] is defined
     - _custom_s3_configuration.resources[0].data['s3-region'] | length
 
@@ -58,7 +58,7 @@
   set_fact:
     s3_endpoint_available: true
   when:
-    - s3_secret_data_avaiable
+    - s3_secret_data_available
     - _custom_s3_configuration.resources[0].data['s3-endpoint'] is defined
     - _custom_s3_configuration.resources[0].data['s3-endpoint'] | length
 
@@ -66,7 +66,7 @@
   fail:
     msg: "Secret {{ object_storage_s3_secret  }} is missing required configuration data."
   when:
-    - s3_secret_data_avaiable
+    - s3_secret_data_available
     - not s3_access_key_id_available
     - not s3_secret_access_key_available
     - not s3_bucket_name_available
@@ -90,7 +90,7 @@
   set_fact:
     object_storage_path: "{{ _custom_s3_configuration['resources'][0]['data']['s3-bucket-path'] | b64decode }}"
   when:
-    - s3_secret_data_avaiable
+    - s3_secret_data_available
     - _custom_s3_configuration.resources[0].data['s3-bucket-path'] is defined
     - _custom_s3_configuration.resources[0].data['s3-bucket-path'] | length
 

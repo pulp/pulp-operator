@@ -49,7 +49,7 @@ is_file_storage: true
 
 object_storage_path: ''
 
-s3_secret_data_avaiable: false
+s3_secret_data_available: false
 s3_access_key_id_available: false
 s3_secret_access_key_available: false
 s3_bucket_name_available: false
