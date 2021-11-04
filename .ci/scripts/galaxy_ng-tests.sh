@@ -51,6 +51,14 @@ do
     fi
 done
 
+podman pull quay.io/pulp/pulp-operator:devel
+podman login --tls-verify=false -u admin -p password localhost:24880
+podman tag quay.io/pulp/pulp-operator:devel localhost:24880/pulp/pulp-operator:devel
+podman push --tls-verify=false localhost:24880/pulp/pulp-operator:devel
+
+
+curl -H "Authorization:Token $TOKEN" http://localhost:24880/api/galaxy/_ui/v1/execution-environments/repositories/ | jq
+
 cat >> ansible.cfg << ANSIBLECFG
 [defaults]
 remote_tmp     = /tmp/ansible
@@ -84,7 +92,7 @@ wait_until_task_finished() {
                 ;;
             *)
                 echo "Still waiting..."
-                sleep 2
+                sleep 5
                 ;;
         esac
     done
