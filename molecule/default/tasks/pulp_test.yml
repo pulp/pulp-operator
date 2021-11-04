@@ -5,7 +5,7 @@
     namespace: '{{ namespace }}'
     definition: "{{ lookup('template', '/'.join([samples_dir, cr_file])) | from_yaml }}"
   vars:
-    cr_file: 'pulpproject_v1beta1_pulp_cr.ci.yaml'
+    cr_file: 'pulpproject_v1beta1_pulp_cr.molecule.ci.yaml'
 
 - name: Wait 15m for reconciliation to run
   k8s_info:
@@ -19,7 +19,7 @@
   delay: 6
   retries: 150
   vars:
-    cr_file: 'pulpproject_v1beta1_pulp_cr.ci.yaml'
+    cr_file: 'pulpproject_v1beta1_pulp_cr.molecule.ci.yaml'
     custom_resource: "{{ lookup('template', '/'.join([samples_dir, cr_file])) | from_yaml }}"
 
 - name: Add assertions here
