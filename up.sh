@@ -19,8 +19,6 @@ fi
 KUBE_ASSETS_DIR=${KUBE_ASSETS_DIR:-".ci/assets/kubernetes"}
 OPERATOR_IMAGE=${OPERATOR_IMAGE:-"quay.io/pulp/pulp-operator:devel"}
 
-echo "Make Install"
-make install
 echo "Make Deploy"
 make deploy IMG=$OPERATOR_IMAGE
 echo "Namespaces"

@@ -39,6 +39,7 @@ BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 
 # Image URL to use all building/pushing image targets
 IMG ?= $(IMAGE_TAG_BASE):v$(VERSION)
+NAMESPACE ?= pulp-operator-system
 
 all: docker-build
 
@@ -79,6 +80,7 @@ uninstall: kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube
 
 deploy: kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	cd config/default && $(KUSTOMIZE) edit set namespace ${NAMESPACE}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
