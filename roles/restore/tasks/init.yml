@@ -74,6 +74,14 @@
     - backup_name | length
     - this_backup['resources'][0]['status']['containerTokenSecret'] is defined
 
+- name: Set optional sso secret
+  set_fact:
+    sso_secret: "{{ this_backup['resources'][0]['status']['ssoSecret'] }}"
+  when:
+    - backup_name is defined
+    - backup_name | length
+    - this_backup['resources'][0]['status']['ssoSecret'] is defined
+
 - name: Surface error to user
   block:
     - name: Set error message

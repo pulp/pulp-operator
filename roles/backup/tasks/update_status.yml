@@ -103,6 +103,17 @@
       containerTokenSecret: "{{ container_token_secret }}"
   when: container_token_secret is defined
 
+# The backup sso secret in this status can be referenced when restoring
+- name: Update sso secret name status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    status:
+      ssoSecret: "{{ sso_secret }}"
+  when: sso_secret is defined
+
 # The backup objectstorage secret in this status can be referenced when restoring
 - name: Update objectstorage secret name status
   operator_sdk.util.k8s_status:

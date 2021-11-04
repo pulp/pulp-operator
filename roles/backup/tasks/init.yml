@@ -137,6 +137,13 @@
     - status['containerTokenSecret'] is defined
     - status['containerTokenSecret'] | length
 
+- name: Set SSO secret if found
+  set_fact:
+    sso_secret: "{{ status['ssoSecret'] }}"
+  when:
+    - status['ssoSecret'] is defined
+    - status['ssoSecret'] | length
+
 - name: Get PVC information
   k8s_info:
     kind: PersistentVolumeClaim
