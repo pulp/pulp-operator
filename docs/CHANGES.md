@@ -13,6 +13,31 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+0.5.0 (2021-11-05)
+==================
+
+
+Features
+--------
+
+- Made request size limit configurable
+  [#227](https://github.com/pulp/pulp-operator/issues/227)
+- Ensure resource manager is not started for pulpcore >= 3.16
+  [#231](https://github.com/pulp/pulp-operator/issues/231)
+- Set RELATED_IMAGE_ vars to enable disconnected deployments
+  [#232](https://github.com/pulp/pulp-operator/issues/232)
+
+
+Bugfixes
+--------
+
+- Image pull policy defaults to IfNotPresent
+  [#229](https://github.com/pulp/pulp-operator/issues/229)
+
+
+----
+
+
 0.4.0 (2021-10-15)
 ==================
 
