@@ -188,7 +188,7 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-    - description: A Pulp Backup Instance
+    - description: Back up a deployment of pulp, including all hosted Ansible content
       displayName: Pulp Backup
       kind: PulpBackup
       name: pulpbackups.pulp.pulpproject.org
@@ -279,7 +279,7 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
       version: v1beta1
-    - description: A Pulp Restore Instance
+    - description: Restore a previous pulp deployment into the namespace
       displayName: Pulp Restore
       kind: PulpRestore
       name: pulprestores.pulp.pulpproject.org
@@ -334,7 +334,7 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
       version: v1beta1
-    - description: A Pulp Instance
+    - description: Deploy a new instance of pulp
       displayName: Pulp
       kind: Pulp
       name: pulps.pulp.pulpproject.org
