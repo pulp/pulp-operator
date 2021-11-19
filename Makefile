@@ -86,6 +86,11 @@ deploy: kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/c
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
+resources: kustomize ## Get pulp resources
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	cd config/default && $(KUSTOMIZE) edit set namespace ${NAMESPACE}
+	$(KUSTOMIZE) build config/default > pulp_resources.yaml
+
 OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 ARCH := $(shell uname -m | sed 's/x86_64/amd64/')
 
