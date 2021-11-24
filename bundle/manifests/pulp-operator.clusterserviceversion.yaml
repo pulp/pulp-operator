@@ -188,7 +188,8 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-    - description: Back up a deployment of pulp, including all hosted Ansible content
+    - description: Back up a deployment of the pulp, including all hosted Ansible
+        content
       displayName: Pulp Backup
       kind: PulpBackup
       name: pulpbackups.pulp.pulpproject.org
@@ -375,11 +376,16 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - displayName: Database resource requirements
+      - displayName: PostgreSQL container storage requirements (when using a managed
+          instance)
+        path: postgres_storage_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: PostgreSQL container resource requirements (when using a managed
+          instance)
         path: postgres_resource_requirements
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
       - displayName: Database data path
         path: postgres_data_path
         x-descriptors:

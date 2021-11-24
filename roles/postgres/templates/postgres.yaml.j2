@@ -126,6 +126,7 @@ spec:
             - name: postgres
               mountPath: '{{ postgres_data_path | dirname }}'
               subPath: '{{ postgres_data_path | dirname | basename }}'
+          resources: {{ postgres_resource_requirements }}
   volumeClaimTemplates:
     - metadata:
         name: postgres
@@ -135,7 +136,7 @@ spec:
 {% if postgres_storage_class is defined %}
         storageClassName: '{{ postgres_storage_class }}'
 {% endif %}
-        resources: {{ postgres_resource_requirements }}
+        resources: {{ postgres_storage_requirements }}
 
 # Postgres Service.
 ---

@@ -92,25 +92,41 @@ spec:
               postgres_image:
                 description: Registry path to the PostgreSQL container to use
                 type: string
+              postgres_storage_requirements:
+                description: Storage requirements for the PostgreSQL container
+                properties:
+                  requests:
+                    properties:
+                      storage:
+                        default: 8Gi
+                        type: string
+                    type: object
+                  limits:
+                    properties:
+                      storage:
+                        default: 50Gi
+                        type: string
+                    type: object
+                type: object
               postgres_resource_requirements:
                 description: Resource requirements for the PostgreSQL container
                 properties:
                   requests:
                     properties:
                       cpu:
+                        default: 500m
                         type: string
                       memory:
-                        type: string
-                      storage:
+                        default: 2Gi
                         type: string
                     type: object
                   limits:
                     properties:
                       cpu:
+                        default: 1000m
                         type: string
                       memory:
-                        type: string
-                      storage:
+                        default: 8Gi
                         type: string
                     type: object
                 type: object

@@ -248,25 +248,41 @@ spec:
                   limits:
                     properties:
                       cpu:
+                        default: 1000m
                         type: string
                       memory:
-                        type: string
-                      storage:
+                        default: 8Gi
                         type: string
                     type: object
                   requests:
                     properties:
                       cpu:
+                        default: 500m
                         type: string
                       memory:
-                        type: string
-                      storage:
+                        default: 2Gi
                         type: string
                     type: object
                 type: object
               postgres_storage_class:
                 description: Storage class to use for the PostgreSQL PVC
                 type: string
+              postgres_storage_requirements:
+                description: Storage requirements for the PostgreSQL container
+                properties:
+                  limits:
+                    properties:
+                      storage:
+                        default: 50Gi
+                        type: string
+                    type: object
+                  requests:
+                    properties:
+                      storage:
+                        default: 8Gi
+                        type: string
+                    type: object
+                type: object
               pulp_settings:
                 description: The pulp settings.
                 properties:
