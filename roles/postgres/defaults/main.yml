@@ -3,7 +3,8 @@ deployment_type: pulp
 
 postgres_version: 12
 _postgres_image: postgres:12
-postgres_default_storage:
+
+postgres_storage_requirements:
   requests:
     storage: 8Gi
 postgres_resource_requirements: {}
