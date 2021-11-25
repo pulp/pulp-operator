@@ -187,7 +187,7 @@
           social_auth_keycloak_key: "{{ social_auth_keycloak_key }}"
           social_auth_keycloak_secret: "{{ social_auth_keycloak_secret }}"
           social_auth_keycloak_public_key: "{{ social_auth_keycloak_public_key }}"
-          social_auth_login_redirect_url: "{{ social_auth_login_redirect_url | default(omit) }}"
+          social_auth_login_redirect_url: "{{ social_auth_login_redirect_url | default( content_origin | default(omit)) }}"
           keycloak_host: "{{ keycloak_host }}"
           keycloak_port: "{{ keycloak_port }}"
           keycloak_protocol: "{{ keycloak_protocol }}"
