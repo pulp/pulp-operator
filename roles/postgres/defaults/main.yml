@@ -22,3 +22,7 @@ postgres_host_auth_method: 'scram-sha-256'
 
 custom_resource_key: '_pulp_pulpproject_org_pulp'
 database_status_present: false
+
+# Here we use  _pulpproject_org_pulp to get un-modified cr
+# see: https://github.com/operator-framework/operator-sdk/issues/1770
+raw_spec: "{{ vars['_pulpproject_org_pulp']['spec'] }}"

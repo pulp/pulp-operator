@@ -12,3 +12,7 @@ worker:
       memory: 1Gi
 
 is_file_storage: true
+
+# Here we use  _pulpproject_org_pulp to get un-modified cr
+# see: https://github.com/operator-framework/operator-sdk/issues/1770
+raw_spec: "{{ vars['_pulpproject_org_pulp']['spec'] }}"

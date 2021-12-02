@@ -146,6 +146,11 @@
   set_fact:
     _image: "{{ _custom_image | default(lookup('env', 'RELATED_IMAGE_PULP')) | default(_default_image, true) }}"
 
+- name: Set node affinity
+  set_fact:
+    _node_affinity: "{{ raw_spec['affinity']['node_affinity'] | default({}) }}"
+  when: affinity is defined and affinity.node_affinity is defined
+
 - name: pulp-api deployment
   k8s:
     state: "{{ deployment_state }}"

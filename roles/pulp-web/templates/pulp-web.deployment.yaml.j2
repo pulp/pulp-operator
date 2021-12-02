@@ -35,9 +35,9 @@ spec:
       imagePullSecrets:
         - name: {{ image_pull_secret }}
 {% endif %}
-{% if affinity is defined and affinity.node_affinity is defined %}
+{% if _node_affinity is defined %}
       affinity:
-        nodeAffinity: {{ affinity.node_affinity }}
+        nodeAffinity: {{ _node_affinity }}
 {% endif %}
       serviceAccountName: pulp-operator-sa
       containers:

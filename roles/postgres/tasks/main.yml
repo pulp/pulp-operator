@@ -1,4 +1,8 @@
 ---
+- name: Set node affinity
+  set_fact:
+    _node_affinity: "{{ raw_spec['affinity']['node_affinity'] | default({}) }}"
+  when: affinity is defined and affinity.node_affinity is defined
 
 - name: Obtain custom resource information
   set_fact:
