@@ -20,7 +20,7 @@ LABEL quay.expires-after={{ quay_expire }}d
 {% if item.value.base_image_name == "galaxy" %}
 COPY --from=builder /www/data .
 {% endif %}
-COPY --from=builder /etc/nginx/pulp/*.conf "${NGINX_CONFIGURATION_PATH}"/
+COPY --from=builder /etc/nginx/pulp/*.conf "${NGINX_DEFAULT_CONFIGURATION_PATH}"/
 
 # Run script uses standard ways to run the application
 CMD nginx -g "daemon off;"
