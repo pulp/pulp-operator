@@ -13,6 +13,20 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+0.6.0 (2021-12-06)
+
+Bugfixes
+--------
+
+- Fix node affinity handling
+  [#289](https://github.com/pulp/pulp-operator/issues/289)
+- Fixed web containers initialization
+  [#295](https://github.com/pulp/pulp-operator/issues/295)
+
+
+----
+
+
 0.5.0 (2021-11-05)
 ==================
 
