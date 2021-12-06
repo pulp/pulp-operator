@@ -104,13 +104,6 @@
     - _sso_configuration.resources[0].data['keycloak_host_loopback'] is defined
     - _sso_configuration.resources[0].data['keycloak_host_loopback'] | length
 
-- name: Check if galaxy_verify_keycloak_ssl_certs is found
-  set_fact:
-    galaxy_verify_keycloak_ssl_certs_available: true
-  when:
-    - _sso_configuration.resources[0].data['galaxy_verify_keycloak_ssl_certs'] is defined
-    - _sso_configuration.resources[0].data['galaxy_verify_keycloak_ssl_certs'] | length
-
 ### Check to make sure all required sso config values are set before proceeding
 - name: Fail if required sso secret items are not present
   fail:
@@ -124,7 +117,6 @@
     - not keycloak_protocol_available
     - not keycloak_port_available
     - not keycloak_realm_available
-    - not galaxy_verify_keycloak_ssl_certs_available
 
 ### Store Required Variables
 - name: Store social_auth_keycloak_key
@@ -187,12 +179,6 @@
   when: keycloak_host_loopback_available | default(False)
   no_log: true
 
-- name: Store galaxy_verify_keycloak_ssl_certs
-  set_fact:
-    galaxy_verify_keycloak_ssl_certs: "{{ _sso_configuration.resources[0].data['galaxy_verify_keycloak_ssl_certs'] | b64decode }}"
-  when: galaxy_verify_keycloak_ssl_certs_available | default(False)
-  no_log: true
-
 - name: Add SSO settings to sso_settings dict
   block:
 
@@ -211,7 +197,6 @@
           keycloak_group_token_claim: "{{ keycloak_group_token_claim | default(omit) }}"
           keycloak_role_token_claim: "{{ keycloak_role_token_claim | default(omit) }}"
           keycloak_host_loopback: "{{ keycloak_host_loopback | default(omit) }}"
-          galaxy_verify_keycloak_ssl_certs: "{{ galaxy_verify_keycloak_ssl_certs | default(omit) }}"
 
     - name: Inject SSO settings into pulp_settings
       set_fact:
