@@ -63,6 +63,9 @@ spec:
         - name: file-storage
           persistentVolumeClaim:
             claimName: {{ ansible_operator_meta.name }}-file-storage
+{% else %}
+        - name: tmp-file-storage
+          emptyDir: {}
 {% endif %}
       serviceAccountName: pulp-operator-sa
       containers:
@@ -96,4 +99,7 @@ spec:
             - name: file-storage
               readOnly: false
               mountPath: "/var/lib/pulp"
+{% else %}
+            - name: tmp-file-storage
+              mountPath: "/var/lib/pulp/tmp"
 {% endif %}
