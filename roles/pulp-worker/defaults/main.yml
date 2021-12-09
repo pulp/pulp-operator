@@ -9,7 +9,7 @@ worker:
       memory: 512Mi
     limits:
       cpu: 800m
-      memory: 1Gi
+      memory: 4Gi
 
 is_file_storage: true
 

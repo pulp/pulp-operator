@@ -1,0 +1,1 @@
+Raise resource limits for worker container to avoid OOMKill
