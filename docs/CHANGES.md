@@ -13,6 +13,22 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+0.6.1 (2021-12-09)
+
+Bugfixes
+--------
+
+- Mount `/var/lib/pulp/tmp` on pulp-content
+  [#299](https://github.com/pulp/pulp-operator/issues/299)
+- Raise resource limits for worker container to avoid OOMKill
+  [#302](https://github.com/pulp/pulp-operator/issues/302)
+- Raise resource limits for content container to avoid OOMKill
+  [#303](https://github.com/pulp/pulp-operator/issues/303)
+
+
+----
+
+
 0.6.0 (2021-12-06)
 ==================
 
