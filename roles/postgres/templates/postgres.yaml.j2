@@ -27,7 +27,7 @@ spec:
       app.kubernetes.io/version: '{{ postgres_version }}'
       app.kubernetes.io/part-of: '{{ deployment_type }}'
       app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
-  serviceName: '{{ ansible_operator_meta.name }}-postgres'
+  serviceName: '{{ ansible_operator_meta.name }}-postgres-svc'
   replicas: 1
   updateStrategy:
     type: RollingUpdate
@@ -143,7 +143,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: '{{ ansible_operator_meta.name }}-postgres'
+  name: '{{ ansible_operator_meta.name }}-postgres-svc'
   namespace: '{{ ansible_operator_meta.namespace }}'
   labels:
     app.kubernetes.io/name: 'postgres'

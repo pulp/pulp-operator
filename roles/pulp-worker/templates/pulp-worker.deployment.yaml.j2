@@ -82,7 +82,7 @@ spec:
             - name: POSTGRES_SERVICE_PORT
               value: "{{ postgres_port }}"
             - name: REDIS_SERVICE_HOST
-              value: "{{ ansible_operator_meta.name }}-redis"
+              value: "{{ ansible_operator_meta.name }}-redis-svc"
             - name: REDIS_SERVICE_PORT
               value: "{{ default_settings.redis_port }}"
           volumeMounts:
