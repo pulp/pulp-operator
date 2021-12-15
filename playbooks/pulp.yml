@@ -18,7 +18,7 @@
           CONN_MAX_AGE: 0
           OPTIONS:
             sslmode: '{{ postgres_sslmode }}'
-      redis_host: "{{ ansible_operator_meta.name }}-redis"
+      redis_host: "{{ ansible_operator_meta.name }}-redis-svc"
       redis_port: 6379
       redis_password: ""
       GALAXY_FEATURE_FLAGS:
