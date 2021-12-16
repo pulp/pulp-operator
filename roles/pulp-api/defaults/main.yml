@@ -76,6 +76,9 @@ default_azure_settings:
 is_k8s: false
 is_openshift: false
 
+container_auth_public_key_name: 'container_auth_public_key.pem'
+container_auth_private_key_name: 'container_auth_private_key.pem'
+
 # Keycloack SSO settings
 keycloak_admin_role: hubadmin
 keycloak_port: 443

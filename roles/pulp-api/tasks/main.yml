@@ -151,6 +151,27 @@
     _node_affinity: "{{ raw_spec['affinity']['node_affinity'] | default({}) }}"
   when: affinity is defined and affinity.node_affinity is defined
 
+- name: Get container token configuration
+  k8s_info:
+    kind: Secret
+    namespace: '{{ ansible_operator_meta.namespace }}'
+    name: '{{ container_token_secret }}'
+  register: _container_token_configuration
+  no_log: true
+  when: container_token_secret is defined
+
+- name: Get container token keys
+  set_fact:
+    container_auth_private_key_name: "tls.key"
+    container_auth_public_key_name: "tls.crt"
+  no_log: true
+  when:
+    - _container_token_configuration is defined
+    - _container_token_configuration['resources'][0]['data']['tls.crt'] is defined
+    - _container_token_configuration['resources'][0]['data']['tls.crt'] | length
+    - _container_token_configuration['resources'][0]['data']['tls.key'] is defined
+    - _container_token_configuration['resources'][0]['data']['tls.key'] | length
+
 - name: pulp-api deployment
   k8s:
     state: "{{ deployment_state }}"
