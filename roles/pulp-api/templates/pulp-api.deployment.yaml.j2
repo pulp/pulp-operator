@@ -79,9 +79,9 @@ spec:
             secretName: {{ container_token_secret }}
             items:
               - path: container_auth_public_key.pem
-                key: container_auth_public_key.pem
+                key: {{ container_auth_public_key_name }}
               - path: container_auth_private_key.pem
-                key: container_auth_private_key.pem
+                key: {{ container_auth_private_key_name }}
 {% endif %}
       serviceAccountName: pulp-operator-sa
       containers:
