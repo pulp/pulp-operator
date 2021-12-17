@@ -21,8 +21,6 @@
       redis_host: "{{ ansible_operator_meta.name }}-redis-svc"
       redis_port: 6379
       redis_password: ""
-      GALAXY_FEATURE_FLAGS:
-        execution_environments: ""
     deployment_state: present
     _image: quay.io/pulp/pulp
     _image_version: stable
