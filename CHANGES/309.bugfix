@@ -1,2 +1,0 @@
-Renamed services to avoid overwriting environment variables
-https://kubernetes.io/docs/concepts/services-networking/service/#environment-variables

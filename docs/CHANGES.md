@@ -13,6 +13,30 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+0.7.0 (2021-12-21)
+==================
+
+
+Features
+--------
+
+- Support cert-manager format on container token secret
+  [#313](https://github.com/pulp/pulp-operator/issues/313)
+- Enable Execution Environments by default
+  [#315](https://github.com/pulp/pulp-operator/issues/315)
+
+
+Bugfixes
+--------
+
+- Renamed services to avoid overwriting environment variables
+  https://kubernetes.io/docs/concepts/services-networking/service/#environment-variables
+  [#309](https://github.com/pulp/pulp-operator/issues/309)
+
+
+----
+
+
 0.6.1 (2021-12-09)
 ==================
 
