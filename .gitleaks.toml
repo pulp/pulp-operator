@@ -2,4 +2,5 @@
   description = "Our test install exports a test only PRIVATE KEY"
   paths = [
     ".ci/assets/kubernetes/pulp-container-auth.secret.yaml",
+    ".ci/scripts/prepare-object-storage.sh",
   ]
