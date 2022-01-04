@@ -76,6 +76,15 @@
     - _custom_azure_configuration.resources[0].data['azure-container-path'] is defined
     - _custom_azure_configuration.resources[0].data['azure-container-path'] | length
 
+- name: Add azure connection string to azure settings
+  set_fact:
+    azure_connection_string_dict: "{'AZURE_CONNECTION_STRING': '{{ _custom_azure_configuration['resources'][0]['data']['azure-connection-string'] | b64decode }}' }"
+  no_log: true
+  when:
+    - azure_secret_data_avaiable
+    - _custom_azure_configuration.resources[0].data['azure-connection-string'] is defined
+    - _custom_azure_configuration.resources[0].data['azure-connection-string'] | length
+
 - name: Add azure account name azure settings
   set_fact:
     azure_account_name_dict : "{'AZURE_ACCOUNT_NAME': '{{ azure_account_name }}' }"
@@ -111,6 +120,11 @@
 - name: merge azure_container_path with settings
   set_fact:
     default_azure_settings: "{{ default_azure_settings|combine(azure_container_path_dict) }}"
+  no_log: true
+
+- name: merge azure_connection_string with settings
+  set_fact:
+    default_azure_settings: "{{ default_azure_settings|combine(azure_connection_string_dict) }}"
   no_log: true
 
 - name: merge default_azure_settings with settings

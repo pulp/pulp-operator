@@ -150,6 +150,12 @@ jobs:
 
   galaxy:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - STORAGE: filesystem
+          - STORAGE: azure
     steps:
       - uses: actions/checkout@v2
         with:
@@ -169,6 +175,7 @@ jobs:
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
           echo "IMG=quay.io/pulp/pulp-operator:devel" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
+          echo "CI_TEST_STORAGE=${{ matrix.STORAGE }}" >> $GITHUB_ENV
         shell: bash
       - name: Start minikube
         run: |
@@ -191,6 +198,10 @@ jobs:
         run: |
           sudo -E make docker-build IMG=quay.io/pulp/pulp-operator:devel
           sudo -E docker images
+        shell: bash
+      - name: Prepare Object Storage
+        run: |
+          .ci/scripts/prepare-object-storage.sh
         shell: bash
       - name: Deploy pulp-operator to K8s
         run: sudo -E CI_TEST=galaxy ./up.sh
