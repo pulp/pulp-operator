@@ -52,8 +52,6 @@ elif [[ "$CI_TEST" == "azure" ]]; then
   echo "Will deploy object storage secret for testing ..."
   $KUBECTL apply -f $KUBE_ASSETS_DIR/pulp-object-storage.azure.secret.yaml
 elif [[ "$CI_TEST_STORAGE" == "azure" ]]; then
-  export AZURITE_IP=$(minikube ip)
-  envsubst < $KUBE_ASSETS_DIR/azurite.yaml | $KUBECTL apply -f -
   echo "Will deploy object storage secret for testing ..."
   $KUBECTL apply -f $KUBE_ASSETS_DIR/pulp-object-storage.azure.secret.yaml
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.galaxy.azure.ci.yaml

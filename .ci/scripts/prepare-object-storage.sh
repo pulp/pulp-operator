@@ -3,7 +3,6 @@
 
 if [[ "$CI_TEST_STORAGE" == "azure" ]]; then
   docker run -d -p 10000:10000 --name pulp-azurite mcr.microsoft.com/azure-storage/azurite azurite-blob --blobHost 0.0.0.0
-  export AZURITE_IP=$(docker inspect pulp-azurite | grep IPAddress | awk '{print $2}')
   sleep 5
   AZURE_CONNECTION_STRING="DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://pulp-azurite:10000/devstoreaccount1;"
   echo $(minikube ip)   pulp-azurite | sudo tee -a /etc/hosts
