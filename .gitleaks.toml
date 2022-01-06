@@ -3,4 +3,5 @@
   paths = [
     ".ci/assets/kubernetes/pulp-container-auth.secret.yaml",
     ".ci/scripts/prepare-object-storage.sh",
+    "containers/compose/certs/database_fields.symmetric.key",
   ]

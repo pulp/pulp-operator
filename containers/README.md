@@ -35,3 +35,19 @@ The image can be pushed to custom registry by specifying variables via the comma
     ansible-playbook push.yaml -e registry=docker.io -e project=myproject
 
 See `vars/defaults.yaml` for more info about the variables.
+
+
+## Compose
+
+Everything under compose directory will be mounted into the container.
+Please modify the files as needed.
+
+Requires podman 3.x and podman-compose 0.1.x
+https://github.com/containers/podman-compose#versions
+
+```shell
+$ pip install podman-compose
+$ git clone git@github.com:pulp/pulp-operator.git
+$ cd pulp-operator/containers
+$ podman-compose up
+```
