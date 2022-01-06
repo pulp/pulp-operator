@@ -1,0 +1,95 @@
+version: '3'
+services:
+  postgres:
+    image: "docker.io/library/postgres:12"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: pulp
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pulp
+      POSTGRES_INITDB_ARGS: '--auth-host=scram-sha-256'
+      POSTGRES_HOST_AUTH_METHOD: 'scram-sha-256'
+    volumes:
+      - "pg_data:/var/lib/postgresql/data"
+
+  redis:
+    image: "docker.io/library/redis:latest"
+    volumes:
+      - "redis_data:/data"
+
+  pulp_web:
+    image: "quay.io/pulp/pulp-web:latest"
+    depends_on:
+      - postgres
+      - pulp_api
+      - pulp_content
+    ports:
+      - "8080:8080"
+    hostname: pulp
+    user: root
+    volumes:
+      - "./compose/nginx/nginx.conf:/etc/opt/rh/rh-nginx116/nginx/nginx.conf:z"
+
+  pulp_api:
+    image: "quay.io/pulp/pulp:latest"
+    ports:
+      - "24817:24817"
+    command: ['pulp-api']
+    depends_on:
+      - redis
+      - postgres
+    hostname: pulp-api
+    user: root
+    volumes:
+      - "./compose/settings.py:/etc/pulp/settings.py:z"
+      - "./compose/certs:/etc/pulp/certs:z"
+      - "pulp:/var/lib/pulp"
+    environment:
+      POSTGRES_SERVICE_PORT: 5432
+      POSTGRES_SERVICE_HOST: postgres
+      PULP_ADMIN_PASSWORD: password
+
+  pulp_content:
+    image: "quay.io/pulp/pulp:latest"
+    ports:
+      - "24816:24816"
+    command: ['pulp-content']
+    depends_on:
+      - redis
+      - postgres
+    hostname: pulp-content
+    user: root
+    volumes:
+      - "./compose/settings.py:/etc/pulp/settings.py:z"
+      - "./compose/certs:/etc/pulp/certs:z"
+      - "pulp:/var/lib/pulp"
+    environment:
+      POSTGRES_SERVICE_PORT: 5432
+      POSTGRES_SERVICE_HOST: postgres
+
+  pulp_worker:
+    image: "quay.io/pulp/pulp:latest"
+    deploy:
+        replicas: 2
+    command: ['pulp-worker']
+    depends_on:
+      - redis
+      - postgres
+    hostname: pulp-worker
+    user: root
+    volumes:
+      - "./compose/settings.py:/etc/pulp/settings.py:z"
+      - "./compose/certs:/etc/pulp/certs:z"
+      - "pulp:/var/lib/pulp"
+    environment:
+      POSTGRES_SERVICE_PORT: 5432
+      POSTGRES_SERVICE_HOST: postgres
+
+volumes:
+  pulp:
+    name: pulp${DEV_VOLUME_SUFFIX:-dev}
+  pg_data:
+    name: pg_data${DEV_VOLUME_SUFFIX:-dev}
+  redis_data:
+    name: redis_data${DEV_VOLUME_SUFFIX:-dev}
