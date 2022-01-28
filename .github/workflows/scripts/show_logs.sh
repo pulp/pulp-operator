@@ -12,8 +12,8 @@ sudo -E kubectl get deployments
 
 if [[ "$KUBE" == "minikube" ]]; then
   echo ::group::METRICS
-  sudo -E kubectl top pods
-  sudo -E kubectl describe node minikube
+  sudo -E kubectl top pods || true
+  sudo -E kubectl describe node minikube || true
   echo ::endgroup::
 fi
 
