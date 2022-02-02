@@ -80,6 +80,11 @@
     pulp_combined_settings: "{{ default_settings|combine(raw_pulp_settings, recursive=True) if pulp_settings is defined and pulp_settings is not none else default_settings }}"
   no_log: true
 
+- name: Include redis role
+  include_role:
+    name: redis
+  when: pulp_combined_settings.cache_enabled
+
 - include_tasks:
     file: sso-configuration.yml
   when:
