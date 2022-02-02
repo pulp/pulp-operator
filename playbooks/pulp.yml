@@ -6,6 +6,7 @@
     - operator_sdk.util
   vars:
     default_settings:
+      cache_enabled: true
       db_encryption_key: "/etc/pulp/keys/database_fields.symmetric.key"
       databases:
         default:
@@ -34,7 +35,6 @@
     raw_spec: "{{ vars['_pulp_pulpproject_org_pulp']['spec'] }}"
   roles:
     - postgres
-    - redis
     - pulp-routes
     - pulp-web
     - pulp-api
