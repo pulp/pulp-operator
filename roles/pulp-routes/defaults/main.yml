@@ -7,8 +7,13 @@ route_host: ''
 hostname: '{{ deployment_type }}.example.com'
 
 
+# https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
+nginx_client_max_body_size: 10m
+
+# https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/
 # Add annotations to the ingress. Specify as literal block. E.g.:
 # ingress_annotations: |
 #   kubernetes.io/ingress.class: nginx
 #   nginx.ingress.kubernetes.io/proxy-connect-timeout: 60s
-ingress_annotations: ''
+ingress_annotations: |
+  nginx.ingress.kubernetes.io/proxy-body-size: {{ nginx_client_max_body_size }}
