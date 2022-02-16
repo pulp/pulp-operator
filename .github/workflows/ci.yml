@@ -232,7 +232,26 @@ jobs:
           sudo -E docker images
           .github/workflows/scripts/show_logs.sh
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/ || true
-
+      - name: Send Build details to Slack
+        id: slack
+        uses: slackapi/slack-github-action@v1.18.0
+        if: failure()
+        with:
+          payload: |
+            {
+              "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.head_commit.url }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.head_commit.url }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_PULP_CHANNEL }}
   molecule:
     runs-on: ubuntu-latest
     steps:
