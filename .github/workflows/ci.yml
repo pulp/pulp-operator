@@ -239,13 +239,13 @@ jobs:
         with:
           payload: |
             {
-              "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.head_commit.url }}",
+              "text": "Galaxy Operator CI ${{ job.status }}\nhttps://github.com/pulp/pulp-operator/runs/${{ github.run_id }}?check_suite_focus=true",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.head_commit.url }}"
+                    "text": "Galaxy Operator CI ${{ job.status }}\nhttps://github.com/pulp/pulp-operator/runs/${{ github.run_id }}?check_suite_focus=true"
                   }
                 }
               ]
