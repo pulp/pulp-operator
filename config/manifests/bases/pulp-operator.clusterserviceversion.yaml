@@ -725,7 +725,7 @@ spec:
           - subjectaccessreviews
           verbs:
           - create
-        serviceAccountName: default
+        serviceAccountName: pulp-operator-sa
       deployments:
       - name: pulp-operator-controller-manager
         spec:
@@ -793,7 +793,7 @@ spec:
           verbs:
           - create
           - patch
-        serviceAccountName: default
+        serviceAccountName: pulp-operator-sa
     strategy: deployment
   installModes:
   - supported: true
