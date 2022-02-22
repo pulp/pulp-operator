@@ -12,6 +12,27 @@ Changelog
 --->
 
 <!-- TOWNCRIER -->
+0.7.1 (2022-02-22)
+==================
+
+
+Bugfixes
+--------
+
+- Made Redis optional when installing pulp
+  [#323](https://github.com/pulp/pulp-operator/issues/323)
+- Made Operator work with arbitrary namespaces
+  [#326](https://github.com/pulp/pulp-operator/issues/326)
+- Made web image and ingress to have the same max_body_size
+  [#330](https://github.com/pulp/pulp-operator/issues/330)
+- Fixed pulp-api and pulp-web liveness probes.
+  [#332](https://github.com/pulp/pulp-operator/issues/332)
+- Fixes TokenReview authentication
+  [#337](https://github.com/pulp/pulp-operator/issues/337)
+
+
+----
+
 
 0.7.0 (2021-12-21)
 ==================
