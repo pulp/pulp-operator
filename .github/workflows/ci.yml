@@ -235,7 +235,7 @@ jobs:
       - name: Send Build details to Slack
         id: slack
         uses: slackapi/slack-github-action@v1.18.0
-        if: failure()
+        if: failure() && github.event_name == 'schedule'
         with:
           payload: |
             {
