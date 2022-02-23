@@ -196,5 +196,5 @@ You can check your `password` on `Secrets`, `example-pulp-admin-password`:
 Verify your URL at `Networking > Routes`:
 ![Route URL](images/9.png "Route URL")
 
-Use the URL from the previous step with `/pulp/api/v3/status`path and verify Pulp was successfully deployed:
+Use the URL from the previous step with `/pulp/api/v3/status/`path and verify Pulp was successfully deployed:
 ![Pulp Status](images/10.png "Pulp Status")
