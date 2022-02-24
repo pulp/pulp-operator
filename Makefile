@@ -92,7 +92,7 @@ resources: kustomize ## Get pulp resources
 	$(KUSTOMIZE) build config/default > pulp_resources.yaml
 
 OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
-ARCH := $(shell uname -m | sed 's/x86_64/amd64/')
+ARCH := $(shell uname -m | sed -e 's/x86_64/amd64/' -e 's/aarch64/arm64/')
 
 .PHONY: kustomize
 KUSTOMIZE = $(shell pwd)/bin/kustomize
