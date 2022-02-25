@@ -102,6 +102,14 @@ spec:
 {% if web.resource_requirements is defined %}
           resources: {{ web.resource_requirements }}
 {% endif %}
+{% if node_selector %}
+      nodeSelector:
+        {{ node_selector | indent(width=8) }}
+{% endif %}
+{% if tolerations %}
+      tolerations:
+        {{ tolerations | indent(width=8) }}
+{% endif %}
       volumes:
         - name: {{ ansible_operator_meta.name }}-nginx-conf
           configMap:

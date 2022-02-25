@@ -130,6 +130,14 @@ spec:
               mountPath: '{{ postgres_data_path | dirname }}'
               subPath: '{{ postgres_data_path | dirname | basename }}'
           resources: {{ postgres_resource_requirements }}
+{% if postgres_selector %}
+      nodeSelector:
+        {{ postgres_selector | indent(width=8) }}
+{% endif %}
+{% if postgres_tolerations %}
+      tolerations:
+        {{ postgres_tolerations | indent(width=8) }}
+{% endif %}
   volumeClaimTemplates:
     - metadata:
         name: postgres

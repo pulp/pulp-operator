@@ -1,0 +1,1 @@
+Support nodeSelector and tolerations
