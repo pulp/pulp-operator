@@ -143,7 +143,7 @@ spec:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
       - displayName: LoadBalancer Annotations
-        path: loadbalancer_annotations
+        path: service_annotations
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:LoadBalancer

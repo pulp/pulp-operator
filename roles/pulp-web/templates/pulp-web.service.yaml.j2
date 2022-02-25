@@ -10,9 +10,9 @@ metadata:
     app.kubernetes.io/component: webserver
     app.kubernetes.io/part-of: '{{ deployment_type }}'
     app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
-{% if ingress_type | lower == 'loadbalancer' and loadbalancer_annotations %}
+{% if service_annotations %}
   annotations:
-    {{ loadbalancer_annotations | indent(width=4) }}
+    {{ service_annotations | indent(width=4) }}
 {% endif %}
 spec:
   selector:
