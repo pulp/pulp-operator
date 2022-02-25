@@ -68,6 +68,10 @@ spec:
           emptyDir: {}
 {% endif %}
       serviceAccountName: pulp-operator-sa
+{% if topology_spread_constraints %}
+      topologySpreadConstraints:
+        {{ topology_spread_constraints | indent(width=8) }}
+{% endif %}
       containers:
         - name: resource-manager
           image: "{{ _image }}"

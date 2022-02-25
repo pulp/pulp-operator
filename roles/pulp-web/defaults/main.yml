@@ -36,6 +36,17 @@ ca_trust_bundle: "/etc/pki/tls/certs/ca-bundle.crt"
 pulp_webserver_static_dir: "/opt/app-root/src"
 pulp_nginx_conf_dir: "/opt/app-root/etc/nginx.default.d"
 
+# Add a topologySpreadConstraints for the Pulp pods.
+# Specify as literal block. E.g.:
+# topology_spread_constraints: |
+#   - maxSkew: 100
+#     topologyKey: "topology.kubernetes.io/zone"
+#     whenUnsatisfiable: "ScheduleAnyway"
+#     labelSelector:
+#       matchLabels:
+#         app.kubernetes.io/name: "<resourcename>"
+topology_spread_constraints: ''
+
 # Here we use  _pulp_pulpproject_org_pulp to get un-modified cr
 # see: https://github.com/operator-framework/operator-sdk/issues/1770
 raw_spec: "{{ vars['_pulp_pulpproject_org_pulp']['spec'] }}"

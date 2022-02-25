@@ -226,9 +226,9 @@ spec:
                 description: Path where the PostgreSQL data are located
                 type: string
               postgres_extra_args:
-                type: array
                 items:
                   type: string
+                type: array
               postgres_host_auth_method:
                 description: The method to be used for database host authentication
                 type: string
@@ -386,6 +386,9 @@ spec:
                 - S3
                 - azure
                 - Azure
+                type: string
+              topology_spread_constraints:
+                description: topology rule(s) for the pods
                 type: string
               web:
                 description: The pulp web deployment.

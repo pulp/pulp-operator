@@ -84,6 +84,10 @@ spec:
                 key: {{ container_auth_private_key_name }}
 {% endif %}
       serviceAccountName: pulp-operator-sa
+{% if topology_spread_constraints %}
+      topologySpreadConstraints:
+        {{ topology_spread_constraints | indent(width=8) }}
+{% endif %}
       containers:
         - name: api
           image: "{{ _image }}"
