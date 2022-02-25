@@ -227,6 +227,18 @@ spec:
               route_tls_secret:
                 description: Secret where the TLS related credentials are stored
                 type: string
+              node_selector:
+                description: nodeSelector for the Pulp pods
+                type: string
+              tolerations:
+                description: node tolerations for the Pulp pods
+                type: string
+              postgres_selector:
+                description: nodeSelector for the Postgres pods
+                type: string
+              postgres_tolerations:
+                description: node tolerations for the Postgres pods
+                type: string
               nodeport_port:
                 description: Provide requested port value
                 type: string
