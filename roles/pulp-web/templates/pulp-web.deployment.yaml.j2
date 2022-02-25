@@ -40,6 +40,10 @@ spec:
         nodeAffinity: {{ _node_affinity }}
 {% endif %}
       serviceAccountName: pulp-operator-sa
+{% if topology_spread_constraints %}
+      topologySpreadConstraints:
+        {{ topology_spread_constraints | indent(width=8) }}
+{% endif %}
       containers:
         - name: web
           image: "{{ _image_web }}"

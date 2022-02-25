@@ -70,6 +70,10 @@ spec:
         - name: {{ ansible_operator_meta.name }}-ansible-tmp
           emptyDir: {}
       serviceAccountName: pulp-operator-sa
+{% if topology_spread_constraints %}
+      topologySpreadConstraints:
+        {{ topology_spread_constraints | indent(width=8) }}
+{% endif %}
       containers:
         - name: worker
           image: "{{ _image }}"
