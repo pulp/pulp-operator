@@ -196,8 +196,8 @@ spec:
                 - NodePort
                 - nodeport
                 type: string
-              loadbalancer_annotations:
-                description: Annotations to add to the loadbalancer
+              service_annotations:
+                description: Annotations to add to the service
                 type: string
               loadbalancer_port:
                 default: 80
