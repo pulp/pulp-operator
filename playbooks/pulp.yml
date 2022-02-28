@@ -35,8 +35,8 @@
     raw_spec: "{{ vars['_pulp_pulpproject_org_pulp']['spec'] }}"
   roles:
     - postgres
-    - pulp-routes
     - pulp-web
+    - pulp-routes
     - pulp-api
     - pulp-content
     - pulp-worker
