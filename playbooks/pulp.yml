@@ -8,6 +8,7 @@
     default_settings:
       cache_enabled: true
       db_encryption_key: "/etc/pulp/keys/database_fields.symmetric.key"
+      ansible_certs_dir: "/etc/pulp/keys/"
       databases:
         default:
           HOST: "{{ postgres_host }}"
