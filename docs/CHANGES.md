@@ -12,6 +12,34 @@ Changelog
 --->
 
 <!-- TOWNCRIER -->
+
+0.8.0 (2022-03-14)
+==================
+
+
+Features
+--------
+
+- Add ability to configure extra args for postgres
+  [#344](https://github.com/pulp/pulp-operator/issues/344)
+- Add the ability to specify topologySpreadConstraints
+  [#345](https://github.com/pulp/pulp-operator/issues/345)
+- Allow service annotations not only for LoadBalancer type
+  [#346](https://github.com/pulp/pulp-operator/issues/346)
+- Support nodeSelector and tolerations
+  [#348](https://github.com/pulp/pulp-operator/issues/348)
+
+
+Bugfixes
+--------
+
+- Ensure the operator works with pre-defined TLS secret
+  [#354](https://github.com/pulp/pulp-operator/issues/354)
+
+
+----
+
+
 0.7.1 (2022-02-22)
 ==================
 
