@@ -6,6 +6,7 @@ metadata:
   namespace: "{{ ansible_operator_meta.namespace }}"
   annotations:
     email: pulp-dev@redhat.com
+    ignore-check.kube-linter.io/no-node-affinity: "Do not check node affinity"
   labels:
     app.kubernetes.io/name: 'nginx'
     app.kubernetes.io/instance: 'nginx-{{ ansible_operator_meta.name }}'

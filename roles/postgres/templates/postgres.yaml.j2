@@ -10,6 +10,7 @@ metadata:
     ignore-check.kube-linter.io/unset-cpu-requirements: "Temporarily disabled"
     ignore-check.kube-linter.io/unset-memory-requirements: "Temporarily disabled"
     ignore-check.kube-linter.io/read-secret-from-env-var: "Temporarily disabled"
+    ignore-check.kube-linter.io/no-node-affinity: "Do not check node affinity"
   labels:
     app.kubernetes.io/name: 'postgres'
     app.kubernetes.io/instance: 'postgres-{{ ansible_operator_meta.name }}'
