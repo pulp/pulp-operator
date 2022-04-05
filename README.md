@@ -4,7 +4,7 @@
 
 [Pulp](https://pulpproject.org/) is a platform for managing repositories of content, such as software packages, and making them available to a large number of consumers.
 
-With Pulp you can:
+With Pulp you can
 
 * Locally mirror all or part of a repository
 * Host your own content in a new repository
