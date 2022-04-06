@@ -92,3 +92,5 @@ keycloak_host_available: false
 keycloak_protocol_available: false
 keycloak_port_available: false
 keycloak_realm_available: false
+
+__pulp_gpg_inspect_command: "gpg --import-options show-only --import --with-fingerprint"
