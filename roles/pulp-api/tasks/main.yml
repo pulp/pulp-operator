@@ -105,6 +105,9 @@
 - include_tasks:
     file: db_fields_encryption_configuration.yml
 
+- include_tasks: signing_service.yml
+  when: galaxy_signing_secret is defined
+
 - name: pulp-api service
   k8s:
     state: "{{ deployment_state }}"

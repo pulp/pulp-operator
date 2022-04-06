@@ -68,6 +68,19 @@ spec:
             items:
               - path: database_fields.symmetric.key
                 key: database_fields.symmetric.key
+{% if galaxy_signing_secret is defined %}
+        - name: {{ ansible_operator_meta.name }}-signing-scripts
+          configMap:
+            name: {{ signing_scripts_configmap }}
+        - name: {{ ansible_operator_meta.name }}-signing-galaxy
+          secret:
+            secretName: {{ galaxy_signing_secret }}
+            items:
+              - path: galaxy_signing_service.gpg
+                key: galaxy_signing_service.gpg
+              - path: galaxy_signing_service.asc
+                key: galaxy_signing_service.asc
+{% endif %}
 {% if is_file_storage %}
         - name: file-storage
           persistentVolumeClaim:
@@ -99,6 +112,10 @@ spec:
               value: "{{ ansible_operator_meta.name }}-redis-svc"
             - name: REDIS_SERVICE_PORT
               value: "{{ default_settings.redis_port }}"
+{% if galaxy_signing_secret is defined %}
+            - name: PULP_SIGNING_KEY_FINGERPRINT
+              value: "{{ signing_key_fingerprint }}"
+{% endif %}
           ports:
             - protocol: TCP
               containerPort: 24816
@@ -108,6 +125,20 @@ spec:
             - name: {{ ansible_operator_meta.name }}-db-fields-encryption
               mountPath: "/etc/pulp/keys/"
               readOnly: true
+{% if galaxy_signing_secret is defined %}
+            - name: {{ ansible_operator_meta.name }}-signing-scripts
+              mountPath: "/var/lib/pulp/scripts"
+              subPath: scripts
+              readOnly: true
+            - name: name: {{ ansible_operator_meta.name }}-signing-galaxy
+              mountPath: "/etc/pulp/keys/galaxy_signing_service.gpg"
+              subPath: galaxy_signing_service.gpg
+              readOnly: true
+            - name: name: {{ ansible_operator_meta.name }}-signing-galaxy
+              mountPath: "/etc/pulp/keys/galaxy_signing_service.asc"
+              subPath: galaxy_signing_service.asc
+              readOnly: true
+{% endif %}
 {% if is_file_storage %}
             - name: file-storage
               readOnly: false

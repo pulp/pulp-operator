@@ -15,6 +15,11 @@ django-admin migrate --noinput
 django-admin migrate auth --noinput
 
 bash +x
+
+if [ -n "${PULP_SIGNING_KEY_FINGERPRINT}" ]; then
+    django-admin add-signing-service "${SIGNING_SERVICE}" /var/lib/pulp/scripts/collection_sign.sh "${PULP_SIGNING_KEY_FINGERPRINT}"
+fi
+
 ADMIN_PASSWORD_FILE=/etc/pulp/pulp-admin-password
 if [[ -f "$ADMIN_PASSWORD_FILE" ]]; then
    echo "pulp admin can be initialized."
