@@ -1,0 +1,6 @@
+[gerrit]
+host=code.engineering.redhat.com
+defaultbranch=release-2.2
+project=automationhub-operator
+port=22
+
