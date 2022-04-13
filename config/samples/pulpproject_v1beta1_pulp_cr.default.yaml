@@ -6,6 +6,12 @@ metadata:
   # The registry to grab the pulp image from.
 # image: quay.io/pulp/pulp
 # image_version: stable
+
+  # The credentials to pull the images when using private registries.
+  # By default, it is not required to set this variable because the operator will pull the images from public registries.
+  # It is useful when trying to do disconnected installations or using custom images from private registries.
+# image_pull_secret_credentials: '{ "auths": { "quay.io": { "auth": "PHVzZXI+OjxwYXNzPgo="}, "docker.io" : {"auth": "PHVzZXI+OjxwYXNzPgo="}}}'
+
 # Pulp settings.
 # pulp_settings:
 #    debug: "True"

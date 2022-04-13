@@ -260,7 +260,10 @@ spec:
                   - Always
                   - Never
               image_pull_secret:
-                description: The image pull secret
+                description: Name of the secret that will be created with the content of image_pull_secret_credentials
+                type: string
+              image_pull_secret_credentials:
+                description: The credentials (following the same format as .docker/config.json) that will be stored on image pull secret
                 type: string
               affinity:
                 description: Defines various deployment affinities
