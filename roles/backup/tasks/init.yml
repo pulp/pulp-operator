@@ -130,6 +130,13 @@
     - status['dbFieldsEncryptionSecret'] is defined
     - status['dbFieldsEncryptionSecret'] | length
 
+- name: Set galaxy signing secret if found
+  set_fact:
+    galaxy_signing_secret: "{{ status['galaxySigningSecret'] }}"
+  when:
+    - status['galaxySigningSecret'] is defined
+    - status['galaxySigningSecret'] | length
+
 - name: Set container token secret if found
   set_fact:
     container_token_secret: "{{ status['containerTokenSecret'] }}"
