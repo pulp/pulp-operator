@@ -64,6 +64,20 @@
     - db_fields_encryption_secret is defined
     - db_fields_encryption_secret | length
 
+- name: Remove ownerReferences from galaxy signing secret to avoid garbage collection
+  k8s:
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: '{{ galaxy_signing_secret }}'
+        namespace: '{{ ansible_operator_meta.namespace }}'
+        ownerReferences: null
+  no_log: true
+  when:
+    - galaxy_signing_secret is defined
+    - galaxy_signing_secret | length
+
 - name: Remove ownerReferences from container token secret to avoid garbage collection
   k8s:
     definition:
