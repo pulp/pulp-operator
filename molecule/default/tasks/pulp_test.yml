@@ -7,6 +7,43 @@
   vars:
     cr_file: 'pulpproject_v1beta1_pulp_cr.molecule.ci.yaml'
 
+- name: Create role to allow patch/get on osdk-sa serviceaccount
+  k8s:
+    state: present
+    namespace: '{{ namespace }}'
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: Role
+      metadata:
+        name: 'osdk-sa-role'
+      rules:
+      - apiGroups:
+        - ""
+        resourceNames:
+        - osdk-sa
+        resources:
+        - serviceaccounts
+        verbs:
+        - patch
+        - get
+
+- name: Bind osdk-sa-role to osdk-sa serviceaccount
+  k8s:
+    state: present
+    namespace: '{{ namespace }}'
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: 'osdk-sa-rolebinding'
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: Role
+        name: osdk-sa-role
+      subjects:
+      - kind: ServiceAccount
+        name: osdk-sa
+
 - name: Wait 15m for reconciliation to run
   k8s_info:
     api_version: '{{ custom_resource.apiVersion }}'

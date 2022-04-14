@@ -32,6 +32,7 @@ nav:
   - Custom Resources:
       - Pulp:
         - API: roles/pulp-api.md
+        - Common: roles/common.md
         - Content: roles/pulp-content.md
         - Routes: roles/pulp-routes.md
         - Worker: roles/pulp-worker.md
