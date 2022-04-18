@@ -35,7 +35,7 @@ do
 	# echo $repo
     COLLECTION_URL="$BASE_ADDR/api/galaxy/content/$repo/v3/collections/"
     # echo $COLLECTION_URL
-    HTTP_CODE=$(curl --write-out "%{http_code}\n" -H "Authorization:Token $TOKEN" $COLLECTION_URL --silent --output /dev/null)
+    HTTP_CODE=$(curl --location --write-out "%{http_code}\n" -H "Authorization:Token $TOKEN" $COLLECTION_URL --silent --output /dev/null)
     # echo $HTTP_CODE
     REPO_RESULTS+=($HTTP_CODE)
 done
