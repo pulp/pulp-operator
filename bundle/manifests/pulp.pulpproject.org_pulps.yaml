@@ -162,9 +162,11 @@ spec:
                 - Always
                 - Never
                 type: string
-              image_pull_secret:
-                description: The image pull secret
-                type: string
+              image_pull_secrets:
+                description: The image pull secrets
+                items:
+                  type: string
+                type: array
               image_version:
                 default: stable
                 description: The image version for the pulp image.
