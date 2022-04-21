@@ -29,18 +29,22 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
       labels:
         control-plane: controller-manager
         app.kubernetes.io/name: pulp-operator
         app.kubernetes.io/component: operator
     spec:
-      serviceAccountName: sa
+      securityContext:
+        runAsNonRoot: true
       containers:
-        - name: pulp-manager
-          args:
-          - --leader-elect
-          - --leader-election-id=pulp-operator
-          env:
+      - args:
+        - --leader-elect
+        - --leader-election-id=pulp-operator
+        image: controller:latest
+        name: pulp-manager
+        env:
           # Watch one namespace (namespace-scoped).
             - name: WATCH_NAMESPACE
               valueFrom:
@@ -58,24 +62,28 @@ spec:
               value: redis:latest
             - name: RELATED_IMAGE_PULP_POSTGRES
               value: postgres:12
-          image: controller:latest
-          resources:
-            limits:
-              cpu: 1200m
-              memory: 2Gi
-            requests:
-              cpu: 1m
-              memory: 6Mi
-          livenessProbe:
-            httpGet:
-              path: /readyz
-              port: 6789
-            initialDelaySeconds: 15
-            periodSeconds: 20
-          readinessProbe:
-            httpGet:
-              path: /healthz
-              port: 6789
-            initialDelaySeconds: 5
-            periodSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 6789
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 6789
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        # TODO(user): Configure the resources accordingly based on the project requirements.
+        # More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+        resources:
+          limits:
+            cpu: 500m
+            memory: 768Mi
+          requests:
+            cpu: 10m
+            memory: 256Mi
+      serviceAccountName: sa
       terminationGracePeriodSeconds: 10

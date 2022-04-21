@@ -8,4 +8,4 @@ resources:
 - pulpproject_v1beta1_pulp_cr.galaxy.yaml
 - pulpproject_v1beta1_pulp_cr.object_storage.aws.yaml
 - pulpproject_v1beta1_pulp_cr.object_storage.azure.yaml
-# +kubebuilder:scaffold:manifestskustomizesamples
+#+kubebuilder:scaffold:manifestskustomizesamples

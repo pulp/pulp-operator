@@ -175,11 +175,11 @@ metadata:
       ]
     capabilities: Seamless Upgrades
     categories: Integration & Delivery
-    containerImage: quay.io/pulp/pulp-operator:v0.9.0.dev
+    containerImage: quay.io/pulp/pulp-operator:v0.9.0
     createdAt: "2021-03-26 16:57:40"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
-    operators.operatorframework.io/builder: operator-sdk-v1.12.0
+    operators.operatorframework.io/builder: operator-sdk-v1.19.1
     operators.operatorframework.io/project_layout: ansible.sdk.operatorframework.io/v1
     repository: https://github.com/pulp/pulp-operator
   name: pulp-operator.v0.9.0
@@ -507,9 +507,9 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - description: Image pull secret for container images
-        displayName: Image pull secret
-        path: image_pull_secret
+      - description: Image pull secrets for container images
+        displayName: Image pull secrets
+        path: image_pull_secrets
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:imagePullSecret
@@ -815,7 +815,12 @@ spec:
   install:
     spec:
       deployments:
-      - name: pulp-operator-controller-manager
+      - label:
+          app.kubernetes.io/component: operator
+          app.kubernetes.io/name: pulp-operator
+          control-plane: controller-manager
+          owner: pulp-dev
+        name: pulp-operator-controller-manager
         spec:
           replicas: 1
           selector:
@@ -825,6 +830,8 @@ spec:
             type: RollingUpdate
           template:
             metadata:
+              annotations:
+                kubectl.kubernetes.io/default-container: manager
               labels:
                 app.kubernetes.io/component: operator
                 app.kubernetes.io/name: pulp-operator
@@ -835,14 +842,20 @@ spec:
                 - --secure-listen-address=0.0.0.0:8443
                 - --upstream=http://127.0.0.1:8080/
                 - --logtostderr=true
-                - --v=10
+                - --v=0
                 image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
                 name: kube-rbac-proxy
                 ports:
                 - containerPort: 8443
                   name: https
                   protocol: TCP
-                resources: {}
+                resources:
+                  limits:
+                    cpu: 500m
+                    memory: 128Mi
+                  requests:
+                    cpu: 5m
+                    memory: 64Mi
               - args:
                 - --health-probe-bind-address=:6789
                 - --metrics-bind-address=127.0.0.1:8080
@@ -865,27 +878,31 @@ spec:
                   value: redis:latest
                 - name: RELATED_IMAGE_PULP_POSTGRES
                   value: postgres:12
-                image: quay.io/pulp/pulp-operator:v0.9.0.dev
+                image: quay.io/pulp/pulp-operator:v0.9.0
                 livenessProbe:
                   httpGet:
-                    path: /readyz
+                    path: /healthz
                     port: 6789
                   initialDelaySeconds: 15
                   periodSeconds: 20
                 name: pulp-manager
                 readinessProbe:
                   httpGet:
-                    path: /healthz
+                    path: /readyz
                     port: 6789
                   initialDelaySeconds: 5
                   periodSeconds: 10
                 resources:
                   limits:
-                    cpu: 1200m
-                    memory: 2Gi
+                    cpu: 500m
+                    memory: 768Mi
                   requests:
-                    cpu: 1m
-                    memory: 6Mi
+                    cpu: 10m
+                    memory: 256Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+              securityContext:
+                runAsNonRoot: true
               serviceAccountName: pulp-operator-sa
               terminationGracePeriodSeconds: 10
       permissions:
@@ -998,6 +1015,22 @@ spec:
           verbs:
           - patch
         - apiGroups:
+          - ""
+          resources:
+          - serviceaccounts
+          verbs:
+          - list
+          - watch
+        - apiGroups:
+          - ""
+          resourceNames:
+          - pulp-operator-sa
+          resources:
+          - serviceaccounts
+          verbs:
+          - patch
+          - get
+        - apiGroups:
           - pulp.pulpproject.org
           resources:
           - pulps
@@ -1048,4 +1081,13 @@ spec:
   provider:
     name: Pulp Community
     url: https://github.com/pulp/pulp-operator
+  relatedImages:
+  - image: quay.io/pulp/pulp:stable
+    name: pulp
+  - image: quay.io/pulp/pulp-web:stable
+    name: pulp-web
+  - image: redis:latest
+    name: pulp-redis
+  - image: postgres:12
+    name: pulp-postgres
   version: 0.9.0
