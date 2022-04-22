@@ -100,7 +100,7 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     status:
-      containerTokenSecret: "{{ galaxy_signing_secret }}"
+      galaxySigningSecret: "{{ galaxy_signing_secret }}"
   when: galaxy_signing_secret is defined
 
 # The backup container token secret in this status can be referenced when restoring
@@ -133,7 +133,7 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     status:
-      objectStorageConfigurationSecret: "{{ storage_secret }}"
+      storageSecret: "{{ storage_secret }}"
   when: storage_secret is defined
 
 - name: Add BackupComplete condition

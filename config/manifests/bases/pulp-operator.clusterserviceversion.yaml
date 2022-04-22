@@ -524,11 +524,6 @@ spec:
         path: databaseConfigurationSecret
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
-      - description: Configuration secret for current deployed objectstorage
-        displayName: Objectstorage configuration
-        path: objectStorageConfigurationSecret
-        x-descriptors:
-        - urn:alm:descriptor:io.kubernetes:Secret
       - description: Configuration secret for encrypting DB fields
         displayName: DB fields encryption configuration
         path: dbFieldsEncryptionSecret
