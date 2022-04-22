@@ -87,7 +87,7 @@ spec:
               deploymentStorageType:
                 description: The deployment storage type
                 type: string
-              objectStorageConfigurationSecret:
+              storageSecret:
                 description: Objectstorage configuration secret used by the deployed
                   instance
                 type: string
