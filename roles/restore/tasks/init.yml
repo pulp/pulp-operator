@@ -52,11 +52,11 @@
 
 - name: Set optional objectstorage backup fact
   set_fact:
-    storage_secret: "{{ this_backup['resources'][0]['status']['objectStorageConfigurationSecret'] }}"
+    storage_secret: "{{ this_backup['resources'][0]['status']['storageSecret'] }}"
   when:
     - backup_name is defined
     - backup_name | length
-    - this_backup['resources'][0]['status']['objectStorageConfigurationSecret'] is defined
+    - this_backup['resources'][0]['status']['storageSecret'] is defined
 
 - name: Set optional DB fields encryption backup fact
   set_fact:
