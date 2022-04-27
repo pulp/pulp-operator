@@ -13,6 +13,38 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+0.9.0 (2022-04-27)
+==================
+
+Features
+--------
+
+- Modified image_pull_secret to allow users to provide multiple secrets.
+  [#343](https://github.com/pulp/pulp-operator/issues/343)
+- Implement the galaxy collection signing service
+  [#362](https://github.com/pulp/pulp-operator/issues/362)
+- Backup & restore the default signing service
+  [#366](https://github.com/pulp/pulp-operator/issues/366)
+- Enable backup for ReadWriteOnce access mode
+  [#380](https://github.com/pulp/pulp-operator/issues/380)
+
+
+Bugfixes
+--------
+
+- Fix backup/restore events
+  [#378](https://github.com/pulp/pulp-operator/issues/378)
+
+
+Misc
+----
+
+- [#374](https://github.com/pulp/pulp-operator/issues/374)
+
+
+----
+
+
 0.8.0 (2022-03-14)
 ==================
 
