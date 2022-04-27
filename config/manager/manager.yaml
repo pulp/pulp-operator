@@ -86,4 +86,6 @@ spec:
             cpu: 10m
             memory: 256Mi
       serviceAccountName: sa
+      imagePullSecrets:
+        - name: ansible-deployment-pull-secret
       terminationGracePeriodSeconds: 10
