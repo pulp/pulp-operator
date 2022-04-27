@@ -175,14 +175,14 @@ metadata:
       ]
     capabilities: Seamless Upgrades
     categories: Integration & Delivery
-    containerImage: quay.io/pulp/pulp-operator:v0.9.0
+    containerImage: quay.io/pulp/pulp-operator:v0.10.0
     createdAt: "2021-03-26 16:57:40"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
     operators.operatorframework.io/builder: operator-sdk-v1.19.1
     operators.operatorframework.io/project_layout: ansible.sdk.operatorframework.io/v1
     repository: https://github.com/pulp/pulp-operator
-  name: pulp-operator.v0.9.0
+  name: pulp-operator.v0.10.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -873,7 +873,7 @@ spec:
                   value: redis:latest
                 - name: RELATED_IMAGE_PULP_POSTGRES
                   value: postgres:12
-                image: quay.io/pulp/pulp-operator:v0.9.0
+                image: quay.io/pulp/pulp-operator:v0.10.0
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -1085,4 +1085,4 @@ spec:
     name: pulp-redis
   - image: postgres:12
     name: pulp-postgres
-  version: 0.9.0
+  version: 0.10.0
