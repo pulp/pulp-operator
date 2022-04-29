@@ -87,5 +87,5 @@ spec:
             memory: 256Mi
       serviceAccountName: sa
       imagePullSecrets:
-        - name: ansible-deployment-pull-secret
+        - name: redhat-operators-pull-secret
       terminationGracePeriodSeconds: 10
