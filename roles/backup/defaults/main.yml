@@ -16,7 +16,7 @@ backup_storage_class: ''
 admin_password_secret: "{{ deployment_name }}-admin-password"
 postgres_configuration_secret: "{{ deployment_name }}-postgres-configuration"
 
-custom_resource_key: '_pulp_pulpproject_org_pulpbackup'
+custom_resource_key: '_automationhub_ansible_com_automationhubbackup'
 
 database_type: 'unmanaged'
 

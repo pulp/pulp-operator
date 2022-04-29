@@ -1,9 +1,9 @@
 ---
 
-deployment_type: "pulp"
+deployment_type: "automationhub"
 _postgres_image: postgres:12
 
-custom_resource_key: '_pulp_pulpproject_org_pulprestore'
+custom_resource_key: '_automationhub_ansible_com_automationhubrestore'
 
 backup_api_version: 'v1beta1'
-backup_kind: 'PulpBackup'
+backup_kind: 'AutomationHubBackup'

@@ -1,7 +1,7 @@
 ---
 galaxy_info:
-  author: Pulp Team
-  description: A role to restore a Pulp deployment
+  author: AutomationHub Team
+  description: A role to restore a AutomationHub deployment
   issue_tracker_url: https://github.com/pulp/pulp-operator/issues/new
   license: GPL-2.0-or-later
   company: Red Hat

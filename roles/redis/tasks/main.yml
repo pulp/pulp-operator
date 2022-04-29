@@ -21,7 +21,7 @@
 
 - name: Set Redis image URL
   set_fact:
-    _redis_image: "{{ _custom_redis_image | default(lookup('env', 'RELATED_IMAGE_PULP_REDIS')) | default(_redis_image, true) }}"
+    _redis_image: "{{ _custom_redis_image | default(lookup('env', 'RELATED_IMAGE_HUB_REDIS')) | default(_redis_image, true) }}"
 
 - name: Set node affinity
   set_fact:

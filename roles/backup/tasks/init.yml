@@ -64,15 +64,15 @@
         namespace: '{{ backup_pvc_namespace }}'
         ownerReferences: null
 
-- name: Get Pulp custom resource object
+- name: Get AutomationHub custom resource object
   k8s_info:
     version: v1beta1
-    kind: Pulp
+    kind: AutomationHub
     namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ deployment_name }}'
   register: _custom_resource
 
-- name: Set Pulp object
+- name: Set AutomationHub object
   set_fact:
     _pulp: "{{ _custom_resource['resources'][0] }}"
 
@@ -176,7 +176,7 @@
 
 - name: Set Postgres image URL
   set_fact:
-    _postgres_image: "{{ _custom_postgres_image | default(lookup('env', 'RELATED_IMAGE_PULP_POSTGRES')) | default(_postgres_image, true) }}"
+    _postgres_image: "{{ _custom_postgres_image | default(lookup('env', 'RELATED_IMAGE_HUB_POSTGRES')) | default(_postgres_image, true) }}"
 
 - name: Create management pod from templated deployment config
   k8s:

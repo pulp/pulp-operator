@@ -43,7 +43,7 @@
   k8s:
     definition:
       apiVersion: '{{ api_version }}'
-      kind: Pulp
+      kind: AutomationHub
       metadata:
         name: '{{ deployment_name }}'
         namespace: '{{ ansible_operator_meta.namespace }}'

@@ -1,4 +1,4 @@
 ---
 
-deployment_type: "pulp"
+deployment_type: "automationhub"
 _postgres_image: postgres:12

@@ -1,17 +1,17 @@
 ---
 # Use the 'create api' subcommand to add watches to this file.
 - version: v1beta1
-  group: pulp.pulpproject.org
-  kind: Pulp
+  group: automationhub.ansible.com
+  kind: AutomationHub
   playbook: playbooks/pulp.yml
 
 - version: v1beta1
-  group: pulp.pulpproject.org
-  kind: PulpBackup
+  group: automationhub.ansible.com
+  kind: AutomationHubBackup
   role: backup
 
 - version: v1beta1
-  group: pulp.pulpproject.org
-  kind: PulpRestore
+  group: automationhub.ansible.com
+  kind: AutomationHubRestore
   role: restore
 # +kubebuilder:scaffold:watch

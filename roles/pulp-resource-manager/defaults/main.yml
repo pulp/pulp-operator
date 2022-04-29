@@ -13,6 +13,6 @@ resource_manager:
 
 is_file_storage: true
 
-# Here we use  _pulp_pulpproject_org_pulp to get un-modified cr
+# Here we use  _automationhub_ansible_com_automationhub to get un-modified cr
 # see: https://github.com/operator-framework/operator-sdk/issues/1770
-raw_spec: "{{ vars['_pulp_pulpproject_org_pulp']['spec'] }}"
+raw_spec: "{{ vars['_automationhub_ansible_com_automationhub']['spec'] }}"
