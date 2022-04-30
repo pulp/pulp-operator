@@ -1,5 +1,4 @@
 mkdocs
-pymdown-extensions
 mike
 mkdocs-git-revision-date-plugin
 mkdocs-material
