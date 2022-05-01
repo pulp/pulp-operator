@@ -79,7 +79,7 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     status:
-      databaseConfigurationSecret: "{{ _pg_config['resources'][0]['metadata']['name'] }}"
+      databaseConfigurationSecret: "{{ pg_config['resources'][0]['metadata']['name'] }}"
 
 - name: Update storage type status
   operator_sdk.util.k8s_status:
