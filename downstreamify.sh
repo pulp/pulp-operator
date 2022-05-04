@@ -35,6 +35,7 @@ for row in "${replacements[@]}"; do
     sed -i -e "s/pulp/automationhub/g" ./roles/backup/vars/main.yml \
                                         roles/backup/templates/event.yaml.j2 \
                                         roles/pulp-worker/defaults/main.yml \
+                                        roles/postgres/defaults/main.yml \
                                         roles/restore/vars/main.yml ;
 done
 

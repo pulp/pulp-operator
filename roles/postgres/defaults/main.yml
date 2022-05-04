@@ -1,5 +1,5 @@
 ---
-deployment_type: pulp
+deployment_type: automationhub
 
 postgres_version: 12
 _postgres_image: postgres:12
