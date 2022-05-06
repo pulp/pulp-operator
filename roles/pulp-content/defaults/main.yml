@@ -18,3 +18,4 @@ is_file_storage: true
 raw_spec: "{{ vars['_automationhub_ansible_com_automationhub']['spec'] }}"
 
 gunicorn_timeout: 90
+gunicorn_content_workers: 2
