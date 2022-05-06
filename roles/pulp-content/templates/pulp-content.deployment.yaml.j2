@@ -108,6 +108,8 @@ spec:
               value: "{{ ansible_operator_meta.name }}-redis-svc"
             - name: REDIS_SERVICE_PORT
               value: "{{ default_settings.redis_port }}"
+            - name: PULP_GUNICORN_TIMEOUT
+              value: "{{ gunicorn_timeout }}"
 {% if galaxy_signing_secret is defined %}
             - name: PULP_SIGNING_KEY_FINGERPRINT
               value: "{{ signing_key_fingerprint }}"
