@@ -27,6 +27,7 @@ Role Variables
     * `debug`: Wether to run pulp in debug mode.
 * `image`: The image name. Default: quay.io/pulp/pulp
 * `image_version`: The image tag. Default: stable
+* `gunicorn_timeout`: The timeout for the gunicorn process. Default: 90
 * `storage_type`: A string for specifying storage configuration type.
 * `file_storage_access_mode`: The access mode for the volume.
 * `file_storage_size`: The storage size.
