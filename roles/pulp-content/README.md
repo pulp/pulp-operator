@@ -14,6 +14,7 @@ Role Variables
     * `log_level`: The desired log level.
 * `image`: The image name. Default: quay.io/pulp/pulp
 * `image_version`: The image tag. Default: stable
+* `gunicorn_timeout`: The timeout for the gunicorn process. Default: 90
 
 Requirements
 ------------
