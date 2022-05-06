@@ -123,6 +123,8 @@ spec:
               value: "{{ default_settings.redis_port }}"
             - name: PULP_GUNICORN_TIMEOUT
               value: "{{ gunicorn_timeout }}"
+            - name: PULP_API_WORKERS
+              value: "{{ gunicorn_api_workers }}"
 {% if galaxy_signing_secret is defined %}
             - name: PULP_SIGNING_KEY_FINGERPRINT
               value: "{{ signing_key_fingerprint }}"

@@ -32,6 +32,7 @@ fi
 bash -x
 
 PULP_GUNICORN_TIMEOUT=${PULP_GUNICORN_TIMEOUT:-90}
+PULP_API_WORKERS=${PULP_API_WORKERS:-1}
 
 mkdir -p /var/lib/pulp/media \
          /var/lib/pulp/assets \
@@ -42,4 +43,6 @@ mkdir -p /var/lib/pulp/media \
 # Due to containers using network namespaces, even if the host has this disabled
 # with /proc/sys/net/ipv6/bindv6only=1, the container will still have
 # it enabled with /proc/sys/net/ipv6/bindv6only=0 .
-exec gunicorn --bind '[::]:24817' pulpcore.app.wsgi:application --timeout "${PULP_GUNICORN_TIMEOUT}"
+exec gunicorn --bind '[::]:24817' pulpcore.app.wsgi:application \
+--timeout "${PULP_GUNICORN_TIMEOUT}" \
+--workers "${PULP_API_WORKERS}"
