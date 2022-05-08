@@ -807,6 +807,8 @@ spec:
                 name: pulp-manager
                 resources: {}
               terminationGracePeriodSeconds: 10
+              imagePullSecrets:
+               - name: redhat-operators-pull-secret
       permissions:
       - rules:
         - apiGroups:

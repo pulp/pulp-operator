@@ -900,6 +900,8 @@ spec:
                 runAsNonRoot: true
               serviceAccountName: pulp-operator-sa
               terminationGracePeriodSeconds: 10
+              imagePullSecrets:
+               - name: redhat-operators-pull-secret
       permissions:
       - rules:
         - apiGroups:
