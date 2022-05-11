@@ -72,6 +72,10 @@
   when: pulp_settings is defined
 
 - include_tasks:
+    file: container_auth_configuration.yml
+  when: container_token_secret is not defined
+
+- include_tasks:
     file: get_node_ip.yml
   when: content_origin_temp is not defined
 
