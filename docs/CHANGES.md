@@ -13,6 +13,37 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+0.10.0 (2022-05-12)
+===================
+
+
+Features
+--------
+
+- Add configurable timeout for pulp-api and pulp-content
+  [#390](https://github.com/pulp/pulp-operator/issues/390)
+- Add configurable workers for pulp-api and pulp-content
+  [#392](https://github.com/pulp/pulp-operator/issues/392)
+
+
+Bugfixes
+--------
+
+- Fix a reference to an incorrect variable in pulp-status role
+  [#388](https://github.com/pulp/pulp-operator/issues/388)
+- Provide default values for container registry
+  [#394](https://github.com/pulp/pulp-operator/issues/394)
+
+
+Misc
+----
+
+- [#386](https://github.com/pulp/pulp-operator/issues/386)
+
+
+----
+
+
 0.9.0 (2022-04-27)
 ==================
 
