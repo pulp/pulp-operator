@@ -38,7 +38,7 @@ metadata:
     createdAt: "2021-03-26 16:57:40"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
-    operators.operatorframework.io/builder: operator-sdk-v1.19.1
+    operators.operatorframework.io/builder: operator-sdk-v1.20.0
     operators.operatorframework.io/project_layout: ansible.sdk.operatorframework.io/v1
     repository: https://github.com/pulp/pulp-operator
   name: pulp-operator.v0.4.0
