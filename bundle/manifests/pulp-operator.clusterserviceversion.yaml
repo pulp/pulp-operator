@@ -896,6 +896,8 @@ spec:
                     memory: 256Mi
                 securityContext:
                   allowPrivilegeEscalation: false
+              imagePullSecrets:
+              - name: redhat-operators-pull-secret
               securityContext:
                 runAsNonRoot: true
               serviceAccountName: pulp-operator-sa
