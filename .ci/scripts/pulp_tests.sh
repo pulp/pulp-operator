@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # coding=utf-8
+set -euo pipefail
 
 KUBE="k3s"
 SERVER=$(hostname)
@@ -41,18 +42,16 @@ fi
 
 cat ~/.config/pulp/cli.toml | tee ~/.config/pulp/settings.toml
 
-pushd pulp_file/docs/_scripts
-# Let's only do sync tests.
-# So as to check that Pulp can work in containers, including writing to disk.
-# If the upload tests are simpler in the long run, just use them.
-#
-# If the master branch tests fail, run the stable tests.
-# The git command is to checkout the newest stag, which should be the
-# stable release.
-# Temporary workaround until we replace with pulp-smash.
-timeout 5m bash -x docs_check_sync_publish.sh || {
-  echo "Master branch of pulp_file tests failed. Using newest tag (stable release.)"
-  git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
-  timeout 5m bash -x docs_check_sync_publish.sh
+pushd pulp_ansible/docs/_scripts
+timeout 5m bash -x quickstart.sh || {
+  git checkout $(git ls-remote --heads https://github.com/pulp/pulp_ansible.git | grep -o "[[:digit:]]\.[[:digit:]]*" | sort -V | tail -1)
+  timeout 5m bash -x quickstart.sh
 }
+popd
 
+pushd pulp_container/docs/_scripts
+timeout 5m bash -x docs_check.sh || {
+  git checkout $(git ls-remote --heads https://github.com/pulp/pulp_container.git | grep -o "[[:digit:]]\.[[:digit:]]*" | sort -V | tail -1)
+  timeout 5m bash -x docs_check.sh
+}
+popd
