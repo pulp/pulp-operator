@@ -136,8 +136,9 @@ jobs:
           sudo popeye --kubeconfig ~/.kube/config || true
       - name: Test all components
         run: |
-          git clone --depth=1 https://github.com/pulp/pulp_file.git
-          .ci/scripts/retry.sh 3 ".ci/scripts/pulp_file-tests.sh -m"
+          git clone --depth=1 https://github.com/pulp/pulp_ansible.git
+          git clone --depth=1 https://github.com/pulp/pulp_container.git
+          .ci/scripts/retry.sh 3 ".ci/scripts/pulp_tests.sh -m"
         shell: bash
         env:
           PY_COLORS: '1'
