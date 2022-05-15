@@ -42,8 +42,7 @@ done
 
 # -- Swap out postgres data path
 
-# Need to verify new path after this work lands for 2.2
-# sed -i -e "s/\/var\/lib\/pgsql\/data/\/var\/lib\/postgresql\/data\/pgdata/g" ./roles/postgres/defaults/main.yml
+sed -i -e "s/\/var\/lib\/postgresql/\/var\/lib\/pgsql/g" ./roles/postgres/defaults/main.yml
 
 # -- Inject RELATED_IMAGES_ references
 

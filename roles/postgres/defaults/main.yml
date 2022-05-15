@@ -9,7 +9,7 @@ postgres_storage_requirements:
     storage: 8Gi
 postgres_resource_requirements: {}
 
-postgres_data_path: '/var/lib/postgresql/data/pgdata'
+postgres_data_path: '/var/lib/pgsql/data/pgdata'
 
 # Secret to lookup that provide the PostgreSQL configuration
 postgres_configuration_secret: '{{ ansible_operator_meta.name }}-postgres-configuration'
