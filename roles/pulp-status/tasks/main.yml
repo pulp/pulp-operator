@@ -17,6 +17,19 @@
     - postgres_migrated_from_secret is defined
     - postgres_migrated_from_secret | length
 
+# This signifies that the PostgreSQL upgrade is complete and the version it was upgraded to
+- name: Update upgradedPostgresVersion status
+  operator_sdk.util.k8s_status:
+    api_version: '{{ api_version }}'
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    status:
+      upgradedPostgresVersion: "{{ upgraded_postgres_version }}"
+  when:
+    - upgraded_postgres_version is defined
+    - upgraded_postgres_version | length
+
 - name: Get the resource pod information.
   k8s_info:
     kind: Pod

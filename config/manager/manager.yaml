@@ -61,7 +61,7 @@ spec:
             - name: RELATED_IMAGE_PULP_REDIS
               value: redis:latest
             - name: RELATED_IMAGE_PULP_POSTGRES
-              value: postgres:12
+              value: postgres:13
         securityContext:
           allowPrivilegeEscalation: false
         livenessProbe:
