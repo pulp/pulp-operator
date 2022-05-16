@@ -18,7 +18,7 @@ sudo -E ./up.sh
 if [[ "$CI_TEST" == "galaxy" ]]; then
   CI_TEST=true .ci/scripts/galaxy_ng-tests.sh -m
 else
-  .ci/scripts/retry.sh 3 ".ci/scripts/pulp_file-tests.sh -m"
+  .ci/scripts/retry.sh 3 ".ci/scripts/pulp_tests.sh -m"
 fi
 
 docker images
