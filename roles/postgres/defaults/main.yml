@@ -1,8 +1,8 @@
 ---
 deployment_type: pulp
 
-postgres_version: 12
-_postgres_image: postgres:12
+postgres_version: 13
+_postgres_image: postgres:13
 
 postgres_storage_requirements:
   requests:
@@ -13,7 +13,6 @@ postgres_data_path: '/var/lib/postgresql/data/pgdata'
 
 # Secret to lookup that provide the PostgreSQL configuration
 postgres_configuration_secret: '{{ ansible_operator_meta.name }}-postgres-configuration'
-
 
 # Secret to lookup that provide the PostgreSQL configuration for old database
 postgres_migrant_configuration_secret: ''
@@ -29,6 +28,9 @@ postgres_host_auth_method: 'scram-sha-256'
 #   kubernetes.io/arch: amd64
 #   kubernetes.io/os: linux
 postgres_selector: ''
+
+# Specify whether or not to keep the old PVC after PostgreSQL upgrades
+postgres_keep_pvc_after_upgrade: true
 
 # Add node tolerations for the Postgres pods.
 # Specify as literal block. E.g.:
