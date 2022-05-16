@@ -380,7 +380,8 @@ jobs:
           CI_TEST=${{ matrix.CI_TEST }} python3 .ci/scripts/images.py
       - name: Testing images
         run: |
-          git clone --depth=1 https://github.com/pulp/pulp_file.git
+          git clone --depth=1 https://github.com/pulp/pulp_ansible.git
+          git clone --depth=1 https://github.com/pulp/pulp_container.git
           CI_TEST=${{ matrix.CI_TEST }} .github/workflows/scripts/build_images.sh
           CI_TEST=${{ matrix.CI_TEST }} .github/workflows/scripts/test_images.sh -m
         shell: bash
