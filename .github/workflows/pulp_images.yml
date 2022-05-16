@@ -36,7 +36,7 @@ jobs:
       - name: Test all components
         run: |
           git clone --depth=1 https://github.com/pulp/pulp_file.git
-          .ci/scripts/retry.sh 3 ".ci/scripts/pulp_file-tests.sh"
+          .ci/scripts/retry.sh 3 ".ci/scripts/pulp_tests.sh"
         shell: bash
         env:
           PY_COLORS: '1'
