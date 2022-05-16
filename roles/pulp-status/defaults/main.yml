@@ -1,5 +1,6 @@
 ---
 postgres_migrated_from_secret: ''
+upgraded_postgres_version: ''
 
 ingress_type: none
 

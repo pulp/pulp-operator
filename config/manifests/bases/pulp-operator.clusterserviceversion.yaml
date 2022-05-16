@@ -124,6 +124,10 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Postgres Keep Old Data PVC After Upgrade
+        path: postgres_keep_pvc_after_upgrade
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - displayName: Ingress type
         path: ingress_type
         x-descriptors:
@@ -802,7 +806,7 @@ spec:
                 - name: RELATED_IMAGE_PULP_REDIS
                   value: redis:latest
                 - name: RELATED_IMAGE_PULP_POSTGRES
-                  value: postgres:12
+                  value: postgres:13
                 image: quay.io/pulp/pulp-operator:devel
                 name: pulp-manager
                 resources: {}
