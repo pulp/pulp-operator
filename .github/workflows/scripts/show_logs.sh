@@ -36,3 +36,7 @@ echo ::endgroup::
 echo ::group::PULP_WEB_LOGS
 sudo -E kubectl logs -l app.kubernetes.io/name=nginx --tail=10000
 echo ::endgroup::
+
+echo ::group::POSTGRES
+sudo -E kubectl logs -l app.kubernetes.io/name=postgres --tail=10000
+echo ::endgroup::

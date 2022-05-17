@@ -102,7 +102,7 @@ spec:
                 - /bin/sh
                 - -i
                 - -c
-                - pg_isready -h 127.0.0.1 -p 5432
+                - pg_isready -U {{ deployment_type }} -h 127.0.0.1 -p {{ postgres_port | default('5432')}}
             enabled: true
             initialDelaySeconds: 30
             periodSeconds: 10
@@ -115,7 +115,7 @@ spec:
                 - /bin/sh
                 - -i
                 - -c
-                - pg_isready -h 127.0.0.1 -p 5432
+                - pg_isready -U {{ deployment_type }} -h 127.0.0.1 -p {{ postgres_port | default('5432')}}
             enabled: true
             initialDelaySeconds: 5
             periodSeconds: 10
