@@ -12,6 +12,8 @@ backup_storage_requirements: ''
 # Specify storage class to determine how to dynamically create PVC's with
 backup_storage_class: ''
 
+postgres_version: 13
+
 # Secret Names
 admin_password_secret: "{{ deployment_name }}-admin-password"
 postgres_configuration_secret: "{{ deployment_name }}-postgres-configuration"

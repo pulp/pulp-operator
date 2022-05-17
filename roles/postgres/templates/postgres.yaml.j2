@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: StatefulSet
 metadata:
-  name: '{{ ansible_operator_meta.name }}-postgres'
+  name: '{{ ansible_operator_meta.name }}-postgres-{{ postgres_version }}'
   namespace: '{{ ansible_operator_meta.namespace }}'
   annotations: # About kube-linter checks: https://docs.kubelinter.io/#/generated/checks
     email: pulp-dev@redhat.com
