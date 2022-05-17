@@ -42,22 +42,35 @@
     postgres_label_selector: "app.kubernetes.io/instance=postgres-{{ postgres_version }}-{{ ansible_operator_meta.name }}"
   when: postgres_label_selector is not defined
 
-- name: Get new postgres pod information
-  k8s_info:
-    kind: Pod
-    namespace: "{{ ansible_operator_meta.namespace }}"
-    label_selectors:
-      - "{{ postgres_label_selector }}"
-      - app.kubernetes.io/version: '{{ postgres_version }}'
-    field_selectors:
-      - status.phase=Running
-  register: postgres_pod
-  until:
-    - "postgres_pod['resources'] | length"
-    - "postgres_pod['resources'][0]['status']['phase'] == 'Running'"
-    - "postgres_pod['resources'][0]['status']['containerStatuses'][0]['ready'] == true"
-  delay: 5
-  retries: 60
+- block:
+    - name: Get new postgres pod information
+      k8s_info:
+        kind: Pod
+        namespace: "{{ ansible_operator_meta.namespace }}"
+        label_selectors:
+          - "{{ postgres_label_selector }}"
+          - "app.kubernetes.io/version={{ postgres_version }}"
+        field_selectors:
+          - status.phase=Running
+      register: postgres_pod
+      until:
+        - "postgres_pod['resources'] | length"
+        - "postgres_pod['resources'][0]['status']['phase'] == 'Running'"
+        - "postgres_pod['resources'][0]['status']['containerStatuses'][0]['ready'] == true"
+      delay: 5
+      retries: 60
+- rescue:
+    - name: Set error message
+      set_fact:
+        error_msg: "A Postgres {{ postgres_version }} Pod with the {{ postgres_label_selector }} label \
+              is not available and in the Running state"
+
+    - name: Handle error
+      import_tasks: error_handling.yml
+
+    - name: Fail with message if Postgres Pod doesn't come up
+      fail:
+        msg: "{{ error_msg }}"
 
 - name: Set the resource pod name as a variable.
   set_fact:
