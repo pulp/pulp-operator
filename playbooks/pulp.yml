@@ -36,7 +36,6 @@
     file_storage_size: "100Gi"
     raw_spec: "{{ vars['_pulp_pulpproject_org_pulp']['spec'] }}"
   roles:
-    - common
     - postgres
     - pulp-web
     - pulp-routes

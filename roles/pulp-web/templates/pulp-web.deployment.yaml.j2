@@ -32,6 +32,16 @@ spec:
         app.kubernetes.io/part-of: '{{ deployment_type }}'
         app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
     spec:
+{% if image_pull_secret is defined and image_pull_secrets is undefined %}
+# image_pull_secret is deprecated in favor of image_pull_secrets
+      imagePullSecrets:
+        - name: {{ image_pull_secret }}
+{% elif image_pull_secrets is defined %}
+      imagePullSecrets:
+{% for secret in image_pull_secrets %}
+        - name: {{ secret }}
+{% endfor %}
+{% endif %}
 {% if _node_affinity is defined %}
       affinity:
         nodeAffinity: {{ _node_affinity }}
