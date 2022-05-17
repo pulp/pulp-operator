@@ -72,10 +72,6 @@
   when: pulp_settings is defined
 
 - include_tasks:
-    file: container_auth_configuration.yml
-  when: container_token_secret is not defined
-
-- include_tasks:
     file: get_node_ip.yml
   when: content_origin_temp is not defined
 
@@ -163,6 +159,12 @@
     _node_affinity: "{{ raw_spec['affinity']['node_affinity'] | default({}) }}"
   when: affinity is defined and affinity.node_affinity is defined
 
+- name: Set default token authentication secret name if not set by user
+  set_fact:
+    container_token_secret: '{{ ansible_operator_meta.name }}-container-auth'
+    cacheable: yes
+  when: container_token_secret is not defined
+
 - name: Get container token configuration
   k8s_info:
     kind: Secret
@@ -170,7 +172,11 @@
     name: '{{ container_token_secret }}'
   register: _container_token_configuration
   no_log: true
-  when: container_token_secret is defined
+
+- include_tasks:
+    file: container_auth_configuration.yml
+  when:
+    - (_container_token_configuration is not defined) or not (_container_token_configuration['resources'] | length)
 
 - name: Get container token keys
   set_fact:

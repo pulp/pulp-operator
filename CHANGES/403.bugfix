@@ -1,0 +1,1 @@
+Revert pulp#373 and patch container-auth secret creation to ensure the reconciliation loop converges
