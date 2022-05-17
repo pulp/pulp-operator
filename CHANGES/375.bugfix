@@ -1,0 +1,1 @@
+Rolled back to operator-sdk v1.18.1 to resolve issue with reconciliation loop not converging

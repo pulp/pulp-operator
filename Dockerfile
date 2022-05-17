@@ -1,4 +1,4 @@
-FROM quay.io/operator-framework/ansible-operator:v1.20.0
+FROM quay.io/operator-framework/ansible-operator:v1.18.1
 
 ENV ANSIBLE_FORCE_COLOR=true
 ENV ANSIBLE_SHOW_TASK_PATH_ON_FAILURE=true
