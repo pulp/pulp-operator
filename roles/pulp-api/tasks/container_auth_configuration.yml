@@ -9,7 +9,10 @@
     apply: true
     definition: "{{ lookup('template', 'pulp-container-auth.secret.yaml.j2') }}"
 
-- name: Set default token authentication secret name
-  set_fact:
-    container_token_secret: '{{ ansible_operator_meta.name }}-container-auth'
-    cacheable: yes
+- name: Get container token configuration
+  k8s_info:
+    kind: Secret
+    namespace: '{{ ansible_operator_meta.namespace }}'
+    name: '{{ container_token_secret }}'
+  register: _container_token_configuration
+  no_log: true
