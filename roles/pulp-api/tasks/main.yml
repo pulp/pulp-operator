@@ -71,8 +71,10 @@
   no_log: true
   when: pulp_settings is defined
 
-- include_tasks:
-    file: container_auth_configuration.yml
+- name: Set default token authentication secret name if not set by user
+  set_fact:
+    container_token_secret: '{{ ansible_operator_meta.name }}-container-auth'
+    cacheable: yes
   when: container_token_secret is not defined
 
 - include_tasks:
@@ -170,7 +172,11 @@
     name: '{{ container_token_secret }}'
   register: _container_token_configuration
   no_log: true
-  when: container_token_secret is defined
+
+- include_tasks:
+    file: container_auth_configuration.yml
+  when:
+    - (_container_token_configuration is not defined) or not (_container_token_configuration['resources'] | length)
 
 - name: Get container token keys
   set_fact:
