@@ -1,1 +1,0 @@
-Set reconcile period to 0s to resolve issue with reconciliation loop not converging
