@@ -1,0 +1,1 @@
+Patch container-auth secret creation to ensure the reconciliation loop converges
