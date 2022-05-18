@@ -174,7 +174,8 @@ For installing it, click on: `Pulp Project` and then `Install`:
 
 ![Installing pulp](images/3.png "Installing pulp operator")
 
-Create a `Secret` with the `S3` credentials:
+Create a `Secret` with the `S3` credentials.
+Note that these should be valid credentials from an already configured S3 bucket:
 ![S3 credentials Secret](images/4.png "S3 credentials Secret")
 
 Click `Pulp`:
