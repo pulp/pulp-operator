@@ -71,22 +71,6 @@ rules:
       - deployments/scale
     verbs:
       - patch
-  - apiGroups:
-      - ""
-    resources:
-      - serviceaccounts
-    verbs:
-      - list
-      - watch
-  - apiGroups:
-      - ""
-    resourceNames:
-      - pulp-operator-sa
-    resources:
-      - serviceaccounts
-    verbs:
-      - patch
-      - get
   ##
   ## Rules for pulp.pulpproject.org/v1beta1, Kind: Pulp
   ##
