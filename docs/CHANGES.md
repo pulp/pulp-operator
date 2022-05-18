@@ -13,6 +13,29 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+0.10.1 (2022-05-18)
+===================
+
+
+Bugfixes
+--------
+
+- Set reconcile period to 0s to resolve issue with reconciliation loop not converging
+  [#385](https://github.com/pulp/pulp-operator/issues/385)
+- Patch container-auth secret creation to ensure the reconciliation loop converges
+  [#403](https://github.com/pulp/pulp-operator/issues/403)
+
+
+Deprecations and Removals
+-------------------------
+
+- Revert #373 to ensure the reconciliation loop converges
+  [#403](https://github.com/pulp/pulp-operator/issues/403)
+
+
+----
+
+
 0.10.0 (2022-05-12)
 ===================
 
