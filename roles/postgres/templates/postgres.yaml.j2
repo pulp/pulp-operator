@@ -56,7 +56,7 @@ spec:
       affinity:
         nodeAffinity: {{ _node_affinity }}
 {% endif %}
-      serviceAccountName: pulp-operator-sa
+      serviceAccountName: '{{ deployment_type }}-operator-sa'
       containers:
         - image: '{{ _postgres_image }}'
           name: postgres

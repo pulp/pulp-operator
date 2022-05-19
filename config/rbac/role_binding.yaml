@@ -12,4 +12,4 @@ roleRef:
   name: pulp-manager-role
 subjects:
 - kind: ServiceAccount
-  name: pulp-operator-sa
+  name: sa

@@ -81,7 +81,7 @@ spec:
         - name: tmp-file-storage
           emptyDir: {}
 {% endif %}
-      serviceAccountName: pulp-operator-sa
+      serviceAccountName: '{{ deployment_type }}-operator-sa'
 {% if topology_spread_constraints %}
       topologySpreadConstraints:
         {{ topology_spread_constraints | indent(width=8) }}
