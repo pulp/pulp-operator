@@ -14,7 +14,7 @@ sudo mv ./kind /usr/local/bin/kind
 make kustomize
 kustomize version
 
-find ./roles/*/templates/*.yaml.j2 -exec sed -i 's/pulp-operator-sa/osdk-sa/g' {} \;
+find ./roles/*/templates/*.yaml.j2 -exec sed -i 's/{{ deployment_type }}-operator-sa/osdk-sa/g' {} \;
 
 echo "Starting molecule test"
 molecule -v test -s kind --destroy never
