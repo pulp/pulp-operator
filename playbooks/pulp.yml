@@ -35,6 +35,27 @@
     file_storage_access_mode: "ReadWriteMany"
     file_storage_size: "100Gi"
     raw_spec: "{{ vars['_pulp_pulpproject_org_pulp']['spec'] }}"
+  pre_tasks:
+    - name: Verify imagePullSecrets
+      k8s_info:
+        kind: Secret
+        namespace: '{{ ansible_operator_meta.namespace }}'
+        name: redhat-operators-pull-secret
+      register: _rh_ops_secret
+      no_log: true
+    - name: Create imagePullSecret
+      k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: redhat-operators-pull-secret
+            namespace: '{{ ansible_operator_meta.namespace }}'
+          stringData:
+            operator: pulp
+      when:
+        - (_rh_ops_secret is not defined) or not (_rh_ops_secret['resources'] | length)
   roles:
     - postgres
     - pulp-web
