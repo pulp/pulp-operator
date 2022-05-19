@@ -46,7 +46,7 @@ spec:
       affinity:
         nodeAffinity: {{ _node_affinity }}
 {% endif %}
-      serviceAccountName: pulp-operator-sa
+      serviceAccountName: '{{ deployment_type }}-operator-sa'
 {% if topology_spread_constraints %}
       topologySpreadConstraints:
         {{ topology_spread_constraints | indent(width=8) }}
