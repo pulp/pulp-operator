@@ -15,6 +15,9 @@ if [[ "$KUBE" == "minikube" ]]; then
   sudo -E kubectl top pods || true
   sudo -E kubectl describe node minikube || true
   echo ::endgroup::
+  echo ::group::MINIKUBE_LOGS
+  minikube logs -n 10000
+  echo ::endgroup::
 fi
 
 echo ::group::OPERATOR_LOGS
