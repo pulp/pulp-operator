@@ -198,6 +198,7 @@ spec:
                 - NodePort
                 - nodeport
                 type: string
+                default: Route
               loadbalancer_port:
                 default: 80
                 description: Port to use for the loadbalancer

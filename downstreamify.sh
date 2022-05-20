@@ -73,6 +73,10 @@ for file in "${files[@]}"; do
     sed -i -e "s/ingress_type:\ none/ingress_type:\ Route/g" ${file};
 done
 
+# TODO: inject `default: Route` on the following files:
+  # bundle/manifests/pulp.pulpproject.org_pulps.yaml
+  # config/crd/bases/pulpproject_v1beta1_pulp_crd.yaml
+
 # TODO: Set this as a 'suggested' setting via alm-examples in a way that it gets used in the AAP wrapped operator
 
 # Uneeded because it is still upstream

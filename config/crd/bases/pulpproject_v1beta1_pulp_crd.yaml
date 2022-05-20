@@ -192,6 +192,7 @@ spec:
                   - loadbalancer
                   - NodePort
                   - nodeport
+                default: Route
               ingress_annotations:
                 description: Annotations to add to the ingress
                 type: string
