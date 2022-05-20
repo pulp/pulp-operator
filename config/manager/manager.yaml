@@ -54,13 +54,13 @@ spec:
               value: explicit
             - name: ANSIBLE_DEBUG_LOGS
               value: 'false'
-            - name: RELATED_IMAGE_PULP
+            - name: RELATED_IMAGE_HUB
               value: quay.io/pulp/pulp:stable
-            - name: RELATED_IMAGE_PULP_WEB
+            - name: RELATED_IMAGE_HUB_WEB
               value: quay.io/pulp/pulp-web:stable
-            - name: RELATED_IMAGE_PULP_REDIS
+            - name: RELATED_IMAGE_HUB_REDIS
               value: redis:latest
-            - name: RELATED_IMAGE_PULP_POSTGRES
+            - name: RELATED_IMAGE_HUB_POSTGRES
               value: postgres:13
         securityContext:
           allowPrivilegeEscalation: false

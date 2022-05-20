@@ -33,10 +33,24 @@ for row in "${replacements[@]}"; do
     upstream="$(echo $row | cut -d: -f1)";
     downstream="$(echo $row | cut -d: -f2)";
     sed -i -e "s/pulp/automationhub/g" ./roles/backup/vars/main.yml \
-                                        roles/backup/templates/event.yaml.j2 \
-                                        roles/pulp-worker/defaults/main.yml \
-                                        roles/postgres/defaults/main.yml \
-                                        roles/restore/vars/main.yml ;
+                                       ./roles/backup/templates/event.yaml.j2 \
+                                       ./roles/pulp-worker/defaults/main.yml \
+                                       ./roles/postgres/defaults/main.yml \
+                                       ./roles/restore/vars/main.yml ;
+done
+
+# Replace in manifest files
+
+replacements=(
+    RELATED_IMAGE_PULP:RELATED_IMAGE_HUB
+)
+
+for row in "${replacements[@]}"; do
+    upstream="$(echo $row | cut -d: -f1)";
+    downstream="$(echo $row | cut -d: -f2)";
+    sed -i -e "s/${upstream}/${downstream}/g" ./bundle/manifests/pulp-operator.clusterserviceversion.yaml \
+                                              ./config/manifests/bases/pulp-operator.clusterserviceversion.yaml \
+                                              ./config/manager/manager.yaml ;
 done
 
 
