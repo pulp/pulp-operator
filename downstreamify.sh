@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# TODO: make a function that takes in files and replacements
+
 # -- General replaces section
 
 replacements=(
@@ -58,6 +60,19 @@ done
 
 sed -i -e "s/\/var\/lib\/postgresql/\/var\/lib\/pgsql/g" ./roles/postgres/defaults/main.yml
 
-# -- Inject RELATED_IMAGES_ references
+# -- Set default ingress_type to Route
+
+files=(
+    roles/pulp-api/defaults/main.yml
+    roles/pulp-content/defaults/main.yml
+    roles/pulp-status/defaults/main.yml
+    roles/pulp-web/defaults/main.yml
+)
+
+for file in "${files[@]}"; do
+    sed -i -e "s/ingress_type:\ none/ingress_type:\ Route/g" ${file};
+done
+
+# TODO: Set this as a 'suggested' setting via alm-examples in a way that it gets used in the AAP wrapped operator
 
 # Uneeded because it is still upstream

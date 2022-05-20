@@ -10,7 +10,7 @@ content:
       cpu: 800m
       memory: 4Gi
 
-ingress_type: none
+ingress_type: Route
 is_file_storage: true
 
 # Here we use  _automationhub_ansible_com_automationhub to get un-modified cr

@@ -2,7 +2,7 @@
 postgres_migrated_from_secret: ''
 upgraded_postgres_version: ''
 
-ingress_type: none
+ingress_type: Route
 
 # The TLS termination mechanism to use to access
 # the services. Supported mechanism are: edge, passthrough

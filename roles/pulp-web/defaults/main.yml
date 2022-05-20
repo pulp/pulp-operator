@@ -9,7 +9,7 @@ web:
       cpu: 800m
       memory: 1Gi
 
-ingress_type: none
+ingress_type: Route
 
 # TLS secret for the ingress. The secret either has to exist before hand with
 # the corresponding cert and key or just be an indicator for where an automated
