@@ -55,6 +55,18 @@ for row in "${replacements[@]}"; do
                                               ./config/manager/manager.yaml ;
 done
 
+# -- Replace Service Account name
+
+# TODO: consider changing deployment_type to automation-hub instead of automationhub
+
+files=(
+    bundle/manifests/pulp-operator.clusterserviceversion.yaml
+    config/manifests/bases/pulp-operator.clusterserviceversion.yaml
+)
+
+for file in "${files[@]}"; do
+   sed -i -e "s/pulp-operator-sa/automationhub-operator-sa/g" ${file};
+done
 
 # -- Swap out postgres data path
 

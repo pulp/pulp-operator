@@ -900,7 +900,7 @@ spec:
               - name: redhat-operators-pull-secret
               securityContext:
                 runAsNonRoot: true
-              serviceAccountName: pulp-operator-sa
+              serviceAccountName: automationhub-operator-sa
               terminationGracePeriodSeconds: 10
               imagePullSecrets:
                - name: redhat-operators-pull-secret
@@ -1033,7 +1033,7 @@ spec:
           - patch
           - update
           - watch
-        serviceAccountName: pulp-operator-sa
+        serviceAccountName: automationhub-operator-sa
     strategy: deployment
   installModes:
   - supported: true
