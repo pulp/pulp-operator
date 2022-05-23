@@ -7,7 +7,7 @@
     - route_tls_secret != ''
 
 - name: pulp-web configmap
-  k8s:
+  kubernetes.core.k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.configmap.yaml.j2') | from_yaml }}"
   with_items:
@@ -34,14 +34,14 @@
   when: affinity is defined and affinity.node_affinity is defined
 
 - name: pulp-web deployment
-  k8s:
+  kubernetes.core.k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.deployment.yaml.j2') | from_yaml }}"
   with_items:
     - pulp-web
 
 - name: pulp-web service
-  k8s:
+  kubernetes.core.k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.service.yaml.j2') | from_yaml }}"
   with_items:

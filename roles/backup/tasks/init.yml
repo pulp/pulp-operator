@@ -1,7 +1,7 @@
 ---
 
 - name: Delete any existing management pod
-  k8s:
+  kubernetes.core.k8s:
     name: "{{ ansible_operator_meta.name }}-backup-manager"
     kind: Pod
     namespace: "{{ backup_pvc_namespace }}"
@@ -11,7 +11,7 @@
 
 # Check to make sure provided pvc exists, error loudly if not.  Otherwise, the management pod will just stay in pending state forever.
 - name: Check provided PVC exists
-  k8s_info:
+  kubernetes.core.k8s_info:
     name: "{{ backup_pvc }}"
     kind: PersistentVolumeClaim
     namespace: "{{ backup_pvc_namespace }}"
@@ -46,7 +46,7 @@
     backup_claim: "{{ backup_pvc | default(_default_backup_pvc, true) }}"
 
 - name: Create persistent volume claim for backup
-  k8s:
+  kubernetes.core.k8s:
     state: present
     definition: "{{ lookup('template', 'templates/' + item + '.pvc.yaml.j2') | from_yaml }}"
   with_items:
@@ -55,7 +55,7 @@
     - backup_pvc == '' or backup_pvc is not defined
 
 - name: Remove ownerReferences from backup-claim pvc to avoid garbage collection
-  k8s:
+  kubernetes.core.k8s:
     definition:
       apiVersion: v1
       kind: PersistentVolumeClaim
@@ -65,7 +65,7 @@
         ownerReferences: null
 
 - name: Get AutomationHub custom resource object
-  k8s_info:
+  kubernetes.core.k8s_info:
     version: v1beta1
     kind: AutomationHub
     namespace: '{{ ansible_operator_meta.namespace }}'
@@ -152,7 +152,7 @@
     - status['ssoSecret'] | length
 
 - name: Get PVC information
-  k8s_info:
+  kubernetes.core.k8s_info:
     kind: PersistentVolumeClaim
     namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ storage_claim }}'
@@ -179,7 +179,7 @@
     _postgres_image: "{{ _custom_postgres_image | default(lookup('env', 'RELATED_IMAGE_HUB_POSTGRES')) | default(_postgres_image, true) }}"
 
 - name: Create management pod from templated deployment config
-  k8s:
+  kubernetes.core.k8s:
     state: present
     definition: "{{ lookup('template', 'templates/management-pod.yaml.j2') | from_yaml }}"
     wait: true

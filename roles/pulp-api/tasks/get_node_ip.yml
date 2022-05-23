@@ -25,7 +25,7 @@
 
 - block:
     - name: Retrieve route URL
-      k8s_info:
+      kubernetes.core.k8s_info:
         kind: Route
         namespace: '{{ ansible_operator_meta.namespace }}'
         name: '{{ ansible_operator_meta.name }}'
@@ -48,7 +48,7 @@
 
 - block:
     - name: Retrieve service node port
-      k8s_info:
+      kubernetes.core.k8s_info:
         kind: Service
         namespace: '{{ ansible_operator_meta.namespace }}'
         name: '{{ ansible_operator_meta.name }}-web-svc'
@@ -67,7 +67,7 @@
         msg: "{{ nodeport_port }}"
 
     - name: Retrieve web pod
-      k8s_info:
+      kubernetes.core.k8s_info:
         kind: Pod
         namespace: "{{ ansible_operator_meta.namespace }}"
         label_selectors:

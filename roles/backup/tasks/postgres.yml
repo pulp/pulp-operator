@@ -1,7 +1,7 @@
 ---
 
 - name: Check for specified PostgreSQL configuration
-  k8s_info:
+  kubernetes.core.k8s_info:
     kind: Secret
     namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ postgres_configuration_secret }}'
@@ -9,7 +9,7 @@
   when: postgres_configuration_secret | length
 
 - name: Check for default PostgreSQL configuration
-  k8s_info:
+  kubernetes.core.k8s_info:
     kind: Secret
     namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ deployment_name }}-postgres-configuration'
@@ -37,7 +37,7 @@
   when: postgres_label_selector is not defined
 
 - name: Get the postgres pod information
-  k8s_info:
+  kubernetes.core.k8s_info:
     kind: Pod
     namespace: '{{ ansible_operator_meta.namespace }}'
     label_selectors:
@@ -61,21 +61,21 @@
     _backup_dir: "/backups/openshift-backup-{{ now }}"
 
 - name: Create directory for backup
-  k8s_exec:
+  kubernetes.core.k8s_exec:
     namespace: "{{ backup_pvc_namespace }}"
     pod: "{{ ansible_operator_meta.name }}-backup-manager"
     command: >-
       mkdir -p {{ _backup_dir }}
 
 - name: Precreate file for database dump
-  k8s_exec:
+  kubernetes.core.k8s_exec:
     namespace: "{{ backup_pvc_namespace}}"
     pod: "{{ ansible_operator_meta.name }}-backup-manager"
     command: >-
       touch {{ _backup_dir }}/pulp.db
 
 - name: Set permissions on file for database dump
-  k8s_exec:
+  kubernetes.core.k8s_exec:
     namespace: "{{ backup_pvc_namespace }}"
     pod: "{{ ansible_operator_meta.name }}-backup-manager"
     command: >-
@@ -93,7 +93,7 @@
   no_log: true
 
 - name: Write pg_dump to backup on PVC
-  k8s_exec:
+  kubernetes.core.k8s_exec:
     namespace: "{{ backup_pvc_namespace }}"
     pod: "{{ ansible_operator_meta.name }}-backup-manager"
     command: >-

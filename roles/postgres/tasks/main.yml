@@ -24,7 +24,7 @@
     - recorded_db_migration_secret == postgres_migrant_configuration_secret
 
 - name: Check for specified PostgreSQL configuration
-  k8s_info:
+  kubernetes.core.k8s_info:
     kind: Secret
     namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ postgres_configuration_secret }}'
@@ -33,7 +33,7 @@
   when: postgres_configuration_secret | length
 
 - name: Check for default PostgreSQL configuration
-  k8s_info:
+  kubernetes.core.k8s_info:
     kind: Secret
     namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ ansible_operator_meta.name }}-postgres-configuration'
@@ -41,7 +41,7 @@
   no_log: true
 
 - name: Check for old PostgreSQL configuration secret
-  k8s_info:
+  kubernetes.core.k8s_info:
     kind: Secret
     namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ postgres_migrant_configuration_secret }}'
@@ -65,13 +65,13 @@
 
 - block:
     - name: Create Database configuration
-      k8s:
+      kubernetes.core.k8s:
         apply: true
         definition: "{{ lookup('template', 'postgres.secret.yaml.j2') }}"
       no_log: true
 
     - name: Read Database Configuration
-      k8s_info:
+      kubernetes.core.k8s_info:
         kind: Secret
         namespace: '{{ ansible_operator_meta.namespace }}'
         name: '{{ ansible_operator_meta.name }}-postgres-configuration'
@@ -115,7 +115,7 @@
   when: postgres_label_selector is not defined
 
 - name: Get the old postgres pod information
-  k8s_info:
+  kubernetes.core.k8s_info:
     kind: Pod
     namespace: "{{ ansible_operator_meta.namespace }}"
     label_selectors:
@@ -126,7 +126,7 @@
   register: old_postgres_pod
 
 - name: Create Database if no database is specified
-  k8s:
+  kubernetes.core.k8s:
     apply: true
     definition: "{{ lookup('template', 'postgres.yaml.j2') }}"
   when: managed_database
@@ -137,7 +137,7 @@
     kind: '{{ hostvars["localhost"]["inventory_file"].split("/")[6]  }}'
 
 - name: Look up details for this deployment
-  k8s_info:
+  kubernetes.core.k8s_info:
     api_version: "{{ api_version }}"
     kind: "{{ kind }}"
     name: "{{ ansible_operator_meta.name }}"
@@ -151,7 +151,7 @@
         path_to_pg_version: '{{ postgres_data_path }}/PG_VERSION'
 
     - name: Get old PostgreSQL version
-      k8s_exec:
+      kubernetes.core.k8s_exec:
         namespace: "{{ ansible_operator_meta.namespace }}"
         pod: "{{ old_postgres_pod['resources'][0]['metadata']['name'] }}"
         command: |

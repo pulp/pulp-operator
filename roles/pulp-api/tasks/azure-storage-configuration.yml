@@ -1,6 +1,6 @@
 ---
 - name: Check for specified azure storage configuration
-  k8s_info:
+  kubernetes.core.k8s_info:
     kind: Secret
     namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ object_storage_azure_secret  }}'

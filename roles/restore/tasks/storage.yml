@@ -5,7 +5,7 @@
     storage_claim: "{{ deployment_name }}-file-storage"
 
 - name: Delete any existing management pod
-  k8s:
+  kubernetes.core.k8s:
     name: "{{ ansible_operator_meta.name }}-backup-manager"
     kind: Pod
     namespace: "{{ backup_pvc_namespace }}"
@@ -14,7 +14,7 @@
     wait: true
 
 - name: Create management pod from templated deployment config
-  k8s:
+  kubernetes.core.k8s:
     state: present
     definition: "{{ lookup('template', 'templates/management-pod.yaml.j2') | from_yaml }}"
     wait: true
@@ -25,7 +25,7 @@
       cp -fr {{ backup_dir }}/pulp/. /var/lib/pulp
 
 - name: Write content files from backup on PVC
-  k8s_exec:
+  kubernetes.core.k8s_exec:
     namespace: "{{ backup_pvc_namespace }}"
     pod: "{{ ansible_operator_meta.name }}-backup-manager"
     command: >-

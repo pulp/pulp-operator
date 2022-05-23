@@ -73,7 +73,7 @@ default_azure_settings:
   AZURE_OVERWRITE_FILES: "True"
   DEFAULT_FILE_STORAGE: "storages.backends.azure_storage.AzureStorage"
 
-is_k8s: false
+is_kubernetes.core.k8s: false
 is_openshift: false
 
 container_auth_public_key_name: 'container_auth_public_key.pem'

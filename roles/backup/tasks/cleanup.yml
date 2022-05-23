@@ -7,7 +7,7 @@
     state: absent
 
 - name: Delete any existing management pod
-  k8s:
+  kubernetes.core.k8s:
     name: "{{ ansible_operator_meta.name }}-backup-manager"
     kind: Pod
     namespace: "{{ backup_pvc_namespace }}"

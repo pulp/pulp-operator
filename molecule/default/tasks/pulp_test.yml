@@ -1,6 +1,6 @@
 ---
 - name: Create the pulp.pulpproject.org/v1beta1.Pulp
-  k8s:
+  kubernetes.core.k8s:
     state: present
     namespace: '{{ namespace }}'
     definition: "{{ lookup('template', '/'.join([samples_dir, cr_file])) | from_yaml }}"
@@ -8,7 +8,7 @@
     cr_file: 'pulpproject_v1beta1_pulp_cr.molecule.ci.yaml'
 
 - name: Wait 15m for reconciliation to run
-  k8s_info:
+  kubernetes.core.k8s_info:
     api_version: '{{ custom_resource.apiVersion }}'
     kind: '{{ custom_resource.kind }}'
     namespace: '{{ namespace }}'

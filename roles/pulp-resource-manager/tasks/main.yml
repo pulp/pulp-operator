@@ -21,7 +21,7 @@
   when: affinity is defined and affinity.node_affinity is defined
 
 - name: pulp-resource-manager deployment
-  k8s:
+  kubernetes.core.k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.deployment.yaml.j2') | from_yaml }}"
   with_items:

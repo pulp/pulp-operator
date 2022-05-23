@@ -10,6 +10,6 @@
     now: '{{ lookup("pipe", "date +%FT%TZ") }}'
 
 - name: Emit ocp event with error
-  k8s:
+  kubernetes.core.k8s:
     state: present
     definition: "{{ lookup('template', 'templates/event.yaml.j2') }}"

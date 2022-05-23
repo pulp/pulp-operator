@@ -21,14 +21,14 @@
 - name: pulp-file-storage
   block:
     - name: pulp-file-storage persistent volume claim
-      k8s:
+      kubernetes.core.k8s:
         state: "{{ deployment_state }}"
         definition: "{{ lookup('template', 'templates/' + item + '.pvc.yaml.j2') | from_yaml }}"
       with_items:
         - pulp-file-storage
 
     - name: Remove ownerReferences from pulp-file-storage pvc to avoid garbage collection
-      k8s:
+      kubernetes.core.k8s:
         definition:
           apiVersion: v1
           kind: PersistentVolumeClaim
@@ -98,7 +98,7 @@
     - sso_secret | length
 
 - name: pulp-server secret
-  k8s:
+  kubernetes.core.k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.secret.yaml.j2') | from_yaml }}"
   with_items:
@@ -115,7 +115,7 @@
   when: galaxy_signing_secret is defined
 
 - name: pulp-api service
-  k8s:
+  kubernetes.core.k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.service.yaml.j2') | from_yaml }}"
   with_items:
@@ -166,7 +166,7 @@
   when: affinity is defined and affinity.node_affinity is defined
 
 - name: Get container token configuration
-  k8s_info:
+  kubernetes.core.k8s_info:
     kind: Secret
     namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ container_token_secret }}'
@@ -191,7 +191,7 @@
     - _container_token_configuration['resources'][0]['data']['tls.key'] | length
 
 - name: pulp-api deployment
-  k8s:
+  kubernetes.core.k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.deployment.yaml.j2') | from_yaml }}"
   with_items:

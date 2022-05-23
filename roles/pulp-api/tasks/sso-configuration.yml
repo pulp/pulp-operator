@@ -1,6 +1,6 @@
 ---
 - name: Check for specified sso configuration secret
-  k8s_info:
+  kubernetes.core.k8s_info:
     kind: Secret
     namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ sso_secret }}'

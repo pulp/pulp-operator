@@ -1,7 +1,7 @@
 ---
 
 - name: Delete any existing management pod
-  k8s:
+  kubernetes.core.k8s:
     name: "{{ ansible_operator_meta.name }}-backup-manager"
     kind: Pod
     namespace: "{{ backup_pvc_namespace }}"
@@ -9,7 +9,7 @@
     force: true
 
 - name: Remove ownerReferences from admin password secret to avoid garbage collection
-  k8s:
+  kubernetes.core.k8s:
     definition:
       apiVersion: v1
       kind: Secret
@@ -23,7 +23,7 @@
     - admin_password_name | length
 
 - name: Remove ownerReferences from db secret to avoid garbage collection
-  k8s:
+  kubernetes.core.k8s:
     definition:
       apiVersion: v1
       kind: Secret
@@ -37,7 +37,7 @@
     - db_secret_name | length
 
 - name: Remove ownerReferences from storage secret to avoid garbage collection
-  k8s:
+  kubernetes.core.k8s:
     definition:
       apiVersion: v1
       kind: Secret
@@ -51,7 +51,7 @@
     - storage_secret | length
 
 - name: Remove ownerReferences from DB fields encryption secret to avoid garbage collection
-  k8s:
+  kubernetes.core.k8s:
     definition:
       apiVersion: v1
       kind: Secret
@@ -65,7 +65,7 @@
     - db_fields_encryption_secret | length
 
 - name: Remove ownerReferences from galaxy signing secret to avoid garbage collection
-  k8s:
+  kubernetes.core.k8s:
     definition:
       apiVersion: v1
       kind: Secret
@@ -79,7 +79,7 @@
     - galaxy_signing_secret | length
 
 - name: Remove ownerReferences from container token secret to avoid garbage collection
-  k8s:
+  kubernetes.core.k8s:
     definition:
       apiVersion: v1
       kind: Secret
@@ -93,7 +93,7 @@
     - container_token_secret | length
 
 - name: Remove ownerReferences from sso secret to avoid garbage collection
-  k8s:
+  kubernetes.core.k8s:
     definition:
       apiVersion: v1
       kind: Secret

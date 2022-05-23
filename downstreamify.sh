@@ -5,7 +5,6 @@
 # -- General replaces section
 
 replacements=(
-
     RELATED_IMAGE_PULP:RELATED_IMAGE_HUB
     Pulp:AutomationHub
     "AutomationHub 3":AutomationHub
@@ -84,6 +83,11 @@ files=(
 for file in "${files[@]}"; do
     sed -i -e "s/ingress_type:\ none/ingress_type:\ Route/g" ${file};
 done
+
+# -- Set Fully Qualified Domain Names for k8s modules
+
+# TODO
+
 
 # TODO: inject `default: Route` on the following files:
   # bundle/manifests/pulp.pulpproject.org_pulps.yaml
