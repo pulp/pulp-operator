@@ -63,7 +63,7 @@ jobs:
       - name: Popeye
         run: |
           echo ::group::POPEYE
-          sudo wget https://github.com/derailed/popeye/releases/download/v0.9.7/popeye_Linux_x86_64.tar.gz
+          sudo wget https://github.com/derailed/popeye/releases/download/v0.10.0/popeye_Linux_x86_64.tar.gz
           sudo tar -xvzf popeye_Linux_x86_64.tar.gz
           sudo mv popeye /usr/local/bin/
           sudo chmod +x /usr/local/bin/popeye
@@ -129,7 +129,7 @@ jobs:
       - name: Popeye
         run: |
           echo ::group::POPEYE
-          sudo wget https://github.com/derailed/popeye/releases/download/v0.9.7/popeye_Linux_x86_64.tar.gz
+          sudo wget https://github.com/derailed/popeye/releases/download/v0.10.0/popeye_Linux_x86_64.tar.gz
           sudo tar -xvzf popeye_Linux_x86_64.tar.gz
           sudo mv popeye /usr/local/bin/
           sudo chmod +x /usr/local/bin/popeye
@@ -214,7 +214,7 @@ jobs:
       - name: Popeye
         run: |
           echo ::group::POPEYE
-          sudo wget https://github.com/derailed/popeye/releases/download/v0.9.7/popeye_Linux_x86_64.tar.gz
+          sudo wget https://github.com/derailed/popeye/releases/download/v0.10.0/popeye_Linux_x86_64.tar.gz
           sudo tar -xvzf popeye_Linux_x86_64.tar.gz
           sudo mv popeye /usr/local/bin/
           sudo chmod +x /usr/local/bin/popeye
