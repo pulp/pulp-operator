@@ -89,6 +89,7 @@
       -U {{ postgres_user }}
       -d {{ postgres_database }}
       -p {{ postgres_port }}
+      -F custom
   no_log: true
 
 - name: Write pg_dump to backup on PVC
