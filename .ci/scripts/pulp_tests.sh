@@ -5,7 +5,7 @@ set -euo pipefail
 KUBE="k3s"
 SERVER=$(hostname)
 WEB_PORT="24817"
-if [[ "$1" == "--minikube" ]] || [[ "$1" == "-m" ]]; then
+if [[ "${1-}" == "--minikube" ]] || [[ "${1-}" == "-m" ]]; then
   KUBE="minikube"
   SERVER="localhost"
   if [[ "$CI_TEST" == "true" ]]; then
