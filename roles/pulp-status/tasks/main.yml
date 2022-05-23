@@ -167,7 +167,7 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     status:
-      deployedImage: "{{ _custom_image | default(lookup('env', 'RELATED_IMAGE_HUB')) | default(_default_image) }}"
+      deployedImage: "{{ _custom_image | default(lookup('env', 'RELATED_IMAGE_HUB')) | default(_default_image, true) }}"
 
 - block:
     - name: Retrieve route URL

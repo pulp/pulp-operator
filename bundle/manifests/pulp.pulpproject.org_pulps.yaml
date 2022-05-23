@@ -150,10 +150,6 @@ spec:
               hostname:
                 description: The hostname of the instance
                 type: string
-              image:
-                default: quay.io/pulp/pulp
-                description: The image name (repo name) for the pulp image.
-                type: string
               image_pull_policy:
                 default: IfNotPresent
                 description: Image pull policy for container image
@@ -167,16 +163,16 @@ spec:
                 items:
                   type: string
                 type: array
+              image:
+                description: The image name (repo name) for the pulp image.
+                type: string
               image_version:
-                default: stable
                 description: The image version for the pulp image.
                 type: string
               image_web:
-                default: quay.io/pulp/pulp-web
                 description: The image name (repo name) for the pulp webserver image.
                 type: string
               image_web_version:
-                default: stable
                 description: The image version for the pulp webserver image.
                 type: string
               ingress_annotations:
