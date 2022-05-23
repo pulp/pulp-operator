@@ -25,6 +25,10 @@
       redis_port: 6379
       redis_password: ""
     deployment_state: present
+    _image: quay.io/pulp/pulp
+    _image_version: stable
+    _image_web: quay.io/pulp/pulp-web
+    _image_web_version: stable
     image_pull_policy: IfNotPresent
     image_pull_secrets: []
     storage_type: File
