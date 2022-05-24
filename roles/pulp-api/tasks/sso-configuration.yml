@@ -203,4 +203,4 @@
         pulp_combined_settings: "{{ pulp_combined_settings | combine(sso_settings, recursive=True) }}"
 
   run_once: true
-  no_log: false
+  no_log: true
