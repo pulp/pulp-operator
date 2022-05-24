@@ -36,9 +36,13 @@
     namespace: '{{ ansible_operator_meta.namespace }}'
     label_selectors:
       - "app.kubernetes.io/instance=nginx-{{ ansible_operator_meta.name }}"
-    field_selectors:
-      - status.phase=Running
   register: pulp_pods
+  until:
+    - "pulp_pods['resources'] | length"
+    - "pulp_pods['resources'][0]['status']['phase'] == 'Running'"
+    - "pulp_pods['resources'][0]['status']['containerStatuses'][0]['ready'] == true"
+  delay: 10
+  retries: 100
 
 - name: Set the resource pod name as a variable.
   set_fact:
