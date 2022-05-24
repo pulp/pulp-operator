@@ -27,13 +27,13 @@ spec:
               type: object
               properties:
                 backup_source:
-                  description: backup source
+                  description: Where to restore from (Backup CR recommended)
                   type: string
                   enum:
-                    - CR
+                    - Backup CR
                     - PVC
                 deployment_name:
-                  description: Name of the deployment to be restored to
+                  description: Name of the deployment to restore to
                   type: string
                 backup_name:
                   description: Name of the backup custom resource

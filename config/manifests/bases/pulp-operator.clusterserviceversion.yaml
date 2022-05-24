@@ -229,6 +229,10 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:imagePullSecret
+      - displayName: Image Pull Secret (Deprecated)
+        path: image_pull_secret
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: The deployment affinity
         displayName: Deployment Affinity
         path: affinity
@@ -544,21 +548,20 @@ spec:
       kind: PulpRestore
       name: pulprestores.pulp.pulpproject.org
       specDescriptors:
-      - displayName: Backup source to restore ?
+      - displayName: Backup source
         path: backup_source
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:select:CR
+        - urn:alm:descriptor:com.tectonic.ui:select:Backup CR
         - urn:alm:descriptor:com.tectonic.ui:select:PVC
       - displayName: Backup name
         path: backup_name
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
-        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:backup_source:CR
-      - displayName: Deployment name
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:backup_source:Backup CR
+      - displayName: New Deployment name
         path: deployment_name
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
-        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:backup_source:PVC
       - displayName: Backup persistent volume claim
         path: backup_pvc
         x-descriptors:
