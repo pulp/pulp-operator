@@ -5,7 +5,7 @@
     namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ object_storage_azure_secret  }}'
   register: _custom_azure_configuration
-  no_log: true
+  # no_log: true
 
 - name: Check azure secret data format
   set_fact:
@@ -62,7 +62,7 @@
 - name: Store azure account key
   set_fact:
     azure_account_key: "{{ _custom_azure_configuration['resources'][0]['data']['azure-account-key'] | b64decode }}"
-  no_log: true
+  # no_log: true
 
 - name: Store azure account container
   set_fact:
@@ -79,7 +79,7 @@
 - name: Add azure connection string to azure settings
   set_fact:
     azure_connection_string_dict: "{'AZURE_CONNECTION_STRING': '{{ _custom_azure_configuration['resources'][0]['data']['azure-connection-string'] | b64decode }}' }"
-  no_log: true
+  # no_log: true
   when:
     - azure_secret_data_avaiable
     - _custom_azure_configuration.resources[0].data['azure-connection-string'] is defined
@@ -92,7 +92,7 @@
 - name: Add azure account key azure settings
   set_fact:
     azure_account_key_dict : "{'AZURE_ACCOUNT_KEY': '{{ azure_account_key }}' }"
-  no_log: true
+  # no_log: true
 
 - name: Add azure container azure settings
   set_fact:
@@ -105,29 +105,29 @@
 - name: merge azure_account_name with settings
   set_fact:
     default_azure_settings: "{{ default_azure_settings|combine(azure_account_name_dict) }}"
-  no_log: true
+  # no_log: true
 
 - name: merge azure_account_key with settings
   set_fact:
     default_azure_settings: "{{ default_azure_settings|combine(azure_account_key_dict) }}"
-  no_log: true
+  # no_log: true
 
 - name: merge azure_container with settings
   set_fact:
     default_azure_settings: "{{ default_azure_settings|combine(azure_container_dict) }}"
-  no_log: true
+  # no_log: true
 
 - name: merge azure_container_path with settings
   set_fact:
     default_azure_settings: "{{ default_azure_settings|combine(azure_container_path_dict) }}"
-  no_log: true
+  # no_log: true
 
 - name: merge azure_connection_string with settings
   set_fact:
     default_azure_settings: "{{ default_azure_settings|combine(azure_connection_string_dict) }}"
-  no_log: true
+  # no_log: true
 
 - name: merge default_azure_settings with settings
   set_fact:
     default_settings: "{{ default_settings|combine(default_azure_settings) }}"
-  no_log: true
+  # no_log: true

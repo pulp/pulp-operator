@@ -115,12 +115,12 @@
 - name: merge content_origin with settings
   set_fact:
     default_settings: "{{ default_settings|combine(content_origin_dict) }}"
-  no_log: true
+  # no_log: true
 
 - name: merge token_server with settings
   set_fact:
     default_settings: "{{ default_settings|combine(token_server_dict) }}"
-  no_log: true
+  # no_log: true
   when: container_token_secret is defined
 
 - name: DEBUG Show content_origin

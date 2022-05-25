@@ -43,7 +43,7 @@
         namespace: '{{ ansible_operator_meta.namespace }}'
         name: redhat-operators-pull-secret
       register: _rh_ops_secret
-      no_log: true
+      # no_log: true
     - name: Create imagePullSecret
       k8s:
         state: present
