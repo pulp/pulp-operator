@@ -128,6 +128,22 @@ spec:
         path: postgres_keep_pvc_after_upgrade
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Gunicorn API workers
+        path: gunicorn_api_workers
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Gunicorn Content workers
+        path: gunicorn_content_workers
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Gunicorn timeout
+        path: gunicorn_timeout
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: HAProxy timeout
+        path: haproxy_timeout
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - displayName: Ingress type
         path: ingress_type
         x-descriptors:
@@ -162,6 +178,22 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:number
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:LoadBalancer
+      - displayName: Nginx client max body size
+        path: nginx_client_max_body_size
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Nginx proxy read timeout
+        path: nginx_proxy_read_timeout
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Nginx proxy connect timeout
+        path: nginx_proxy_connect_timeout
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Nginx proxy send timeout
+        path: nginx_proxy_send_timeout
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - displayName: Route DNS host
         path: route_host
         x-descriptors:

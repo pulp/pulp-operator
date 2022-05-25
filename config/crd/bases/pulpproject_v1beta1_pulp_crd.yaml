@@ -172,8 +172,24 @@ spec:
               object_storage_azure_secret:
                 description: The secret for Azure blob storage configuration.
                 type: string
+              gunicorn_api_workers:
+                description: The number of gunicorn workers to use for the api.
+                type: integer
+                default: 1
+              gunicorn_content_workers:
+                description: The number of gunicorn workers to use for the content.
+                type: integer
+                default: 2
+              gunicorn_timeout:
+                description: The timeout for the gunicorn process.
+                type: integer
+                default: 90
               hostname:
                 description: The hostname of the instance
+                type: string
+              haproxy_timeout:
+                description: HAProxy timeout
+                default: 180s
                 type: string
               ingress_type:
                 description: The ingress type to use to reach the deployed instance
@@ -194,6 +210,22 @@ spec:
                 type: string
               ingress_tls_secret:
                 description: Secret where the ingress TLS secret can be found
+                type: string
+              nginx_client_max_body_size:
+                description: NGINX client max body size
+                default: 10m
+                type: string
+              nginx_proxy_read_timeout:
+                description: NGINX proxy read timeout
+                default: 120s
+                type: string
+              nginx_proxy_connect_timeout:
+                description: NGINX proxy connect timeout
+                default: 120s
+                type: string
+              nginx_proxy_send_timeout:
+                description: NGINX proxy send timeout
+                default: 120s
                 type: string
               service_annotations:
                 description: Annotations to add to the service
