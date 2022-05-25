@@ -36,6 +36,10 @@ kind: Route
 metadata:
   name: '{{ ansible_operator_meta.name }}'
   namespace: '{{ ansible_operator_meta.namespace }}'
+{% if ingress_annotations %}
+  annotations:
+    {{ ingress_annotations | indent(width=4) }}
+{% endif %}
 spec:
 {% if route_host != '' %}
   host: {{ route_host }}
