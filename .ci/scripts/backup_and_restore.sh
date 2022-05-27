@@ -25,7 +25,7 @@ fi
 echo ::group::PRE_BACKUP_LOGS
 $KUBECTL logs -l app.kubernetes.io/name=pulp-operator -c pulp-manager --tail=9999999
 echo ::endgroup::
-
+$KUBECTL get pvc,configmap,secret -o yaml
 $KUBECTL apply -f config/samples/$BACKUP_RESOURCE
 time $KUBECTL wait --for condition=BackupComplete --timeout=900s -f config/samples/$BACKUP_RESOURCE
 

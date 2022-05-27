@@ -229,6 +229,8 @@ jobs:
         shell: bash
         env:
           PY_COLORS: '1'
+      - name: Debugging with tmate
+        uses: mxschmitt/action-tmate@v3.11
       - name: Logs
         if: always()
         run: |
