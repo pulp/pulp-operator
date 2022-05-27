@@ -1,4 +1,7 @@
 ---
+- name: "Ansible | List all known variables and facts"
+  debug:
+    var: hostvars[inventory_hostname]
 
 - name: Check for specified PostgreSQL configuration
   k8s_info:

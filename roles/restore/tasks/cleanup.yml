@@ -1,4 +1,7 @@
 ---
+- name: "Ansible | List all known variables and facts"
+  debug:
+    var: hostvars[inventory_hostname]
 
 - name: Delete any existing management pod
   k8s:

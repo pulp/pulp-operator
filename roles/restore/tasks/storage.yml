@@ -1,4 +1,7 @@
 ---
+- name: "Ansible | List all known variables and facts"
+  debug:
+    var: hostvars[inventory_hostname]
 
 - name: Set the resource pod name as a variable.
   set_fact:
