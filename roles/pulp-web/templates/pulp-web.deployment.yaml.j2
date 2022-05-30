@@ -80,7 +80,7 @@ spec:
 {% endif %}
           livenessProbe:
             httpGet:
-              path: /pulp/api/v3/status/
+              path: "{{ pulp_combined_settings.api_root }}api/v3/status/"
 {% if ingress_type | lower == 'route' and route_tls_termination_mechanism | lower == 'passthrough' %}
               port: 8443
               scheme: HTTPS
@@ -94,7 +94,7 @@ spec:
             timeoutSeconds: 10
           readinessProbe:
             httpGet:
-              path: /pulp/api/v3/status/
+              path: "{{ pulp_combined_settings.api_root }}api/v3/status/"
 {% if ingress_type | lower == 'route' and route_tls_termination_mechanism | lower == 'passthrough' %}
               port: 8443
               scheme: HTTPS

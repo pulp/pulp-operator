@@ -93,7 +93,7 @@ data:
             # purposes are served through the webserver.
             root {{ pulp_webserver_static_dir }};
 
-            location /pulp/content/ {
+            location {{ pulp_combined_settings.content_path_prefix | default('/pulp/content/') }} {
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                 proxy_set_header X-Forwarded-Proto $scheme;
                 proxy_set_header Host $http_host;
@@ -103,7 +103,7 @@ data:
                 proxy_pass http://pulp-content;
             }
 
-            location /pulp/api/v3/ {
+            location {{ pulp_combined_settings.api_root }}api/v3/ {
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                 proxy_set_header X-Forwarded-Proto $scheme;
                 proxy_set_header Host $http_host;

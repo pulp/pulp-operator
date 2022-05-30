@@ -6,6 +6,7 @@
     - operator_sdk.util
   vars:
     default_settings:
+      api_root: '/pulp/'
       cache_enabled: true
       db_encryption_key: "/etc/pulp/keys/database_fields.symmetric.key"
       galaxy_collection_signing_service: ansible-default

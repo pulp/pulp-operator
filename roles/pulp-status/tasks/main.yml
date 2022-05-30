@@ -55,7 +55,7 @@
 
 - name: Check that status and it returns a status 200
   uri:
-    url: '{{ status_protocol }}://{{ ansible_operator_meta.name }}-web-svc.{{ ansible_operator_meta.namespace }}.svc.cluster.local:{{ status_port }}/pulp/api/v3/status/'
+    url: '{{ status_protocol }}://{{ ansible_operator_meta.name }}-web-svc.{{ ansible_operator_meta.namespace }}.svc.cluster.local:{{ status_port }}{{ pulp_combined_settings.api_root }}api/v3/status/'
   register: result
   until: >
     result.json is defined and
