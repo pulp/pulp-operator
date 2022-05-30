@@ -70,12 +70,18 @@ if [ -z "$(pip freeze | grep pulp-cli)" ]; then
   pip install pulp-cli[pygments]
 fi
 
+if [[ "$CI_TEST" == "galaxy" ]]; then
+  API_ROOT="/api/galaxy/pulp/"
+fi
+API_ROOT=${API_ROOT:-"/pulp/"}
+
 if [ ! -f ~/.config/pulp/settings.toml ]; then
   echo "Configuring pulp-cli"
   mkdir -p ~/.config/pulp
   cat > ~/.config/pulp/cli.toml << EOF
 [cli]
 base_url = "$BASE_ADDR"
+api_root = "$API_ROOT"
 verify_ssl = false
 format = "json"
 EOF

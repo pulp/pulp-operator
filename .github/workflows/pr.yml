@@ -235,6 +235,7 @@ jobs:
           echo "IMG=quay.io/pulp/pulp-operator:devel" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
           echo "CI_TEST_STORAGE=${{ matrix.STORAGE }}" >> $GITHUB_ENV
+          echo "API_ROOT=/api/galaxy/pulp/" >> $GITHUB_ENV
         shell: bash
       - name: Start minikube
         run: |

@@ -10,6 +10,24 @@
     pulp_combined_settings: "{{ default_settings|combine(raw_pulp_settings, recursive=True) if pulp_settings is defined and pulp_settings is not none else default_settings }}"
   no_log: true
 
+- name: Galaxy API root
+  set_fact:
+    pulp_combined_settings: "{{ pulp_combined_settings| combine({ 'api_root': '/api/galaxy/pulp/'}) }}"
+  no_log: true
+  when:
+    - image is defined
+    - "'galaxy' in image"
+    - pulp_combined_settings.api_root == '/pulp/'
+
+- name: Hub API root
+  set_fact:
+    pulp_combined_settings: "{{ pulp_combined_settings| combine({ 'api_root': '/api/automation-hub/pulp/'}) }}"
+  no_log: true
+  when:
+    - image is defined
+    - "'hub' in image"
+    - pulp_combined_settings.api_root == '/pulp/'
+
 - name: Validade API root
   fail:
     msg: "API root should start and end with '/'"
