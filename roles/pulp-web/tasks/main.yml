@@ -1,4 +1,21 @@
 ---
+- name: Getting raw pulp_settings
+  set_fact:
+    raw_pulp_settings: "{{ raw_spec['pulp_settings'] | default({}) }}"
+  no_log: true
+  when: pulp_settings is defined
+
+- name: Combining pulp_settings
+  set_fact:
+    pulp_combined_settings: "{{ default_settings|combine(raw_pulp_settings, recursive=True) if pulp_settings is defined and pulp_settings is not none else default_settings }}"
+  no_log: true
+
+- name: Validade API root
+  fail:
+    msg: "API root should start and end with '/'"
+  when:
+  - not pulp_combined_settings.api_root.startswith('/')
+  - not pulp_combined_settings.api_root.endswith('/')
 
 - name: Load Route TLS certificate
   include_tasks: load_route_tls_secret.yml

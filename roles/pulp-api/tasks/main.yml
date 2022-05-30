@@ -84,6 +84,7 @@
 - name: Combining pulp_settings
   set_fact:
     pulp_combined_settings: "{{ default_settings|combine(raw_pulp_settings, recursive=True) if pulp_settings is defined and pulp_settings is not none else default_settings }}"
+    cacheable: yes
   no_log: true
 
 - name: Include redis role

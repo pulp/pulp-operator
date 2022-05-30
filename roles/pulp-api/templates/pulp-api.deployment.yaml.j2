@@ -146,7 +146,7 @@ spec:
               containerPort: 24817
           livenessProbe:
             httpGet:
-              path: /pulp/api/v3/status/
+              path: "{{ pulp_combined_settings.api_root }}api/v3/status/"
               port: 24817
               scheme: HTTP
             failureThreshold: 5
@@ -155,7 +155,7 @@ spec:
             timeoutSeconds: 5
           readinessProbe:
             httpGet:
-              path: /pulp/api/v3/status/
+              path: "{{ pulp_combined_settings.api_root }}api/v3/status/"
               port: 24817
               scheme: HTTP
             failureThreshold: 10
