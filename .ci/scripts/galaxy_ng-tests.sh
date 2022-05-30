@@ -111,8 +111,8 @@ curl -H "Authorization:Token $TOKEN" $BASE_ADDR/api/galaxy/content/staging/v3/co
 echo "Sync collections"
 curl -X PUT -d '{"requirements_file": "collections: \n - pulp.pulp_installer", "url": "https://galaxy.ansible.com/api/"}' -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization:Token $TOKEN" $BASE_ADDR/api/galaxy/content/community/v3/sync/config/ | jq
 TASK_PK=$(curl -X POST -H "Authorization:Token $TOKEN" $BASE_ADDR/api/galaxy/content/community/v3/sync/ | jq -r '.task')
-echo "$BASE_ADDR/pulp/api/v3/tasks/$TASK_PK/"
-wait_until_task_finished "$BASE_ADDR/pulp/api/v3/tasks/$TASK_PK/"
+echo "$BASE_ADDR/api/galaxy/pulp/api/v3/tasks/$TASK_PK/"
+wait_until_task_finished "$BASE_ADDR/api/galaxy/pulp/api/v3/tasks/$TASK_PK/"
 
 echo "Install pulp.pulp_installer collection"
 mkdir -p /tmp/ci_test

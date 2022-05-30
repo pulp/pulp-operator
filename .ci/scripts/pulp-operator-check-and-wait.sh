@@ -26,7 +26,10 @@ storage_debug() {
     sudo -E $KUBECTL -n local-path-storage logs $STORAGE_POD
   fi
 }
-
+if [[ "$CI_TEST" == "galaxy" ]]; then
+  API_ROOT="/api/galaxy/pulp/"
+fi
+API_ROOT=${API_ROOT:-"/pulp/"}
 # CentOS 7 /etc/sudoers does not include /usr/local/bin
 # Which k3s installs to.
 # But we do not want to prevent other possible kubectl implementations.
@@ -130,7 +133,7 @@ fi
 
 # Later tests in other scripts will use localhost:24817, which was not a safe
 # assumption at the time this script was originally written.
-URL=http://$API_NODE:$API_PORT/pulp/api/v3/status/
+URL="http://${API_NODE}:${API_PORT}${API_ROOT}api/v3/status/"
 echo "Waiting for $URL to respond ..."
 
 if ! [ -x "$(command -v http)" -a -x "$(command -v jq)" ]; then
@@ -140,7 +143,7 @@ if ! [ -x "$(command -v http)" -a -x "$(command -v jq)" ]; then
   echo "this script can not perform its remaining checks."
   echo ""
   echo "Wait a few minutes (or longer if slow system/internet) and check manually:"
-  echo "http://$API_NODE:$API_PORT/pulp/api/v3/status/"
+  echo "http://${API_NODE}:${API_PORT}${API_ROOT}api/v3/status/"
   exit 100
 fi
 
