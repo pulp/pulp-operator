@@ -1,19 +1,37 @@
 ---
+- name: Check for signing keys
+  k8s_info:
+    kind: Secret
+    namespace: '{{ ansible_operator_meta.namespace }}'
+    name: '{{ signing_secret }}'
+  register: _signing_keys
+  no_log: true
+
+- name: Get signing keys
+  set_fact:
+    signing_service_gpg_content: "{{ _signing_keys['resources'][0]['data']['signing_service.gpg'] | b64decode }}"
+  no_log: true
+
+- name: Copying public GPG key
+  copy:
+    dest: "/tmp/signing_service.gpg"
+    content: "{{ signing_service_gpg_content }}"
+
 - name: Get GPG key ID
   block:
   - name: Inspect galaxy signing service GPG key file
     shell: >
       {{ __pulp_gpg_inspect_command }}
-      /etc/pulp/keys/galaxy_signing_service.gpg | grep -m1 -o -E
+      /tmp/signing_service.gpg | grep -m1 -o -E
       '[A-F0-9]{4} [A-F0-9]{4} [A-F0-9]{4} [A-F0-9]{4} [A-F0-9]{4}  [A-F0-9]{4} [A-F0-9]{4} [A-F0-9]{4} [A-F0-9]{4} [A-F0-9]{4}'
       | tr -d " "
-    register: galaxy_signing_key
+    register: signing_key
     changed_when: false
-    failed_when: galaxy_signing_key.stdout | length != 40
+    failed_when: signing_key.stdout | length != 40
     check_mode: false
 
   - name: Import galaxy signing service GPG key file
-    command: gpg --batch --import /etc/pulp/keys/galaxy_signing_service.gpg
+    command: gpg --batch --import /tmp/signing_service.gpg
     register: result
     # Imported successfully: rc 0
     # Already imported: rc 2
@@ -24,7 +42,7 @@
   - name: Trust the galaxy signing service GPG key
     # When using this syntax, "ultimate" trust == 6
     shell: >
-      echo {{ galaxy_signing_key.stdout }}:6 | gpg --import-ownertrust
+      echo {{ signing_key.stdout }}:6 | gpg --import-ownertrust
     register: result
     # changed messages can be either:
     # gpg: inserting ownertrust of 6
@@ -33,7 +51,7 @@
 
   - name: Set environment variable for the GPG key ID
     set_fact:
-        signing_key_fingerprint: "{{ galaxy_signing_key.stdout }}"
+        signing_key_fingerprint: "{{ signing_key.stdout }}"
         cacheable: yes
 
   when: signing_key_fingerprint is undefined

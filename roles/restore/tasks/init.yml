@@ -68,11 +68,11 @@
 
 - name: Set optional galaxy signing backup fact
   set_fact:
-    galaxy_signing_secret: "{{ this_backup['resources'][0]['status']['galaxySigningSecret'] }}"
+    signing_secret: "{{ this_backup['resources'][0]['status']['signingSecret'] }}"
   when:
     - backup_name is defined
     - backup_name | length
-    - this_backup['resources'][0]['status']['galaxySigningSecret'] is defined
+    - this_backup['resources'][0]['status']['signingSecret'] is defined
 
 - name: Set optional container token backup fact
   set_fact:

@@ -140,8 +140,8 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     status:
-      galaxySigningSecret: "{{ galaxy_signing_secret }}"
-  when: galaxy_signing_secret is defined
+      signingSecret: "{{ signing_secret }}"
+  when: signing_secret is defined
 
 - name: Update container token secret name status
   operator_sdk.util.k8s_status:
