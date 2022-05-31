@@ -132,10 +132,10 @@
 
 - name: Set galaxy signing secret if found
   set_fact:
-    galaxy_signing_secret: "{{ status['galaxySigningSecret'] }}"
+    signing_secret: "{{ status['signingSecret'] }}"
   when:
-    - status['galaxySigningSecret'] is defined
-    - status['galaxySigningSecret'] | length
+    - status['signingSecret'] is defined
+    - status['signingSecret'] | length
 
 - name: Set container token secret if found
   set_fact:

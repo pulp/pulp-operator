@@ -88,18 +88,18 @@ spec:
         - name: assets-file-storage
           emptyDir: {}
 {% endif %}
-{% if galaxy_signing_secret is defined %}
+{% if signing_secret is defined %}
         - name: {{ ansible_operator_meta.name }}-signing-scripts
           configMap:
             name: {{ signing_scripts_configmap }}
         - name: {{ ansible_operator_meta.name }}-signing-galaxy
           secret:
-            secretName: {{ galaxy_signing_secret }}
+            secretName: {{ signing_secret }}
             items:
-              - path: galaxy_signing_service.gpg
-                key: galaxy_signing_service.gpg
-              - path: galaxy_signing_service.asc
-                key: galaxy_signing_service.asc
+              - path: signing_service.gpg
+                key: signing_service.gpg
+              - path: signing_service.asc
+                key: signing_service.asc
 {% endif %}
 {% if container_token_secret is defined %}
         - name: {{ ansible_operator_meta.name }}-container-auth-certs
@@ -135,11 +135,11 @@ spec:
               value: "{{ gunicorn_timeout }}"
             - name: PULP_API_WORKERS
               value: "{{ gunicorn_api_workers }}"
-{% if galaxy_signing_secret is defined %}
+{% if signing_secret is defined %}
             - name: PULP_SIGNING_KEY_FINGERPRINT
               value: "{{ signing_key_fingerprint }}"
             - name: SIGNING_SERVICE
-              value: "{{ __pulp_common_merged_pulp_settings.galaxy_collection_signing_service }}"
+              value: "{{ pulp_combined_settings.galaxy_collection_signing_service }}"
 {% endif %}
           ports:
             - protocol: TCP
@@ -188,18 +188,18 @@ spec:
             - name: assets-file-storage
               mountPath: "/var/lib/pulp/assets"
 {% endif %}
-{% if galaxy_signing_secret is defined %}
+{% if signing_secret is defined %}
             - name: {{ ansible_operator_meta.name }}-signing-scripts
               mountPath: "/var/lib/pulp/scripts"
               subPath: scripts
               readOnly: true
-            - name: name: {{ ansible_operator_meta.name }}-signing-galaxy
-              mountPath: "/etc/pulp/keys/galaxy_signing_service.gpg"
-              subPath: galaxy_signing_service.gpg
+            - name: {{ ansible_operator_meta.name }}-signing-galaxy
+              mountPath: "/etc/pulp/keys/signing_service.gpg"
+              subPath: signing_service.gpg
               readOnly: true
-            - name: name: {{ ansible_operator_meta.name }}-signing-galaxy
-              mountPath: "/etc/pulp/keys/galaxy_signing_service.asc"
-              subPath: galaxy_signing_service.asc
+            - name: {{ ansible_operator_meta.name }}-signing-galaxy
+              mountPath: "/etc/pulp/keys/signing_service.asc"
+              subPath: signing_service.asc
               readOnly: true
 {% endif %}
 {% if container_token_secret is defined %}

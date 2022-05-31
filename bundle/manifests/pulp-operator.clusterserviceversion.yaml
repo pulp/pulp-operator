@@ -175,7 +175,7 @@ metadata:
       ]
     capabilities: Seamless Upgrades
     categories: Integration & Delivery
-    containerImage: quay.io/pulp/pulp-operator:v0.11.0
+    containerImage: quay.io/pulp/pulp-operator:v0.11.0.dev
     createdAt: "2021-03-26 16:57:40"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
@@ -407,6 +407,26 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Postgres Keep Old Data PVC After Upgrade
+        path: postgres_keep_pvc_after_upgrade
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Gunicorn API workers
+        path: gunicorn_api_workers
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Gunicorn Content workers
+        path: gunicorn_content_workers
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Gunicorn timeout
+        path: gunicorn_timeout
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: HAProxy timeout
+        path: haproxy_timeout
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - displayName: Ingress type
         path: ingress_type
         x-descriptors:
@@ -441,6 +461,22 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:number
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:LoadBalancer
+      - displayName: Nginx client max body size
+        path: nginx_client_max_body_size
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Nginx proxy read timeout
+        path: nginx_proxy_read_timeout
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Nginx proxy connect timeout
+        path: nginx_proxy_connect_timeout
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Nginx proxy send timeout
+        path: nginx_proxy_send_timeout
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - displayName: Route DNS host
         path: route_host
         x-descriptors:
@@ -639,8 +675,8 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - displayName: Galaxy signing secret
-        path: galaxy_signing_secret
+      - displayName: Signing secret
+        path: signing_secret
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
@@ -873,7 +909,7 @@ spec:
                   value: redis:latest
                 - name: RELATED_IMAGE_HUB_POSTGRES
                   value: postgres:13
-                image: quay.io/pulp/pulp-operator:v0.11.0
+                image: quay.io/pulp/pulp-operator:v0.11.0.dev
                 livenessProbe:
                   httpGet:
                     path: /healthz

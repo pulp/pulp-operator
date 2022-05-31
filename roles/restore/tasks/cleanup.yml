@@ -70,13 +70,13 @@
       apiVersion: v1
       kind: Secret
       metadata:
-        name: '{{ galaxy_signing_secret }}'
+        name: '{{ signing_secret }}'
         namespace: '{{ ansible_operator_meta.namespace }}'
         ownerReferences: null
   no_log: true
   when:
-    - galaxy_signing_secret is defined
-    - galaxy_signing_secret | length
+    - signing_secret is defined
+    - signing_secret | length
 
 - name: Remove ownerReferences from container token secret to avoid garbage collection
   kubernetes.core.k8s:
