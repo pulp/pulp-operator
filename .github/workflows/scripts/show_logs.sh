@@ -44,6 +44,10 @@ echo ::group::POSTGRES
 sudo -E kubectl logs -l app.kubernetes.io/name=postgres --tail=10000
 echo ::endgroup::
 
+echo ::group::EVENTS
+sudo -E kubectl get events --sort-by='.metadata.creationTimestamp'
+echo ::endgroup::
+
 echo ::group::OBJECTS
 sudo -E kubectl get pvc,configmap,serviceaccount,secret,networkpolicy,ingress,service,deployment,statefulset,hpa,job,cronjob -o yaml
 echo ::endgroup::
