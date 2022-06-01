@@ -39,7 +39,6 @@
 
 - name: Set backup facts
   set_fact:
-    deployment_name: "{{ this_backup['resources'][0]['status']['deploymentName'] }}"
     backup_pvc: "{{ this_backup['resources'][0]['status']['backupClaim'] }}"
     backup_pvc_namespace: "{{ this_backup['resources'][0]['status']['backupNamespace'] }}"
     backup_dir: "{{ this_backup['resources'][0]['status']['backupDirectory'] }}"
@@ -49,6 +48,14 @@
   when:
     - backup_name is defined
     - backup_name | length
+
+- name: Set deployment_name
+  set_fact:
+    deployment_name: "{{ this_backup['resources'][0]['status']['deploymentName'] }}"
+  when:
+    - backup_name is defined
+    - backup_name | length
+    - deployment_name is undefined
 
 - name: Set optional objectstorage backup fact
   set_fact:
