@@ -60,8 +60,8 @@ for tries in {0..90}; do
   if [[ $(echo "$services" | grep -c NodePort) > 0 ]]; then
     # parse string like this. 30805 is the external port
     # pulp-api-svc     NodePort    10.43.170.79   <none>        24817:30805/TCP   0s
-    API_PORT=$( echo "$services" | awk -F '[ :/]+' '/pulp-web/{print $5}')
-    SVC_NAME=$( echo "$services" | awk -F '[ :/]+' '/pulp-web/{print $1}')
+    WEB_PORT=$( echo "$services" | awk -F '[ :/]+' '/web-svc/{print $5}')
+    SVC_NAME=$( echo "$services" | awk -F '[ :/]+' '/web-svc/{print $1}')
     echo "SERVICES:"
     echo "$services"
     break
@@ -100,7 +100,7 @@ for tries in {0..180}; do
   if [[ $(echo "$pods" | grep -c -v -E "STATUS|Running") -eq 0 && $(echo "$pods" | grep -c "web") -eq 1 ]]; then
     echo "PODS:"
     echo "$pods"
-    API_NODE=$( echo "$pods" | awk -F '[ :/]+' '/pulp-api/{print $8}')
+    API_NODE=$( echo "$pods" | awk -F '[ :/]+' '/-api-/{print $8}')
     break
   else
     # Often after 30 tries (150 secs), not all of the pods are running yet.
@@ -126,14 +126,14 @@ done
 
 if [[ "$KUBE" == "minikube" ]]; then
   API_NODE="localhost"
-  kubectl port-forward service/$SVC_NAME $API_PORT:$API_PORT &
-  echo "port-forwarding service/$SVC_NAME $API_PORT:$API_PORT"
+  kubectl port-forward service/$SVC_NAME $WEB_PORT:$WEB_PORT &
+  echo "port-forwarding service/$SVC_NAME $WEB_PORT:$WEB_PORT"
   sleep 30
 fi
 
 # Later tests in other scripts will use localhost:24817, which was not a safe
 # assumption at the time this script was originally written.
-URL="http://${API_NODE}:${API_PORT}${API_ROOT}api/v3/status/"
+URL="http://${API_NODE}:${WEB_PORT}${API_ROOT}api/v3/status/"
 echo "Waiting for $URL to respond ..."
 
 if ! [ -x "$(command -v http)" -a -x "$(command -v jq)" ]; then
@@ -143,7 +143,7 @@ if ! [ -x "$(command -v http)" -a -x "$(command -v jq)" ]; then
   echo "this script can not perform its remaining checks."
   echo ""
   echo "Wait a few minutes (or longer if slow system/internet) and check manually:"
-  echo "http://${API_NODE}:${API_PORT}${API_ROOT}api/v3/status/"
+  echo "http://${API_NODE}:${WEB_PORT}${API_ROOT}api/v3/status/"
   exit 100
 fi
 

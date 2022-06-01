@@ -45,5 +45,5 @@ sudo -E kubectl logs -l app.kubernetes.io/name=postgres --tail=10000
 echo ::endgroup::
 
 echo ::group::OBJECTS
-sudo -E kubectl get pvc,configmap,serviceaccount,secret,networkpolicy,ingress,service,deployment,statefulset,hpa,job,cronjob -o yaml
+sudo -E kubectl get pulp,pulpbackup,pulprestore,pvc,configmap,serviceaccount,secret,networkpolicy,ingress,service,deployment,statefulset,hpa,job,cronjob -o yaml
 echo ::endgroup::

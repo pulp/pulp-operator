@@ -229,14 +229,15 @@ jobs:
         shell: bash
         env:
           PY_COLORS: '1'
-      - name: Debugging with tmate
-        uses: mxschmitt/action-tmate@v3.11
       - name: Logs
         if: always()
         run: |
           sudo -E docker images
           .github/workflows/scripts/show_logs.sh
           http --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/ || true
+      - name: Debugging with tmate
+        if: always()
+        uses: mxschmitt/action-tmate@v3.11
       - name: Send Build details to Slack
         id: slack
         uses: slackapi/slack-github-action@v1.18.0

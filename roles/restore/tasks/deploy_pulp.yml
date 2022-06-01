@@ -20,18 +20,63 @@
     cr_spec: "{{ cr_object.stdout }}"
     cr_spec_strip: "{ "
     admin_str: "admin_password_secret: {{ admin_password_name }}"
+    storage_str: "object_storage_{{ storage_type | lower }}_secret: {{ storage_secret }}"
+    container_token_str: "container_token_secret: {{ container_token_secret }}"
+    db_fields_str: "db_fields_encryption_secret: {{ db_fields_encryption_secret }}"
+    signing_str: "galaxy_signing_secret: {{ galaxy_signing_secret }}"
+    db_str: "postgres_configuration_secret: {{ db_secret_name }}"
+    sso_str: "sso_secret: {{ sso_secret }}"
 
 - name: Strip end characters from spec
   set_fact:
-    cr_spec_strip: "{{ cr_object.stdout[:-2] + ', '}}"
+    cr_spec_strip: "{{ cr_object.stdout[:-2] }}"
   when:
     - cr_object.stdout | length > 1
-    - not 'admin_password_secret' in cr_object.stdout
 
-- name: Set custom resource spec variable from backup
+- name: Set custom resource spec admin from backup
   set_fact:
-    cr_spec: "{{ cr_spec_strip + admin_str + '}\n' }}"
+    cr_spec_strip: "{{ cr_spec_strip + ', ' + admin_str }}"
   when: not 'admin_password_secret' in cr_object.stdout
+
+- name: Set custom resource spec storage from backup
+  set_fact:
+    cr_spec_strip: "{{ cr_spec_strip + ', ' + storage_str }}"
+  when:
+    - not 'object_storage_{{ storage_type | lower }}_secret' in cr_object.stdout
+    - storage_type | lower != 'file'
+
+- name: Set custom resource spec container token from backup
+  set_fact:
+    cr_spec_strip: "{{ cr_spec_strip + ', ' + container_token_str }}"
+  when: not 'container_token_secret' in cr_object.stdout
+
+- name: Set custom resource spec db encryption from backup
+  set_fact:
+    cr_spec_strip: "{{ cr_spec_strip + ', ' + db_fields_str }}"
+  when: not 'db_fields_encryption_secret' in cr_object.stdout
+
+- name: Set custom resource spec galaxy signing from backup
+  set_fact:
+    cr_spec_strip: "{{ cr_spec_strip + ', ' + signing_str }}"
+  when:
+    - not 'galaxy_signing_secret' in cr_object.stdout
+    - galaxy_signing_secret != ''
+
+- name: Set custom resource spec db from backup
+  set_fact:
+    cr_spec_strip: "{{ cr_spec_strip + ', ' + db_str }}"
+  when: not 'postgres_configuration_secret' in cr_object.stdout
+
+- name: Set custom resource spec SSO from backup
+  set_fact:
+    cr_spec_strip: "{{ cr_spec_strip + ', ' + sso_str }}"
+  when:
+    - not 'sso_secret' in cr_object.stdout
+    - sso_secret != ''
+
+- name: Set custom resource spec from backup
+  set_fact:
+    cr_spec: "{{ cr_spec_strip + '}\n' }}"
 
 - name: Deploy object
   k8s:
