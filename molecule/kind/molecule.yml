@@ -28,6 +28,7 @@ provisioner:
     group_vars:
       all:
         namespace: ${TEST_OPERATOR_NAMESPACE:-osdk-test}
+        operator_service_account_name: osdk-sa
     host_vars:
       localhost:
         ansible_python_interpreter: '{{ ansible_playbook_python }}'
