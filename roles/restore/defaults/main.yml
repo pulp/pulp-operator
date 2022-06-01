@@ -2,9 +2,6 @@
 # Required: specify name of pulp backup
 backup_name: ''
 
-# Required: specify name of pulp deployment to restore to
-deployment_name: ''
-
 # Required: specify a pre-created PVC (name) to restore from
 backup_pvc: ''
 backup_pvc_namespace: "{{ ansible_operator_meta.namespace }}"
