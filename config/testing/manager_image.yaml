@@ -10,3 +10,6 @@ spec:
       containers:
         - name: pulp-manager
           image: testing
+          env:
+            - name: OPERATOR_SA_NAME
+              value: osdk-sa
