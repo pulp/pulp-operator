@@ -13,6 +13,42 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+0.11.0 (2022-06-02)
+===================
+
+
+Features
+--------
+
+- Upgrade to PostgreSQL 13 and add data migration logic
+  [#358](https://github.com/pulp/pulp-operator/issues/358)
+- Made Nginx, Gunicorn, HAproxy timeouts configurable
+  [#418](https://github.com/pulp/pulp-operator/issues/418)
+- The Pulp API can now be rerooted using the new ``API_ROOT`` setting. By default it is set to
+  ``/pulp/``. Pulp appends the string ``api/v3/`` onto the value of ``API_ROOT``.
+  [#421](https://github.com/pulp/pulp-operator/issues/421)
+
+
+Bugfixes
+--------
+
+- Ensure Nginx `client_max_body_size` is correctly set
+  [#418](https://github.com/pulp/pulp-operator/issues/418)
+- Ensure content can be signed
+  [#426](https://github.com/pulp/pulp-operator/issues/426)
+- Fix restore when ``deployment_name`` is set
+  [#427](https://github.com/pulp/pulp-operator/issues/427)
+
+
+Misc
+----
+
+- [#407](https://github.com/pulp/pulp-operator/issues/407)
+
+
+----
+
+
 0.10.1 (2022-05-18)
 ===================
 
