@@ -147,9 +147,6 @@ spec:
               file_storage_storage_class:
                 description: Storage class to use for the file persistentVolumeClaim
                 type: string
-              signing_secret:
-                description: Secret where the signing certificates are stored
-                type: string
               gunicorn_api_workers:
                 default: 1
                 description: The number of gunicorn workers to use for the api.
@@ -426,6 +423,9 @@ spec:
                 type: string
               signing_scripts_configmap:
                 description: ConfigMap where the signing scripts are stored
+                type: string
+              signing_secret:
+                description: Secret where the signing certificates are stored
                 type: string
               sso_secret:
                 description: Secret where Single Sign-on configuration can be found
