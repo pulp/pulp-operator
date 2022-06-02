@@ -131,14 +131,25 @@ spec:
               containerPort: 24816
           volumeMounts:
             - name: {{ ansible_operator_meta.name }}-server
-              mountPath: "/etc/pulp/"
+              mountPath: "/etc/pulp/settings.py"
+              subPath: settings.py
+              readOnly: true
             - name: {{ ansible_operator_meta.name }}-db-fields-encryption
-              mountPath: "/etc/pulp/keys/"
+              mountPath: "/etc/pulp/keys/database_fields.symmetric.key"
+              subPath: database_fields.symmetric.key
               readOnly: true
 {% if signing_secret is defined %}
             - name: {{ ansible_operator_meta.name }}-signing-scripts
               mountPath: "/var/lib/pulp/scripts"
               subPath: scripts
+              readOnly: true
+            - name: {{ ansible_operator_meta.name }}-signing-galaxy
+              mountPath: "/etc/pulp/keys/signing_service.gpg"
+              subPath: signing_service.gpg
+              readOnly: true
+            - name: {{ ansible_operator_meta.name }}-signing-galaxy
+              mountPath: "/etc/pulp/keys/signing_service.asc"
+              subPath: signing_service.asc
               readOnly: true
 {% endif %}
 {% if is_file_storage %}
