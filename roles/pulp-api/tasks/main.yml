@@ -87,24 +87,6 @@
     cacheable: yes
   no_log: true
 
-- name: Galaxy API root
-  set_fact:
-    pulp_combined_settings: "{{ pulp_combined_settings| combine({ 'api_root': '/api/galaxy/pulp/'}) }}"
-  no_log: true
-  when:
-    - image is defined
-    - "'galaxy' in image"
-    - pulp_combined_settings.api_root == '/pulp/'
-
-- name: Hub API root
-  set_fact:
-    pulp_combined_settings: "{{ pulp_combined_settings| combine({ 'api_root': '/api/automation-hub/pulp/'}) }}"
-  no_log: true
-  when:
-    - image is defined
-    - "'hub' in image"
-    - pulp_combined_settings.api_root == '/pulp/'
-
 - name: Include redis role
   include_role:
     name: redis
