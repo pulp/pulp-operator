@@ -119,7 +119,7 @@ def save_vars(image, tag, pulpcore, plugins):
                     "tag": tag,
                     "container_file": "Containerfile.web",
                     "base_image_name": "pulp",
-                    "python_version": "3.9",
+                    "python_version": "3.10",
                     "plugin_snippets": PULP_PLUGINS_WITH_WEBSERVER_SNIPPETS,
                 }
             }
@@ -149,7 +149,7 @@ def save_vars(image, tag, pulpcore, plugins):
                     "tag": tag,
                     "container_file": "Containerfile.web",
                     "base_image_name": "galaxy",
-                    "python_version": "3.9",
+                    "python_version": "3.10",
                     "plugin_snippets": GALAXY_PLUGINS_WITH_WEBSERVER_SNIPPETS,
                 }
             }

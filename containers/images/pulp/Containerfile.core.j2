@@ -1,4 +1,4 @@
-FROM registry.fedoraproject.org/fedora:34
+FROM registry.fedoraproject.org/fedora:36
 
 {% if quay_expire is defined %}
 LABEL quay.expires-after={{ quay_expire }}d
@@ -51,6 +51,10 @@ RUN		dnf -y update && \
 		dnf -y install libcomps-devel && \
 		dnf -y install ninja-build && \
 		dnf -y install 'dnf-command(builddep)' && \
+		dnf -y install cairo-devel && \
+		dnf -y install cmake && \
+		dnf -y install gobject-introspection-devel && \
+		dnf -y install cairo-gobject-devel && \
 		dnf -y builddep createrepo_c && \
 		dnf clean all
 

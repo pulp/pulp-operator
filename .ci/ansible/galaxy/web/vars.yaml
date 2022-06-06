@@ -4,7 +4,7 @@ images:
       tag: latest
       container_file: Containerfile.web
       base_image_name: galaxy
-      python_version: "3.9"
+      python_version: "3.10"
       plugin_snippets:
         - pulp_ansible
         - pulp_container
