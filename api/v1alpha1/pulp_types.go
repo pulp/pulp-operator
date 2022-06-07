@@ -37,7 +37,7 @@ type PulpSpec struct {
 type Api struct {
 	// Size is the size of number of api replicas
 	//+kubebuilder:validation:Minimum=0
-	Replicas int32 `json:"size"`
+	Replicas int32 `json:"replicas"`
 }
 
 type Database struct {

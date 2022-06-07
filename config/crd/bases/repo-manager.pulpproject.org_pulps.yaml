@@ -37,13 +37,13 @@ spec:
             properties:
               api:
                 properties:
-                  size:
+                  replicas:
                     description: Size is the size of number of api replicas
                     format: int32
                     minimum: 0
                     type: integer
                 required:
-                - size
+                - replicas
                 type: object
               database:
                 properties:

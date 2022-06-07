@@ -1,0 +1,9 @@
+apiVersion: repo-manager.pulpproject.org/v1alpha1
+kind: Pulp
+metadata:
+  name: test
+spec:
+  api:
+    replicas: 1
+  database:
+    type: postgres
