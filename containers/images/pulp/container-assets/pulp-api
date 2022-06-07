@@ -32,7 +32,7 @@ fi
 bash -x
 
 PULP_GUNICORN_TIMEOUT=${PULP_GUNICORN_TIMEOUT:-90}
-PULP_API_WORKERS=${PULP_API_WORKERS:-1}
+PULP_API_WORKERS=${PULP_API_WORKERS:-2}
 
 mkdir -p /var/lib/pulp/media \
          /var/lib/pulp/assets \

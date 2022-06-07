@@ -96,4 +96,4 @@ keycloak_realm_available: false
 __pulp_gpg_inspect_command: "gpg --import-options show-only --import --with-fingerprint"
 
 gunicorn_timeout: 90
-gunicorn_api_workers: 1
+gunicorn_api_workers: 2
