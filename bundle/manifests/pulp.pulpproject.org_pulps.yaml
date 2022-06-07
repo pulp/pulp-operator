@@ -151,7 +151,7 @@ spec:
                 description: Secret where the signing certificates are stored
                 type: string
               gunicorn_api_workers:
-                default: 1
+                default: 2
                 description: The number of gunicorn workers to use for the api.
                 type: integer
               gunicorn_content_workers:

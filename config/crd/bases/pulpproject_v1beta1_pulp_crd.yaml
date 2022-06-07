@@ -175,7 +175,7 @@ spec:
               gunicorn_api_workers:
                 description: The number of gunicorn workers to use for the api.
                 type: integer
-                default: 1
+                default: 2
               gunicorn_content_workers:
                 description: The number of gunicorn workers to use for the content.
                 type: integer
