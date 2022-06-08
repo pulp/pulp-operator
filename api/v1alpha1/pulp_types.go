@@ -41,7 +41,8 @@ type Api struct {
 }
 
 type Database struct {
-	Type string `json:"type"`
+	Replicas int32  `json:"replicas"`
+	Type     string `json:"type"`
 }
 
 // PulpStatus defines the observed state of Pulp

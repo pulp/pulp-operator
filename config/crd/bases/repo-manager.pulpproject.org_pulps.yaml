@@ -47,9 +47,13 @@ spec:
                 type: object
               database:
                 properties:
+                  replicas:
+                    format: int32
+                    type: integer
                   type:
                     type: string
                 required:
+                - replicas
                 - type
                 type: object
               foo:

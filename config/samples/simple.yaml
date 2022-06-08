@@ -6,4 +6,5 @@ spec:
   api:
     replicas: 1
   database:
+    replicas: 1
     type: postgres

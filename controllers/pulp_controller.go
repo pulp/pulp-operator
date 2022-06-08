@@ -70,9 +70,17 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 
-	pulpController, err := r.pulpApiController(ctx, req, pulp, log)
+	pulpController, err := r.databaseController(ctx, pulp, log)
+	if err != nil {
+		return pulpController, err
+	}
 
-	return pulpController, err
+	pulpController, err = r.pulpApiController(ctx, pulp, log)
+	if err != nil {
+		return pulpController, err
+	}
+
+	return pulpController, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
