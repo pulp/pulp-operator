@@ -126,6 +126,10 @@
   set_fact:
     default_azure_settings: "{{ default_azure_settings|combine(azure_connection_string_dict) }}"
   no_log: true
+  when:
+    - azure_secret_data_avaiable
+    - _custom_azure_configuration.resources[0].data['azure-connection-string'] is defined
+    - _custom_azure_configuration.resources[0].data['azure-connection-string'] | length
 
 - name: merge default_azure_settings with settings
   set_fact:
