@@ -13,6 +13,22 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+0.11.1 (2022-06-09)
+===================
+
+
+Bugfixes
+--------
+
+- Gunicorn API workers default to 2
+  [#437](https://github.com/pulp/pulp-operator/issues/437)
+- Ensure azure_connection_string is optional
+  [#440](https://github.com/pulp/pulp-operator/issues/440)
+
+
+----
+
+
 0.11.0 (2022-06-02)
 ===================
 
