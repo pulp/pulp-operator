@@ -73,6 +73,10 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 
 // deploymentForPulpApi returns a pulp-api Deployment object
 func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
+
+	runAsUser := int64(0)
+	fsGroup := int64(0)
+
 	ls := labelsForPulpApi(m.Name)
 	replicas := m.Spec.Api.Replicas
 
@@ -92,14 +96,114 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image:   "memcached:1.4.36-alpine",
-						Name:    "pulp-api",
-						Command: []string{"memcached", "-m=64", "-o", "modern", "-v"},
+						Image: "quay.io/pulp/pulp",
+						Name:  "api",
+						Args:  []string{"pulp-api"},
+						Env: []corev1.EnvVar{
+							{
+								Name:  "POSTGRES_SERVICE_HOST",
+								Value: "postgres.pulp.svc.cluster.local",
+							},
+							{
+								Name:  "POSTGES_SERVICE_PORT",
+								Value: "5432",
+							},
+							{
+								Name:  "PULP_GUNICORN_TIMEOUT",
+								Value: "60s",
+							},
+							{
+								Name:  "PULP_API_WORKERS",
+								Value: "1",
+							},
+						},
 						Ports: []corev1.ContainerPort{{
-							ContainerPort: 11211,
-							Name:          "memcached",
+							ContainerPort: 24817,
+							Protocol:      "TCP",
 						}},
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      "pulp-server",
+								MountPath: "/etc/pulp/settings.py",
+								SubPath:   "settings.py",
+								ReadOnly:  true,
+							},
+							{
+								Name:      "pulp-admin-password",
+								MountPath: "/etc/pulp/pulp-admin-password",
+								SubPath:   "admin-password",
+								ReadOnly:  true,
+							},
+							{
+								Name:      "pulp-db-fields-encryption",
+								MountPath: "/etc/pulp/keys/database_fields.symmetric.key",
+								SubPath:   "database_fields.symmetric.key",
+								ReadOnly:  true,
+							},
+							{
+								Name:      "tmp-file-storage",
+								MountPath: "/var/lib/pulp/tmp",
+							},
+							{
+								Name:      "assets-file-storage",
+								MountPath: "/var/lib/pulp/assets",
+							},
+						},
 					}},
+					SecurityContext: &corev1.PodSecurityContext{
+						RunAsUser: &runAsUser,
+						FSGroup:   &fsGroup,
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: "pulp-admin-password",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "pulp-admin-password",
+									Items: []corev1.KeyToPath{{
+										Key:  "admin-password",
+										Path: "password",
+									}},
+								},
+							},
+						},
+						{
+							Name: "pulp-server",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "pulp-server",
+									Items: []corev1.KeyToPath{{
+										Key:  "settings.py",
+										Path: "settings.py",
+									}},
+								},
+							},
+						},
+						{
+							Name: "pulp-db-fields-encryption",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "pulp-db-fields-encryption",
+									Items: []corev1.KeyToPath{{
+										Key:  "database_fields.symmetric.key",
+										Path: "database_fields.symmetric.key",
+									}},
+								},
+							},
+						},
+						{
+							Name: "tmp-file-storage",
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+						{
+							Name: "assets-file-storage",
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+					},
 				},
 			},
 		},
