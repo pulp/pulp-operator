@@ -27,6 +27,7 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - secrets
   - services
   verbs:
   - create

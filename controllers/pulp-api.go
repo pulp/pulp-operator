@@ -68,6 +68,66 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
 
+	// Create pulp-server secret
+	secret := &corev1.Secret{}
+	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-server", Namespace: pulp.Namespace}, secret)
+
+	// Create the secret in case it is not found
+	if err != nil && errors.IsNotFound(err) {
+		sec := r.pulpServerSecret(pulp)
+		log.Info("Creating a new pulp-server secret", "Secret.Namespace", sec.Namespace, "Secret.Name", sec.Name)
+		err = r.Create(ctx, sec)
+		if err != nil {
+			log.Error(err, "Failed to create new pulp-server secret", "Secret.Namespace", sec.Namespace, "Secret.Name", sec.Name)
+			return ctrl.Result{}, err
+		}
+		// Deployment created successfully - return and requeue
+		return ctrl.Result{Requeue: true}, nil
+	} else if err != nil {
+		log.Error(err, "Failed to get pulp-server secret")
+		return ctrl.Result{}, err
+	}
+
+	// Create pulp-db-fields-encryption secret
+	dbFieldsEnc := &corev1.Secret{}
+	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-db-fields-encryption", Namespace: pulp.Namespace}, dbFieldsEnc)
+
+	// Create the secret in case it is not found
+	if err != nil && errors.IsNotFound(err) {
+		dbFields := r.pulpDBFieldsEncryptionSecret(pulp)
+		log.Info("Creating a new pulp-db-fields-encryption secret", "Secret.Namespace", dbFields.Namespace, "Secret.Name", dbFields.Name)
+		err = r.Create(ctx, dbFields)
+		if err != nil {
+			log.Error(err, "Failed to create new pulp-db-fields-encryption secret", "Secret.Namespace", dbFields.Namespace, "Secret.Name", dbFields.Name)
+			return ctrl.Result{}, err
+		}
+		// Deployment created successfully - return and requeue
+		return ctrl.Result{Requeue: true}, nil
+	} else if err != nil {
+		log.Error(err, "Failed to get pulp-db-fields-encryption secret")
+		return ctrl.Result{}, err
+	}
+
+	// Create pulp-db-fields-encryption secret
+	adminSecret := &corev1.Secret{}
+	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-admin-password", Namespace: pulp.Namespace}, adminSecret)
+
+	// Create the secret in case it is not found
+	if err != nil && errors.IsNotFound(err) {
+		adminPwd := r.pulpAdminPasswordSecret(pulp)
+		log.Info("Creating a new pulp-admin-secret secret", "Secret.Namespace", adminPwd.Namespace, "Secret.Name", adminPwd.Name)
+		err = r.Create(ctx, adminPwd)
+		if err != nil {
+			log.Error(err, "Failed to create new pulp-admin-secret secret", "Secret.Namespace", adminPwd.Namespace, "Secret.Name", adminPwd.Name)
+			return ctrl.Result{}, err
+		}
+		// Deployment created successfully - return and requeue
+		return ctrl.Result{Requeue: true}, nil
+	} else if err != nil {
+		log.Error(err, "Failed to get pulp-admin-secret secret")
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -102,15 +162,15 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 						Env: []corev1.EnvVar{
 							{
 								Name:  "POSTGRES_SERVICE_HOST",
-								Value: "postgres.pulp.svc.cluster.local",
+								Value: "test-database-svc.pulp-operator-go-system.svc.cluster.local",
 							},
 							{
-								Name:  "POSTGES_SERVICE_PORT",
+								Name:  "POSTGRES_SERVICE_PORT",
 								Value: "5432",
 							},
 							{
 								Name:  "PULP_GUNICORN_TIMEOUT",
-								Value: "60s",
+								Value: "60",
 							},
 							{
 								Name:  "PULP_API_WORKERS",
@@ -123,19 +183,19 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 						}},
 						VolumeMounts: []corev1.VolumeMount{
 							{
-								Name:      "pulp-server",
+								Name:      m.Name + "-server",
 								MountPath: "/etc/pulp/settings.py",
 								SubPath:   "settings.py",
 								ReadOnly:  true,
 							},
 							{
-								Name:      "pulp-admin-password",
+								Name:      m.Name + "-admin-password",
 								MountPath: "/etc/pulp/pulp-admin-password",
 								SubPath:   "admin-password",
 								ReadOnly:  true,
 							},
 							{
-								Name:      "pulp-db-fields-encryption",
+								Name:      m.Name + "-db-fields-encryption",
 								MountPath: "/etc/pulp/keys/database_fields.symmetric.key",
 								SubPath:   "database_fields.symmetric.key",
 								ReadOnly:  true,
@@ -156,22 +216,22 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 					},
 					Volumes: []corev1.Volume{
 						{
-							Name: "pulp-admin-password",
+							Name: m.Name + "-admin-password",
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
-									SecretName: "pulp-admin-password",
+									SecretName: m.Name + "-admin-password",
 									Items: []corev1.KeyToPath{{
-										Key:  "admin-password",
-										Path: "password",
+										Path: "admin-password",
+										Key:  "password",
 									}},
 								},
 							},
 						},
 						{
-							Name: "pulp-server",
+							Name: m.Name + "-server",
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
-									SecretName: "pulp-server",
+									SecretName: m.Name + "-server",
 									Items: []corev1.KeyToPath{{
 										Key:  "settings.py",
 										Path: "settings.py",
@@ -180,10 +240,10 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 							},
 						},
 						{
-							Name: "pulp-db-fields-encryption",
+							Name: m.Name + "-db-fields-encryption",
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
-									SecretName: "pulp-db-fields-encryption",
+									SecretName: m.Name + "-db-fields-encryption",
 									Items: []corev1.KeyToPath{{
 										Key:  "database_fields.symmetric.key",
 										Path: "database_fields.symmetric.key",
@@ -217,4 +277,62 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 // belonging to the given pulp CR name.
 func labelsForPulpApi(name string) map[string]string {
 	return map[string]string{"app": "pulp-api", "pulp_cr": name}
+}
+
+func (r *PulpReconciler) pulpServerSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
+	sec := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      m.Name + "-server",
+			Namespace: m.Namespace,
+		},
+		StringData: map[string]string{
+			"settings.py": `
+CONTENT_ORIGIN = "http://test-pulp-content-svc.pulp-operator-go-system.svc.cluster.local:24816"
+API_ROOT = "/pulp/"
+CACHE_ENABLED = "False"
+DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
+GALAXY_COLLECTION_SIGNING_SERVICE = "ansible-default"
+ANSIBLE_CERTS_DIR = "/etc/pulp/keys"
+DATABASES = { 'default' : { 'HOST': 'test-database-svc.pulp-operator-go-system.svc.cluster.local', 'ENGINE': 'django.db.backends.postgresql_psycopg2', 'NAME': 'pulp', 'USER': 'admin', 'PASSWORD': 'password', 'CONN_MAX_AGE': 0, 'PORT': '5432'}}
+`,
+		},
+	}
+
+	// Set Pulp instance as the owner and controller
+	ctrl.SetControllerReference(m, sec, r.Scheme)
+	return sec
+}
+
+// pulp-db-fields-encryption secret
+func (r *PulpReconciler) pulpDBFieldsEncryptionSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
+	sec := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      m.Name + "-db-fields-encryption",
+			Namespace: m.Namespace,
+		},
+		StringData: map[string]string{
+			"database_fields.symmetric.key": "81HqDtbqAywKSOumSha3BhWNOdQ26slT6K0YaZeZyPs=",
+		},
+	}
+
+	// Set Pulp instance as the owner and controller
+	ctrl.SetControllerReference(m, sec, r.Scheme)
+	return sec
+}
+
+// pulp-admin-passowrd
+func (r *PulpReconciler) pulpAdminPasswordSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
+	sec := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      m.Name + "-admin-password",
+			Namespace: m.Namespace,
+		},
+		StringData: map[string]string{
+			"password": "password",
+		},
+	}
+
+	// Set Pulp instance as the owner and controller
+	ctrl.SetControllerReference(m, sec, r.Scheme)
+	return sec
 }

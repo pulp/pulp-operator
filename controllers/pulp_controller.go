@@ -42,7 +42,7 @@ type PulpReconciler struct {
 //+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulps/finalizers,verbs=update
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;
-//+kubebuilder:rbac:groups=core,resources=services,verbs=create;update;patch;delete;watch;get;list;
+//+kubebuilder:rbac:groups=core,resources=secrets;services,verbs=create;update;patch;delete;watch;get;list;
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
