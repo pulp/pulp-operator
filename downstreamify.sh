@@ -67,6 +67,10 @@ for file in "${files[@]}"; do
    sed -i -e "s/pulp-operator-sa/automationhub-operator-sa/g" ${file};
 done
 
+# -- Replace pulp spec reference (based on manifest file name)
+
+sed -i -e "s/pulp_pulpproject_org_pulp/automationhub_ansible_com_automationhub/g" ./playbooks/pulp.yml
+
 # -- Swap out postgres data path
 
 sed -i -e "s/\/var\/lib\/postgresql/\/var\/lib\/pgsql/g" ./roles/postgres/defaults/main.yml

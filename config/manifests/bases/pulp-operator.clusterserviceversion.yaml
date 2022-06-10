@@ -557,7 +557,8 @@ spec:
         path: backup_name
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
-        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:backup_source:Backup CR
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:backup_source:Backup
+          CR
       - displayName: New Deployment name
         path: deployment_name
         x-descriptors:
@@ -813,9 +814,9 @@ spec:
                 image: quay.io/pulp/pulp-operator:devel
                 name: pulp-manager
                 resources: {}
-              terminationGracePeriodSeconds: 10
               imagePullSecrets:
-               - name: redhat-operators-pull-secret
+              - name: redhat-operators-pull-secret
+              terminationGracePeriodSeconds: 10
       permissions:
       - rules:
         - apiGroups:
