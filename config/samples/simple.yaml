@@ -8,3 +8,5 @@ spec:
   database:
     replicas: 1
     type: postgres
+  content:
+    replicas: 1

@@ -32,15 +32,24 @@ type PulpSpec struct {
 	Foo      string   `json:"foo,omitempty"`
 	Api      Api      `json:"api"`
 	Database Database `json:"database"`
+	Content  Content  `json:"content"`
 }
 
 type Api struct {
-	// Size is the size of number of api replicas
-	//+kubebuilder:validation:Minimum=0
+	// Size is the size of number of pulp-api replicas
+	//+kubebuilder:validation:Minimum=1
+	Replicas int32 `json:"replicas"`
+}
+
+type Content struct {
+	// Size is the size of number of pulp-content replicas
+	//+kubebuilder:validation:Minimum=1
 	Replicas int32 `json:"replicas"`
 }
 
 type Database struct {
+	// Size is the size of number of db replicas
+	//+kubebuilder:validation:Minimum=1
 	Replicas int32  `json:"replicas"`
 	Type     string `json:"type"`
 }

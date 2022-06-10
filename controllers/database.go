@@ -95,11 +95,11 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 	}
 
 	// Ensure the service spec is as expected
-	expected_spec := serviceSpec(pulp.Name)
+	expected_spec := serviceDBSpec(pulp.Name)
 
 	if !reflect.DeepEqual(expected_spec, dbSvc.Spec) {
 		log.Info("The Database service has been modified! Reconciling ...")
-		err = r.Update(ctx, serviceObject(pulp.Name, pulp.Namespace))
+		err = r.Update(ctx, serviceDBObject(pulp.Name, pulp.Namespace))
 		if err != nil {
 			log.Error(err, "Error trying to update the Database Service object ... ")
 			return reconcile.Result{}, err
@@ -182,20 +182,20 @@ func labelsForDatabase(name string) map[string]string {
 // serviceForDatabase returns a service object for postgres pods
 func (r *PulpReconciler) serviceForDatabase(m *repomanagerv1alpha1.Pulp) *corev1.Service {
 
-	svc := serviceObject(m.Name, m.Namespace)
+	svc := serviceDBObject(m.Name, m.Namespace)
 
 	// Set Pulp instance as the owner and controller
 	ctrl.SetControllerReference(m, svc, r.Scheme)
 	return svc
 }
 
-func serviceObject(name, namespace string) *corev1.Service {
+func serviceDBObject(name, namespace string) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name + "-database-svc",
 			Namespace: namespace,
 		},
-		Spec: serviceSpec(name),
+		Spec: serviceDBSpec(name),
 	}
 }
 
@@ -205,7 +205,7 @@ func serviceObject(name, namespace string) *corev1.Service {
 //   names, ports and selectors. This function could be modified to address all pulp
 //   service configurations (maybe just adding the corev1.ServicePort and a dictionary
 //   for the selectors as function parameters would be enough).
-func serviceSpec(name string) corev1.ServiceSpec {
+func serviceDBSpec(name string) corev1.ServiceSpec {
 
 	var serviceInternalTrafficPolicyCluster corev1.ServiceInternalTrafficPolicyType
 	serviceInternalTrafficPolicyCluster = "Cluster"

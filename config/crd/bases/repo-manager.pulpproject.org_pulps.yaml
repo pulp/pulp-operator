@@ -38,9 +38,19 @@ spec:
               api:
                 properties:
                   replicas:
-                    description: Size is the size of number of api replicas
+                    description: Size is the size of number of pulp-api replicas
                     format: int32
-                    minimum: 0
+                    minimum: 1
+                    type: integer
+                required:
+                - replicas
+                type: object
+              content:
+                properties:
+                  replicas:
+                    description: Size is the size of number of pulp-content replicas
+                    format: int32
+                    minimum: 1
                     type: integer
                 required:
                 - replicas
@@ -48,7 +58,9 @@ spec:
               database:
                 properties:
                   replicas:
+                    description: Size is the size of number of db replicas
                     format: int32
+                    minimum: 1
                     type: integer
                   type:
                     type: string
@@ -62,6 +74,7 @@ spec:
                 type: string
             required:
             - api
+            - content
             - database
             type: object
           status:
