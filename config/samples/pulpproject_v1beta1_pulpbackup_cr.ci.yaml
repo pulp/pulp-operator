@@ -5,3 +5,4 @@ metadata:
   name: ci-pulpbackup
 spec:
   deployment_name: example-pulp
+  no_log: false

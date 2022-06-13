@@ -159,7 +159,8 @@ metadata:
             "name": "ci-pulpbackup"
           },
           "spec": {
-            "deployment_name": "example-pulp"
+            "deployment_name": "example-pulp",
+            "no_log": "false"
           }
         },
         {
@@ -169,7 +170,8 @@ metadata:
             "name": "ci-pulprestore"
           },
           "spec": {
-            "backup_name": "ci-pulpbackup"
+            "backup_name": "ci-pulpbackup",
+            "no_log": "false"
           }
         }
       ]
@@ -329,6 +331,11 @@ spec:
         path: restoreComplete
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
+      - displayName: No Log Configuration
+        path: no_log
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       version: v1beta1
     - description: Deploy a new instance of pulp
       displayName: Pulp

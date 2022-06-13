@@ -15,4 +15,4 @@
     namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ container_token_secret }}'
   register: _container_token_configuration
-  no_log: true
+  no_log: "{{ no_log }}"

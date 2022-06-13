@@ -6,7 +6,7 @@
     namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ db_secret_name }}'
   register: _custom_pg_config_resources
-  no_log: true
+  no_log: "{{ no_log }}"
   when:
     - db_secret_name is defined
     - db_secret_name | length
@@ -17,12 +17,12 @@
     namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ deployment_name }}-postgres-configuration'
   register: _default_pg_config_resources
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Set PostgreSQL configuration
   set_fact:
     pg_config: '{{ _custom_pg_config_resources["resources"] | default([]) | length | ternary(_custom_pg_config_resources, _default_pg_config_resources) }}'
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Store Database Configuration
   set_fact:
@@ -32,7 +32,7 @@
     postgres_port: "{{ pg_config['resources'][0]['data']['port'] | b64decode }}"
     postgres_host: "{{ pg_config['resources'][0]['data']['host'] | b64decode }}"
     postgres_sslmode: "{{ pg_config['resources'][0]['data']['sslmode'] | default('prefer'|b64encode) | b64decode }}"
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Default label selector to custom resource generated postgres
   set_fact:
@@ -72,7 +72,7 @@
       -h {{ postgres_host }}
       -d {{ postgres_database }}
       -p {{ postgres_port }}
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Restore database dump to the new postgresql container
   kubernetes.core.k8s_exec:
@@ -85,5 +85,5 @@
       echo 'Successful'
       """
   register: data_migration
-  no_log: true
+  no_log: "{{ no_log }}"
   failed_when: "'Successful' not in data_migration.stdout"

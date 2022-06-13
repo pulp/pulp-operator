@@ -241,6 +241,10 @@ spec:
                 default: 120s
                 description: NGINX proxy send timeout
                 type: string
+              no_log:
+                default: true
+                description: Configure no_log for no_log tasks
+                type: boolean
               node_selector:
                 description: nodeSelector for the Pulp pods
                 type: string
