@@ -5,3 +5,4 @@ metadata:
   name: ci-pulprestore
 spec:
   backup_name: ci-pulpbackup
+  no_log: false

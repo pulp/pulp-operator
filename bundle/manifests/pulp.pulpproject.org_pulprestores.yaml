@@ -42,6 +42,10 @@ spec:
               deployment_name:
                 description: Name of the deployment to be restored to
                 type: string
+              no_log:
+                default: true
+                description: Configure no_log for no_log tasks
+                type: boolean
               postgres_label_selector:
                 description: Label selector used to identify postgres pod for executing
                   migration

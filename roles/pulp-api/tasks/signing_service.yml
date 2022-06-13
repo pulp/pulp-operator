@@ -5,12 +5,12 @@
     namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ signing_secret }}'
   register: _signing_keys
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Get signing keys
   set_fact:
     signing_service_gpg_content: "{{ _signing_keys['resources'][0]['data']['signing_service.gpg'] | b64decode }}"
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Copying public GPG key
   copy:

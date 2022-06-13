@@ -5,6 +5,7 @@ metadata:
 spec:
   image_version: latest
   image_web_version: latest
+  no_log: false
   admin_password_secret: "example-pulp-admin-password"
   storage_type: File
   ingress_type: nodeport
