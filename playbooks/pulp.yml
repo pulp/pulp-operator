@@ -35,6 +35,7 @@
     file_storage_access_mode: "ReadWriteMany"
     file_storage_size: "100Gi"
     raw_spec: "{{ vars['_pulp_pulpproject_org_pulp']['spec'] }}"
+    no_log: true
   pre_tasks:
     - name: Verify imagePullSecrets
       k8s_info:
@@ -42,7 +43,7 @@
         namespace: '{{ ansible_operator_meta.namespace }}'
         name: redhat-operators-pull-secret
       register: _rh_ops_secret
-      no_log: true
+      no_log: "{{ no_log }}"
     - name: Create imagePullSecret
       k8s:
         state: present

@@ -1,7 +1,7 @@
 ---
 - set_fact:
     secret_key: "{{ lookup('password', '/dev/null length=50 chars=ascii_letters') }}"
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - set_fact:
     object_storage_secret: "{{ object_storage_s3_secret }}"
@@ -68,7 +68,7 @@
 - name: Getting raw pulp_settings
   set_fact:
     raw_pulp_settings: "{{ raw_spec['pulp_settings'] | default({}) }}"
-  no_log: true
+  no_log: "{{ no_log }}"
   when: pulp_settings is defined
 
 - name: Set default token authentication secret name if not set by user
@@ -85,7 +85,7 @@
   set_fact:
     pulp_combined_settings: "{{ default_settings|combine(raw_pulp_settings, recursive=True) if pulp_settings is defined and pulp_settings is not none else default_settings }}"
     cacheable: yes
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Include redis role
   include_role:
@@ -104,7 +104,7 @@
     definition: "{{ lookup('template', 'templates/' + item + '.secret.yaml.j2') | from_yaml }}"
   with_items:
     - pulp-server
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - include_tasks:
     file: admin_password_configuration.yml
@@ -172,7 +172,7 @@
     namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ container_token_secret }}'
   register: _container_token_configuration
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - include_tasks:
     file: container_auth_configuration.yml
@@ -183,7 +183,7 @@
   set_fact:
     container_auth_private_key_name: "tls.key"
     container_auth_public_key_name: "tls.crt"
-  no_log: true
+  no_log: "{{ no_log }}"
   when:
     - _container_token_configuration is defined
     - _container_token_configuration['resources'][0]['data']['tls.crt'] is defined

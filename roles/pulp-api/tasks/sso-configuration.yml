@@ -5,7 +5,7 @@
     namespace: '{{ ansible_operator_meta.namespace }}'
     name: '{{ sso_secret }}'
   register: _sso_configuration
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Check sso secret data format
   set_fact:
@@ -46,7 +46,7 @@
 - name: Store social_auth_keycloak_public_key
   set_fact:
     social_auth_keycloak_public_key: "{{ _sso_configuration.resources[0].data['social_auth_keycloak_public_key'] | b64decode }}"
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Check if keycloak_host is found
   set_fact:
@@ -122,62 +122,62 @@
 - name: Store social_auth_keycloak_key
   set_fact:
     social_auth_keycloak_key: "{{ _sso_configuration.resources[0].data['social_auth_keycloak_key'] | b64decode }}"
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Store social_auth_keycloak_secret
   set_fact:
     social_auth_keycloak_secret: "{{ _sso_configuration.resources[0].data['social_auth_keycloak_secret'] | b64decode }}"
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Store social_auth_keycloak_public_key
   set_fact:
     social_auth_keycloak_public_key: "{{ _sso_configuration.resources[0].data['social_auth_keycloak_public_key'] | b64decode }}"
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Store keycloak_host
   set_fact:
     keycloak_host: "{{ _sso_configuration.resources[0].data['keycloak_host'] | b64decode }}"
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Store keycloak_protocol
   set_fact:
     keycloak_protocol: "{{ _sso_configuration.resources[0].data['keycloak_protocol'] | b64decode }}"
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Store keycloak_port
   set_fact:
     keycloak_port: "{{ _sso_configuration.resources[0].data['keycloak_port'] | b64decode }}"
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Store keycloak_realm
   set_fact:
     keycloak_realm: "{{ _sso_configuration.resources[0].data['keycloak_realm'] | b64decode }}"
-  no_log: true
+  no_log: "{{ no_log }}"
 
 ### Store Optional Variables
 - name: Store keycloak_admin_role
   set_fact:
     keycloak_admin_role: "{{ _sso_configuration.resources[0].data['keycloak_admin_role'] | b64decode }}"
   when: keycloak_admin_role_available | default(False)
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Store keycloak_group_token_claim
   set_fact:
     keycloak_group_token_claim: "{{ _sso_configuration.resources[0].data['keycloak_group_token_claim'] | b64decode }}"
   when: keycloak_group_token_claim_available | default(False)
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Store keycloak_role_token_claim
   set_fact:
     keycloak_role_token_claim: "{{ _sso_configuration.resources[0].data['keycloak_role_token_claim'] | b64decode }}"
   when: keycloak_role_token_claim_available | default(False)
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Store keycloak_host_loopback
   set_fact:
     keycloak_host_loopback: "{{ _sso_configuration.resources[0].data['keycloak_host_loopback'] | b64decode }}"
   when: keycloak_host_loopback_available | default(False)
-  no_log: true
+  no_log: "{{ no_log }}"
 
 - name: Add SSO settings to sso_settings dict
   block:
@@ -203,4 +203,4 @@
         pulp_combined_settings: "{{ pulp_combined_settings | combine(sso_settings, recursive=True) }}"
 
   run_once: true
-  no_log: false
+  no_log: "{{ no_log }}"

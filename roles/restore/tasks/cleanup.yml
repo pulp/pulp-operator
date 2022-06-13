@@ -17,7 +17,7 @@
         name: '{{ admin_password_name }}'
         namespace: '{{ ansible_operator_meta.namespace }}'
         ownerReferences: null
-  no_log: true
+  no_log: "{{ no_log }}"
   when:
     - admin_password_name is defined
     - admin_password_name | length
@@ -31,7 +31,7 @@
         name: '{{ db_secret_name }}'
         namespace: '{{ ansible_operator_meta.namespace }}'
         ownerReferences: null
-  no_log: true
+  no_log: "{{ no_log }}"
   when:
     - db_secret_name is defined
     - db_secret_name | length
@@ -45,7 +45,7 @@
         name: '{{ storage_secret }}'
         namespace: '{{ ansible_operator_meta.namespace }}'
         ownerReferences: null
-  no_log: true
+  no_log: "{{ no_log }}"
   when:
     - storage_secret is defined
     - storage_secret | length
@@ -59,7 +59,7 @@
         name: '{{ db_fields_encryption_secret }}'
         namespace: '{{ ansible_operator_meta.namespace }}'
         ownerReferences: null
-  no_log: true
+  no_log: "{{ no_log }}"
   when:
     - db_fields_encryption_secret is defined
     - db_fields_encryption_secret | length
@@ -73,7 +73,7 @@
         name: '{{ signing_secret }}'
         namespace: '{{ ansible_operator_meta.namespace }}'
         ownerReferences: null
-  no_log: true
+  no_log: "{{ no_log }}"
   when:
     - signing_secret is defined
     - signing_secret | length
@@ -87,7 +87,7 @@
         name: '{{ container_token_secret }}'
         namespace: '{{ ansible_operator_meta.namespace }}'
         ownerReferences: null
-  no_log: true
+  no_log: "{{ no_log }}"
   when:
     - container_token_secret is defined
     - container_token_secret | length
@@ -101,7 +101,7 @@
         name: '{{ sso_secret }}'
         namespace: '{{ ansible_operator_meta.namespace }}'
         ownerReferences: null
-  no_log: true
+  no_log: "{{ no_log }}"
   when:
     - sso_secret is defined
     - sso_secret | length

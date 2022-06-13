@@ -631,6 +631,11 @@ spec:
         path: restoreComplete
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
+      - displayName: No Log Configuration
+        path: no_log
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       version: v1beta1
   description: |-
     [Pulp](https://pulpproject.org/) is a platform for managing repositories of content, such as software packages, and making them available to a large number of consumers.
