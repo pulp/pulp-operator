@@ -33,23 +33,34 @@ type PulpSpec struct {
 	Api      Api      `json:"api"`
 	Database Database `json:"database"`
 	Content  Content  `json:"content"`
+	Worker   Worker   `json:"worker"`
 }
 
 type Api struct {
 	// Size is the size of number of pulp-api replicas
 	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:default:=1
 	Replicas int32 `json:"replicas"`
 }
 
 type Content struct {
 	// Size is the size of number of pulp-content replicas
 	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:default:=1
+	Replicas int32 `json:"replicas"`
+}
+
+type Worker struct {
+	// Size is the size of number of pulp-worker replicas
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:default:=1
 	Replicas int32 `json:"replicas"`
 }
 
 type Database struct {
 	// Size is the size of number of db replicas
 	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:default:=1
 	Replicas int32  `json:"replicas"`
 	Type     string `json:"type"`
 }

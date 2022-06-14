@@ -38,6 +38,7 @@ spec:
               api:
                 properties:
                   replicas:
+                    default: 1
                     description: Size is the size of number of pulp-api replicas
                     format: int32
                     minimum: 1
@@ -48,6 +49,7 @@ spec:
               content:
                 properties:
                   replicas:
+                    default: 1
                     description: Size is the size of number of pulp-content replicas
                     format: int32
                     minimum: 1
@@ -58,6 +60,7 @@ spec:
               database:
                 properties:
                   replicas:
+                    default: 1
                     description: Size is the size of number of db replicas
                     format: int32
                     minimum: 1
@@ -72,10 +75,22 @@ spec:
                 description: Foo is an example field of Pulp. Edit pulp_types.go to
                   remove/update
                 type: string
+              worker:
+                properties:
+                  replicas:
+                    default: 1
+                    description: Size is the size of number of pulp-worker replicas
+                    format: int32
+                    minimum: 1
+                    type: integer
+                required:
+                - replicas
+                type: object
             required:
             - api
             - content
             - database
+            - worker
             type: object
           status:
             description: PulpStatus defines the observed state of Pulp

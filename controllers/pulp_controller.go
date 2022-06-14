@@ -87,6 +87,11 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return pulpController, err
 	}
 
+	pulpController, err = r.pulpWorkerController(ctx, pulp, log)
+	if err != nil {
+		return pulpController, err
+	}
+
 	return pulpController, nil
 }
 
@@ -96,5 +101,6 @@ func (r *PulpReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&repomanagerv1alpha1.Pulp{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.Service{}).
+		Owns(&corev1.Secret{}).
 		Complete(r)
 }
