@@ -1,5 +1,5 @@
-Pulp Web
-========
+Pulp Status
+===========
 
 A role to update Pulp 3 deployment status.
 
