@@ -62,7 +62,11 @@
   register: result
   until: >
     result.json is defined and
-    result.json.versions | length
+    result.json.versions | length and
+    result.json.online_content_apps | length and
+    result.json.database_connection.connected and
+    (result.json.redis_connection.connected or not pulp_combined_settings.cache_enabled) and
+    result.json.online_workers | map(attribute='name') | select('match', '^[0-9]+@.*$') | list | count > 0
   delay: 5
   retries: 10
 
