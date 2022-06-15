@@ -114,10 +114,12 @@ spec:
               value: "{{ postgres_host }}"
             - name: POSTGRES_SERVICE_PORT
               value: "{{ postgres_port }}"
+{% if pulp_combined_settings.cache_enabled %}
             - name: REDIS_SERVICE_HOST
               value: "{{ ansible_operator_meta.name }}-redis-svc"
             - name: REDIS_SERVICE_PORT
-              value: "{{ default_settings.redis_port }}"
+              value: "{{ pulp_combined_settings.redis_port }}"
+{% endif %}
             - name: PULP_GUNICORN_TIMEOUT
               value: "{{ gunicorn_timeout }}"
             - name: PULP_CONTENT_WORKERS
