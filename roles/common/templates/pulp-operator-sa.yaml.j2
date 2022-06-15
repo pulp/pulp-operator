@@ -15,3 +15,32 @@ kind: ServiceAccount
 metadata:
   name: '{{ operator_service_account_name }}'
   namespace: '{{ ansible_operator_meta.namespace }}'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: '{{ ansible_operator_meta.name }}'
+  namespace: '{{ ansible_operator_meta.namespace }}'
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["pods"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "create", "delete"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: '{{ ansible_operator_meta.name }}'
+  namespace: '{{ ansible_operator_meta.namespace }}'
+subjects:
+- kind: ServiceAccount
+  name: '{{ operator_service_account_name }}'
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: '{{ ansible_operator_meta.name }}'
