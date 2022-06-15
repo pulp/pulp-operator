@@ -93,6 +93,7 @@ RUN pip install {{ plugin }}
 {% endfor %}
 {% endif %}
 
+COPY pulp-operator/containers/images/pulp/container-assets/readyz.py /usr/bin/readyz.py
 COPY pulp-operator/containers/images/pulp/container-assets/wait_on_postgres.py /usr/bin/wait_on_postgres.py
 COPY pulp-operator/containers/images/pulp/container-assets/wait_on_database_migrations.sh /usr/bin/wait_on_database_migrations.sh
 COPY pulp-operator/containers/images/pulp/container-assets/pulp-common-entrypoint.sh /pulp-common-entrypoint.sh
