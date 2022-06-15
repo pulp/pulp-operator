@@ -36,6 +36,7 @@
     file_storage_size: "100Gi"
     raw_spec: "{{ vars['_automationhub_ansible_com_automationhub']['spec'] }}"
   roles:
+    - prereq
     - postgres
     - pulp-web
     - pulp-routes

@@ -97,7 +97,7 @@ spec:
 {% endif %}
         - name: {{ ansible_operator_meta.name }}-ansible-tmp
           emptyDir: {}
-      serviceAccountName: '{{ deployment_type }}-operator-sa'
+      serviceAccountName: '{{ ansible_operator_meta.name }}'
 {% if topology_spread_constraints %}
       topologySpreadConstraints:
         {{ topology_spread_constraints | indent(width=8) }}
