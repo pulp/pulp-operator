@@ -13,6 +13,27 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+0.12.0 (2022-06-15)
+===================
+
+
+Features
+--------
+
+- Make no_log configurable
+  [#443](https://github.com/pulp/pulp-operator/issues/443)
+
+
+Bugfixes
+--------
+
+- Improve pulp status health check
+  [#447](https://github.com/pulp/pulp-operator/issues/447)
+
+
+----
+
+
 0.11.1 (2022-06-09)
 ===================
 
