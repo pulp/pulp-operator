@@ -51,4 +51,4 @@ jobs:
           podman logs --tail=10000 containers_pulp_worker_1
           podman logs --tail=10000 containers_pulp_worker_2
           podman logs --tail=10000 containers_pulp_web_1
-          http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/ || true
+          http --follow --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/ || true

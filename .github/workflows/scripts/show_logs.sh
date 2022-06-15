@@ -8,6 +8,7 @@ if [[ "$1" == "--kind" ]] || [[ "$1" == "-k" ]]; then
 fi
 
 sudo -E kubectl get pods -o wide
+sudo -E kubectl get pods -o go-template='{{range .items}} {{.metadata.name}} {{range .status.containerStatuses}} {{.lastState.terminated.exitCode}} {{end}}{{"\n"}} {{end}}'
 sudo -E kubectl get deployments
 
 if [[ "$KUBE" == "minikube" ]]; then
