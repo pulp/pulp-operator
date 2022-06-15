@@ -160,7 +160,7 @@ metadata:
           },
           "spec": {
             "deployment_name": "example-pulp",
-            "no_log": "false"
+            "no_log": false
           }
         },
         {
@@ -171,13 +171,13 @@ metadata:
           },
           "spec": {
             "backup_name": "ci-pulpbackup",
-            "no_log": "false"
+            "no_log": false
           }
         }
       ]
     capabilities: Seamless Upgrades
     categories: Integration & Delivery
-    containerImage: quay.io/pulp/pulp-operator:v0.12.0.dev
+    containerImage: quay.io/pulp/pulp-operator:v0.12.0
     createdAt: "2021-03-26 16:57:40"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
@@ -922,7 +922,7 @@ spec:
                   value: redis:latest
                 - name: RELATED_IMAGE_PULP_POSTGRES
                   value: postgres:13
-                image: quay.io/pulp/pulp-operator:v0.12.0.dev
+                image: quay.io/pulp/pulp-operator:v0.12.0
                 livenessProbe:
                   httpGet:
                     path: /healthz
