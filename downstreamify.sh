@@ -71,6 +71,11 @@ done
 
 sed -i -e "s/pulp_pulpproject_org_pulp/automationhub_ansible_com_automationhub/g" ./playbooks/pulp.yml
 
+# -- Inject cluster permissions for SA's and roles
+
+# Or find a way to do this upstream
+# https://code.engineering.redhat.com/gerrit/gitweb?p=automationhub-operator.git;a=blobdiff;f=bundle/manifests/pulp-operator.clusterserviceversion.yaml;h=b563c1c667824eab6b4feb70d798456841517328;hp=c2a54443eb6352e19e6f5e1071df8c9f5e93ad03;hb=5f5b65b9c32c38c1134f17dae9f1c68144f0f896;hpb=205aafd69999389f54b1a84537fe9f42550c9515
+
 # -- Swap out postgres data path
 
 sed -i -e "s/\/var\/lib\/postgresql/\/var\/lib\/pgsql/g" ./roles/postgres/defaults/main.yml

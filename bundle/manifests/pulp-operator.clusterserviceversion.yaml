@@ -964,6 +964,7 @@ spec:
           - watch
         - apiGroups:
           - ""
+          - rbac.authorization.k8s.io
           resources:
           - secrets
           - pods
@@ -975,6 +976,9 @@ spec:
           - persistentvolumeclaims
           - events
           - configmaps
+          - roles
+          - rolebindings
+          - serviceaccounts
           verbs:
           - create
           - delete
