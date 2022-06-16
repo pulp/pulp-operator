@@ -3,6 +3,17 @@ kind: Pulp
 metadata:
   name: test
 spec:
+  deployment_type: pulp
+  is_k8s: true
+#  affinity:
+#    nodeAffinity:
+#      requiredDuringSchedulingIgnoredDuringExecution:
+#        nodeSelectorTerms:
+#        - matchExpressions:
+#          - key: test
+#            operator: In
+#            values:
+#            - test
   api:
     replicas: 1
   database:

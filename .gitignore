@@ -42,3 +42,5 @@ testbin/*
 *.swp
 *.swo
 *~
+.vscode
+__debug_bin
