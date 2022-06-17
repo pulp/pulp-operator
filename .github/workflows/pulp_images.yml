@@ -1,9 +1,14 @@
-name: Pulp Images
+name: Pulp Compose
 
 on:
   schedule:
     - cron: '15 3 * * *'
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/pulp_images.yml'
+      - 'containers/compose/**'
+      - 'containers/podman-compose.yml'
 
 jobs:
   compose:
@@ -32,12 +37,21 @@ jobs:
           cd containers
           podman-compose up -d
           sleep 30
+          for _ in $(seq 20)
+          do
+            sleep 3
+            if curl --fail http://localhost:24817/pulp/api/v3/status/ > /dev/null 2>&1
+            then
+              break
+            fi
+          done
+          curl --fail http://localhost:24817/pulp/api/v3/status/ | jq
         shell: bash
       - name: Test all components
         run: |
           git clone --depth=1 https://github.com/pulp/pulp_ansible.git
           git clone --depth=1 https://github.com/pulp/pulp_container.git
-          .ci/scripts/retry.sh 3 ".ci/scripts/pulp_tests.sh"
+          .ci/scripts/pulp_tests.sh
         shell: bash
         env:
           PY_COLORS: '1'

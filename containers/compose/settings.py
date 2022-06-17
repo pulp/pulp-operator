@@ -1,6 +1,7 @@
 SECRET_KEY = "aabbcc"
 CONTENT_ORIGIN = "http://localhost:24816"
 DATABASES = {"default": {"HOST": "postgres", "ENGINE": "django.db.backends.postgresql", "NAME": "pulp", "USER": "pulp", "PASSWORD": "password", "PORT": "5432", "CONN_MAX_AGE": 0, "OPTIONS": {"sslmode": "prefer"}}}
+CACHE_ENABLED = True
 REDIS_HOST = "redis"
 REDIS_PORT = 6379
 REDIS_PASSWORD = ""
