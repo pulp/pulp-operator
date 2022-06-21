@@ -1,4 +1,9 @@
 ---
+- name: Set apiVersion and kind variables
+  set_fact:
+    api_version: '{{ hostvars["localhost"]["inventory_file"].split("/")[4:6] | join("/")  }}'
+    kind: '{{ hostvars["localhost"]["inventory_file"].split("/")[6]  }}'
+
 - name: Set node affinity
   set_fact:
     _node_affinity: "{{ raw_spec['affinity']['node_affinity'] | default({}) }}"
@@ -7,21 +12,6 @@
 - name: Obtain custom resource information
   set_fact:
     custom_resource: "{{ hostvars[inventory_hostname][custom_resource_key] }}"
-    custom_resource_status: "{{ hostvars[inventory_hostname][custom_resource_key]['status'] }}"
-
-- name: Record migrant database secret
-  set_fact:
-    recorded_db_migration_secret: "{{ custom_resource_status['migrantDatabaseConfigurationSecret'] }}"
-  when:
-    - custom_resource_status['migrantDatabaseConfigurationSecret'] is defined
-
-- name: Check if data migration has been performed
-  set_fact:
-    database_status_present: true
-  when:
-    - recorded_db_migration_secret is defined
-    - postgres_migrant_configuration_secret is defined
-    - recorded_db_migration_secret == postgres_migrant_configuration_secret
 
 - name: Check for specified PostgreSQL configuration
   k8s_info:
@@ -63,7 +53,20 @@
     _pg_config: '{{ _custom_pg_config_resources["resources"] | default([]) | length | ternary(_custom_pg_config_resources, _default_pg_config_resources) }}'
   no_log: "{{ no_log }}"
 
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Database-Ready
+        message: Creating database Secret resource
+        reason: CreatingSecret
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
 - block:
+
     - name: Create Database configuration
       k8s:
         apply: true
@@ -79,6 +82,25 @@
       no_log: "{{ no_log }}"
 
   when: not _pg_config['resources'] | default([]) | length
+
+- name: Obtain custom resource status
+  set_fact:
+    custom_resource_status: "{{ hostvars[inventory_hostname][custom_resource_key]['status'] }}"
+
+- name: Record migrant database secret
+  set_fact:
+    recorded_db_migration_secret: "{{ custom_resource_status['migrantDatabaseConfigurationSecret'] }}"
+  when:
+    - custom_resource_status['migrantDatabaseConfigurationSecret'] is defined
+
+- name: Check if data migration has been performed
+  set_fact:
+    database_status_present: true
+  when:
+    - recorded_db_migration_secret is defined
+    - postgres_migrant_configuration_secret is defined
+    - recorded_db_migration_secret == postgres_migrant_configuration_secret
+
 
 - name: Set PostgreSQL Configuration
   set_fact:
@@ -125,16 +147,25 @@
       - status.phase=Running
   register: old_postgres_pod
 
-- name: Create Database if no database is specified
-  k8s:
-    apply: true
-    definition: "{{ lookup('template', 'postgres.yaml.j2') }}"
-  when: managed_database
+- block:
+    - k8s_status:
+        api_version: "{{ api_version }}"
+        kind: "{{ kind }}"
+        name: "{{ ansible_operator_meta.name }}"
+        namespace: "{{ ansible_operator_meta.namespace }}"
+        conditions:
+          - type: Database-Ready
+            message: Creating database StatefulSet resource
+            reason: CreatingStatefulSet
+            status: "False"
+            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
-- name: Set apiVersion and kind variables
-  set_fact:
-    api_version: '{{ hostvars["localhost"]["inventory_file"].split("/")[4:6] | join("/")  }}'
-    kind: '{{ hostvars["localhost"]["inventory_file"].split("/")[6]  }}'
+    - name: Create Database if no database is specified
+      k8s:
+        apply: true
+        definition: "{{ lookup('template', 'postgres.yaml.j2') }}"
+
+  when: managed_database
 
 - name: Look up details for this deployment
   k8s_info:
@@ -175,3 +206,26 @@
     - old_pg_config['resources'] is defined
     - old_pg_config['resources'] | length
     - not database_status_present
+
+- name: Check PostgreSQL status
+  k8s_info:
+    api_version: v1
+    kind: StatefulSet
+    namespace: '{{ ansible_operator_meta.namespace }}'
+    name: '{{ ansible_operator_meta.name }}-postgres-{{ postgres_version }}'
+  register: _pg_sts_status
+
+# This status will probably not reflect the real state during the first playbook execution
+# I thought to put a wait_for here, but it would just delay the execution of the other tasks
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Database-Ready
+        message: All Postgres tasks ran successfully
+        reason: DatabaseTasksFinished
+        status: "True"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+#  when: _pg_sts_status['resources'][0]['status']['availableReplicas'] == _pg_sts_status['resources'][0]['status']['replicas']

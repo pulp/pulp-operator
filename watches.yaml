@@ -4,6 +4,7 @@
   group: pulp.pulpproject.org
   kind: Pulp
   playbook: playbooks/pulp.yml
+  manageStatus: false
 
 - version: v1beta1
   group: pulp.pulpproject.org
