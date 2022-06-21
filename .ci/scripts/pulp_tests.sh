@@ -42,6 +42,8 @@ fi
 
 cat ~/.config/pulp/cli.toml | tee ~/.config/pulp/settings.toml
 
+pulp status | jq
+
 pushd pulp_ansible/docs/_scripts
 timeout 5m bash -x quickstart.sh || {
   YLATEST=$(git ls-remote --heads https://github.com/pulp/pulp_ansible.git | grep -o "[[:digit:]]\.[[:digit:]]*" | sort -V | tail -1)
