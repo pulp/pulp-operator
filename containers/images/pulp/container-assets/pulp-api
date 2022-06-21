@@ -4,20 +4,20 @@
 
 # Generating /var/lib/pulp/static at runtime rather than at container build time
 # facilitates all of /var/lib/pulp being a separate volume.
-django-admin collectstatic --noinput
+/usr/local/bin/pulpcore-manager collectstatic --noinput
 
 # Get list of installed plugins via pip
 # Assumes they are all named like "pulp-file" -> "file", with no 2nd dash.
-# (Was previously needed when we ran `django-admin makemigrations`)
+# (Was previously needed when we ran `pulpcore-manager makemigrations`)
 # PLUGINS=$(pip list | awk -F '[[:space:]]+|[-]' '/pulp-/{printf $2 " " }')
 
-django-admin migrate --noinput
-django-admin migrate auth --noinput
+/usr/local/bin/pulpcore-manager migrate --noinput
+/usr/local/bin/pulpcore-manager migrate auth --noinput
 
 bash +x
 
 if [ -n "${PULP_SIGNING_KEY_FINGERPRINT}" ]; then
-    django-admin add-signing-service "${SIGNING_SERVICE}" /var/lib/pulp/scripts/collection_sign.sh "${PULP_SIGNING_KEY_FINGERPRINT}"
+    /usr/local/bin/pulpcore-manager add-signing-service "${SIGNING_SERVICE}" /var/lib/pulp/scripts/collection_sign.sh "${PULP_SIGNING_KEY_FINGERPRINT}"
 fi
 
 ADMIN_PASSWORD_FILE=/etc/pulp/pulp-admin-password
@@ -27,7 +27,7 @@ if [[ -f "$ADMIN_PASSWORD_FILE" ]]; then
 fi
 
 if [ -n "${PULP_ADMIN_PASSWORD}" ]; then
-    django-admin reset-admin-password --password "${PULP_ADMIN_PASSWORD}"
+    /usr/local/bin/pulpcore-manager reset-admin-password --password "${PULP_ADMIN_PASSWORD}"
 fi
 bash -x
 
