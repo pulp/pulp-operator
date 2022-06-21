@@ -3,7 +3,7 @@
 /usr/bin/wait_on_postgres.py
 /usr/bin/wait_on_database_migrations.sh
 
-NEW_TASKING_SYSTEM=$(python3 -c "import sys; from packaging.version import parse; from pulpcore.app.apps import PulpAppConfig; print('yes' if parse(PulpAppConfig.version) >= parse('3.13.0.dev0') else 'no')")
+NEW_TASKING_SYSTEM=$(python3 -c "from packaging.version import parse; from pulpcore.app.apps import PulpAppConfig; print('yes' if parse(PulpAppConfig.version) >= parse('3.13.0.dev0') else 'no')")
 echo $NEW_TASKING_SYSTEM
 
 if [[ "$NEW_TASKING_SYSTEM" == "no" ]]; then
