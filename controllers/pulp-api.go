@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"reflect"
+	"strconv"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -199,8 +200,8 @@ func deploymentSpec(m *repomanagerv1alpha1.Pulp) appsv1.DeploymentSpec {
 	ls := labelsForPulpApi(m)
 
 	affinity := &corev1.Affinity{}
-	if m.Spec.Affinity.NodeAffinity != nil {
-		affinity.NodeAffinity = m.Spec.Affinity.NodeAffinity
+	if m.Spec.Api.Affinity.NodeAffinity != nil {
+		affinity.NodeAffinity = m.Spec.Api.Affinity.NodeAffinity
 	}
 
 	runAsUser := int64(0)
@@ -212,6 +213,38 @@ func deploymentSpec(m *repomanagerv1alpha1.Pulp) appsv1.DeploymentSpec {
 			FSGroup:   &fsGroup,
 		}
 	}
+
+	nodeSelector := map[string]string{}
+	if m.Spec.Api.NodeSelector != nil {
+		nodeSelector = m.Spec.Api.NodeSelector
+	}
+
+	toleration := []corev1.Toleration{}
+	if m.Spec.Api.Tolerations != nil {
+		toleration = m.Spec.Api.Tolerations
+	}
+
+	topologySpreadConstraint := []corev1.TopologySpreadConstraint{}
+	if m.Spec.Api.TopologySpreadConstraints != nil {
+		topologySpreadConstraint = m.Spec.Api.TopologySpreadConstraints
+	}
+
+	envVars := []corev1.EnvVar{
+		{Name: "POSTGRES_SERVICE_HOST", Value: m.Name + "-postgres-" + m.Spec.PostgresVersion},
+		{Name: "POSTGRES_SERVICE_PORT", Value: strconv.Itoa(m.Spec.PostgresPort)},
+		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(m.Spec.Api.GunicornTimeout)},
+		{Name: "PULP_API_WORKERS", Value: strconv.Itoa(m.Spec.Api.GunicornWorkers)},
+	}
+
+	redisEnvVars := []corev1.EnvVar{}
+	if m.Spec.CacheEnabled {
+		redisEnvVars = []corev1.EnvVar{
+			{Name: "REDIS_SERVICE_HOST", Value: m.Name + "-redis-svc"},
+			{Name: "REDIS_SERVICE_PORT", Value: strconv.Itoa(m.Spec.RedisPort)},
+		}
+	}
+
+	envVars = append(envVars, redisEnvVars...)
 
 	// the following variables are defined to avoid issues with reconciliation
 	restartPolicy := corev1.RestartPolicy("Always")
@@ -229,29 +262,16 @@ func deploymentSpec(m *repomanagerv1alpha1.Pulp) appsv1.DeploymentSpec {
 				Labels: ls,
 			},
 			Spec: corev1.PodSpec{
-				Affinity: affinity,
+				Affinity:                  affinity,
+				NodeSelector:              nodeSelector,
+				Tolerations:               toleration,
+				SecurityContext:           podSecurityContext,
+				TopologySpreadConstraints: topologySpreadConstraint,
 				Containers: []corev1.Container{{
 					Image: "quay.io/pulp/pulp",
 					Name:  "api",
 					Args:  []string{"pulp-api"},
-					Env: []corev1.EnvVar{
-						{
-							Name:  "POSTGRES_SERVICE_HOST",
-							Value: "test-database-svc.pulp-operator-go-system.svc.cluster.local",
-						},
-						{
-							Name:  "POSTGRES_SERVICE_PORT",
-							Value: "5432",
-						},
-						{
-							Name:  "PULP_GUNICORN_TIMEOUT",
-							Value: "60",
-						},
-						{
-							Name:  "PULP_API_WORKERS",
-							Value: "1",
-						},
-					},
+					Env:   envVars,
 					Ports: []corev1.ContainerPort{{
 						ContainerPort: 24817,
 						Protocol:      "TCP",
@@ -285,7 +305,6 @@ func deploymentSpec(m *repomanagerv1alpha1.Pulp) appsv1.DeploymentSpec {
 						},
 					},
 				}},
-				SecurityContext: podSecurityContext,
 				Volumes: []corev1.Volume{
 					{
 						Name: m.Name + "-admin-password",
@@ -426,9 +445,9 @@ func (r *PulpReconciler) checkDeployment(m *repomanagerv1alpha1.Pulp, current *a
 		modified = true
 	}
 
-	if !reflect.DeepEqual(current.Spec.Template.Spec.Affinity.NodeAffinity, m.Spec.Affinity.NodeAffinity) {
+	if !reflect.DeepEqual(current.Spec.Template.Spec.Affinity.NodeAffinity, m.Spec.Api.Affinity.NodeAffinity) {
 		patch.Spec.Template.Spec.Affinity = &corev1.Affinity{
-			NodeAffinity: m.Spec.Affinity.NodeAffinity,
+			NodeAffinity: m.Spec.Api.Affinity.NodeAffinity,
 		}
 		modified = true
 	}
@@ -439,6 +458,7 @@ func (r *PulpReconciler) checkDeployment(m *repomanagerv1alpha1.Pulp, current *a
 		RunAsUser: &runAsUser,
 		FSGroup:   &fsGroup,
 	}
+
 	if m.Spec.IsK8s && (!reflect.DeepEqual(current.Spec.Template.Spec.SecurityContext.RunAsUser, podSecurityContext.RunAsUser) ||
 		!reflect.DeepEqual(current.Spec.Template.Spec.SecurityContext.FSGroup, podSecurityContext.FSGroup)) {
 		patch.Spec.Template.Spec.SecurityContext = podSecurityContext
@@ -448,6 +468,21 @@ func (r *PulpReconciler) checkDeployment(m *repomanagerv1alpha1.Pulp, current *a
 	if !m.Spec.IsK8s && (current.Spec.Template.Spec.SecurityContext.RunAsUser != nil ||
 		current.Spec.Template.Spec.SecurityContext.FSGroup != nil) {
 		patch.Spec.Template.Spec.SecurityContext = &corev1.PodSecurityContext{}
+		modified = true
+	}
+
+	if !reflect.DeepEqual(current.Spec.Template.Spec.NodeSelector, m.Spec.Api.NodeSelector) {
+		patch.Spec.Template.Spec.NodeSelector = m.Spec.Api.NodeSelector
+		modified = true
+	}
+
+	if !reflect.DeepEqual(current.Spec.Template.Spec.Tolerations, m.Spec.Api.Tolerations) {
+		patch.Spec.Template.Spec.Tolerations = m.Spec.Api.Tolerations
+		modified = true
+	}
+
+	if !reflect.DeepEqual(current.Spec.Template.Spec.TopologySpreadConstraints, m.Spec.Api.TopologySpreadConstraints) {
+		patch.Spec.Template.Spec.TopologySpreadConstraints = m.Spec.Api.TopologySpreadConstraints
 		modified = true
 	}
 

@@ -33,9 +33,6 @@ type PulpSpec struct {
 	DeploymentType string `json:"deployment_type"`
 
 	// +kubebuilder:validation:Optional
-	Affinity Affinity `json:"affinity"`
-
-	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:=false
 	IsK8s bool `json:"is_k8s"`
 
@@ -46,6 +43,22 @@ type PulpSpec struct {
 	Content Content `json:"content"`
 	//+kubebuilder:validation:Optional
 	Worker Worker `json:"worker"`
+
+	// +kubebuilder:default:=true
+	// +kubebuilder:validation:Optional
+	CacheEnabled bool `json:"cache_enabled,omitempty"`
+
+	// +kubebuilder:default:=6379
+	// +kubebuilder:validation:Optional
+	RedisPort int `json:"redis_port,omitempty"`
+
+	// +kubebuilder:default:="13"
+	// +kubebuilder:validation:Optional
+	PostgresVersion string `json:"postgres_version,omitempty"`
+
+	// +kubebuilder:default:=5432
+	// +kubebuilder:validation:Optional
+	PostgresPort int `json:"postgres_port,omitempty"`
 }
 
 type Affinity struct {
@@ -57,6 +70,42 @@ type Api struct {
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:default:=1
 	Replicas int32 `json:"replicas"`
+
+	// +kubebuilder:validation:Optional
+	Affinity Affinity `json:"affinity,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	NodeSelector map[string]string `json:"node_selector,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	TopologySpreadConstraints []corev1.TopologySpreadConstraint `json:"topology_spread_constraints,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	PulpSettings `json:"pulp_settings,omitempty"`
+
+	// +kubebuilder:default:=90
+	// +kubebuilder:validation:Optional
+	GunicornTimeout int `json:"gunicorn_timeout,omitempty"`
+
+	// +kubebuilder:default:=2
+	// +kubebuilder:validation:Optional
+	GunicornWorkers int `json:"gunicorn_workers,omitempty"`
+}
+
+type PulpSettings struct {
+	// +kubebuilder:validation:Optional
+	Debug string `json:"debug,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	GalaxyFeatureFlags `json:"GALAXY_FEATURE_FLAGS,omitempty"`
+}
+
+type GalaxyFeatureFlags struct {
+	// +kubebuilder:validation:Optional
+	ExecutionEnvironments string `json:"execution_environments,omitempty"`
 }
 
 type Content struct {
