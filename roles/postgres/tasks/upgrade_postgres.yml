@@ -6,6 +6,17 @@
 #  * Data will be streamed via a pg_dump from the postgres 12 pod to the postgres 13
 #    pod via a pg_restore.
 
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Database-Ready
+        message: Scaling down Deployment for Postgres upgrade
+        reason: ScalingDownDeploymentForPostgresUpgrade
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
 - name: Scale down Deployment for migration
   include_tasks: scale_down_deployment.yml
@@ -19,6 +30,18 @@
     state: absent
     wait: yes
 
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Database-Ready
+        message: "Creating the new database configuration for postgres-{{ postgres_version }}"
+        reason: "CreatingNewSecretForPostgres{{ postgres_version }}"
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
 - name: Create Database configuration with new -postgres-{{ postgres_version }} hostname
   k8s:
     apply: true
@@ -29,6 +52,18 @@
   set_fact:
     postgres_host: "{{ ansible_operator_meta.name }}-postgres-{{ postgres_version }}"
   no_log: "{{ no_log }}"
+
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Database-Ready
+        message: Recreating database StatefulSet resource after upgrading Postgres
+        reason: RecreatingStatefulSetUpgradeTask
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
 - name: Create Database if no database is specified
   k8s:
@@ -65,6 +100,18 @@
         error_msg: "A Postgres {{ postgres_version }} Pod with the {{ postgres_label_selector }} label \
               is not available and in the Running state"
 
+    - k8s_status:
+        api_version: "{{ api_version }}"
+        kind: "{{ kind }}"
+        name: "{{ ansible_operator_meta.name }}"
+        namespace: "{{ ansible_operator_meta.namespace }}"
+        conditions:
+          - type: Database-Ready
+            message: "{{ error_msg }}"
+            reason: UpgradePostgresError
+            status: "False"
+            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
     - name: Handle error
       import_tasks: error_handling.yml
 
@@ -81,6 +128,19 @@
     resolvable_db_host: "{{ ansible_operator_meta.name }}-postgres-svc.{{ ansible_operator_meta.namespace }}.svc.cluster.local"  # yamllint disable-line rule:line-length
   no_log: "{{ no_log }}"
 
+
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Database-Ready
+        message: Dumping database for Postgres upgrade task
+        reason: DumpingDatabaseUpgradeTask
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
 - name: Set pg_dump command
   set_fact:
     pgdump: >-
@@ -92,6 +152,18 @@
       -F custom
   no_log: "{{ no_log }}"
 
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Database-Ready
+        message: Restoring database for Postgres upgrade task
+        reason: RestoringDatabaseUpgradeTask
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
 - name: Set pg_restore command
   set_fact:
     pg_restore: >-
@@ -99,6 +171,18 @@
       -U {{ postgres_user }}
       -d {{ postgres_database }}
   no_log: "{{ no_log }}"
+
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Database-Ready
+        message: Streaming backup from pg_dump to the new container (upgrade task)
+        reason: StreamingBackupToNewContainer
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
 - name: Stream backup from pg_dump to the new postgresql container
   k8s_exec:
@@ -118,6 +202,18 @@
   set_fact:
     upgraded_postgres_version: '13'
 
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Database-Ready
+        message: Removing old Postgres StatefulSet
+        reason: RemovingOldPostgresStatefulSet
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
 # Cleanup old Postgres resources
 - name: Remove old Postgres StatefulSet
   k8s:
@@ -128,6 +224,18 @@
     state: absent
     wait: true
 
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Database-Ready
+        message: Removing old Postgres Service
+        reason: RemovingOldPostgresService
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
 - name: Remove old Postgres Service
   k8s:
     kind: Service
@@ -135,6 +243,18 @@
     namespace: "{{ ansible_operator_meta.namespace }}"
     name: "{{ ansible_operator_meta.name }}-postgres-svc"
     state: absent
+
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Database-Ready
+        message: Removing old Postgres PVC
+        reason: RemovingOldPostgresPVC
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
 - name: Remove old persistent volume claim
   k8s:
@@ -146,3 +266,15 @@
   when:
     - postgres_keep_pvc_after_upgrade is defined
     - postgres_keep_pvc_after_upgrade | length
+
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Database-Ready
+        message: All Postgres upgrade tasks ran successfully
+        reason: DatabaseTasksFinished
+        status: "True"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
