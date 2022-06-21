@@ -44,7 +44,7 @@
       - kind: ServiceAccount
         name: "{{ operator_service_account_name }}"
 
-- name: Wait 15m for reconciliation to run
+- name: Wait 10m for database reconciliation to run
   k8s_info:
     api_version: '{{ custom_resource.apiVersion }}'
     kind: '{{ custom_resource.kind }}'
@@ -52,9 +52,25 @@
     name: '{{ custom_resource.metadata.name }}'
   register: cr
   until:
-    - "'Successful' in (cr | json_query('resources[].status.conditions[].reason'))"
+    - "'DatabaseTasksFinished' in (cr | json_query('resources[].status.conditions[].reason'))"
   delay: 6
-  retries: 150
+  retries: 100
+  vars:
+    cr_file: 'pulpproject_v1beta1_pulp_cr.molecule.ci.yaml'
+    custom_resource: "{{ lookup('template', '/'.join([samples_dir, cr_file])) | from_yaml }}"
+
+# Temp check while the others .status.conditions are not implemented yet
+- name: Wait 10m for reconciliation to run
+  k8s_info:
+    api_version: '{{ custom_resource.apiVersion }}'
+    kind: '{{ custom_resource.kind }}'
+    namespace: '{{ namespace }}'
+    name: '{{ custom_resource.metadata.name }}'
+  register: cr
+  until:
+    - "'quay.io/pulp/pulp:latest' in (cr | json_query('resources[].status.deployedImage'))"
+  delay: 6
+  retries: 100
   vars:
     cr_file: 'pulpproject_v1beta1_pulp_cr.molecule.ci.yaml'
     custom_resource: "{{ lookup('template', '/'.join([samples_dir, cr_file])) | from_yaml }}"
