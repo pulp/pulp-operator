@@ -29,18 +29,66 @@ type PulpSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
+	// Name of the deployment type.
 	//+kubebuilder:default:="pulp"
 	DeploymentType string `json:"deployment_type"`
+
+	// The secret for S3 compliant object storage configuration.
+	// +kubebuilder:validation:Optional
+	ObjectStorageS3Secret string `json:"object_storage_s3_secret"`
+
+	// Secret where the Fernet symmetric encryption key is stored.
+	// +kubebuilder:validation:Optional
+	DBFieldsEncryptionSecret string `json:"db_fields_encryption_secret"`
+
+	// Secret where the signing certificates are stored.
+	// +kubebuilder:validation:Optional
+	SigningSecret string `json:"signing_secret"`
+
+	// ConfigMap where the signing scripts are stored.
+	// +kubebuilder:validation:Optional
+	SigningScriptsConfigmap string `json:"signing_scripts_configmap"`
+
+	// Secret where the container token certificates are stored.
+	// +kubebuilder:validation:Optional
+	ContainerTokenSecret string `json:"container_token_secret"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:="container_auth_public_key.pem"
+	ContainerAuthPublicKey string `json:"container_auth_public_key_name"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:="container_auth_private_key.pem"
+	ContainerAuthPrivateKey string `json:"container_auth_private_key_name"`
+
+	// The image name (repo name) for the pulp image.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:="quay.io/pulp/pulp"
+	Image string `json:"image"`
+
+	// The image version for the pulp image.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:="stable"
+	ImageVersion string `json:"image_version"`
+
+	// Image pull policy for container image
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum:=IfNotPresent;Always;Never
+	// +kubebuilder:default:="IfNotPresent"
+	ImagePullPolicy string `json:"image_pull_policy"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:=false
 	IsK8s bool `json:"is_k8s"`
 
 	Api Api `json:"api"`
+
 	//+kubebuilder:validation:Optional
 	Database Database `json:"database"`
+
 	//+kubebuilder:validation:Optional
 	Content Content `json:"content"`
+
 	//+kubebuilder:validation:Optional
 	Worker Worker `json:"worker"`
 
@@ -66,33 +114,44 @@ type Affinity struct {
 }
 
 type Api struct {
-	// Size is the size of number of pulp-api replicas
+	// Size is the size of number of pulp-api replicas.
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:default:=1
 	Replicas int32 `json:"replicas"`
 
+	// Defines various deployment affinities.
 	// +kubebuilder:validation:Optional
 	Affinity Affinity `json:"affinity,omitempty"`
 
+	// NodeSelector for the Pulp pods.
 	// +kubebuilder:validation:Optional
 	NodeSelector map[string]string `json:"node_selector,omitempty"`
 
+	// Node tolerations for the Pulp pods.
 	// +kubebuilder:validation:Optional
 	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 
+	// Topology rule(s) for the pods.
 	// +kubebuilder:validation:Optional
 	TopologySpreadConstraints []corev1.TopologySpreadConstraint `json:"topology_spread_constraints,omitempty"`
 
+	// The pulp settings.
 	// +kubebuilder:validation:Optional
 	PulpSettings `json:"pulp_settings,omitempty"`
 
+	// The timeout for the gunicorn process.
 	// +kubebuilder:default:=90
 	// +kubebuilder:validation:Optional
 	GunicornTimeout int `json:"gunicorn_timeout,omitempty"`
 
+	// The number of gunicorn workers to use for the api.
 	// +kubebuilder:default:=2
 	// +kubebuilder:validation:Optional
 	GunicornWorkers int `json:"gunicorn_workers,omitempty"`
+
+	// Resource requirements for the pulp content container.
+	// +kubebuilder:validation:Optional
+	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements"`
 }
 
 type PulpSettings struct {

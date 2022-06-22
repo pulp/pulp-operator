@@ -38,6 +38,7 @@ spec:
               api:
                 properties:
                   affinity:
+                    description: Defines various deployment affinities.
                     properties:
                       nodeAffinity:
                         description: Node affinity is a group of node affinity scheduling
@@ -255,15 +256,19 @@ spec:
                     type: object
                   gunicorn_timeout:
                     default: 90
+                    description: The timeout for the gunicorn process.
                     type: integer
                   gunicorn_workers:
                     default: 2
+                    description: The number of gunicorn workers to use for the api.
                     type: integer
                   node_selector:
                     additionalProperties:
                       type: string
+                    description: NodeSelector for the Pulp pods.
                     type: object
                   pulp_settings:
+                    description: The pulp settings.
                     properties:
                       GALAXY_FEATURE_FLAGS:
                         properties:
@@ -275,11 +280,38 @@ spec:
                     type: object
                   replicas:
                     default: 1
-                    description: Size is the size of number of pulp-api replicas
+                    description: Size is the size of number of pulp-api replicas.
                     format: int32
                     minimum: 1
                     type: integer
+                  resource_requirements:
+                    description: Resource requirements for the pulp content container.
+                    properties:
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Limits describes the maximum amount of compute
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Requests describes the minimum amount of compute
+                          resources required. If Requests is omitted for a container,
+                          it defaults to Limits if that is explicitly specified, otherwise
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                    type: object
                   tolerations:
+                    description: Node tolerations for the Pulp pods.
                     items:
                       description: The pod this Toleration is attached to tolerates
                         any taint that matches the triple <key,value,effect> using
@@ -320,6 +352,7 @@ spec:
                       type: object
                     type: array
                   topology_spread_constraints:
+                    description: Topology rule(s) for the pods.
                     items:
                       description: TopologySpreadConstraint specifies how to spread
                         matching pods among the given topology.
@@ -427,6 +460,15 @@ spec:
               cache_enabled:
                 default: true
                 type: boolean
+              container_auth_private_key_name:
+                default: container_auth_private_key.pem
+                type: string
+              container_auth_public_key_name:
+                default: container_auth_public_key.pem
+                type: string
+              container_token_secret:
+                description: Secret where the container token certificates are stored.
+                type: string
               content:
                 properties:
                   replicas:
@@ -451,12 +493,35 @@ spec:
                 - replicas
                 - type
                 type: object
+              db_fields_encryption_secret:
+                description: Secret where the Fernet symmetric encryption key is stored.
+                type: string
               deployment_type:
                 default: pulp
+                description: Name of the deployment type.
+                type: string
+              image:
+                default: quay.io/pulp/pulp
+                description: The image name (repo name) for the pulp image.
+                type: string
+              image_pull_policy:
+                default: IfNotPresent
+                description: Image pull policy for container image
+                enum:
+                - IfNotPresent
+                - Always
+                - Never
+                type: string
+              image_version:
+                default: stable
+                description: The image version for the pulp image.
                 type: string
               is_k8s:
                 default: false
                 type: boolean
+              object_storage_s3_secret:
+                description: The secret for S3 compliant object storage configuration.
+                type: string
               postgres_port:
                 default: 5432
                 type: integer
@@ -466,6 +531,12 @@ spec:
               redis_port:
                 default: 6379
                 type: integer
+              signing_scripts_configmap:
+                description: ConfigMap where the signing scripts are stored.
+                type: string
+              signing_secret:
+                description: Secret where the signing certificates are stored.
+                type: string
               worker:
                 properties:
                   replicas:
