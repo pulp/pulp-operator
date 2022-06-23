@@ -102,7 +102,7 @@ func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *a
 						Env: []corev1.EnvVar{
 							{
 								Name:  "POSTGRES_SERVICE_HOST",
-								Value: "test-database-svc.pulp-operator-go-system.svc.cluster.local",
+								Value: m.Name + "-database-svc." + m.Namespace + ".svc",
 							},
 							{
 								Name:  "POSTGRES_SERVICE_PORT",
@@ -127,14 +127,8 @@ func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *a
 								ReadOnly:  true,
 							},
 							{
-								Name:      "file-storage",
-								MountPath: "/var/lib/pulp",
-								ReadOnly:  false,
-							},
-							{
 								Name:      "file-storage-tmp",
 								MountPath: "/var/lib/pulp/tmp",
-								SubPath:   "tmp",
 								ReadOnly:  false,
 							},
 						},
@@ -170,12 +164,6 @@ func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *a
 						},
 						{
 							Name: "file-storage-tmp",
-							VolumeSource: corev1.VolumeSource{
-								EmptyDir: &corev1.EmptyDirVolumeSource{},
-							},
-						},
-						{
-							Name: "file-storage",
 							VolumeSource: corev1.VolumeSource{
 								EmptyDir: &corev1.EmptyDirVolumeSource{},
 							},

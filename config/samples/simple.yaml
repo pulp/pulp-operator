@@ -1,7 +1,7 @@
 apiVersion: repo-manager.pulpproject.org/v1alpha1
 kind: Pulp
 metadata:
-  name: test
+  name: pulp
 spec:
   deployment_type: pulp
   is_k8s: true

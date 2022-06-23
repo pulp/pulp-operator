@@ -39,33 +39,33 @@ import (
 func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// DEPLOYMENT
-	found := &appsv1.Deployment{}
+	found := &appsv1.StatefulSet{}
 	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-database", Namespace: pulp.Namespace}, found)
 
 	if err != nil && errors.IsNotFound(err) {
-		// Define a new deployment
-		dep := r.deploymentForDatabase(pulp)
-		log.Info("Creating a new Database Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-		err = r.Create(ctx, dep)
+		// Define a new statefulset
+		sts := r.statefulSetForDatabase(pulp)
+		log.Info("Creating a new Database StatefulSet", "StatefulSet.Namespace", sts.Namespace, "StatefulSet.Name", sts.Name)
+		err = r.Create(ctx, sts)
 		if err != nil {
-			log.Error(err, "Failed to create new Database Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+			log.Error(err, "Failed to create new Database StatefulSet", "StatefulSet.Namespace", sts.Namespace, "StatefulSet.Name", sts.Name)
 			return ctrl.Result{}, err
 		}
 		// Deployment created successfully - return and requeue
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
-		log.Error(err, "Failed to get Database Deployment")
+		log.Error(err, "Failed to get Database StatefulSet")
 		return ctrl.Result{}, err
 	}
 
 	// Ensure the deployment size is the same as the spec
 	size := pulp.Spec.Api.Replicas
 	if *found.Spec.Replicas != size {
-		log.Info("Reconciling Database Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+		log.Info("Reconciling Database StatefulSet", "StatefulSet.Namespace", found.Namespace, "StatefulSet.Name", found.Name)
 		found.Spec.Replicas = &size
 		err = r.Update(ctx, found)
 		if err != nil {
-			log.Error(err, "Failed to update Database Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+			log.Error(err, "Failed to update Database StatefulSet", "StatefulSet.Namespace", found.Namespace, "StatefulSet.Name", found.Name)
 			return ctrl.Result{}, err
 		}
 		// Ask to requeue after 1 minute in order to give enough time for the
@@ -111,16 +111,16 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 }
 
 // deploymentForDatabase returns a postgresql Deployment object
-func (r *PulpReconciler) deploymentForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
+func (r *PulpReconciler) statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 	ls := labelsForDatabase(m.Name)
 	replicas := m.Spec.Database.Replicas
 
-	dep := &appsv1.Deployment{
+	dep := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-database",
 			Namespace: m.Namespace,
 		},
-		Spec: appsv1.DeploymentSpec{
+		Spec: appsv1.StatefulSetSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: ls,
@@ -207,22 +207,12 @@ func serviceDBObject(name, namespace string) *corev1.Service {
 //   for the selectors as function parameters would be enough).
 func serviceDBSpec(name string) corev1.ServiceSpec {
 
-	var serviceInternalTrafficPolicyCluster corev1.ServiceInternalTrafficPolicyType
-	serviceInternalTrafficPolicyCluster = "Cluster"
-
-	var ipFamilyPolicyType corev1.IPFamilyPolicyType
-	ipFamilyPolicyType = "SingleStack"
-
-	var serviceAffinity corev1.ServiceAffinity
-	serviceAffinity = "None"
-
-	var servicePortProto corev1.Protocol
-	servicePortProto = "TCP"
-
+	serviceInternalTrafficPolicyCluster := corev1.ServiceInternalTrafficPolicyType("Cluster")
+	ipFamilyPolicyType := corev1.IPFamilyPolicyType("SingleStack")
+	serviceAffinity := corev1.ServiceAffinity("None")
+	servicePortProto := corev1.Protocol("TCP")
 	targetPort := intstr.IntOrString{IntVal: 5432}
-
-	var serviceType corev1.ServiceType
-	serviceType = "ClusterIP"
+	serviceType := corev1.ServiceType("ClusterIP")
 
 	return corev1.ServiceSpec{
 		ClusterIP:             "None",

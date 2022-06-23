@@ -234,7 +234,7 @@ func deploymentSpec(m *repomanagerv1alpha1.Pulp) appsv1.DeploymentSpec {
 	}
 
 	envVars := []corev1.EnvVar{
-		{Name: "POSTGRES_SERVICE_HOST", Value: m.Name + "-postgres-" + m.Spec.PostgresVersion},
+		{Name: "POSTGRES_SERVICE_HOST", Value: m.Name + "-database-svc." + m.Namespace + ".svc"},
 		{Name: "POSTGRES_SERVICE_PORT", Value: strconv.Itoa(m.Spec.PostgresPort)},
 		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(m.Spec.Api.GunicornTimeout)},
 		{Name: "PULP_API_WORKERS", Value: strconv.Itoa(m.Spec.Api.GunicornWorkers)},
@@ -531,13 +531,13 @@ func (r *PulpReconciler) pulpServerSecret(m *repomanagerv1alpha1.Pulp) *corev1.S
 		},
 		StringData: map[string]string{
 			"settings.py": `
-CONTENT_ORIGIN = "http://test-pulp-content-svc.pulp-operator-go-system.svc.cluster.local:24816"
+CONTENT_ORIGIN = "http://` + m.Name + `-content-svc.` + m.Namespace + `.svc.cluster.local:24816"
 API_ROOT = "/pulp/"
 CACHE_ENABLED = "False"
 DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
 GALAXY_COLLECTION_SIGNING_SERVICE = "ansible-default"
 ANSIBLE_CERTS_DIR = "/etc/pulp/keys"
-DATABASES = { 'default' : { 'HOST': 'test-database-svc.pulp-operator-go-system.svc.cluster.local', 'ENGINE': 'django.db.backends.postgresql_psycopg2', 'NAME': 'pulp', 'USER': 'admin', 'PASSWORD': 'password', 'CONN_MAX_AGE': 0, 'PORT': '5432'}}
+DATABASES = { 'default' : { 'HOST': '` + m.Name + `-database-svc.` + m.Namespace + `.svc.cluster.local', 'ENGINE': 'django.db.backends.postgresql_psycopg2', 'NAME': 'pulp', 'USER': 'admin', 'PASSWORD': 'password', 'CONN_MAX_AGE': 0, 'PORT': '5432'}}
 `,
 		},
 	}
