@@ -81,6 +81,11 @@ type PulpSpec struct {
 	// +kubebuilder:default:=false
 	IsK8s bool `json:"is_k8s"`
 
+	//NOT WORKING!!!
+	//https://github.com/kubernetes-sigs/controller-tools/issues/636
+	// +kubebuilder:validation:Optional
+	DefaultSettings map[string]interface{} `json:"default_settings"`
+
 	Api Api `json:"api"`
 
 	//+kubebuilder:validation:Optional
