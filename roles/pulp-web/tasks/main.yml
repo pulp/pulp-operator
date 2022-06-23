@@ -1,4 +1,9 @@
 ---
+- name: Set apiVersion and kind variables
+  set_fact:
+    api_version: '{{ hostvars["localhost"]["inventory_file"].split("/")[4:6] | join("/")  }}'
+    kind: '{{ hostvars["localhost"]["inventory_file"].split("/")[6]  }}'
+
 - name: Getting raw pulp_settings
   set_fact:
     raw_pulp_settings: "{{ raw_spec['pulp_settings'] | default({}) }}"
@@ -9,6 +14,18 @@
   set_fact:
     pulp_combined_settings: "{{ default_settings|combine(raw_pulp_settings, recursive=True) if pulp_settings is defined and pulp_settings is not none else default_settings }}"
   no_log: "{{ no_log }}"
+
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-Web-Ready
+        message: "API root should start and end with '/'"
+        reason: ApiRootFormatInvalid
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
 - name: Validade API root
   fail:
@@ -22,6 +39,18 @@
   when:
     - ingress_type | lower == 'route'
     - route_tls_secret != ''
+
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-Web-Ready
+        message: Creating pulp-web ConfigMap resource
+        reason: CreatingConfigMap
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
 - name: pulp-web configmap
   k8s:
@@ -50,6 +79,18 @@
     _node_affinity: "{{ raw_spec['affinity']['node_affinity'] | default({}) }}"
   when: affinity is defined and affinity.node_affinity is defined
 
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-Web-Ready
+        message: Creating pulp-web Deployment resource
+        reason: CreatingDeployment
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
 - name: pulp-web deployment
   k8s:
     state: "{{ deployment_state }}"
@@ -57,9 +98,33 @@
   with_items:
     - pulp-web
 
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-Web-Ready
+        message: Creating pulp-web Service resource
+        reason: CreatingService
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
 - name: pulp-web service
   k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.service.yaml.j2') | from_yaml }}"
   with_items:
     - pulp-web
+
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-Web-Ready
+        message: All pulp-web tasks ran successfully
+        reason: PulpWebTasksFinished
+        status: "True"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
