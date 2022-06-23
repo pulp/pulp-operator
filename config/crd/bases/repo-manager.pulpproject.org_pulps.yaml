@@ -496,7 +496,6 @@ spec:
               db_fields_encryption_secret:
                 description: Secret where the Fernet symmetric encryption key is stored.
                 type: string
-              default_settings: {}
               deployment_type:
                 default: pulp
                 description: Name of the deployment type.

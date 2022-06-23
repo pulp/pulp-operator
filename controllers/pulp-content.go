@@ -281,12 +281,22 @@ func serviceContentObject(name, namespace string) *corev1.Service {
 // content service spec
 func serviceContentSpec(name string) corev1.ServiceSpec {
 
-	serviceInternalTrafficPolicyCluster := corev1.ServiceInternalTrafficPolicyType("Cluster")
-	ipFamilyPolicyType := corev1.IPFamilyPolicyType("SingleStack")
-	serviceAffinity := corev1.ServiceAffinity("None")
-	servicePortProto := corev1.Protocol("TCP")
+	var serviceInternalTrafficPolicyCluster corev1.ServiceInternalTrafficPolicyType
+	serviceInternalTrafficPolicyCluster = "Cluster"
+
+	var ipFamilyPolicyType corev1.IPFamilyPolicyType
+	ipFamilyPolicyType = "SingleStack"
+
+	var serviceAffinity corev1.ServiceAffinity
+	serviceAffinity = "None"
+
+	var servicePortProto corev1.Protocol
+	servicePortProto = "TCP"
+
 	targetPort := intstr.IntOrString{IntVal: 24816}
-	serviceType := corev1.ServiceType("ClusterIP")
+
+	var serviceType corev1.ServiceType
+	serviceType = "ClusterIP"
 
 	return corev1.ServiceSpec{
 		ClusterIP:             "None",

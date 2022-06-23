@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"strconv"
-	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -105,7 +104,7 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 
 	// Create the secret in case it is not found
 	if err != nil && errors.IsNotFound(err) {
-		sec := r.pulpServerSecret(pulp, log)
+		sec := r.pulpServerSecret(pulp)
 		log.Info("Creating a new pulp-server secret", "Secret.Namespace", sec.Namespace, "Secret.Name", sec.Name)
 		err = r.Create(ctx, sec)
 		if err != nil {
@@ -524,15 +523,7 @@ func labelsForPulpApi(m *repomanagerv1alpha1.Pulp) map[string]string {
 	}
 }
 
-func (r *PulpReconciler) pulpServerSecret(m *repomanagerv1alpha1.Pulp, log logr.Logger) *corev1.Secret {
-
-	unmarshal := m.Spec.DefaultSettings
-
-	for i, j := range unmarshal {
-		log.Info(strings.ToUpper(i))
-		parseSettings(j, log)
-	}
-
+func (r *PulpReconciler) pulpServerSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
 	sec := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-server",
