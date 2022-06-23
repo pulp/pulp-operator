@@ -18,11 +18,11 @@ package controllers
 
 import (
 	"context"
-	"reflect"
 	"strconv"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -30,7 +30,6 @@ import (
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	"github.com/go-logr/logr"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
@@ -66,33 +65,38 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 		---
 		> [(*"k8s.io/api/core/v1.Container")(0xc000157a20)]
 	*/
-	/*
-		// Ensure the deployment template spec is as expected
-		expected_deployment_spec := deploymentSpec(pulp)
-		if !reflect.DeepEqual(expected_deployment_spec.Template.Spec, found.Spec.Template.Spec) {
-			log.Info("The API deployment has been modified! Reconciling ...")
-			err = r.Update(ctx, deploymentObject(pulp))
-			if err != nil {
-				log.Error(err, "Error trying to update the API deployment object ... ")
-				return reconcile.Result{}, err
-			}
-			return reconcile.Result{Requeue: true}, nil
-		}
-	*/
 
-	// as a workaround to check if pulp the deployment is in sync with Pulp CR instance
-	// we can compare each field managed by Pulp CR and how they are in current deployment
-	updated, modified := r.checkDeployment(pulp, found)
-	if modified {
+	// Ensure the deployment template spec is as expected
+	// https://github.com/kubernetes-sigs/kubebuilder/issues/592
+	expected_deployment_spec := deploymentSpec(pulp)
+	if !equality.Semantic.DeepDerivative(expected_deployment_spec.Template.Spec, found.Spec.Template.Spec) {
 		log.Info("The API deployment has been modified! Reconciling ...")
-		patch := client.MergeFrom(found.DeepCopy())
-		err = r.Patch(ctx, updated, patch)
+		found.Spec.Template.Spec = expected_deployment_spec.Template.Spec
+		err = r.Update(ctx, found)
 		if err != nil {
 			log.Error(err, "Error trying to update the API deployment object ... ")
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{Requeue: true}, nil
 	}
+
+	// pending reconcile number o api replicas and deployment labels
+
+	/*
+		// as a workaround to check if pulp the deployment is in sync with Pulp CR instance
+		// we can compare each field managed by Pulp CR and how they are in current deployment
+		updated, modified := r.checkDeployment(pulp, found)
+		if modified {
+			log.Info("The API deployment has been modified! Reconciling ...")
+			patch := client.MergeFrom(found.DeepCopy())
+			err = r.Patch(ctx, updated, patch)
+			if err != nil {
+				log.Error(err, "Error trying to update the API deployment object ... ")
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{Requeue: true}, nil
+		}
+	*/
 
 	// Create pulp-server secret
 	secret := &corev1.Secret{}
@@ -472,32 +476,35 @@ func deploymentSpec(m *repomanagerv1alpha1.Pulp) appsv1.DeploymentSpec {
 			},
 			Spec: corev1.PodSpec{
 				Affinity:                  affinity,
+				SecurityContext:           podSecurityContext,
 				NodeSelector:              nodeSelector,
 				Tolerations:               toleration,
-				SecurityContext:           podSecurityContext,
+				Volumes:                   volumes,
+				ServiceAccountName:        m.Spec.DeploymentType + "-operator-sa",
 				TopologySpreadConstraints: topologySpreadConstraint,
 				Containers: []corev1.Container{{
+					Name:            "api",
 					Image:           m.Spec.Image + ":" + m.Spec.ImageVersion,
 					ImagePullPolicy: corev1.PullPolicy(m.Spec.ImagePullPolicy),
-					Name:            "api",
 					Args:            []string{"pulp-api"},
 					Env:             envVars,
 					Ports: []corev1.ContainerPort{{
 						ContainerPort: 24817,
 						Protocol:      "TCP",
 					}},
-					VolumeMounts: volumeMounts,
 					/* WIP
 					LivenessProbe:  &corev1.Probe{},
 					ReadinessProbe: &corev1.Probe{}, */
-					Resources: resources,
+					Resources:    resources,
+					VolumeMounts: volumeMounts,
 				}},
-				Volumes:                       volumes,
+
+				/* the following configs are not defined on pulp-operator (ansible version)  */
+				/* but i'll keep it here just in case we can manage to make deepequal usable */
 				RestartPolicy:                 restartPolicy,
 				TerminationGracePeriodSeconds: &terminationGracePeriodSeconds,
 				DNSPolicy:                     dnsPolicy,
 				SchedulerName:                 schedulerName,
-				ServiceAccountName:            m.Spec.DeploymentType + "-operator-sa",
 			},
 		},
 	}
@@ -574,16 +581,21 @@ func (r *PulpReconciler) pulpAdminPasswordSecret(m *repomanagerv1alpha1.Pulp) *c
 	return sec
 }
 
+/*
+// PROBABLY DEPRECATED IN FAVOR OF equality.Semantic.DeepDerivative (need to do more tests)
 // verify if deployment matches the definition on Pulp CR
 func (r *PulpReconciler) checkDeployment(m *repomanagerv1alpha1.Pulp, current *appsv1.Deployment) (*appsv1.Deployment, bool) {
 
 	modified := false
 	patch := current.DeepCopy()
+
+	// check replicas
 	if !reflect.DeepEqual(*current.Spec.Replicas, m.Spec.Api.Replicas) {
 		*patch.Spec.Replicas = m.Spec.Api.Replicas
 		modified = true
 	}
 
+	// check affinity
 	if !reflect.DeepEqual(current.Spec.Template.Spec.Affinity.NodeAffinity, m.Spec.Api.Affinity.NodeAffinity) {
 		patch.Spec.Template.Spec.Affinity = &corev1.Affinity{
 			NodeAffinity: m.Spec.Api.Affinity.NodeAffinity,
@@ -591,39 +603,53 @@ func (r *PulpReconciler) checkDeployment(m *repomanagerv1alpha1.Pulp, current *a
 		modified = true
 	}
 
+	// check security context (is_k8s)
 	runAsUser := int64(0)
 	fsGroup := int64(0)
 	podSecurityContext := &corev1.PodSecurityContext{
 		RunAsUser: &runAsUser,
 		FSGroup:   &fsGroup,
 	}
-
 	if m.Spec.IsK8s && (!reflect.DeepEqual(current.Spec.Template.Spec.SecurityContext.RunAsUser, podSecurityContext.RunAsUser) ||
 		!reflect.DeepEqual(current.Spec.Template.Spec.SecurityContext.FSGroup, podSecurityContext.FSGroup)) {
 		patch.Spec.Template.Spec.SecurityContext = podSecurityContext
 		modified = true
 	}
-
 	if !m.Spec.IsK8s && (current.Spec.Template.Spec.SecurityContext.RunAsUser != nil ||
 		current.Spec.Template.Spec.SecurityContext.FSGroup != nil) {
 		patch.Spec.Template.Spec.SecurityContext = &corev1.PodSecurityContext{}
 		modified = true
 	}
 
+	// check nodeSelector
 	if !reflect.DeepEqual(current.Spec.Template.Spec.NodeSelector, m.Spec.Api.NodeSelector) {
 		patch.Spec.Template.Spec.NodeSelector = m.Spec.Api.NodeSelector
 		modified = true
 	}
 
+	// check tolerations
 	if !reflect.DeepEqual(current.Spec.Template.Spec.Tolerations, m.Spec.Api.Tolerations) {
 		patch.Spec.Template.Spec.Tolerations = m.Spec.Api.Tolerations
 		modified = true
 	}
 
+	// check volumes [PENDING]
+	// check serviceAccount [PENDING]
+
+	// check topologySpreadConstraints
 	if !reflect.DeepEqual(current.Spec.Template.Spec.TopologySpreadConstraints, m.Spec.Api.TopologySpreadConstraints) {
 		patch.Spec.Template.Spec.TopologySpreadConstraints = m.Spec.Api.TopologySpreadConstraints
 		modified = true
 	}
 
+	// check container image [PENDING]
+	// check container imagePullPolicy [PENDING]
+	// check container env [PENDING]
+	// check container livenessProbe [PENDING]
+	// check container readinessProbe [PENDING]
+	// check container resources [PENDING]
+	// check container mounts [PENDING]
+
 	return patch, modified
 }
+*/
