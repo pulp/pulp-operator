@@ -66,7 +66,7 @@ RUN mkdir -p /etc/pulp \
 			 /var/lib/pulp/assets \
 			 /var/lib/pulp/tmp
 
-RUN pip install gunicorn "django-storages[boto3,azure]>=1.12.2" "azure-storage-blob<12.10.0"
+RUN pip install setproctitle gunicorn "django-storages[boto3,azure]>=1.12.2" "azure-storage-blob<12.10.0"
 {% if s3_test is defined %}
 # Hacking botocore (https://github.com/boto/botocore/pull/1990):
 RUN sed -i "s/hasattr(body, 'read')/getattr(body, '_size', None)/g" $(pip show botocore | grep -i location | awk '{ print $2 }')/botocore/handlers.py

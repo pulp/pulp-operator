@@ -44,5 +44,6 @@ mkdir -p /var/lib/pulp/media \
 # with /proc/sys/net/ipv6/bindv6only=1, the container will still have
 # it enabled with /proc/sys/net/ipv6/bindv6only=0 .
 exec gunicorn --bind '[::]:24817' pulpcore.app.wsgi:application \
+--name pulp-api \
 --timeout "${PULP_GUNICORN_TIMEOUT}" \
 --workers "${PULP_API_WORKERS}"

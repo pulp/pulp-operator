@@ -12,6 +12,7 @@ PULP_CONTENT_WORKERS=${PULP_CONTENT_WORKERS:-2}
 # with /proc/sys/net/ipv6/bindv6only=1, the container will still have
 # it enabled with /proc/sys/net/ipv6/bindv6only=0 .
 exec gunicorn pulpcore.content:server \
+--name pulp-content \
 --bind '[::]:24816' \
 --worker-class 'aiohttp.GunicornWebWorker' \
 --timeout "${PULP_GUNICORN_TIMEOUT}" \
