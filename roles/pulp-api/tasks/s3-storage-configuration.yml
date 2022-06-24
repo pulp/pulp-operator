@@ -1,4 +1,16 @@
 ---
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-API-Ready
+        message: Checking s3 storage configurations
+        reason: CheckingS3StorageConfigs
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
 - name: Check for specified s3 storage configuration
   k8s_info:
     kind: Secret
@@ -16,9 +28,23 @@
     - _custom_s3_configuration.resources[0] is defined
     - _custom_s3_configuration.resources[0].data is defined
 
-- name: Fail if s3 secret object is an unexpected format
-  fail:
-    msg: "Cannot read the data for secret {{ object_storage_s3_secret  }}"
+- block:
+  - k8s_status:
+      api_version: "{{ api_version }}"
+      kind: "{{ kind }}"
+      name: "{{ ansible_operator_meta.name }}"
+      namespace: "{{ ansible_operator_meta.namespace }}"
+      conditions:
+        - type: Pulp-API-Ready
+          message: Unexpected format in s3 Secret
+          reason: UnexpectedS3SecretFormat
+          status: "False"
+          lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
+  - name: Fail if s3 secret object is an unexpected format
+    fail:
+      msg: "Cannot read the data for secret {{ object_storage_s3_secret  }}"
+
   when:
     - not s3_secret_data_available
 
@@ -62,9 +88,23 @@
     - _custom_s3_configuration.resources[0].data['s3-endpoint'] is defined
     - _custom_s3_configuration.resources[0].data['s3-endpoint'] | length
 
-- name: Fail if required s3 secret items are not present
-  fail:
-    msg: "Secret {{ object_storage_s3_secret  }} is missing required configuration data."
+- block:
+  - k8s_status:
+      api_version: "{{ api_version }}"
+      kind: "{{ kind }}"
+      name: "{{ ansible_operator_meta.name }}"
+      namespace: "{{ ansible_operator_meta.namespace }}"
+      conditions:
+        - type: Pulp-API-Ready
+          message: Missing s3 fields in Secret
+          reason: MissingS3Fields
+          status: "False"
+          lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
+  - name: Fail if required s3 secret items are not present
+    fail:
+      msg: "Secret {{ object_storage_s3_secret  }} is missing required configuration data."
+
   when:
     - s3_secret_data_available
     - not s3_access_key_id_available
