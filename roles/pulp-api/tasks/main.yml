@@ -20,12 +20,36 @@
 
 - name: pulp-file-storage
   block:
+    - k8s_status:
+        api_version: "{{ api_version }}"
+        kind: "{{ kind }}"
+        name: "{{ ansible_operator_meta.name }}"
+        namespace: "{{ ansible_operator_meta.namespace }}"
+        conditions:
+          - type: Pulp-API-Ready
+            message: Creating pulp-api PVC resource
+            reason: CreatingPVC
+            status: "False"
+            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
     - name: pulp-file-storage persistent volume claim
       k8s:
         state: "{{ deployment_state }}"
         definition: "{{ lookup('template', 'templates/' + item + '.pvc.yaml.j2') | from_yaml }}"
       with_items:
         - pulp-file-storage
+
+    - k8s_status:
+        api_version: "{{ api_version }}"
+        kind: "{{ kind }}"
+        name: "{{ ansible_operator_meta.name }}"
+        namespace: "{{ ansible_operator_meta.namespace }}"
+        conditions:
+          - type: Pulp-API-Ready
+            message: Removing ownerReferences from pulp-file-storage PVC
+            reason: RemovingPVCOwnerReferences
+            status: "False"
+            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
     - name: Remove ownerReferences from pulp-file-storage pvc to avoid garbage collection
       k8s:
@@ -98,6 +122,18 @@
     - sso_secret is defined
     - sso_secret | length
 
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-API-Ready
+        message: Creating pulp-server Secret resource
+        reason: CreatingPulpServerSecret
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
 - name: pulp-server secret
   k8s:
     state: "{{ deployment_state }}"
@@ -114,6 +150,18 @@
 
 - include_tasks: signing_service.yml
   when: signing_secret is defined
+
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-API-Ready
+        message: Creating pulp-api Service resource
+        reason: CreatingService
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
 - name: pulp-api service
   k8s:
@@ -140,8 +188,23 @@
 # Indicate what kind of cluster we are in (OpenShift or Kubernetes).
 - debug:
     msg: "CLUSTER TYPE: is_openshift={{ is_openshift }}; is_k8s={{ is_k8s }}"
-- fail:
-    msg: "Cannot determine what type of cluster we are in"
+
+- block:
+  - k8s_status:
+      api_version: "{{ api_version }}"
+      kind: "{{ kind }}"
+      name: "{{ ansible_operator_meta.name }}"
+      namespace: "{{ ansible_operator_meta.namespace }}"
+      conditions:
+        - type: Pulp-API-Ready
+          message: Cannot determine what type of cluster we are in
+          reason: FailedToIdentifyClusterType
+          status: "False"
+          lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
+  - fail:
+      msg: "Cannot determine what type of cluster we are in"
+
   when:
   - not is_openshift
   - not is_k8s
@@ -191,9 +254,33 @@
     - _container_token_configuration['resources'][0]['data']['tls.key'] is defined
     - _container_token_configuration['resources'][0]['data']['tls.key'] | length
 
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-API-Ready
+        message: Creating pulp-api Deployment resource
+        reason: CreatingDeployment
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
 - name: pulp-api deployment
   k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.deployment.yaml.j2') | from_yaml }}"
   with_items:
     - pulp-api
+
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-API-Ready
+        message: All pulp-api tasks ran successfully
+        reason: PulpApiTasksFinished
+        status: "True"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"

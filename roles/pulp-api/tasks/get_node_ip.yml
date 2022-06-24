@@ -1,4 +1,15 @@
 ---
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-API-Ready
+        message: Checking Ingress configurations
+        reason: CheckingIngressConfigs
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
 - name: Set web protocol
   set_fact:
@@ -16,9 +27,23 @@
     - ingress_type|lower == "ingress"
     - hostname is defined
 
-- name: Fail if hostname is not defined when ingress is specified
-  fail:
-    msg: "The hostname must be specified when using ingress_type {{ ingress_type }}."
+- block:
+  - k8s_status:
+      api_version: "{{ api_version }}"
+      kind: "{{ kind }}"
+      name: "{{ ansible_operator_meta.name }}"
+      namespace: "{{ ansible_operator_meta.namespace }}"
+      conditions:
+        - type: Pulp-API-Ready
+          message: Hostname is not defined when ingress is specified
+          reason: HostnameNotDefined
+          status: "False"
+          lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
+  - name: Fail if hostname is not defined when ingress is specified
+    fail:
+      msg: "The hostname must be specified when using ingress_type {{ ingress_type }}."
+
   when:
     - ingress_type|lower == "ingress"
     - hostname is not defined

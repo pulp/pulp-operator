@@ -1,4 +1,16 @@
 ---
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-API-Ready
+        message: Checking SSO Secret configurations
+        reason: CheckingSSOSecret
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
 - name: Check for specified sso configuration secret
   k8s_info:
     kind: Secret
@@ -16,9 +28,21 @@
     - _sso_configuration.resources[0] is defined
     - _sso_configuration.resources[0].data is defined
 
-- name: Fail if sso secret object is an unexpected format
-  fail:
-    msg: "Cannot read the data for secret {{ _sso_configuration  }}"
+- block:
+  - k8s_status:
+      api_version: "{{ api_version }}"
+      kind: "{{ kind }}"
+      name: "{{ ansible_operator_meta.name }}"
+      namespace: "{{ ansible_operator_meta.namespace }}"
+      conditions:
+        - type: Pulp-API-Ready
+          message: Unexpected format in SSO Secret
+          reason: UnexpectedSSOSecretFormat
+          status: "False"
+
+  - name: Fail if sso secret object is an unexpected format
+    fail:
+      msg: "Cannot read the data for secret {{ _sso_configuration  }}"
   when:
     - not sso_secret_data_available
 
@@ -105,9 +129,23 @@
     - _sso_configuration.resources[0].data['keycloak_host_loopback'] | length
 
 ### Check to make sure all required sso config values are set before proceeding
-- name: Fail if required sso secret items are not present
-  fail:
-    msg: "Secret {{ sso_secret }} is missing required configuration data."
+- block:
+  - k8s_status:
+      api_version: "{{ api_version }}"
+      kind: "{{ kind }}"
+      name: "{{ ansible_operator_meta.name }}"
+      namespace: "{{ ansible_operator_meta.namespace }}"
+      conditions:
+        - type: Pulp-API-Ready
+          message: Missing SSO fields on Secret
+          reason: MissingSSOFields
+          status: "False"
+          lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
+  - name: Fail if required sso secret items are not present
+    fail:
+      msg: "Secret {{ sso_secret }} is missing required configuration data."
+
   when:
     - sso_secret_data_available
     - not social_auth_keycloak_key_available

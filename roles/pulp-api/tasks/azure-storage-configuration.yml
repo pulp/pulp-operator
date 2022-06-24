@@ -1,4 +1,16 @@
 ---
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-API-Ready
+        message: Checking Azure storage configurations
+        reason: CheckingAzureStorageConfigs
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
 - name: Check for specified azure storage configuration
   k8s_info:
     kind: Secret
@@ -16,9 +28,23 @@
     - _custom_azure_configuration.resources[0] is defined
     - _custom_azure_configuration.resources[0].data is defined
 
-- name: Fail if azure secret object is an unexpected format
-  fail:
-    msg: "Cannot read the data for secret {{ object_storage_azure_secret  }}"
+- block:
+  - k8s_status:
+     api_version: "{{ api_version }}"
+     kind: "{{ kind }}"
+     name: "{{ ansible_operator_meta.name }}"
+     namespace: "{{ ansible_operator_meta.namespace }}"
+     conditions:
+       - type: Pulp-API-Ready
+         message: Unexpected format in Azure Secret
+         reason: UnexpectedAzureSecretFormat
+         status: "False"
+         lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
+  - name: Fail if azure secret object is an unexpected format
+    fail:
+      msg: "Cannot read the data for secret {{ object_storage_azure_secret  }}"
+
   when:
     - not azure_secret_data_avaiable
 
@@ -46,9 +72,23 @@
     - _custom_azure_configuration.resources[0].data['azure-container'] is defined
     - _custom_azure_configuration.resources[0].data['azure-container'] | length
 
-- name: Fail if required azure secret items are not present
-  fail:
-    msg: "Secret {{ object_storage_azure_secret  }} is missing required configuration data."
+- block:
+  - k8s_status:
+      api_version: "{{ api_version }}"
+      kind: "{{ kind }}"
+      name: "{{ ansible_operator_meta.name }}"
+      namespace: "{{ ansible_operator_meta.namespace }}"
+      conditions:
+        - type: Pulp-API-Ready
+          message: Missing Azure fields on Secret
+          reason: MissingAzureFields
+          status: "False"
+          lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
+  - name: Fail if required azure secret items are not present
+    fail:
+      msg: "Secret {{ object_storage_azure_secret  }} is missing required configuration data."
+
   when:
     - azure_secret_data_avaiable
     - not azure_account_name_available
