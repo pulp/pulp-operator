@@ -1,4 +1,16 @@
 ---
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-API-Ready
+        message: Copying public GPG key for signing service
+        reason: CopyingPublicGPG
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
 - name: Check for signing keys
   k8s_info:
     kind: Secret
@@ -30,6 +42,18 @@
     failed_when: signing_key.stdout | length != 40
     check_mode: false
 
+  - k8s_status:
+      api_version: "{{ api_version }}"
+      kind: "{{ kind }}"
+      name: "{{ ansible_operator_meta.name }}"
+      namespace: "{{ ansible_operator_meta.namespace }}"
+      conditions:
+        - type: Pulp-API-Ready
+          message: Importing galaxy signing service GPG key file
+          reason: ImportingGalaxyGPGKey
+          status: "False"
+          lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
   - name: Import galaxy signing service GPG key file
     command: gpg --batch --import /tmp/signing_service.gpg
     register: result
@@ -38,6 +62,18 @@
     # If you try to import multiple keys but only some need to be imported: rc 2
     changed_when: result.stderr is search("imported:")
     failed_when: result.rc not in [0,2]
+
+  - k8s_status:
+      api_version: "{{ api_version }}"
+      kind: "{{ kind }}"
+      name: "{{ ansible_operator_meta.name }}"
+      namespace: "{{ ansible_operator_meta.namespace }}"
+      conditions:
+        - type: Pulp-API-Ready
+          message: Updating Ownertrust trust level
+          reason: UpdatingOwnertrustTrustLevel
+          status: "False"
+          lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
   - name: Trust the galaxy signing service GPG key
     # When using this syntax, "ultimate" trust == 6

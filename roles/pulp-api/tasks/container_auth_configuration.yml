@@ -1,4 +1,16 @@
 ---
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-API-Ready
+        message: Creating token authentication Secret
+        reason: CreatingTokenAuthSecret
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
 - name: Generate token authentication keys
   shell: |-
     openssl ecparam -genkey -name prime256v1 -noout -out /tmp/private_key.pem

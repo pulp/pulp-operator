@@ -1,4 +1,16 @@
 ---
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-API-Ready
+        message: Configuring DB fields encryption Secret name
+        reason: ConfiguringDBFieldsEncryption
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
 - name: Set default DB fields encryption secret name
   set_fact:
     db_fields_encryption_secret: '{{ ansible_operator_meta.name }}-db-fields-encryption'
@@ -14,6 +26,18 @@
   no_log: "{{ no_log }}"
 
 - block:
+    - k8s_status:
+        api_version: "{{ api_version }}"
+        kind: "{{ kind }}"
+        name: "{{ ansible_operator_meta.name }}"
+        namespace: "{{ ansible_operator_meta.namespace }}"
+        conditions:
+          - type: Pulp-API-Ready
+            message: Creating DB fields encryption Secret
+            reason: CreatingDBSecret
+            status: "False"
+            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
     - name: Generate Pulp Database Encryption Key
       shell: |
         from cryptography.fernet import Fernet
