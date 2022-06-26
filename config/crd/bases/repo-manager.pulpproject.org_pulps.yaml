@@ -267,17 +267,6 @@ spec:
                       type: string
                     description: NodeSelector for the Pulp pods.
                     type: object
-                  pulp_settings:
-                    description: The pulp settings.
-                    properties:
-                      GALAXY_FEATURE_FLAGS:
-                        properties:
-                          execution_environments:
-                            type: string
-                        type: object
-                      debug:
-                        type: string
-                    type: object
                   replicas:
                     default: 1
                     description: Size is the size of number of pulp-api replicas.
@@ -528,6 +517,20 @@ spec:
               postgres_version:
                 default: "13"
                 type: string
+              pulp_settings:
+                description: The pulp settings.
+                properties:
+                  GALAXY_FEATURE_FLAGS:
+                    properties:
+                      execution_environments:
+                        type: string
+                    type: object
+                  api_root:
+                    default: /pulp/
+                    type: string
+                  debug:
+                    type: string
+                type: object
               redis_port:
                 default: 6379
                 type: integer
@@ -537,6 +540,17 @@ spec:
               signing_secret:
                 description: Secret where the signing certificates are stored.
                 type: string
+              web:
+                properties:
+                  replicas:
+                    default: 1
+                    description: Size is the size of number of pulp-web replicas
+                    format: int32
+                    minimum: 1
+                    type: integer
+                required:
+                - replicas
+                type: object
               worker:
                 properties:
                   replicas:

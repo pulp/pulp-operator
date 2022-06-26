@@ -23,3 +23,8 @@ spec:
     replicas: 1
   worker:
     replicas: 1
+  web:
+    replicas: 1
+
+  pulp_settings:
+    api_root: "/pulp/"

@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"reflect"
 	"strconv"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -26,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	"github.com/go-logr/logr"
@@ -145,17 +147,50 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 	// Create the secret in case it is not found
 	if err != nil && errors.IsNotFound(err) {
 		adminPwd := r.pulpAdminPasswordSecret(pulp)
-		log.Info("Creating a new pulp-admin-secret secret", "Secret.Namespace", adminPwd.Namespace, "Secret.Name", adminPwd.Name)
+		log.Info("Creating a new pulp-admin-password secret", "Secret.Namespace", adminPwd.Namespace, "Secret.Name", adminPwd.Name)
 		err = r.Create(ctx, adminPwd)
 		if err != nil {
-			log.Error(err, "Failed to create new pulp-admin-secret secret", "Secret.Namespace", adminPwd.Namespace, "Secret.Name", adminPwd.Name)
+			log.Error(err, "Failed to create new pulp-admin-password secret", "Secret.Namespace", adminPwd.Namespace, "Secret.Name", adminPwd.Name)
 			return ctrl.Result{}, err
 		}
 		// Deployment created successfully - return and requeue
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
-		log.Error(err, "Failed to get pulp-admin-secret secret")
+		log.Error(err, "Failed to get pulp-admin-password secret")
 		return ctrl.Result{}, err
+	}
+
+	// SERVICE
+	apiSvc := &corev1.Service{}
+	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api-svc", Namespace: pulp.Namespace}, apiSvc)
+
+	if err != nil && errors.IsNotFound(err) {
+		// Define a new service
+		newApiSvc := r.serviceForAPI(pulp)
+		log.Info("Creating a new API Service", "Service.Namespace", newApiSvc.Namespace, "Service.Name", newApiSvc.Name)
+		err = r.Create(ctx, newApiSvc)
+		if err != nil {
+			log.Error(err, "Failed to create new API Service", "Service.Namespace", newApiSvc.Namespace, "Service.Name", newApiSvc.Name)
+			return ctrl.Result{}, err
+		}
+		// Service created successfully - return and requeue
+		return ctrl.Result{Requeue: true}, nil
+	} else if err != nil {
+		log.Error(err, "Failed to get API Service")
+		return ctrl.Result{}, err
+	}
+
+	// Ensure the service spec is as expected
+	expected_api_spec := serviceAPISpec(pulp.Name)
+
+	if !reflect.DeepEqual(expected_api_spec, apiSvc.Spec) {
+		log.Info("The API service has been modified! Reconciling ...")
+		err = r.Update(ctx, serviceAPIObject(pulp.Name, pulp.Namespace))
+		if err != nil {
+			log.Error(err, "Error trying to update the API Service object ... ")
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{Requeue: true}, nil
 	}
 
 	return ctrl.Result{}, nil
@@ -520,6 +555,8 @@ func labelsForPulpApi(m *repomanagerv1alpha1.Pulp) map[string]string {
 		"app.kubernetes.io/component":  "api",
 		"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
 		"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
+		"app":                          "pulp-api",
+		"pulp_cr":                      m.Name,
 	}
 }
 
@@ -653,3 +690,53 @@ func (r *PulpReconciler) checkDeployment(m *repomanagerv1alpha1.Pulp, current *a
 	return patch, modified
 }
 */
+
+// serviceForAPI returns a service object for pulp-api
+func (r *PulpReconciler) serviceForAPI(m *repomanagerv1alpha1.Pulp) *corev1.Service {
+
+	svc := serviceAPIObject(m.Name, m.Namespace)
+
+	// Set Pulp instance as the owner and controller
+	ctrl.SetControllerReference(m, svc, r.Scheme)
+	return svc
+}
+
+func serviceAPIObject(name, namespace string) *corev1.Service {
+	return &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name + "-api-svc",
+			Namespace: namespace,
+		},
+		Spec: serviceAPISpec(name),
+	}
+}
+
+// api service spec
+func serviceAPISpec(name string) corev1.ServiceSpec {
+
+	serviceInternalTrafficPolicyCluster := corev1.ServiceInternalTrafficPolicyType("Cluster")
+	ipFamilyPolicyType := corev1.IPFamilyPolicyType("SingleStack")
+	serviceAffinity := corev1.ServiceAffinity("None")
+	servicePortProto := corev1.Protocol("TCP")
+	targetPort := intstr.IntOrString{IntVal: 24817}
+	serviceType := corev1.ServiceType("ClusterIP")
+
+	return corev1.ServiceSpec{
+		ClusterIP:             "None",
+		ClusterIPs:            []string{"None"},
+		InternalTrafficPolicy: &serviceInternalTrafficPolicyCluster,
+		IPFamilies:            []corev1.IPFamily{"IPv4"},
+		IPFamilyPolicy:        &ipFamilyPolicyType,
+		Ports: []corev1.ServicePort{{
+			Port:       24817,
+			Protocol:   servicePortProto,
+			TargetPort: targetPort,
+		}},
+		Selector: map[string]string{
+			"app":     "pulp-api",
+			"pulp_cr": name,
+		},
+		SessionAffinity: serviceAffinity,
+		Type:            serviceType,
+	}
+}

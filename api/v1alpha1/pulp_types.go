@@ -92,6 +92,9 @@ type PulpSpec struct {
 	//+kubebuilder:validation:Optional
 	Worker Worker `json:"worker"`
 
+	//+kubebuilder:validation:Optional
+	Web Web `json:"web"`
+
 	// +kubebuilder:default:=true
 	// +kubebuilder:validation:Optional
 	CacheEnabled bool `json:"cache_enabled,omitempty"`
@@ -107,6 +110,10 @@ type PulpSpec struct {
 	// +kubebuilder:default:=5432
 	// +kubebuilder:validation:Optional
 	PostgresPort int `json:"postgres_port,omitempty"`
+
+	// The pulp settings.
+	// +kubebuilder:validation:Optional
+	PulpSettings `json:"pulp_settings,omitempty"`
 }
 
 type Affinity struct {
@@ -135,10 +142,6 @@ type Api struct {
 	// +kubebuilder:validation:Optional
 	TopologySpreadConstraints []corev1.TopologySpreadConstraint `json:"topology_spread_constraints,omitempty"`
 
-	// The pulp settings.
-	// +kubebuilder:validation:Optional
-	PulpSettings `json:"pulp_settings,omitempty"`
-
 	// The timeout for the gunicorn process.
 	// +kubebuilder:default:=90
 	// +kubebuilder:validation:Optional
@@ -160,6 +163,10 @@ type PulpSettings struct {
 
 	// +kubebuilder:validation:Optional
 	GalaxyFeatureFlags `json:"GALAXY_FEATURE_FLAGS,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:="/pulp/"
+	ApiRoot string `json:"api_root"`
 }
 
 type GalaxyFeatureFlags struct {
@@ -175,6 +182,13 @@ type Content struct {
 
 type Worker struct {
 	// Size is the size of number of pulp-worker replicas
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:default:=1
+	Replicas int32 `json:"replicas"`
+}
+
+type Web struct {
+	// Size is the size of number of pulp-web replicas
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:default:=1
 	Replicas int32 `json:"replicas"`

@@ -92,6 +92,11 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return pulpController, err
 	}
 
+	pulpController, err = r.pulpWebController(ctx, pulp, log)
+	if err != nil {
+		return pulpController, err
+	}
+
 	return pulpController, nil
 }
 
