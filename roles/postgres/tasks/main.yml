@@ -4,6 +4,18 @@
     api_version: '{{ hostvars["localhost"]["inventory_file"].split("/")[4:6] | join("/")  }}'
     kind: '{{ hostvars["localhost"]["inventory_file"].split("/")[6]  }}'
 
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-Operator-Finished-Execution
+        message: Pulp operator tasks running
+        reason: PulpOperatorRunning
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
 - name: Set node affinity
   set_fact:
     _node_affinity: "{{ raw_spec['affinity']['node_affinity'] | default({}) }}"
