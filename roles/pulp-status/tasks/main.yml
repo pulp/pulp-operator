@@ -177,6 +177,7 @@
     - name: Retrieve route URL
       k8s_info:
         kind: Route
+        api_version: "route.openshift.io/v1"
         namespace: '{{ ansible_operator_meta.namespace }}'
         name: '{{ ansible_operator_meta.name }}'
       register: route_url
