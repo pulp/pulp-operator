@@ -1,4 +1,15 @@
 ---
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-Worker-Ready
+        message: Starting pulp-worker tasks
+        reason: StartingTasksExecution
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
 - name: Set default pulp-worker image
   set_fact:
@@ -20,9 +31,33 @@
     _node_affinity: "{{ raw_spec['affinity']['node_affinity'] | default({}) }}"
   when: affinity is defined and affinity.node_affinity is defined
 
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-Worker-Ready
+        message: Creating pulp-worker Deployment resource
+        reason: CreatingDeployment
+        status: "False"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
 - name: pulp-worker deployment
   k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.deployment.yaml.j2') | from_yaml }}"
   with_items:
     - pulp-worker
+
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: Pulp-Worker-Ready
+        message: All pulp-worker tasks ran successfully
+        reason: PulpWorkerTasksFinished
+        status: "True"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
