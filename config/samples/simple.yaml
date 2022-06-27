@@ -5,6 +5,7 @@ metadata:
 spec:
   deployment_type: pulp
   is_k8s: true
+  image_version: latest
 #  affinity:
 #    nodeAffinity:
 #      requiredDuringSchedulingIgnoredDuringExecution:

@@ -12,6 +12,9 @@ metadata:
   namespace: system
   labels:
     control-plane: controller-manager
+    app.kubernetes.io/name: pulp-operator
+    app.kubernetes.io/component: operator
+    owner: pulp-dev
 spec:
   selector:
     matchLabels:
@@ -23,6 +26,8 @@ spec:
         kubectl.kubernetes.io/default-container: manager
       labels:
         control-plane: controller-manager
+        app.kubernetes.io/name: pulp-operator
+        app.kubernetes.io/component: operator
     spec:
       securityContext:
         runAsNonRoot: true
