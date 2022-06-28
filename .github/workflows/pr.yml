@@ -117,10 +117,7 @@ jobs:
           sudo popeye --kubeconfig ~/.kube/config || true
       - name: Logs
         if: always()
-        run: |
-          sudo -E docker images
-          .github/workflows/scripts/show_logs.sh
-          http --follow --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/ || true
+        run: .github/workflows/scripts/show_logs.sh
       # - name: Debugging example (uncomment when needed)
       #   if: failure()
       #   uses: mxschmitt/action-tmate@v3
@@ -198,10 +195,7 @@ jobs:
           PY_COLORS: '1'
       - name: Logs
         if: always()
-        run: |
-          sudo -E docker images
-          .github/workflows/scripts/show_logs.sh
-          http --follow --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/ || true
+        run: .github/workflows/scripts/show_logs.sh
       # - name: Debugging example (uncomment when needed)
       #   if: failure()
       #   uses: mxschmitt/action-tmate@v3
@@ -291,10 +285,7 @@ jobs:
           PY_COLORS: '1'
       - name: Logs
         if: always()
-        run: |
-          sudo -E docker images
-          .github/workflows/scripts/show_logs.sh
-          http --follow --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/ || true
+        run: .github/workflows/scripts/show_logs.sh
       # - name: Debugging example (uncomment when needed)
       #   if: failure()
       #   uses: mxschmitt/action-tmate@v3
@@ -346,13 +337,7 @@ jobs:
           MOLECULE_VERBOSITY: 2
       - name: Logs
         if: always()
-        run: |
-          kind export kubeconfig --name osdk-test
-          sudo -E kubectl config set-context --current --namespace=osdk-test
-          sudo -E kubectl port-forward service/example-pulp-web-svc 24880:24880 &
-          sudo -E docker images
-          .github/workflows/scripts/show_logs.sh -k
-          http --follow --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/ || true
+        run: .github/workflows/scripts/show_logs.sh -k
         shell: bash
       - name: Molecule destroy
         if: always()
