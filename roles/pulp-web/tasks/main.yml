@@ -21,7 +21,7 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-Web-Ready
+      - type: "{{ deployment_type|capitalize }}-Web-Ready"
         message: "API root should start and end with '/'"
         reason: ApiRootFormatInvalid
         status: "False"
@@ -46,8 +46,8 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-Web-Ready
-        message: Creating pulp-web ConfigMap resource
+      - type: "{{ deployment_type|capitalize }}-Web-Ready"
+        message: "Creating {{ ansible_operator_meta.name }}-{{ deployment_type }}-configmap ConfigMap resource"
         reason: CreatingConfigMap
         status: "False"
         lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
@@ -85,8 +85,8 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-Web-Ready
-        message: Creating pulp-web Deployment resource
+      - type: "{{ deployment_type|capitalize }}-Web-Ready"
+        message: "Creating {{ ansible_operator_meta.name }}-web Deployment resource"
         reason: CreatingDeployment
         status: "False"
         lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
@@ -104,8 +104,8 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-Web-Ready
-        message: Creating pulp-web Service resource
+      - type: "{{ deployment_type|capitalize }}-Web-Ready"
+        message: "Creating {{ ansible_operator_meta.name }}-web-svc Service resource"
         reason: CreatingService
         status: "False"
         lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
@@ -123,8 +123,8 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-Web-Ready
-        message: All pulp-web tasks ran successfully
-        reason: PulpWebTasksFinished
+      - type: "{{ deployment_type|capitalize }}-Web-Ready"
+        message: "All {{ deployment_type|capitalize }}-web tasks ran successfully"
+        reason: WebTasksFinished
         status: "True"
         lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"

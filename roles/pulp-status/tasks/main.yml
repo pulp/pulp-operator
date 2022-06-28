@@ -199,8 +199,8 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-Operator-Finished-Execution
-        message: All Pulp tasks ran successfully
-        reason: PulpOperatorFinishedExecution
+      - type: "{{ deployment_type|capitalize }}-Operator-Finished-Execution"
+        message: All tasks ran successfully
+        reason: OperatorFinishedExecution
         status: "True"
         lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"

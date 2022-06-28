@@ -5,7 +5,7 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-API-Ready
+      - type: "{{ deployment_type|capitalize }}-API-Ready"
         message: Checking Azure storage configurations
         reason: CheckingAzureStorageConfigs
         status: "False"
@@ -35,7 +35,7 @@
      name: "{{ ansible_operator_meta.name }}"
      namespace: "{{ ansible_operator_meta.namespace }}"
      conditions:
-       - type: Pulp-API-Ready
+       - type: "{{ deployment_type|capitalize }}-API-Ready"
          message: Unexpected format in Azure Secret
          reason: UnexpectedAzureSecretFormat
          status: "False"
@@ -79,7 +79,7 @@
       name: "{{ ansible_operator_meta.name }}"
       namespace: "{{ ansible_operator_meta.namespace }}"
       conditions:
-        - type: Pulp-API-Ready
+        - type: "{{ deployment_type|capitalize }}-API-Ready"
           message: Missing Azure fields on Secret
           reason: MissingAzureFields
           status: "False"

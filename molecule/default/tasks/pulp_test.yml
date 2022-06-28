@@ -67,7 +67,7 @@
     name: '{{ custom_resource.metadata.name }}'
   register: cr
   until:
-    - "'PulpWebTasksFinished' in (cr | json_query('resources[].status.conditions[].reason'))"
+    - "'WebTasksFinished' in (cr | json_query('resources[].status.conditions[].reason'))"
   delay: 6
   retries: 50
   vars:
@@ -82,7 +82,7 @@
     name: '{{ custom_resource.metadata.name }}'
   register: cr
   until:
-    - "'PulpApiTasksFinished' in (cr | json_query('resources[].status.conditions[].reason'))"
+    - "'ApiTasksFinished' in (cr | json_query('resources[].status.conditions[].reason'))"
   delay: 6
   retries: 50
   vars:
@@ -97,7 +97,7 @@
     name: '{{ custom_resource.metadata.name }}'
   register: cr
   until:
-    - "'PulpContentTasksFinished' in (cr | json_query('resources[].status.conditions[].reason'))"
+    - "'ContentTasksFinished' in (cr | json_query('resources[].status.conditions[].reason'))"
   delay: 6
   retries: 50
   vars:
@@ -112,7 +112,7 @@
     name: '{{ custom_resource.metadata.name }}'
   register: cr
   until:
-    - "'PulpWorkerTasksFinished' in (cr | json_query('resources[].status.conditions[].reason'))"
+    - "'WorkerTasksFinished' in (cr | json_query('resources[].status.conditions[].reason'))"
   delay: 6
   retries: 50
   vars:
@@ -127,7 +127,7 @@
     name: '{{ custom_resource.metadata.name }}'
   register: cr
   until:
-    - "'PulpOperatorFinishedExecution' in (cr | json_query('resources[].status.conditions[].reason'))"
+    - "'OperatorFinishedExecution' in (cr | json_query('resources[].status.conditions[].reason'))"
   delay: 6
   retries: 100
   vars:

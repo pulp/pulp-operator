@@ -5,8 +5,8 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-Worker-Ready
-        message: Starting pulp-worker tasks
+      - type: "{{ deployment_type|capitalize }}-Worker-Ready"
+        message: "Starting {{ deployment_type|capitalize }}-worker tasks"
         reason: StartingTasksExecution
         status: "False"
         lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
@@ -37,8 +37,8 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-Worker-Ready
-        message: Creating pulp-worker Deployment resource
+      - type: "{{ deployment_type|capitalize }}-Worker-Ready"
+        message: "Creating {{ deployment_type|capitalize }}-worker Deployment resource"
         reason: CreatingDeployment
         status: "False"
         lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
@@ -56,8 +56,8 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-Worker-Ready
-        message: All pulp-worker tasks ran successfully
-        reason: PulpWorkerTasksFinished
+      - type: "{{ deployment_type|capitalize }}-Worker-Ready"
+        message: "All {{ deployment_type|capitalize }}-worker tasks ran successfully"
+        reason: WorkerTasksFinished
         status: "True"
         lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"

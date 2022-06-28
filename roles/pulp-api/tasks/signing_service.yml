@@ -5,7 +5,7 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-API-Ready
+      - type: "{{ deployment_type|capitalize }}-API-Ready"
         message: Copying public GPG key for signing service
         reason: CopyingPublicGPG
         status: "False"
@@ -48,7 +48,7 @@
       name: "{{ ansible_operator_meta.name }}"
       namespace: "{{ ansible_operator_meta.namespace }}"
       conditions:
-        - type: Pulp-API-Ready
+        - type: "{{ deployment_type|capitalize }}-API-Ready"
           message: Importing galaxy signing service GPG key file
           reason: ImportingGalaxyGPGKey
           status: "False"
@@ -69,7 +69,7 @@
       name: "{{ ansible_operator_meta.name }}"
       namespace: "{{ ansible_operator_meta.namespace }}"
       conditions:
-        - type: Pulp-API-Ready
+        - type: "{{ deployment_type|capitalize }}-API-Ready"
           message: Updating Ownertrust trust level
           reason: UpdatingOwnertrustTrustLevel
           status: "False"

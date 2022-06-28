@@ -5,7 +5,7 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-API-Ready
+      - type: "{{ deployment_type|capitalize }}-API-Ready"
         message: Checking Ingress configurations
         reason: CheckingIngressConfigs
         status: "False"
@@ -34,7 +34,7 @@
       name: "{{ ansible_operator_meta.name }}"
       namespace: "{{ ansible_operator_meta.namespace }}"
       conditions:
-        - type: Pulp-API-Ready
+        - type: "{{ deployment_type|capitalize }}-API-Ready"
           message: Hostname is not defined when ingress is specified
           reason: HostnameNotDefined
           status: "False"
