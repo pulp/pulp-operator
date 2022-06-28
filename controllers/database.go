@@ -59,7 +59,7 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 	}
 
 	// Ensure the deployment size is the same as the spec
-	size := pulp.Spec.Api.Replicas
+	size := pulp.Spec.Database.Replicas
 	if *found.Spec.Replicas != size {
 		log.Info("Reconciling Database StatefulSet", "StatefulSet.Namespace", found.Namespace, "StatefulSet.Name", found.Name)
 		found.Spec.Replicas = &size
