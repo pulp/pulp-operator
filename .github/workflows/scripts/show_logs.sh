@@ -1,10 +1,15 @@
 #!/bin/bash -e
 #!/usr/bin/env bash
 
+sudo -E docker images
+
 KUBE="minikube"
 if [[ "$1" == "--kind" ]] || [[ "$1" == "-k" ]]; then
   KUBE="kind"
   echo "Running $KUBE"
+  kind export kubeconfig --name osdk-test
+  sudo -E kubectl config set-context --current --namespace=osdk-test
+  sudo -E kubectl port-forward service/example-pulp-web-svc 24880:24880 &
 fi
 
 sudo -E kubectl get pods -o wide
@@ -52,3 +57,8 @@ echo ::endgroup::
 echo ::group::OBJECTS
 sudo -E kubectl get pulp,pulpbackup,pulprestore,pvc,configmap,serviceaccount,secret,networkpolicy,ingress,service,deployment,statefulset,hpa,job,cronjob -o yaml
 echo ::endgroup::
+
+echo "Content endpoint"
+http HEAD http://localhost:24880/pulp/content/ || true
+echo "Status endpoint"
+http --follow --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/ || true
