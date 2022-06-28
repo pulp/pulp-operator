@@ -5,7 +5,7 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-API-Ready
+      - type: "{{ deployment_type|capitalize }}-API-Ready"
         message: Configuring DB fields encryption Secret name
         reason: ConfiguringDBFieldsEncryption
         status: "False"
@@ -32,7 +32,7 @@
         name: "{{ ansible_operator_meta.name }}"
         namespace: "{{ ansible_operator_meta.namespace }}"
         conditions:
-          - type: Pulp-API-Ready
+          - type: "{{ deployment_type|capitalize }}-API-Ready"
             message: Creating DB fields encryption Secret
             reason: CreatingDBSecret
             status: "False"

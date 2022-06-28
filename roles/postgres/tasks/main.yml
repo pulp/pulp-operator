@@ -10,9 +10,9 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-Operator-Finished-Execution
-        message: Pulp operator tasks running
-        reason: PulpOperatorRunning
+      - type: "{{ deployment_type | capitalize }}-Operator-Finished-Execution"
+        message: "{{ deployment_type | capitalize }} operator tasks running"
+        reason: OperatorRunning
         status: "False"
         lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 

@@ -26,8 +26,8 @@
         name: "{{ ansible_operator_meta.name }}"
         namespace: "{{ ansible_operator_meta.namespace }}"
         conditions:
-          - type: Pulp-API-Ready
-            message: Creating pulp-api PVC resource
+          - type: "{{ deployment_type|capitalize }}-API-Ready"
+            message: "Creating {{ deployment_type|capitalize }}-api PVC resource"
             reason: CreatingPVC
             status: "False"
             lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
@@ -45,8 +45,8 @@
         name: "{{ ansible_operator_meta.name }}"
         namespace: "{{ ansible_operator_meta.namespace }}"
         conditions:
-          - type: Pulp-API-Ready
-            message: Removing ownerReferences from pulp-file-storage PVC
+          - type: "{{ deployment_type|capitalize }}-API-Ready"
+            message: "Removing ownerReferences from {{ ansible_operator_meta.name}}-file-storage PVC"
             reason: RemovingPVCOwnerReferences
             status: "False"
             lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
@@ -128,9 +128,9 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-API-Ready
-        message: Creating pulp-server Secret resource
-        reason: CreatingPulpServerSecret
+      - type: "{{ deployment_type|capitalize }}-API-Ready"
+        message: "Creating {{ ansible_operator_meta.name }}-server Secret resource"
+        reason: CreatingServerSecret
         status: "False"
         lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
@@ -157,8 +157,8 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-API-Ready
-        message: Creating pulp-api Service resource
+      - type: "{{ deployment_type|capitalize }}-API-Ready"
+        message: "Creating {{ ansible_operator_meta.name }}-api-svc Service resource"
         reason: CreatingService
         status: "False"
         lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
@@ -196,7 +196,7 @@
       name: "{{ ansible_operator_meta.name }}"
       namespace: "{{ ansible_operator_meta.namespace }}"
       conditions:
-        - type: Pulp-API-Ready
+        - type: "{{ deployment_type|capitalize }}-API-Ready"
           message: Cannot determine what type of cluster we are in
           reason: FailedToIdentifyClusterType
           status: "False"
@@ -260,8 +260,8 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-API-Ready
-        message: Creating pulp-api Deployment resource
+      - type: "{{ deployment_type|capitalize }}-API-Ready"
+        message: "Creating {{ ansible_operator_meta.name }}-api Deployment resource"
         reason: CreatingDeployment
         status: "False"
         lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
@@ -279,8 +279,8 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-API-Ready
-        message: All pulp-api tasks ran successfully
-        reason: PulpApiTasksFinished
+      - type: "{{ deployment_type|capitalize }}-API-Ready"
+        message: All API tasks ran successfully
+        reason: ApiTasksFinished
         status: "True"
         lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"

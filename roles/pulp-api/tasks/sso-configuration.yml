@@ -5,7 +5,7 @@
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     conditions:
-      - type: Pulp-API-Ready
+      - type: "{{ deployment_type|capitalize }}-API-Ready"
         message: Checking SSO Secret configurations
         reason: CheckingSSOSecret
         status: "False"
@@ -35,7 +35,7 @@
       name: "{{ ansible_operator_meta.name }}"
       namespace: "{{ ansible_operator_meta.namespace }}"
       conditions:
-        - type: Pulp-API-Ready
+        - type: "{{ deployment_type|capitalize }}-API-Ready"
           message: Unexpected format in SSO Secret
           reason: UnexpectedSSOSecretFormat
           status: "False"
@@ -136,7 +136,7 @@
       name: "{{ ansible_operator_meta.name }}"
       namespace: "{{ ansible_operator_meta.namespace }}"
       conditions:
-        - type: Pulp-API-Ready
+        - type: "{{ deployment_type|capitalize }}-API-Ready"
           message: Missing SSO fields on Secret
           reason: MissingSSOFields
           status: "False"
