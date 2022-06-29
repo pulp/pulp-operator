@@ -36,9 +36,6 @@ import (
 
 func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
-	pgUser, _ := r.retrieveSecretData(ctx, "username", pulp.Name+"-postgres-configuration", pulp.Namespace, log)
-	pgPwd, _ := r.retrieveSecretData(ctx, "password", pulp.Name+"-postgres-configuration", pulp.Namespace, log)
-
 	found := &appsv1.Deployment{}
 	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, found)
 
@@ -58,20 +55,6 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 		return ctrl.Result{}, err
 	}
 
-	// https://github.com/kubernetes-sigs/kubebuilder/issues/592
-	// this is always being considered NOT equal because []containers and []volumes
-	// are always "pointing" to different places. Example:
-	/*
-		3c3
-		< [(*"k8s.io/api/core/v1.Volume")(0xc000140f00),(*"k8s.io/api/core/v1.Volume")(0xc000140ff8),...
-		---
-		> [(*"k8s.io/api/core/v1.Volume")(0xc000140a00),(*"k8s.io/api/core/v1.Volume")(0xc000140af8),...
-		9c9
-		< [(*"k8s.io/api/core/v1.Container")(0xc00037c2c0)]
-		---
-		> [(*"k8s.io/api/core/v1.Container")(0xc000157a20)]
-	*/
-
 	// Ensure the deployment template spec is as expected
 	// https://github.com/kubernetes-sigs/kubebuilder/issues/592
 	expected_deployment_spec := deploymentSpec(pulp)
@@ -86,31 +69,20 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 		return ctrl.Result{Requeue: true}, nil
 	}
 
-	// pending reconcile number o api replicas and deployment labels
-
-	/*
-		// as a workaround to check if pulp the deployment is in sync with Pulp CR instance
-		// we can compare each field managed by Pulp CR and how they are in current deployment
-		updated, modified := r.checkDeployment(pulp, found)
-		if modified {
-			log.Info("The API deployment has been modified! Reconciling ...")
-			patch := client.MergeFrom(found.DeepCopy())
-			err = r.Patch(ctx, updated, patch)
-			if err != nil {
-				log.Error(err, "Error trying to update the API deployment object ... ")
-				return ctrl.Result{}, err
-			}
-			return ctrl.Result{Requeue: true}, nil
-		}
-	*/
-
 	// Create pulp-server secret
 	secret := &corev1.Secret{}
 	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-server", Namespace: pulp.Namespace}, secret)
 
-	// Create the secret in case it is not found
+	// Create pulp-server secret in case it is not found
 	if err != nil && errors.IsNotFound(err) {
-		sec := r.pulpServerSecret(pulp, string(pgUser), string(pgPwd))
+
+		log.Info("Retrieving Postgres credentials from "+pulp.Name+"-postgres-configuration secret", "Secret.Namespace", pulp.Namespace, "Secret.Name", pulp.Name)
+		pgCredentials, err := r.retrieveSecretData(ctx, pulp.Name+"-postgres-configuration", pulp.Namespace, "username", "password")
+		if err != nil {
+			log.Error(err, "Secret Not Found!", "Secret.Namespace", pulp.Namespace, "Secret.Name", pulp.Name)
+		}
+
+		sec := r.pulpServerSecret(pulp, pgCredentials["username"], pgCredentials["password"])
 		log.Info("Creating a new pulp-server secret", "Secret.Namespace", sec.Namespace, "Secret.Name", sec.Name)
 		err = r.Create(ctx, sec)
 		if err != nil {

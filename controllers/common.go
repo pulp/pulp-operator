@@ -4,7 +4,6 @@ import (
 	"context"
 	"math/rand"
 
-	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -19,15 +18,18 @@ func createPwd(pwdSize int) string {
 	return string(pwd)
 }
 
-// WIP - shoud accept a variadic number of keys to avoid making a lot of api calls to retrieve each key
-// Retrieve an specific key from secret object
-func (r *PulpReconciler) retrieveSecretData(ctx context.Context, key, secretName, secretNamespace string, log logr.Logger) ([]byte, error) {
+// Retrieve specific keys from secret object
+func (r *PulpReconciler) retrieveSecretData(ctx context.Context, secretName, secretNamespace string, keys ...string) (map[string]string, error) {
 	found := &corev1.Secret{}
 	err := r.Get(ctx, types.NamespacedName{Name: secretName, Namespace: secretNamespace}, found)
 	if err != nil {
-		log.Error(err, "Secret Not Found!", "Secret.Namespace", secretNamespace, "Secret.Name", secretName)
 		return nil, err
 	}
 
-	return found.Data[key], nil
+	secret := map[string]string{}
+	for _, key := range keys {
+		secret[key] = string(found.Data[key])
+	}
+
+	return secret, nil
 }
