@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"reflect"
-	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -38,9 +37,29 @@ import (
 
 func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
+	// Create pulp-postgres-configuration secret
+	pgConfigSecret := &corev1.Secret{}
+	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-postgres-configuration", Namespace: pulp.Namespace}, pgConfigSecret)
+
+	// Create the secret in case it is not found
+	if err != nil && errors.IsNotFound(err) {
+		newPgConfigSecret := r.databaseConfigSecret(pulp)
+		log.Info("Creating a new pulp-postgres-configuration secret", "Secret.Namespace", newPgConfigSecret.Namespace, "Secret.Name", newPgConfigSecret.Name)
+		err = r.Create(ctx, newPgConfigSecret)
+		if err != nil {
+			log.Error(err, "Failed to create new pulp-postgres-configuration secret secret", "Secret.Namespace", newPgConfigSecret.Namespace, "Secret.Name", newPgConfigSecret.Name)
+			return ctrl.Result{}, err
+		}
+		// Secret created successfully - return and requeue
+		return ctrl.Result{Requeue: true}, nil
+	} else if err != nil {
+		log.Error(err, "Failed to get pulp-postgres-configuration secret")
+		return ctrl.Result{}, err
+	}
+
 	// DEPLOYMENT
 	found := &appsv1.StatefulSet{}
-	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-database", Namespace: pulp.Namespace}, found)
+	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-database", Namespace: pulp.Namespace}, found)
 
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new statefulset
@@ -56,22 +75,6 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 	} else if err != nil {
 		log.Error(err, "Failed to get Database StatefulSet")
 		return ctrl.Result{}, err
-	}
-
-	// Ensure the deployment size is the same as the spec
-	size := pulp.Spec.Database.Replicas
-	if *found.Spec.Replicas != size {
-		log.Info("Reconciling Database StatefulSet", "StatefulSet.Namespace", found.Namespace, "StatefulSet.Name", found.Name)
-		found.Spec.Replicas = &size
-		err = r.Update(ctx, found)
-		if err != nil {
-			log.Error(err, "Failed to update Database StatefulSet", "StatefulSet.Namespace", found.Namespace, "StatefulSet.Name", found.Name)
-			return ctrl.Result{}, err
-		}
-		// Ask to requeue after 1 minute in order to give enough time for the
-		// pods be created on the cluster side and the operand be able
-		// to do the next update step accurately.
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
 
 	// SERVICE
@@ -113,7 +116,134 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 // deploymentForDatabase returns a postgresql Deployment object
 func (r *PulpReconciler) statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 	ls := labelsForDatabase(m.Name)
-	replicas := m.Spec.Database.Replicas
+	//replicas := m.Spec.Database.Replicas
+	replicas := int32(1)
+
+	affinity := &corev1.Affinity{}
+	if m.Spec.Database.Affinity.NodeAffinity != nil {
+		affinity.NodeAffinity = m.Spec.Database.Affinity.NodeAffinity
+	}
+
+	nodeSelector := map[string]string{}
+	if m.Spec.Database.NodeSelector != nil {
+		nodeSelector = m.Spec.Database.NodeSelector
+	}
+
+	toleration := []corev1.Toleration{}
+	if m.Spec.Database.Tolerations != nil {
+		toleration = m.Spec.Database.Tolerations
+	}
+
+	args := []string{}
+	if len(m.Spec.Database.PostgresExtraArgs) > 0 {
+		args = m.Spec.Database.PostgresExtraArgs
+	}
+
+	envVars := []corev1.EnvVar{
+		{
+			Name: "POSTGRESQL_DATABASE",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: m.Name + "-postgres-configuration",
+					},
+					Key: "database",
+				},
+			},
+		},
+		{
+			Name: "POSTGRESQL_USER",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: m.Name + "-postgres-configuration",
+					},
+					Key: "username",
+				},
+			},
+		},
+		{
+			Name: "POSTGRESQL_PASSWORD",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: m.Name + "-postgres-configuration",
+					},
+					Key: "password",
+				},
+			},
+		},
+		{
+			Name: "POSTGRES_DB",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: m.Name + "-postgres-configuration",
+					},
+					Key: "database",
+				},
+			},
+		},
+		{
+			Name: "POSTGRES_USER",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: m.Name + "-postgres-configuration",
+					},
+					Key: "username",
+				},
+			},
+		},
+		{
+			Name: "POSTGRES_PASSWORD",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: m.Name + "-postgres-configuration",
+					},
+					Key: "password",
+				},
+			},
+		},
+		{Name: "PGDATA", Value: m.Spec.Database.PostgresDataPath},
+		{Name: "POSTGRES_INITDB_ARGS", Value: m.Spec.Database.PostgresInitdbArgs},
+		{Name: "POSTGRES_HOST_AUTH_METHOD", Value: m.Spec.Database.PostgresHostAuthMethod},
+	}
+
+	/*
+		pvcSpec := corev1.PersistentVolumeClaimSpec{}
+		if m.Spec.Database.PostgresStorageClass != nil {
+			pvcSpec = corev1.PersistentVolumeClaimSpec{
+				AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+				Resources:        m.Spec.Database.PostgresStorageRequirements,
+				StorageClassName: m.Spec.Database.PostgresStorageClass,
+			}
+		} else {
+			pvcSpec = corev1.PersistentVolumeClaimSpec{
+				AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+				Resources:   m.Spec.Database.PostgresStorageRequirements,
+			}
+		}
+
+			volumeClaimTemplate := []corev1.PersistentVolumeClaim{{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "postgres",
+				},
+				Spec: pvcSpec,
+			},
+			}
+
+			volumeMounts := []corev1.VolumeMount{
+				{
+					Name:      "postgres",
+					MountPath: filepath.Dir(m.Spec.Database.PostgresDataPath),
+					SubPath:   filepath.Base(m.Spec.Database.PostgresDataPath),
+				},
+			}
+	*/
+
+	resources := m.Spec.Database.ResourceRequirements
 
 	dep := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -130,42 +260,28 @@ func (r *PulpReconciler) statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *ap
 					Labels: ls,
 				},
 				Spec: corev1.PodSpec{
+					Affinity:           affinity,
+					NodeSelector:       nodeSelector,
+					Tolerations:        toleration,
+					ServiceAccountName: m.Spec.DeploymentType + "-operator-sa",
 					Containers: []corev1.Container{{
-						Image: "postgres:13",
+						Image: m.Spec.Database.PostgresImage,
 						Name:  "postgres",
-						Env: []corev1.EnvVar{
-							{
-								Name:  "POSTGRESQL_DATABASE",
-								Value: "pulp",
-							},
-							{
-								Name:  "POSTGRESQL_USER",
-								Value: "admin",
-							},
-							{
-								Name:  "POSTGRESQL_PASSWORD",
-								Value: "password",
-							},
-							{
-								Name:  "POSTGRES_DB",
-								Value: "pulp",
-							},
-							{
-								Name:  "POSTGRES_USER",
-								Value: "admin",
-							},
-							{
-								Name:  "POSTGRES_PASSWORD",
-								Value: "password",
-							},
-						},
+						Args:  args,
+						Env:   envVars,
 						Ports: []corev1.ContainerPort{{
-							ContainerPort: 5432,
+							ContainerPort: int32(m.Spec.Database.PostgresPort),
 							Name:          "postgres",
 						}},
+						/* WIP
+						LivenessProbe:  &corev1.Probe{},
+						ReadinessProbe: &corev1.Probe{},
+						VolumeMounts: volumeMounts,  */
+						Resources: resources,
 					}},
 				},
 			},
+			//VolumeClaimTemplates: volumeClaimTemplate,
 		},
 	}
 	// Set Pulp instance as the owner and controller
@@ -232,4 +348,27 @@ func serviceDBSpec(name string) corev1.ServiceSpec {
 		SessionAffinity: serviceAffinity,
 		Type:            serviceType,
 	}
+}
+
+// pulp-postgres-configuration secret
+func (r *PulpReconciler) databaseConfigSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
+	sec := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      m.Name + "-postgres-configuration",
+			Namespace: m.Namespace,
+		},
+		StringData: map[string]string{
+			"password": createPwd(32),
+			"username": m.Spec.DeploymentType,
+			"database": m.Spec.DeploymentType,
+			"port":     "5432",
+			"host":     m.Name + "-postgres-" + m.Spec.Database.PostgresVersion,
+			"sslmode":  m.Spec.Database.PostgresSSLMode,
+			"type":     "managed",
+		},
+	}
+
+	// Set Pulp instance as the owner and controller
+	ctrl.SetControllerReference(m, sec, r.Scheme)
+	return sec
 }

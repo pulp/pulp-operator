@@ -31,69 +31,69 @@ type PulpSpec struct {
 
 	// Name of the deployment type.
 	//+kubebuilder:default:="pulp"
-	DeploymentType string `json:"deployment_type"`
+	DeploymentType string `json:"deployment_type,omitempty"`
 
 	// The secret for S3 compliant object storage configuration.
 	// +kubebuilder:validation:Optional
-	ObjectStorageS3Secret string `json:"object_storage_s3_secret"`
+	ObjectStorageS3Secret string `json:"object_storage_s3_secret,omitempty"`
 
 	// Secret where the Fernet symmetric encryption key is stored.
 	// +kubebuilder:validation:Optional
-	DBFieldsEncryptionSecret string `json:"db_fields_encryption_secret"`
+	DBFieldsEncryptionSecret string `json:"db_fields_encryption_secret,omitempty"`
 
 	// Secret where the signing certificates are stored.
 	// +kubebuilder:validation:Optional
-	SigningSecret string `json:"signing_secret"`
+	SigningSecret string `json:"signing_secret,omitempty"`
 
 	// ConfigMap where the signing scripts are stored.
 	// +kubebuilder:validation:Optional
-	SigningScriptsConfigmap string `json:"signing_scripts_configmap"`
+	SigningScriptsConfigmap string `json:"signing_scripts_configmap,omitempty"`
 
 	// Secret where the container token certificates are stored.
 	// +kubebuilder:validation:Optional
-	ContainerTokenSecret string `json:"container_token_secret"`
+	ContainerTokenSecret string `json:"container_token_secret,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="container_auth_public_key.pem"
-	ContainerAuthPublicKey string `json:"container_auth_public_key_name"`
+	ContainerAuthPublicKey string `json:"container_auth_public_key_name,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="container_auth_private_key.pem"
-	ContainerAuthPrivateKey string `json:"container_auth_private_key_name"`
+	ContainerAuthPrivateKey string `json:"container_auth_private_key_name,omitempty"`
 
 	// The image name (repo name) for the pulp image.
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="quay.io/pulp/pulp"
-	Image string `json:"image"`
+	Image string `json:"image,omitempty"`
 
 	// The image version for the pulp image.
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="stable"
-	ImageVersion string `json:"image_version"`
+	ImageVersion string `json:"image_version,omitempty"`
 
 	// Image pull policy for container image
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Enum:=IfNotPresent;Always;Never
 	// +kubebuilder:default:="IfNotPresent"
-	ImagePullPolicy string `json:"image_pull_policy"`
+	ImagePullPolicy string `json:"image_pull_policy,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:=false
-	IsK8s bool `json:"is_k8s"`
+	IsK8s bool `json:"is_k8s,omitempty"`
 
-	Api Api `json:"api"`
-
-	//+kubebuilder:validation:Optional
-	Database Database `json:"database"`
+	Api Api `json:"api,omitempty"`
 
 	//+kubebuilder:validation:Optional
-	Content Content `json:"content"`
+	Database Database `json:"database,omitempty"`
 
 	//+kubebuilder:validation:Optional
-	Worker Worker `json:"worker"`
+	Content Content `json:"content,omitempty"`
 
 	//+kubebuilder:validation:Optional
-	Web Web `json:"web"`
+	Worker Worker `json:"worker,omitempty"`
+
+	//+kubebuilder:validation:Optional
+	Web Web `json:"web,omitempty"`
 
 	// +kubebuilder:default:=true
 	// +kubebuilder:validation:Optional
@@ -102,14 +102,6 @@ type PulpSpec struct {
 	// +kubebuilder:default:=6379
 	// +kubebuilder:validation:Optional
 	RedisPort int `json:"redis_port,omitempty"`
-
-	// +kubebuilder:default:="13"
-	// +kubebuilder:validation:Optional
-	PostgresVersion string `json:"postgres_version,omitempty"`
-
-	// +kubebuilder:default:=5432
-	// +kubebuilder:validation:Optional
-	PostgresPort int `json:"postgres_port,omitempty"`
 
 	// The pulp settings.
 	// +kubebuilder:validation:Optional
@@ -124,7 +116,7 @@ type Api struct {
 	// Size is the size of number of pulp-api replicas.
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:default:=1
-	Replicas int32 `json:"replicas"`
+	Replicas int32 `json:"replicas,omitempty"`
 
 	// Defines various deployment affinities.
 	// +kubebuilder:validation:Optional
@@ -154,7 +146,7 @@ type Api struct {
 
 	// Resource requirements for the pulp content container.
 	// +kubebuilder:validation:Optional
-	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements"`
+	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
 }
 
 type PulpSettings struct {
@@ -166,7 +158,7 @@ type PulpSettings struct {
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="/pulp/"
-	ApiRoot string `json:"api_root"`
+	ApiRoot string `json:"api_root,omitempty"`
 }
 
 type GalaxyFeatureFlags struct {
@@ -177,29 +169,83 @@ type GalaxyFeatureFlags struct {
 type Content struct {
 	// Size is the size of number of pulp-content replicas
 	//+kubebuilder:default:=1
-	Replicas int32 `json:"replicas"`
+	Replicas int32 `json:"replicas,omitempty"`
 }
 
 type Worker struct {
 	// Size is the size of number of pulp-worker replicas
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:default:=1
-	Replicas int32 `json:"replicas"`
+	Replicas int32 `json:"replicas,omitempty"`
 }
 
 type Web struct {
 	// Size is the size of number of pulp-web replicas
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:default:=1
-	Replicas int32 `json:"replicas"`
+	Replicas int32 `json:"replicas,omitempty"`
 }
 
 type Database struct {
 	// Size is the size of number of db replicas
-	//+kubebuilder:validation:Minimum=1
-	//+kubebuilder:default:=1
-	Replicas int32  `json:"replicas"`
-	Type     string `json:"type"`
+	// The default postgres image does not provide clustering
+	//Replicas int32 `json:"replicas,omitempty"`
+
+	// +kubebuilder:default:="13"
+	// +kubebuilder:validation:Optional
+	PostgresVersion string `json:"version,omitempty"`
+
+	// +kubebuilder:default:=5432
+	// +kubebuilder:validation:Optional
+	PostgresPort int `json:"postgres_port,omitempty"`
+
+	// +kubebuilder:default:="prefer"
+	// +kubebuilder:validation:Optional
+	PostgresSSLMode string `json:"postgres_ssl_mode,omitempty"`
+
+	// Registry path to the PostgreSQL container to use
+	// +kubebuilder:default:="postgres:13"
+	// +kubebuilder:validation:Optional
+	PostgresImage string `json:"postgres_image,omitempty"`
+
+	// +kubebuilder:default:={}
+	// +kubebuilder:validation:Optional
+	PostgresExtraArgs []string `json:"postgres_extra_args,omitempty"`
+
+	// +kubebuilder:default:="/var/lib/postgresql/data/pgdata"
+	// +kubebuilder:validation:Optional
+	PostgresDataPath string `json:"postgres_data_path"`
+
+	// +kubebuilder:default:="--auth-host=scram-sha-256"
+	// +kubebuilder:validation:Optional
+	PostgresInitdbArgs string `json:"postgres_initdb_args"`
+
+	// +kubebuilder:default:="scram-sha-256"
+	// +kubebuilder:validation:Optional
+	PostgresHostAuthMethod string `json:"postgres_host_auth_method"`
+
+	// Resource requirements for the database container.
+	// +kubebuilder:validation:Optional
+	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
+
+	// Defines various deployment affinities.
+	// +kubebuilder:validation:Optional
+	Affinity Affinity `json:"affinity,omitempty"`
+
+	// NodeSelector for the database pod.
+	// +kubebuilder:validation:Optional
+	NodeSelector map[string]string `json:"node_selector,omitempty"`
+
+	// Node tolerations for the database pod.
+	// +kubebuilder:validation:Optional
+	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	PostgresStorageRequirements corev1.ResourceRequirements `json:"postgres_storage_requirements,omitempty"`
+
+	// Name of the StorageClass required by the claim.
+	// +kubebuilder:validation:Optional
+	PostgresStorageClass *string `json:"postgres_storage_class,omitempty"`
 }
 
 // PulpStatus defines the observed state of Pulp

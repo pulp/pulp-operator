@@ -21,13 +21,7 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - pods
-  verbs:
-  - get
-  - list
-- apiGroups:
-  - ""
-  resources:
+  - configmaps
   - secrets
   - services
   verbs:
@@ -38,6 +32,13 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
 - apiGroups:
   - repo-manager.pulpproject.org
   resources:

@@ -17,9 +17,6 @@ spec:
 #            - test
   api:
     replicas: 1
-  database:
-    replicas: 1
-    type: postgres
   content:
     replicas: 1
   worker:
@@ -29,3 +26,6 @@ spec:
 
   pulp_settings:
     api_root: "/pulp/"
+
+  database:
+    postgres_extra_args: []

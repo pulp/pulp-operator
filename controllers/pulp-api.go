@@ -35,6 +35,10 @@ import (
 )
 
 func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+
+	pgUser, _ := r.retrieveSecretData(ctx, "username", pulp.Name+"-postgres-configuration", pulp.Namespace, log)
+	pgPwd, _ := r.retrieveSecretData(ctx, "password", pulp.Name+"-postgres-configuration", pulp.Namespace, log)
+
 	found := &appsv1.Deployment{}
 	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, found)
 
@@ -106,7 +110,7 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 
 	// Create the secret in case it is not found
 	if err != nil && errors.IsNotFound(err) {
-		sec := r.pulpServerSecret(pulp)
+		sec := r.pulpServerSecret(pulp, string(pgUser), string(pgPwd))
 		log.Info("Creating a new pulp-server secret", "Secret.Namespace", sec.Namespace, "Secret.Name", sec.Name)
 		err = r.Create(ctx, sec)
 		if err != nil {
@@ -270,7 +274,7 @@ func deploymentSpec(m *repomanagerv1alpha1.Pulp) appsv1.DeploymentSpec {
 
 	envVars := []corev1.EnvVar{
 		{Name: "POSTGRES_SERVICE_HOST", Value: m.Name + "-database-svc." + m.Namespace + ".svc"},
-		{Name: "POSTGRES_SERVICE_PORT", Value: strconv.Itoa(m.Spec.PostgresPort)},
+		{Name: "POSTGRES_SERVICE_PORT", Value: strconv.Itoa(m.Spec.Database.PostgresPort)},
 		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(m.Spec.Api.GunicornTimeout)},
 		{Name: "PULP_API_WORKERS", Value: strconv.Itoa(m.Spec.Api.GunicornWorkers)},
 	}
@@ -515,7 +519,7 @@ func deploymentSpec(m *repomanagerv1alpha1.Pulp) appsv1.DeploymentSpec {
 				NodeSelector:              nodeSelector,
 				Tolerations:               toleration,
 				Volumes:                   volumes,
-				ServiceAccountName:        "pulp-operator-go-controller-manager",
+				ServiceAccountName:        m.Spec.DeploymentType + "-operator-sa",
 				TopologySpreadConstraints: topologySpreadConstraint,
 				Containers: []corev1.Container{{
 					Name:            "api",
@@ -560,7 +564,7 @@ func labelsForPulpApi(m *repomanagerv1alpha1.Pulp) map[string]string {
 	}
 }
 
-func (r *PulpReconciler) pulpServerSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
+func (r *PulpReconciler) pulpServerSecret(m *repomanagerv1alpha1.Pulp, pgUser, pgPwd string) *corev1.Secret {
 	sec := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-server",
@@ -574,7 +578,7 @@ CACHE_ENABLED = "False"
 DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
 GALAXY_COLLECTION_SIGNING_SERVICE = "ansible-default"
 ANSIBLE_CERTS_DIR = "/etc/pulp/keys"
-DATABASES = { 'default' : { 'HOST': '` + m.Name + `-database-svc.` + m.Namespace + `.svc.cluster.local', 'ENGINE': 'django.db.backends.postgresql_psycopg2', 'NAME': 'pulp', 'USER': 'admin', 'PASSWORD': 'password', 'CONN_MAX_AGE': 0, 'PORT': '5432'}}
+DATABASES = { 'default' : { 'HOST': '` + m.Name + `-database-svc.` + m.Namespace + `.svc.cluster.local', 'ENGINE': 'django.db.backends.postgresql_psycopg2', 'NAME': 'pulp', 'USER': '` + pgUser + `', 'PASSWORD': '` + pgPwd + `', 'CONN_MAX_AGE': 0, 'PORT': '5432'}}
 `,
 		},
 	}
