@@ -519,7 +519,7 @@ func deploymentSpec(m *repomanagerv1alpha1.Pulp) appsv1.DeploymentSpec {
 				NodeSelector:              nodeSelector,
 				Tolerations:               toleration,
 				Volumes:                   volumes,
-				ServiceAccountName:        m.Spec.DeploymentType + "-operator-sa",
+				ServiceAccountName:        "pulp-operator-go-controller-manager",
 				TopologySpreadConstraints: topologySpreadConstraint,
 				Containers: []corev1.Container{{
 					Name:            "api",

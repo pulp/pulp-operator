@@ -30,7 +30,7 @@ jobs:
       - name: Setup Go environment
         uses: actions/setup-go@v3.2.0
         with:
-          go-version: '1.17.11'
+          go-version: '1.18.3'
           cache: true
       - name: Install httpie
         run: |
@@ -84,7 +84,4 @@ jobs:
       #   shell: bash
       - name: Logs
         if: always()
-        run: |
-          docker images
-          .github/workflows/scripts/show_logs.sh
-          http --follow --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/ || true
+        run: .github/workflows/scripts/show_logs.sh

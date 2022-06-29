@@ -113,13 +113,21 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 	runAsUser := int64(0)
 	fsGroup := int64(0)
 
-	ls := labelsForPulpContent(m.Name)
+	ls := labelsForPulpContent(m)
 	replicas := m.Spec.Content.Replicas
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-content",
 			Namespace: m.Namespace,
+			Labels: map[string]string{
+				"app.kubernetes.io/name":       m.Spec.DeploymentType + "-content",
+				"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-content-" + m.Name,
+				"app.kubernetes.io/component":  "content",
+				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
+				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
+				"owner":                        "pulp-dev",
+			},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
@@ -242,8 +250,16 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 
 // labelsForPulpContent returns the labels for selecting the resources
 // belonging to the given pulp CR name.
-func labelsForPulpContent(name string) map[string]string {
-	return map[string]string{"app": "pulp-content", "pulp_cr": name}
+func labelsForPulpContent(m *repomanagerv1alpha1.Pulp) map[string]string {
+	return map[string]string{
+		"app.kubernetes.io/name":       m.Spec.DeploymentType + "-content",
+		"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-content-" + m.Name,
+		"app.kubernetes.io/component":  "content",
+		"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
+		"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
+		"app":                          "pulp-content",
+		"pulp_cr":                      m.Name,
+	}
 }
 
 // serviceForContent returns a service object for pulp-content

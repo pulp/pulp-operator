@@ -77,13 +77,21 @@ func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *a
 	runAsUser := int64(0)
 	fsGroup := int64(0)
 
-	ls := labelsForPulpWorker(m.Name)
+	ls := labelsForPulpWorker(m)
 	replicas := m.Spec.Worker.Replicas
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-worker",
 			Namespace: m.Namespace,
+			Labels: map[string]string{
+				"app.kubernetes.io/name":       m.Spec.DeploymentType + "-worker",
+				"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-worker-" + m.Name,
+				"app.kubernetes.io/component":  "worker",
+				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
+				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
+				"owner":                        "pulp-dev",
+			},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
@@ -180,6 +188,14 @@ func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *a
 
 // labelsForPulpWorker returns the labels for selecting the resources
 // belonging to the given pulp CR name.
-func labelsForPulpWorker(name string) map[string]string {
-	return map[string]string{"app": "pulp-worker", "pulp_cr": name}
+func labelsForPulpWorker(m *repomanagerv1alpha1.Pulp) map[string]string {
+	return map[string]string{
+		"app.kubernetes.io/name":       m.Spec.DeploymentType + "-worker",
+		"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-worker-" + m.Name,
+		"app.kubernetes.io/component":  "worker",
+		"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
+		"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
+		"app":                          "pulp-worker",
+		"pulp_cr":                      m.Name,
+	}
 }

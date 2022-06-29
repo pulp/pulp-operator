@@ -117,13 +117,21 @@ func (r *PulpReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *apps
 	runAsUser := int64(0)
 	fsGroup := int64(0)
 
-	ls := labelsForPulpWeb(m.Name)
+	ls := labelsForPulpWeb(m)
 	replicas := m.Spec.Web.Replicas
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-web",
 			Namespace: m.Namespace,
+			Labels: map[string]string{
+				"app.kubernetes.io/name":       m.Spec.DeploymentType + "-web",
+				"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-web-" + m.Name,
+				"app.kubernetes.io/component":  "web",
+				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
+				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
+				"owner":                        "pulp-dev",
+			},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
@@ -189,10 +197,18 @@ func (r *PulpReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *apps
 	return dep
 }
 
-// labelsForPulpContent returns the labels for selecting the resources
+// labelsForPulpWeb returns the labels for selecting the resources
 // belonging to the given pulp CR name.
-func labelsForPulpWeb(name string) map[string]string {
-	return map[string]string{"app": "pulp-web", "pulp_cr": name}
+func labelsForPulpWeb(m *repomanagerv1alpha1.Pulp) map[string]string {
+	return map[string]string{
+		"app.kubernetes.io/name":       m.Spec.DeploymentType + "-web",
+		"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-web-" + m.Name,
+		"app.kubernetes.io/component":  "web",
+		"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
+		"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
+		"app":                          "pulp-web",
+		"pulp_cr":                      m.Name,
+	}
 }
 
 // serviceForPulpWeb returns a service object for pulp-web

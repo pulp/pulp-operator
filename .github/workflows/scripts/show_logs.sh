@@ -1,6 +1,8 @@
 #!/bin/bash -e
 #!/usr/bin/env bash
 
+docker images
+
 KUBE="minikube"
 if [[ "$1" == "--kind" ]] || [[ "$1" == "-k" ]]; then
   KUBE="kind"
@@ -38,7 +40,7 @@ kubectl logs -l app.kubernetes.io/name=pulp-worker --tail=10000
 echo ::endgroup::
 
 echo ::group::PULP_WEB_LOGS
-kubectl logs -l app.kubernetes.io/name=nginx --tail=10000
+kubectl logs -l app.kubernetes.io/name=pulp-web --tail=10000
 echo ::endgroup::
 
 echo ::group::POSTGRES
@@ -52,3 +54,7 @@ echo ::endgroup::
 echo ::group::OBJECTS
 kubectl get pulp,pvc,configmap,serviceaccount,secret,networkpolicy,ingress,service,deployment,statefulset,hpa,job,cronjob -o yaml
 echo ::endgroup::
+
+API_NODE=$(kubectl get pods -l app.kubernetes.io/component=api -oname)
+STATUS=$(kubectl exec ${API_NODE} -- curl -L http://localhost:24817/pulp/api/v3/status/)
+echo $STATUS | jq

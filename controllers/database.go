@@ -115,7 +115,7 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 
 // deploymentForDatabase returns a postgresql Deployment object
 func (r *PulpReconciler) statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
-	ls := labelsForDatabase(m.Name)
+	ls := labelsForDatabase(m)
 	//replicas := m.Spec.Database.Replicas
 	replicas := int32(1)
 
@@ -249,6 +249,14 @@ func (r *PulpReconciler) statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *ap
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-database",
 			Namespace: m.Namespace,
+			Labels: map[string]string{
+				"app.kubernetes.io/name":       "postgres",
+				"app.kubernetes.io/instance":   "postgres-" + m.Name,
+				"app.kubernetes.io/component":  "database",
+				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
+				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
+				"owner":                        "pulp-dev",
+			},
 		},
 		Spec: appsv1.StatefulSetSpec{
 			Replicas: &replicas,
@@ -263,7 +271,7 @@ func (r *PulpReconciler) statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *ap
 					Affinity:           affinity,
 					NodeSelector:       nodeSelector,
 					Tolerations:        toleration,
-					ServiceAccountName: m.Spec.DeploymentType + "-operator-sa",
+					ServiceAccountName: "pulp-operator-go-controller-manager",
 					Containers: []corev1.Container{{
 						Image: m.Spec.Database.PostgresImage,
 						Name:  "postgres",
@@ -291,8 +299,17 @@ func (r *PulpReconciler) statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *ap
 
 // labelsForDatabase returns the labels for selecting the resources
 // belonging to the given pulp CR name.
-func labelsForDatabase(name string) map[string]string {
-	return map[string]string{"app": "postgresql", "pulp_cr": name}
+func labelsForDatabase(m *repomanagerv1alpha1.Pulp) map[string]string {
+	return map[string]string{
+		"app.kubernetes.io/name":       "postgres",
+		"app.kubernetes.io/instance":   "postgres-" + m.Name,
+		"app.kubernetes.io/component":  "database",
+		"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
+		"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
+		"owner":                        "pulp-dev",
+		"app":                          "postgresql",
+		"pulp_cr":                      m.Name,
+	}
 }
 
 // serviceForDatabase returns a service object for postgres pods
