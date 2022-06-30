@@ -60,9 +60,30 @@ jobs:
           mv ./bin/kustomize /usr/local/bin/kustomize
           kustomize version
         shell: bash
-      - name: Build Operator
+      - name: Check code format and generate manifests
         run: |
-          make docker-build
+          make test
+        shell: bash
+      - name: setup docker context for buildx
+        id: buildx-context
+        run: |
+          docker context create builders
+      - name: setup docker buildx
+        uses: docker/setup-buildx-action@v2.0.0
+        with:
+          endpoint: builders
+      - name: Build image
+        uses: docker/build-push-action@v3.0.0
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          load: true
+          tags: quay.io/rhn_support_hyagi/pulp-operator-go:0.0.1 # Temporarily until we find a way to pass it as a var
+          cache-from: type=gha, scope=${{ github.workflow }}
+          cache-to: type=gha, scope=${{ github.workflow }}
+      - name: List images
+        run: |
           docker images
         shell: bash
       - name: Deploy pulp-operator to K8s
