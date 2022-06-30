@@ -245,6 +245,42 @@ func (r *PulpReconciler) statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *ap
 
 	resources := m.Spec.Database.ResourceRequirements
 
+	livenessProbe := &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			Exec: &corev1.ExecAction{
+				Command: []string{
+					"/bin/sh",
+					"-i",
+					"-c",
+					"pg_isready -U " + m.Spec.DeploymentType + " -h 127.0.0.1 -p 5432",
+				},
+			},
+		},
+		InitialDelaySeconds: 30,
+		PeriodSeconds:       10,
+		TimeoutSeconds:      5,
+		FailureThreshold:    6,
+		SuccessThreshold:    1,
+	}
+
+	readinessProbe := &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			Exec: &corev1.ExecAction{
+				Command: []string{
+					"/bin/sh",
+					"-i",
+					"-c",
+					"pg_isready -U " + m.Spec.DeploymentType + " -h 127.0.0.1 -p 5432",
+				},
+			},
+		},
+		InitialDelaySeconds: 5,
+		PeriodSeconds:       10,
+		TimeoutSeconds:      5,
+		FailureThreshold:    6,
+		SuccessThreshold:    1,
+	}
+
 	dep := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-database",
@@ -281,10 +317,9 @@ func (r *PulpReconciler) statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *ap
 							ContainerPort: int32(m.Spec.Database.PostgresPort),
 							Name:          "postgres",
 						}},
-						/* WIP
-						LivenessProbe:  &corev1.Probe{},
-						ReadinessProbe: &corev1.Probe{},
-						VolumeMounts: volumeMounts,  */
+						LivenessProbe:  livenessProbe,
+						ReadinessProbe: readinessProbe,
+						/* WIP VolumeMounts: volumeMounts,  */
 						Resources: resources,
 					}},
 				},
