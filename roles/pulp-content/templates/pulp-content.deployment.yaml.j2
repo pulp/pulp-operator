@@ -7,7 +7,6 @@ metadata:
   annotations:
     email: pulp-dev@redhat.com
     ignore-check.kube-linter.io/no-liveness-probe: "Temporarily disabled"
-    ignore-check.kube-linter.io/no-readiness-probe: "Temporarily disabled"
     ignore-check.kube-linter.io/no-node-affinity: "Do not check node affinity"
   labels:
     app.kubernetes.io/name: '{{ deployment_type }}-content'
@@ -131,6 +130,15 @@ spec:
           ports:
             - protocol: TCP
               containerPort: 24816
+          readinessProbe:
+            httpGet:
+              path: "{{ pulp_combined_settings.content_path_prefix | default('/pulp/content/') }}"
+              port: 24816
+              scheme: HTTP
+            failureThreshold: 5
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
           volumeMounts:
             - name: {{ ansible_operator_meta.name }}-server
               mountPath: "/etc/pulp/settings.py"
