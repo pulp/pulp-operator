@@ -36,6 +36,12 @@ jobs:
           echo "IMG=quay.io/pulp/pulp-operator:devel" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
         shell: bash
+      - name: setup-minikube
+        uses: medyagh/setup-minikube@v0.0.8
+        with:
+          minikube-version: 1.25.2
+          driver: docker
+          # container-runtime: containerd
       - name: Start minikube
         run: |
           minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
@@ -95,6 +101,12 @@ jobs:
           echo "IMG=quay.io/pulp/pulp-operator:devel" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
         shell: bash
+      - name: setup-minikube
+        uses: medyagh/setup-minikube@v0.0.8
+        with:
+          minikube-version: 1.25.2
+          driver: docker
+          # container-runtime: containerd
       - name: Start minikube
         run: |
           minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
@@ -174,6 +186,12 @@ jobs:
           echo "CI_TEST_STORAGE=${{ matrix.STORAGE }}" >> $GITHUB_ENV
           echo "API_ROOT=/api/galaxy/pulp/" >> $GITHUB_ENV
         shell: bash
+      - name: setup-minikube
+        uses: medyagh/setup-minikube@v0.0.8
+        with:
+          minikube-version: 1.25.2
+          driver: docker
+          # container-runtime: containerd
       - name: Start minikube
         run: |
           minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
@@ -333,6 +351,12 @@ jobs:
           echo "IMG=quay.io/pulp/pulp-operator:devel" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
         shell: bash
+      - name: setup-minikube
+        uses: medyagh/setup-minikube@v0.0.8
+        with:
+          minikube-version: 1.25.2
+          driver: docker
+          # container-runtime: containerd
       - name: Start minikube
         run: |
           minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
