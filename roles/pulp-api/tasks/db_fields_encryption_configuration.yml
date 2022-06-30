@@ -34,4 +34,15 @@
         definition: "{{ lookup('template', 'pulp-db-fields-encryption.secret.yaml.j2') }}"
       no_log: "{{ no_log }}"
 
+    - name: Remove ownerReferences from DB fields encryption secret to avoid garbage collection
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: '{{ ansible_operator_meta.name }}-db-fields-encryption'
+            namespace: '{{ ansible_operator_meta.namespace }}'
+            ownerReferences: null
+      no_log: "{{ no_log }}"
+
   when: not _db_fields_encryption_secret['resources'] | default([]) | length

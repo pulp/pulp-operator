@@ -9,6 +9,17 @@
     apply: true
     definition: "{{ lookup('template', 'pulp-container-auth.secret.yaml.j2') }}"
 
+- name: Remove ownerReferences from token authentication secret to avoid garbage collection
+  k8s:
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: '{{ container_token_secret }}'
+        namespace: '{{ ansible_operator_meta.namespace }}'
+        ownerReferences: null
+  no_log: "{{ no_log }}"
+
 - name: Get container token configuration
   kubernetes.core.k8s_info:
     kind: Secret
