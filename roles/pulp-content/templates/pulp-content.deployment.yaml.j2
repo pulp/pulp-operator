@@ -131,12 +131,12 @@ spec:
             - protocol: TCP
               containerPort: 24816
           readinessProbe:
-            httpGet:
-              path: "{{ pulp_combined_settings.content_path_prefix | default('/pulp/content/') }}"
-              port: 24816
-              scheme: HTTP
-            failureThreshold: 5
-            initialDelaySeconds: 60
+            exec:
+              command:
+                - /usr/bin/readyz.py
+                - "{{ pulp_combined_settings.content_path_prefix | default('/pulp/content/') }}"
+            failureThreshold: 10
+            initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
           volumeMounts:
