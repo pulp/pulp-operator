@@ -97,7 +97,8 @@ echo "Waiting for pods to transition to Running ..."
 # Therefore, this wait is highly dependent on network speed.
 for tries in {0..180}; do
   pods=$(sudo -E $KUBECTL get pods -o wide)
-  if [[ $(echo "$pods" | grep -c -v -E "STATUS|Running") -eq 0 && $(echo "$pods" | grep -c "web") -eq 1 ]]; then
+  api_pod=$(kubectl get pods -l app.kubernetes.io/component=api -oname)
+  if [[ $(echo "$pods" | grep -c -v -E "STATUS|Running") -eq 0 && $(echo "$pods" | grep -c "web") -eq 1 && $(kubectl logs "$api_pod"|grep 'Listening at: ') ]]; then
     echo "PODS:"
     echo "$pods"
     API_NODE=$( echo "$pods" | awk -F '[ :/]+' '/-api-/{print $8}')
