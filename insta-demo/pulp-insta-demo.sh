@@ -24,6 +24,14 @@ elif
   KUBE_CLEANUP="minikube delete --all"
 fi
 
+if command -v kubectl > /dev/null; then
+  KUBECTL=$(command -v kubectl)
+elif [ -x /usr/local/bin/kubectl ]; then
+  KUBECTL=/usr/local/bin/kubectl
+else
+    echo "$0: ERROR 1: Cannot find kubectl"
+fi
+
 failure_message() {
   set +x
   echo "$0 failed to install."
@@ -114,7 +122,7 @@ echo "=================================== Operator Up ==========================
 sudo -E ./up.sh || failure_message
 echo "=================================== Check and wait ==================================="
 echo ""
-.ci/scripts/pulp-operator-check-and-wait.sh $KUBE_FLAG || test $? = 100 || failure_message
+$KUBECTL wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s || test $? = 100 || failure_message
 set +x
 echo "Pulp has been installed in insta-demo mode."
 echo ""

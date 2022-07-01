@@ -24,6 +24,7 @@
 - name: Obtain custom resource information
   set_fact:
     custom_resource: "{{ hostvars[inventory_hostname][custom_resource_key] }}"
+    custom_resource_status: "{{ hostvars[inventory_hostname][custom_resource_key]['status'] }}"
 
 - name: Check for specified PostgreSQL configuration
   k8s_info:
@@ -94,10 +95,6 @@
       no_log: "{{ no_log }}"
 
   when: not _pg_config['resources'] | default([]) | length
-
-- name: Obtain custom resource status
-  set_fact:
-    custom_resource_status: "{{ hostvars[inventory_hostname][custom_resource_key]['status'] }}"
 
 - name: Record migrant database secret
   set_fact:
