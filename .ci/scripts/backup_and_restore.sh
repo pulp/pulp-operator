@@ -39,8 +39,8 @@ $KUBECTL wait --for=delete -f config/samples/$CUSTOM_RESOURCE
 $KUBECTL apply -f config/samples/$RESTORE_RESOURCE
 time $KUBECTL wait --for condition=RestoreComplete --timeout=900s -f config/samples/$RESTORE_RESOURCE || true
 
-pkill -f "port-forward"
-.ci/scripts/pulp-operator-check-and-wait.sh -m
+sudo pkill -f "port-forward" || true
+time $KUBECTL wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s || true
 
 KUBE="k3s"
 SERVER=$(hostname)
@@ -52,9 +52,9 @@ if [[ "$1" == "--minikube" ]] || [[ "$1" == "-m" ]]; then
     services=$($KUBECTL get services)
     WEB_PORT=$( echo "$services" | awk -F '[ :/]+' '/web-svc/{print $5}')
     SVC_NAME=$( echo "$services" | awk -F '[ :/]+' '/web-svc/{print $1}')
-    pkill -f "port-forward"
+    sudo pkill -f "port-forward" || true
     echo "port-forwarding service/$SVC_NAME $WEB_PORT:$WEB_PORT"
-    kubectl port-forward service/$SVC_NAME $WEB_PORT:$WEB_PORT &
+    $KUBECTL port-forward service/$SVC_NAME $WEB_PORT:$WEB_PORT &
   fi
 fi
 
