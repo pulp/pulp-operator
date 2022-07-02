@@ -260,7 +260,7 @@ spec:
         path: image_pull_secrets
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-        - urn:alm:descriptor:com.tectonic.ui:imagePullSecret
+        - urn:alm:descriptor:com.tectonic.ui:imagePullSecrets
       - displayName: Image Pull Secret (Deprecated)
         path: image_pull_secret
         x-descriptors:
