@@ -37,10 +37,14 @@ $KUBECTL delete --cascade=foreground -f config/samples/$CUSTOM_RESOURCE
 $KUBECTL wait --for=delete -f config/samples/$CUSTOM_RESOURCE
 
 $KUBECTL apply -f config/samples/$RESTORE_RESOURCE
-time $KUBECTL wait --for condition=RestoreComplete --timeout=900s -f config/samples/$RESTORE_RESOURCE || true
+time $KUBECTL wait --for condition=RestoreComplete --timeout=900s -f config/samples/$RESTORE_RESOURCE
+
+echo ::group::AFTER_RESTORE_LOGS
+$KUBECTL logs -l app.kubernetes.io/name=pulp-operator -c pulp-manager --tail=10000
+echo ::endgroup::
 
 sudo pkill -f "port-forward" || true
-time $KUBECTL wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s || true
+time $KUBECTL wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
 
 KUBE="k3s"
 SERVER=$(hostname)

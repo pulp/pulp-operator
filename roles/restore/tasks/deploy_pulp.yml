@@ -3,6 +3,7 @@
 - name: Set apiVersion and kind variables
   set_fact:
     api_version: '{{ hostvars["localhost"]["inventory_file"].split("/")[4:6] | join("/")  }}'
+    kind: '{{ hostvars["localhost"]["inventory_file"].split("/")[6]  }}'
 
 - name: Get object definition from pvc
   k8s_exec:
@@ -81,7 +82,7 @@
     definition: "{{ lookup('template', 'pulp_object.yaml.j2') }}"
     wait: true
     wait_condition:
-      type: "Running"
+      type: "{{ deployment_type|capitalize }}-Web-Ready"
       status: "True"
 
 - name: Remove ownerReferences to prevent garbage collection of new CR
