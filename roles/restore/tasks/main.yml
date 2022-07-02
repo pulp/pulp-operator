@@ -3,7 +3,7 @@
 - name: Obtain custom resource information
   set_fact:
     custom_resource: "{{ hostvars[inventory_hostname][custom_resource_key] }}"
-    custom_resource_status: "{{ hostvars[inventory_hostname][custom_resource_key]['status'] }}"
+    custom_resource_status: "{{ hostvars[inventory_hostname][custom_resource_key]['status'] | default({}) }}"
 
 - block:
     - include_tasks: init.yml
