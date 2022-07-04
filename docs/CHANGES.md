@@ -13,6 +13,35 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+0.13.0 (2022-07-04)
+===================
+
+
+Features
+--------
+
+- Added more information on `.status.conditions` CR field.
+  [#435](https://github.com/pulp/pulp-operator/issues/435)
+- Added readiness probe to content and workers
+  [#455](https://github.com/pulp/pulp-operator/issues/455)
+
+
+Bugfixes
+--------
+
+- Remove ownerReferences from DB fields encryption secret to avoid garbage collection
+  [#467](https://github.com/pulp/pulp-operator/issues/467)
+
+
+Misc
+----
+
+- [#461](https://github.com/pulp/pulp-operator/issues/461), [#466](https://github.com/pulp/pulp-operator/issues/466)
+
+
+----
+
+
 0.12.0 (2022-06-15)
 ===================
 
