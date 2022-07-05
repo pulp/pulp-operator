@@ -4,7 +4,6 @@ import os
 import sys
 import requests
 import socket
-from datetime import timedelta
 
 
 def is_api_healthy(path):
