@@ -59,7 +59,13 @@ RUN		dnf -y update && \
 		dnf clean all
 
 # Need to install optional dep, rhsm, for pulp-certguard
-RUN pip install rhsm setproctitle gunicorn "django-storages[boto3,azure]>=1.12.2" "azure-storage-blob<12.10.0"
+RUN pip install  \
+	rhsm \
+	setproctitle \
+	gunicorn \
+	"django-storages[boto3,azure]>=1.12.2" \
+	"azure-storage-blob<12.10.0" \
+	"requests[use_chardet_on_py3]"
 
 RUN mkdir -p /etc/pulp \
 			 /var/lib/pulp/media \
