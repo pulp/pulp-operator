@@ -30,11 +30,12 @@ spec:
 {% endif %}
 
 {% if 'route' == ingress_type|lower %}
+{% for plugin in _pulp_plugins %}
 ---
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: '{{ ansible_operator_meta.name }}'
+  name: '{{ plugin.name }}'
   namespace: '{{ ansible_operator_meta.namespace }}'
 {% if ingress_annotations %}
   annotations:
@@ -44,12 +45,13 @@ spec:
 {% if route_host != '' %}
   host: {{ route_host }}
 {% endif %}
+  path: '{{ plugin.path }}'
   port:
-    targetPort: '{{ (route_tls_termination_mechanism | lower == "passthrough") | ternary("web-8443", "web-8080") }}'
+    targetPort: '{{ plugin.targetPort }}'
   tls:
     insecureEdgeTerminationPolicy: Redirect
-    termination: {{ route_tls_termination_mechanism | lower }}
-{% if route_tls_termination_mechanism | lower == 'edge' and route_tls_secret != '' %}
+    termination: edge
+{% if route_tls_secret != '' %}
     key: |-
 {{ route_tls_key | indent(width=6, first=True) }}
     certificate: |-
@@ -61,7 +63,8 @@ spec:
 {% endif %}
   to:
     kind: Service
-    name: {{ ansible_operator_meta.name }}-web-svc
+    name: '{{ plugin.serviceName }}'
     weight: 100
   wildcardPolicy: None
+{% endfor %}
 {% endif %}

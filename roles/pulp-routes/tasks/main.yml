@@ -1,8 +1,30 @@
 ---
+- name: Load Route TLS certificate
+  include_tasks: load_route_tls_secret.yml
+  when:
+    - ingress_type | lower == 'route'
+    - route_tls_secret != ''
+
+- set_fact:
+    _pulp_plugins:
+      - { name: "{{ ansible_operator_meta.name }}-content", path: "/pulp/content/", targetPort: "content-24816", serviceName: "{{ ansible_operator_meta.name }}-content-svc" }
+      - { name: "{{ ansible_operator_meta.name }}-container", path: "/pulp/container/", targetPort: "content-24816", serviceName: "{{ ansible_operator_meta.name }}-content-svc" }
+      - { name: "{{ ansible_operator_meta.name }}-cookbook", path: "/pulp_cookbook/content/", targetPort: "content-24816", serviceName: "{{ ansible_operator_meta.name }}-content-svc" }
+      - { name: "{{ ansible_operator_meta.name }}", path: "/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
+      - { name: "{{ ansible_operator_meta.name }}-api-v3", path: "/pulp/api/v3/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
+      - { name: "{{ ansible_operator_meta.name }}-auth", path: "/auth/login/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
+      - { name: "{{ ansible_operator_meta.name }}-v2", path: "/v2/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
+      - { name: "{{ ansible_operator_meta.name }}-extensions-v2", path: "/extensions/v2/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
+      - { name: "{{ ansible_operator_meta.name }}-token", path: "/token/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
+      - { name: "{{ ansible_operator_meta.name }}-python", path: "/pypi/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
+      - { name: "{{ ansible_operator_meta.name }}-ansible", path: "/pulp_ansible/galaxy/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
+  when:
+    - ingress_type | lower == 'route'
+
 - name: pulp routes
   k8s:
     state: "{{ deployment_state }}"
-    definition: "{{ lookup('template', 'templates/' + item + '.ingress.yaml.j2') | from_yaml }}"
+    definition: "{{ lookup('template', 'templates/' + item + '.ingress.yaml.j2') }}"
   with_items:
     - pulp
   when:
