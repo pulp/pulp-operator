@@ -60,7 +60,7 @@
   roles:
     - common
     - postgres
-    - pulp-web
+    - { role: "pulp-web", when: [ ingress_type | lower != 'route' ] }
     - pulp-routes
     - pulp-api
     - pulp-content

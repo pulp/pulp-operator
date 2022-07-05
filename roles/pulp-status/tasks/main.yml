@@ -40,10 +40,8 @@
   until: "pulp_pods['resources'][0]['status']['phase'] == 'Running'"
   delay: 5
   retries: 100
-
-- name: Set the resource pod name as a variable.
-  set_fact:
-    pulp_web_pod_name: "{{ pulp_pods['resources'][0]['metadata']['name'] }}"
+  when:
+    - ingress_type | lower != 'route'
 
 - name: Set the status protocol and port
   set_fact:
@@ -56,16 +54,39 @@
 - name: Check that status and it returns a status 200
   uri:
     url: '{{ status_protocol }}://{{ ansible_operator_meta.name }}-web-svc.{{ ansible_operator_meta.namespace }}.svc.cluster.local:{{ status_port }}{{ pulp_combined_settings.api_root }}api/v3/status/'
-  register: result
+  register: result_not_route
   until: >
-    result.json is defined and
-    result.json.versions | length and
-    result.json.online_content_apps | length and
-    result.json.database_connection.connected and
-    (result.json.redis_connection.connected or not pulp_combined_settings.cache_enabled) and
-    result.json.online_workers | map(attribute='name') | select('match', '^[0-9]+@.*$') | list | count > 0
+    result_not_route.json is defined and
+    result_not_route.json.versions | length and
+    result_not_route.json.online_content_apps | length and
+    result_not_route.json.database_connection.connected and
+    (result_not_route.json.redis_connection.connected or not pulp_combined_settings.cache_enabled) and
+    result_not_route.json.online_workers | map(attribute='name') | select('match', '^[0-9]+@.*$') | list | count > 0
   delay: 5
   retries: 10
+  when:
+    - ingress_type | lower != 'route'
+
+- name: Check that status and it returns a status 200
+  uri:
+    url: 'https://{{ route_host }}{{ pulp_combined_settings.api_root }}api/v3/status/'
+    validate_certs: no
+  register: result_route
+  until: >
+    result_route.json is defined and
+    result_route.json.versions | length and
+    result_route.json.online_content_apps | length and
+    result_route.json.database_connection.connected and
+    (result_route.json.redis_connection.connected or not pulp_combined_settings.cache_enabled) and
+    result_route.json.online_workers | map(attribute='name') | select('match', '^[0-9]+@.*$') | list | count > 0
+  delay: 5
+  retries: 10
+  when:
+    - ingress_type | lower == 'route'
+
+# Workaround to issue https://github.com/ansible/ansible/issues/76176
+- set_fact:
+    result: "{{ result_route.json is defined | ternary(result_route, result_not_route) }}"
 
 - name: Get installed plugins
   set_fact:

@@ -34,12 +34,6 @@
   - not pulp_combined_settings.api_root.startswith('/')
   - not pulp_combined_settings.api_root.endswith('/')
 
-- name: Load Route TLS certificate
-  include_tasks: load_route_tls_secret.yml
-  when:
-    - ingress_type | lower == 'route'
-    - route_tls_secret != ''
-
 - k8s_status:
     api_version: "{{ api_version }}"
     kind: "{{ kind }}"
