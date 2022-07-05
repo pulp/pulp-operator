@@ -33,6 +33,19 @@ type PulpSpec struct {
 	//+kubebuilder:default:="pulp"
 	DeploymentType string `json:"deployment_type,omitempty"`
 
+	// +kubebuilder:default:=true
+	IsFileStorage bool `json:"is_file_storage,omitempty"`
+
+	// The size of the file storage; for example 100Gi.
+	FileStorageSize string `json:"file_storage_size,omitempty"`
+
+	// The file storage access mode.
+	// +kubebuilder:validation:Enum:=ReadWriteMany;ReadWriteOnce
+	FileStorageAccessMode string `json:"file_storage_access_mode,omitempty"`
+
+	// Storage class to use for the file persistentVolumeClaim
+	FileStorageClass string `json:"file_storage_storage_class,omitempty"`
+
 	// The secret for S3 compliant object storage configuration.
 	// +kubebuilder:validation:Optional
 	ObjectStorageS3Secret string `json:"object_storage_s3_secret,omitempty"`

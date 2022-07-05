@@ -29,3 +29,7 @@ spec:
 
   database:
     postgres_extra_args: []
+
+  file_storage_access_mode: "ReadWriteOnce"
+  file_storage_size: "2Gi"
+  file_storage_storage_class: "standard"

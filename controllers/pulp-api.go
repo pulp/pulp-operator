@@ -25,6 +25,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -36,6 +37,52 @@ import (
 
 func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
+	// pulp-file-storage
+	if pulp.Spec.IsFileStorage {
+		pvcFound := &corev1.PersistentVolumeClaim{}
+		err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-file-storage", Namespace: pulp.Namespace}, pvcFound)
+		if err != nil && errors.IsNotFound(err) {
+			// Define the new PVC
+			pvc := &corev1.PersistentVolumeClaim{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      pulp.Name + "-file-storage",
+					Namespace: pulp.Namespace,
+					Labels: map[string]string{
+						"app.kubernetes.io/name":       pulp.Spec.DeploymentType + "-storage",
+						"app.kubernetes.io/instance":   pulp.Spec.DeploymentType + "-storage-" + pulp.Name,
+						"app.kubernetes.io/component":  "storage",
+						"app.kubernetes.io/part-of":    pulp.Spec.DeploymentType,
+						"app.kubernetes.io/managed-by": pulp.Spec.DeploymentType + "-operator",
+					},
+				},
+				Spec: corev1.PersistentVolumeClaimSpec{
+					Resources: corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceName(corev1.ResourceStorage): resource.MustParse(pulp.Spec.FileStorageSize),
+						},
+					},
+					AccessModes: []corev1.PersistentVolumeAccessMode{
+						corev1.PersistentVolumeAccessMode(pulp.Spec.FileStorageAccessMode),
+					},
+					StorageClassName: &pulp.Spec.FileStorageClass,
+				},
+			}
+
+			log.Info("Creating a new Pulp API File Storage PVC", "PVC.Namespace", pvc.Namespace, "PVC.Name", pvc.Name)
+			err = r.Create(ctx, pvc)
+			if err != nil {
+				log.Error(err, "Failed to create new Pulp File Storage PVC", "PVC.Namespace", pvc.Namespace, "PVC.Name", pvc.Name)
+				return ctrl.Result{}, err
+			}
+			// Deployment created successfully - return and requeue
+			return ctrl.Result{Requeue: true}, nil
+		} else if err != nil {
+			log.Error(err, "Failed to get Pulp API File Storage PVC")
+			return ctrl.Result{}, err
+		}
+	}
+
+	// Create pulp-api deployment
 	found := &appsv1.Deployment{}
 	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, found)
 
@@ -175,42 +222,6 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 // deploymentForPulpApi returns a pulp-api Deployment object
 func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 
-	// deployment definition
-	dep := deploymentObject(m)
-
-	// Set Pulp instance as the owner and controller
-	ctrl.SetControllerReference(m, dep, r.Scheme)
-	return dep
-}
-
-// deploymentObject allows to reuse the deployment object in
-// - the deploymentForPulpApi (deployment provision) method and
-// - the reconciliation (client.Write.Update) step
-func deploymentObject(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
-
-	return &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name + "-api",
-			Namespace: m.Namespace,
-			Annotations: map[string]string{
-				"email": "pulp-dev@redhat.com",
-				"ignore-check.kube-linter.io/no-node-affinity": "Do not check node affinity",
-			},
-			Labels: map[string]string{
-				"app.kubernetes.io/name":       m.Spec.DeploymentType + "-api",
-				"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-api-" + m.Name,
-				"app.kubernetes.io/component":  "api",
-				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
-				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
-				"owner":                        "pulp-dev",
-			},
-		},
-		Spec: deploymentSpec(m),
-	}
-}
-
-// deploymentSpec containns only the .spec definition
-func deploymentSpec(m *repomanagerv1alpha1.Pulp) appsv1.DeploymentSpec {
 	replicas := m.Spec.Api.Replicas
 	ls := labelsForPulpApi(m)
 
@@ -251,15 +262,25 @@ func deploymentSpec(m *repomanagerv1alpha1.Pulp) appsv1.DeploymentSpec {
 		{Name: "PULP_API_WORKERS", Value: strconv.Itoa(m.Spec.Api.GunicornWorkers)},
 	}
 
-	redisEnvVars := []corev1.EnvVar{}
 	if m.Spec.CacheEnabled {
-		redisEnvVars = []corev1.EnvVar{
+		redisEnvVars := []corev1.EnvVar{
 			{Name: "REDIS_SERVICE_HOST", Value: m.Name + "-redis-svc"},
 			{Name: "REDIS_SERVICE_PORT", Value: strconv.Itoa(m.Spec.RedisPort)},
 		}
+		envVars = append(envVars, redisEnvVars...)
 	}
 
-	envVars = append(envVars, redisEnvVars...)
+	if m.Spec.SigningSecret != "" {
+
+		// for now, we are just dumping the error, but we should handle it
+		signingKeyFingerprint, _ := r.getSigningKeyFingerprint(m.Spec.SigningSecret, m.Namespace)
+
+		signingKeyEnvVars := []corev1.EnvVar{
+			{Name: "PULP_SIGNING_KEY_FINGERPRINT", Value: signingKeyFingerprint},
+			{Name: "SIGNING_SERVICE", Value: "ansible-default"},
+		}
+		envVars = append(envVars, signingKeyEnvVars...)
+	}
 
 	dbFieldsEncryptionSecret := ""
 	if m.Spec.DBFieldsEncryptionSecret == "" {
@@ -319,15 +340,13 @@ func deploymentSpec(m *repomanagerv1alpha1.Pulp) appsv1.DeploymentSpec {
 		},
 	}
 
-	if m.Spec.ObjectStorageS3Secret == "" {
+	if m.Spec.IsFileStorage {
 		fileStorage := corev1.Volume{
 			Name: "file-storage",
 			VolumeSource: corev1.VolumeSource{
-				// Configuring as EmptyDir for test purposes
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-				// PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-				// ClaimName: m.Name + "-file-storage",
-				// },
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: m.Name + "-file-storage",
+				},
 			},
 		}
 		volumes = append(volumes, fileStorage)
@@ -426,6 +445,347 @@ func deploymentSpec(m *repomanagerv1alpha1.Pulp) appsv1.DeploymentSpec {
 		}
 		volumeMounts = append(volumeMounts, fileStorageMount)
 	}
+
+	if m.Spec.SigningSecret != "" {
+		signingSecretMount := []corev1.VolumeMount{
+			{
+				Name:      m.Name + "-signing-scripts",
+				MountPath: "/var/lib/pulp/scripts",
+				SubPath:   "scripts",
+				ReadOnly:  true,
+			},
+			{
+				Name:      m.Name + "-signing-galaxy",
+				MountPath: "/etc/pulp/keys/signing_service.gpg",
+				SubPath:   "signing_service.gpg",
+				ReadOnly:  true,
+			},
+			{
+				Name:      m.Name + "-signing-galaxy",
+				MountPath: "/etc/pulp/keys/singing_service.asc",
+				SubPath:   "signing_service.asc",
+				ReadOnly:  true,
+			},
+		}
+		volumeMounts = append(volumeMounts, signingSecretMount...)
+	}
+
+	if m.Spec.ContainerTokenSecret != "" {
+		containerTokenSecretMount := []corev1.VolumeMount{
+			{
+				Name:      m.Name + "-container-auth-certs",
+				MountPath: "/etc/pulp/keys/container_auth_private_key.pem",
+				SubPath:   "container_auth_private_key.pem",
+				ReadOnly:  true,
+			},
+			{
+				Name:      m.Name + "-container-auth-certs",
+				MountPath: "/etc/pulp/keys/container_auth_public_key.pem",
+				SubPath:   "container_auth_pulblic_key.pem",
+				ReadOnly:  true,
+			},
+		}
+		volumeMounts = append(volumeMounts, containerTokenSecretMount...)
+	}
+
+	resources := m.Spec.Api.ResourceRequirements
+
+	// the following variables are defined to avoid issues with reconciliation
+	restartPolicy := corev1.RestartPolicy("Always")
+	terminationGracePeriodSeconds := int64(30)
+	dnsPolicy := corev1.DNSPolicy("ClusterFirst")
+	schedulerName := corev1.DefaultSchedulerName
+
+	// deployment definition
+	dep := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      m.Name + "-api",
+			Namespace: m.Namespace,
+			Annotations: map[string]string{
+				"email": "pulp-dev@redhat.com",
+				"ignore-check.kube-linter.io/no-node-affinity": "Do not check node affinity",
+			},
+			Labels: map[string]string{
+				"app.kubernetes.io/name":       m.Spec.DeploymentType + "-api",
+				"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-api-" + m.Name,
+				"app.kubernetes.io/component":  "api",
+				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
+				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
+				"owner":                        "pulp-dev",
+			},
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: ls,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: ls,
+				},
+				Spec: corev1.PodSpec{
+					Affinity:                  affinity,
+					SecurityContext:           podSecurityContext,
+					NodeSelector:              nodeSelector,
+					Tolerations:               toleration,
+					Volumes:                   volumes,
+					ServiceAccountName:        "pulp-operator-go-controller-manager",
+					TopologySpreadConstraints: topologySpreadConstraint,
+					Containers: []corev1.Container{{
+						Name:            "api",
+						Image:           m.Spec.Image + ":" + m.Spec.ImageVersion,
+						ImagePullPolicy: corev1.PullPolicy(m.Spec.ImagePullPolicy),
+						Args:            []string{"pulp-api"},
+						Env:             envVars,
+						Ports: []corev1.ContainerPort{{
+							ContainerPort: 24817,
+							Protocol:      "TCP",
+						}},
+						/* WIP
+						LivenessProbe:  &corev1.Probe{},
+						ReadinessProbe: &corev1.Probe{}, */
+						Resources:    resources,
+						VolumeMounts: volumeMounts,
+					}},
+
+					/* the following configs are not defined on pulp-operator (ansible version)  */
+					/* but i'll keep it here just in case we can manage to make deepequal usable */
+					RestartPolicy:                 restartPolicy,
+					TerminationGracePeriodSeconds: &terminationGracePeriodSeconds,
+					DNSPolicy:                     dnsPolicy,
+					SchedulerName:                 schedulerName,
+				},
+			},
+		},
+	}
+
+	// Set Pulp instance as the owner and controller
+	ctrl.SetControllerReference(m, dep, r.Scheme)
+	return dep
+}
+
+// deploymentSpec containns only the .spec definition
+func deploymentSpec(m *repomanagerv1alpha1.Pulp) appsv1.DeploymentSpec {
+	replicas := m.Spec.Api.Replicas
+	ls := labelsForPulpApi(m)
+
+	affinity := &corev1.Affinity{}
+	if m.Spec.Api.Affinity.NodeAffinity != nil {
+		affinity.NodeAffinity = m.Spec.Api.Affinity.NodeAffinity
+	}
+
+	runAsUser := int64(0)
+	fsGroup := int64(0)
+	podSecurityContext := &corev1.PodSecurityContext{}
+	if m.Spec.IsK8s {
+		podSecurityContext = &corev1.PodSecurityContext{
+			RunAsUser: &runAsUser,
+			FSGroup:   &fsGroup,
+		}
+	}
+
+	nodeSelector := map[string]string{}
+	if m.Spec.Api.NodeSelector != nil {
+		nodeSelector = m.Spec.Api.NodeSelector
+	}
+
+	toleration := []corev1.Toleration{}
+	if m.Spec.Api.Tolerations != nil {
+		toleration = m.Spec.Api.Tolerations
+	}
+
+	topologySpreadConstraint := []corev1.TopologySpreadConstraint{}
+	if m.Spec.Api.TopologySpreadConstraints != nil {
+		topologySpreadConstraint = m.Spec.Api.TopologySpreadConstraints
+	}
+
+	envVars := []corev1.EnvVar{
+		{Name: "POSTGRES_SERVICE_HOST", Value: m.Name + "-database-svc." + m.Namespace + ".svc"},
+		{Name: "POSTGRES_SERVICE_PORT", Value: strconv.Itoa(m.Spec.Database.PostgresPort)},
+		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(m.Spec.Api.GunicornTimeout)},
+		{Name: "PULP_API_WORKERS", Value: strconv.Itoa(m.Spec.Api.GunicornWorkers)},
+	}
+
+	if m.Spec.CacheEnabled {
+		redisEnvVars := []corev1.EnvVar{
+			{Name: "REDIS_SERVICE_HOST", Value: m.Name + "-redis-svc"},
+			{Name: "REDIS_SERVICE_PORT", Value: strconv.Itoa(m.Spec.RedisPort)},
+		}
+		envVars = append(envVars, redisEnvVars...)
+	}
+
+	if m.Spec.SigningSecret != "" {
+		signingKeyEnvVars := []corev1.EnvVar{
+			{Name: "PULP_SIGNING_KEY_FINGERPRINT", Value: m.Name + "-redis-svc"},
+			{Name: "SIGNING_SERVICE", Value: strconv.Itoa(m.Spec.RedisPort)},
+		}
+		envVars = append(envVars, signingKeyEnvVars...)
+	}
+
+	dbFieldsEncryptionSecret := ""
+	if m.Spec.DBFieldsEncryptionSecret == "" {
+		dbFieldsEncryptionSecret = m.Name + "-db-fields-encryption"
+	} else {
+		dbFieldsEncryptionSecret = m.Spec.DBFieldsEncryptionSecret
+	}
+
+	volumes := []corev1.Volume{
+		{
+			Name: m.Name + "-server",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: m.Name + "-server",
+					Items: []corev1.KeyToPath{{
+						Key:  "settings.py",
+						Path: "settings.py",
+					}},
+				},
+			},
+		},
+		{
+			Name: m.Name + "-admin-password",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: m.Name + "-admin-password",
+					Items: []corev1.KeyToPath{{
+						Path: "admin-password",
+						Key:  "password",
+					}},
+				},
+			},
+		},
+		{
+			Name: m.Name + "-db-fields-encryption",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: dbFieldsEncryptionSecret,
+					Items: []corev1.KeyToPath{{
+						Key:  "database_fields.symmetric.key",
+						Path: "database_fields.symmetric.key",
+					}},
+				},
+			},
+		},
+		{
+			Name: "tmp-file-storage",
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		},
+		{
+			Name: "assets-file-storage",
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		},
+	}
+
+	if m.Spec.IsFileStorage {
+		fileStorage := corev1.Volume{
+			Name: "file-storage",
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: m.Name + "-file-storage",
+				},
+			},
+		}
+		volumes = append(volumes, fileStorage)
+	}
+
+	if m.Spec.SigningSecret != "" {
+		signingSecretVolume := []corev1.Volume{
+			{
+				Name: m.Name + "-signing-scripts",
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: m.Spec.SigningScriptsConfigmap,
+						},
+					},
+				},
+			},
+			{
+				Name: m.Name + "-signing-galaxy",
+				VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						SecretName: m.Spec.SigningSecret,
+						Items: []corev1.KeyToPath{
+							{
+								Key:  "signing_service.gpg",
+								Path: "signing_serivce.gpg",
+							},
+							{
+								Key:  "signing_service.asc",
+								Path: "signing_serivce.asc",
+							},
+						},
+					},
+				},
+			},
+		}
+		volumes = append(volumes, signingSecretVolume...)
+	}
+
+	if m.Spec.ContainerTokenSecret != "" {
+		containerTokenSecretVolume := corev1.Volume{
+			Name: m.Name + "-container-auth-certs",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: m.Spec.ContainerTokenSecret,
+					Items: []corev1.KeyToPath{
+						{
+							Key:  "container_auth_public_key.pem",
+							Path: m.Spec.ContainerAuthPublicKey,
+						},
+						{
+							Key:  "container_auth_private_key.pem",
+							Path: m.Spec.ContainerAuthPrivateKey,
+						},
+					},
+				},
+			},
+		}
+		volumes = append(volumes, containerTokenSecretVolume)
+	}
+
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      m.Name + "-server",
+			MountPath: "/etc/pulp/settings.py",
+			SubPath:   "settings.py",
+			ReadOnly:  true,
+		},
+		{
+			Name:      m.Name + "-admin-password",
+			MountPath: "/etc/pulp/pulp-admin-password",
+			SubPath:   "admin-password",
+			ReadOnly:  true,
+		},
+		{
+			Name:      m.Name + "-db-fields-encryption",
+			MountPath: "/etc/pulp/keys/database_fields.symmetric.key",
+			SubPath:   "database_fields.symmetric.key",
+			ReadOnly:  true,
+		},
+		{
+			Name:      "tmp-file-storage",
+			MountPath: "/var/lib/pulp/tmp",
+		},
+		{
+			Name:      "assets-file-storage",
+			MountPath: "/var/lib/pulp/assets",
+		},
+	}
+
+	if m.Spec.ObjectStorageS3Secret == "" {
+		fileStorageMount := corev1.VolumeMount{
+			Name:      "file-storage",
+			ReadOnly:  false,
+			MountPath: "/var/lib/pulp",
+		}
+		volumeMounts = append(volumeMounts, fileStorageMount)
+	}
+
 	if m.Spec.SigningSecret != "" {
 		signingSecretMount := []corev1.VolumeMount{
 			{
