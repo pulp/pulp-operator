@@ -33,3 +33,6 @@ spec:
   file_storage_access_mode: "ReadWriteOnce"
   file_storage_size: "2Gi"
   file_storage_storage_class: "standard"
+  signing_secret: "signing-galaxy"
+  signing_scripts_configmap: "signing-scripts"
+  image_web: "quay.io/pulp/galaxy-web"

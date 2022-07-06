@@ -108,7 +108,7 @@ type PulpSpec struct {
 	//+kubebuilder:validation:Optional
 	Web Web `json:"web,omitempty"`
 
-	// +kubebuilder:default:=true
+	// +kubebuilder:default:=false
 	// +kubebuilder:validation:Optional
 	CacheEnabled bool `json:"cache_enabled,omitempty"`
 
@@ -119,6 +119,22 @@ type PulpSpec struct {
 	// The pulp settings.
 	// +kubebuilder:validation:Optional
 	PulpSettings `json:"pulp_settings,omitempty"`
+
+	// The image name (repo name) for the pulp webserver image.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:="quay.io/pulp/pulp-web"
+	ImageWeb string `json:"image_web,omitempty"`
+
+	// The image version for the pulp webserver image.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:="stable"
+	ImageWebVersion string `json:"image_web_version,omitempty"`
+
+	// Secret where the administrator password can be found
+	// NOT USEFUL YET!
+	// FROM ORIGINAL PULP-OPERATOR USED BY BACKUP/RESTORE
+	// +kubebuilder:validation:Optional
+	AdminPasswordSecret string `json:"admin_password_secret,omitempty"`
 }
 
 type Affinity struct {

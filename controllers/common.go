@@ -41,7 +41,7 @@ func (r *PulpReconciler) retrieveSecretData(ctx context.Context, secretName, sec
 // Get signing key fingerprint from secret object
 func (r *PulpReconciler) getSigningKeyFingerprint(secretName, secretNamespace string) (string, error) {
 
-	ctx := context.Background()
+	ctx := context.TODO()
 	secretData, err := r.retrieveSecretData(ctx, secretName, secretNamespace, "signing_service.gpg")
 	if err != nil {
 		return "", err

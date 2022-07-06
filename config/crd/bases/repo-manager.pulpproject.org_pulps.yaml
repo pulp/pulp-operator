@@ -35,6 +35,10 @@ spec:
           spec:
             description: PulpSpec defines the desired state of Pulp
             properties:
+              admin_password_secret:
+                description: Secret where the administrator password can be found
+                  NOT USEFUL YET! FROM ORIGINAL PULP-OPERATOR USED BY BACKUP/RESTORE
+                type: string
               api:
                 properties:
                   affinity:
@@ -480,7 +484,7 @@ spec:
                     type: array
                 type: object
               cache_enabled:
-                default: true
+                default: false
                 type: boolean
               container_auth_private_key_name:
                 default: container_auth_private_key.pem
@@ -881,6 +885,14 @@ spec:
               image_version:
                 default: stable
                 description: The image version for the pulp image.
+                type: string
+              image_web:
+                default: quay.io/pulp/pulp-web
+                description: The image name (repo name) for the pulp webserver image.
+                type: string
+              image_web_version:
+                default: stable
+                description: The image version for the pulp webserver image.
                 type: string
               is_file_storage:
                 default: true

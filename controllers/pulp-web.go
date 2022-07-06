@@ -144,7 +144,7 @@ func (r *PulpReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *apps
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image: "quay.io/pulp/pulp-web:stable",
+						Image: m.Spec.ImageWeb + ":" + m.Spec.ImageWebVersion,
 						Name:  "web",
 						Env: []corev1.EnvVar{
 							{
