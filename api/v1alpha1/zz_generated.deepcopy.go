@@ -239,6 +239,7 @@ func (in *PulpSpec) DeepCopyInto(out *PulpSpec) {
 	out.Content = in.Content
 	out.Worker = in.Worker
 	out.Web = in.Web
+	in.RedisResourceRequirements.DeepCopyInto(&out.RedisResourceRequirements)
 	out.PulpSettings = in.PulpSettings
 }
 

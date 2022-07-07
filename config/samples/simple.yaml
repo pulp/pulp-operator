@@ -36,3 +36,5 @@ spec:
   signing_secret: "signing-galaxy"
   signing_scripts_configmap: "signing-scripts"
   image_web: "quay.io/pulp/galaxy-web"
+
+  redis_storage_class: standard

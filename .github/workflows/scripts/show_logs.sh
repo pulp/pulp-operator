@@ -23,6 +23,14 @@ if [[ "$KUBE" == "minikube" ]]; then
   echo ::endgroup::
 fi
 
+echo ::group::EVENTS
+kubectl get events --sort-by='.metadata.creationTimestamp'
+echo ::endgroup::
+
+echo ::group::OBJECTS
+kubectl get pulp,pvc,configmap,serviceaccount,secret,networkpolicy,ingress,service,deployment,statefulset,hpa,job,cronjob -o yaml
+echo ::endgroup::
+
 echo ::group::OPERATOR_LOGS
 kubectl logs -l app.kubernetes.io/name=pulp-operator -c manager --tail=10000
 echo ::endgroup::
@@ -45,14 +53,6 @@ echo ::endgroup::
 
 echo ::group::POSTGRES
 kubectl logs -l app.kubernetes.io/name=postgres --tail=10000
-echo ::endgroup::
-
-echo ::group::EVENTS
-kubectl get events --sort-by='.metadata.creationTimestamp'
-echo ::endgroup::
-
-echo ::group::OBJECTS
-kubectl get pulp,pvc,configmap,serviceaccount,secret,networkpolicy,ingress,service,deployment,statefulset,hpa,job,cronjob -o yaml
 echo ::endgroup::
 
 API_NODE=$(kubectl get pods -l app.kubernetes.io/component=api -oname)

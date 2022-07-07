@@ -112,9 +112,22 @@ type PulpSpec struct {
 	// +kubebuilder:validation:Optional
 	CacheEnabled bool `json:"cache_enabled,omitempty"`
 
+	// The image name for the redis image.
+	// +kubebuilder:default:="redis:latest"
+	// +kubebuilder:validation:Optional
+	RedisImage string `json:"redis_image,omitempty"`
+
+	// Storage class to use for the Redis PVC
+	// +kubebuilder:validation:Optional
+	RedisStorageClass string `json:"redis_storage_class,omitempty"`
+
 	// +kubebuilder:default:=6379
 	// +kubebuilder:validation:Optional
 	RedisPort int `json:"redis_port,omitempty"`
+
+	// Resource requirements for the Redis container
+	// +kubebuilder:validation:Optional
+	RedisResourceRequirements corev1.ResourceRequirements `json:"redis_resource_requirements,omitempty"`
 
 	// The pulp settings.
 	// +kubebuilder:validation:Optional
@@ -135,6 +148,12 @@ type PulpSpec struct {
 	// FROM ORIGINAL PULP-OPERATOR USED BY BACKUP/RESTORE
 	// +kubebuilder:validation:Optional
 	AdminPasswordSecret string `json:"admin_password_secret,omitempty"`
+
+	// Secret where Single Sign-on configuration can be found
+	// NOT USEFUL YET!
+	// PENDING MIGRATION OF sso-configuration.yml task file
+	// +kubebuilder:validation:Optional
+	SSOSecret string `json:"sso_secret,omitempty"`
 }
 
 type Affinity struct {

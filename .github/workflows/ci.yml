@@ -93,9 +93,9 @@ jobs:
           kubectl config set-context --current --namespace=pulp-operator-go-system
           # kubectl apply -f config/samples/galaxy.yaml
           kubectl apply -f config/samples/simple.yaml
-          # kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
-          # kubectl apply -f .ci/assets/kubernetes/galaxy_sign.secret.yaml
-          # kubectl apply -f .ci/assets/kubernetes/signing_scripts.configmap.yaml
+          kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
+          kubectl apply -f .ci/assets/kubernetes/galaxy_sign.secret.yaml
+          kubectl apply -f .ci/assets/kubernetes/signing_scripts.configmap.yaml
         shell: bash
       - name: Check and wait pulp-operator deploy
         run: .ci/scripts/pulp-operator-check-and-wait.sh -m
