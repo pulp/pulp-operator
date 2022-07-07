@@ -38,3 +38,5 @@ spec:
   image_web: "quay.io/pulp/galaxy-web"
 
   redis_storage_class: standard
+
+  ingress_type: nodeport

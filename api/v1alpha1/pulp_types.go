@@ -62,6 +62,22 @@ type PulpSpec struct {
 	// +kubebuilder:validation:Optional
 	SigningScriptsConfigmap string `json:"signing_scripts_configmap,omitempty"`
 
+	// Configuration for the storage type utilized in the backup
+	// +kubebuilder:validation:Optional
+	// NOT USEFUL YET!
+	// BESIDES PULP-RESTORE AND PULP-BKP ROLES I COULD NOT FIND
+	// ANY MENTION OF THIS VAR, SO NOTHING DONE WITH IT YET
+	StorageType string `json:"storage_type,omitempty"`
+
+	// The ingress type to use to reach the deployed instance
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum:=none;Ingress;ingress;Route;route;LoadBalancer;loadbalancer;NodePort;nodeport
+	IngressType string `json:"ingress_type,omitempty"`
+
+	// Provide requested port value
+	// +kubebuilder:validation:Optional
+	NodePort int32 `json:"nodeport_port,omitempty"`
+
 	// Secret where the container token certificates are stored.
 	// +kubebuilder:validation:Optional
 	ContainerTokenSecret string `json:"container_token_secret,omitempty"`

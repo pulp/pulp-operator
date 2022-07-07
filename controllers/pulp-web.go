@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -25,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 
@@ -91,10 +93,10 @@ func (r *PulpReconciler) pulpWebController(ctx context.Context, pulp *repomanage
 	// SERVICE
 	webSvc := &corev1.Service{}
 	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web-svc", Namespace: pulp.Namespace}, webSvc)
-
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new service
-		newWebSvc := r.serviceForPulpWeb(pulp)
+		newWebSvc := serviceForPulpWeb(pulp)
+		ctrl.SetControllerReference(pulp, newWebSvc, r.Scheme)
 		log.Info("Creating a new Web Service", "Service.Namespace", newWebSvc.Namespace, "Service.Name", newWebSvc.Name)
 		err = r.Create(ctx, newWebSvc)
 		if err != nil {
@@ -125,9 +127,9 @@ func (r *PulpReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *apps
 			Name:      m.Name + "-web",
 			Namespace: m.Namespace,
 			Labels: map[string]string{
-				"app.kubernetes.io/name":       m.Spec.DeploymentType + "-web",
-				"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-web-" + m.Name,
-				"app.kubernetes.io/component":  "web",
+				"app.kubernetes.io/name":       "nginx",
+				"app.kubernetes.io/instance":   "nginx-" + m.Name,
+				"app.kubernetes.io/component":  "webserver",
 				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
 				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
 				"owner":                        "pulp-dev",
@@ -201,62 +203,48 @@ func (r *PulpReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *apps
 // belonging to the given pulp CR name.
 func labelsForPulpWeb(m *repomanagerv1alpha1.Pulp) map[string]string {
 	return map[string]string{
-		"app.kubernetes.io/name":       m.Spec.DeploymentType + "-web",
-		"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-web-" + m.Name,
-		"app.kubernetes.io/component":  "web",
+		"app.kubernetes.io/name":       "nginx",
+		"app.kubernetes.io/instance":   "nginx-" + m.Name,
+		"app.kubernetes.io/component":  "webserver",
 		"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
 		"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
-		"app":                          "pulp-web",
-		"pulp_cr":                      m.Name,
 	}
 }
 
 // serviceForPulpWeb returns a service object for pulp-web
-func (r *PulpReconciler) serviceForPulpWeb(m *repomanagerv1alpha1.Pulp) *corev1.Service {
+func serviceForPulpWeb(m *repomanagerv1alpha1.Pulp) *corev1.Service {
+	var serviceType corev1.ServiceType
+	servicePort := []corev1.ServicePort{{
+		Port:       24880,
+		Protocol:   corev1.ProtocolTCP,
+		TargetPort: intstr.IntOrString{IntVal: 8080},
+		Name:       "web-8080",
+	}}
 
-	svc := serviceWebObject(m.Name, m.Namespace)
+	if strings.ToLower(m.Spec.IngressType) == "nodeport" {
+		serviceType = corev1.ServiceType(corev1.ServiceTypeNodePort)
+		if m.Spec.NodePort > 0 {
+			servicePort[0].NodePort = m.Spec.NodePort
+		}
+	} else {
+		serviceType = corev1.ServiceType(corev1.ServiceTypeClusterIP)
+	}
 
-	// Set Pulp instance as the owner and controller
-	ctrl.SetControllerReference(m, svc, r.Scheme)
-	return svc
-}
-
-func serviceWebObject(name, namespace string) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name + "-web-svc",
-			Namespace: namespace,
+			Name:      m.Name + "-web-svc",
+			Namespace: m.Namespace,
+			Labels:    labelsForPulpWeb(m),
 		},
-		Spec: serviceWebSpec(name),
+		Spec: corev1.ServiceSpec{
+			Selector: labelsForPulpWeb(m),
+			Ports:    servicePort,
+			Type:     serviceType,
+		},
 	}
 }
 
-// web service spec
-func serviceWebSpec(name string) corev1.ServiceSpec {
-
-	serviceInternalTrafficPolicyCluster := corev1.ServiceInternalTrafficPolicyType("Cluster")
-	ipFamilyPolicyType := corev1.IPFamilyPolicyType("SingleStack")
-	serviceAffinity := corev1.ServiceAffinity("None")
-	//targetPort := intstr.IntOrString{IntVal: 8080}
-
-	return corev1.ServiceSpec{
-		InternalTrafficPolicy: &serviceInternalTrafficPolicyCluster,
-		IPFamilies:            []corev1.IPFamily{"IPv4"},
-		IPFamilyPolicy:        &ipFamilyPolicyType,
-		Selector: map[string]string{
-			"app":     "pulp-web",
-			"pulp_cr": name,
-		},
-		SessionAffinity: serviceAffinity,
-		Type:            corev1.ServiceType("NodePort"),
-		Ports: []corev1.ServicePort{{
-			Port:     8080,
-			Protocol: corev1.ProtocolTCP,
-			//		TargetPort: targetPort,
-		}},
-	}
-}
-
+// wouldn't it be better to handle the configmap content by loading it from a file?
 func (r *PulpReconciler) pulpWebConfigMap(m *repomanagerv1alpha1.Pulp) *corev1.ConfigMap {
 	sec := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{

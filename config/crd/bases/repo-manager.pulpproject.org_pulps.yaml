@@ -894,12 +894,29 @@ spec:
                 default: stable
                 description: The image version for the pulp webserver image.
                 type: string
+              ingress_type:
+                description: The ingress type to use to reach the deployed instance
+                enum:
+                - none
+                - Ingress
+                - ingress
+                - Route
+                - route
+                - LoadBalancer
+                - loadbalancer
+                - NodePort
+                - nodeport
+                type: string
               is_file_storage:
                 default: true
                 type: boolean
               is_k8s:
                 default: false
                 type: boolean
+              nodeport_port:
+                description: Provide requested port value
+                format: int32
+                type: integer
               object_storage_s3_secret:
                 description: The secret for S3 compliant object storage configuration.
                 type: string
@@ -963,6 +980,11 @@ spec:
                 description: Secret where Single Sign-on configuration can be found
                   NOT USEFUL YET! PENDING MIGRATION OF sso-configuration.yml task
                   file
+                type: string
+              storage_type:
+                description: Configuration for the storage type utilized in the backup
+                  NOT USEFUL YET! BESIDES PULP-RESTORE AND PULP-BKP ROLES I COULD
+                  NOT FIND ANY MENTION OF THIS VAR, SO NOTHING DONE WITH IT YET
                 type: string
               web:
                 properties:
