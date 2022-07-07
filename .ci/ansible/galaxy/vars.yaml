@@ -6,5 +6,6 @@ images:
       pulpcore: git+https://github.com/pulp/pulpcore.git@3.20#egg=pulpcore
       plugins:
         - "git+https://github.com/ansible/galaxy_ng.git"
+        - "git+https://github.com/pulp/pulp_container.git@2.10"
 registry: quay.io
 project: pulp
