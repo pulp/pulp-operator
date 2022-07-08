@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -44,6 +45,8 @@ type PulpSpec struct {
 	FileStorageAccessMode string `json:"file_storage_access_mode,omitempty"`
 
 	// Storage class to use for the file persistentVolumeClaim
+	// +kubebuilder:default:="standard"
+	// +kubebuilder:validation:Optional
 	FileStorageClass string `json:"file_storage_storage_class,omitempty"`
 
 	// The secret for S3 compliant object storage configuration.
@@ -135,6 +138,7 @@ type PulpSpec struct {
 
 	// Storage class to use for the Redis PVC
 	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:="standard"
 	RedisStorageClass string `json:"redis_storage_class,omitempty"`
 
 	// +kubebuilder:default:=6379
@@ -234,6 +238,9 @@ type Content struct {
 	// Size is the size of number of pulp-content replicas
 	//+kubebuilder:default:=1
 	Replicas int32 `json:"replicas,omitempty"`
+
+	// Resource requirements for the pulp-content container
+	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
 }
 
 type Worker struct {
@@ -241,6 +248,9 @@ type Worker struct {
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:default:=1
 	Replicas int32 `json:"replicas,omitempty"`
+
+	// Resource requirements for the pulp-api container
+	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
 }
 
 type Web struct {
@@ -248,6 +258,9 @@ type Web struct {
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:default:=1
 	Replicas int32 `json:"replicas,omitempty"`
+
+	// Resource requirements for the pulp-web container
+	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
 }
 
 type Database struct {
@@ -260,16 +273,14 @@ type Database struct {
 	PostgresVersion string `json:"version,omitempty"`
 
 	// +kubebuilder:default:=5432
-	// +kubebuilder:validation:Optional
 	PostgresPort int `json:"postgres_port,omitempty"`
 
-	// +kubebuilder:default:="prefer"
 	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:="prefer"
 	PostgresSSLMode string `json:"postgres_ssl_mode,omitempty"`
 
 	// Registry path to the PostgreSQL container to use
 	// +kubebuilder:default:="postgres:13"
-	// +kubebuilder:validation:Optional
 	PostgresImage string `json:"postgres_image,omitempty"`
 
 	// +kubebuilder:default:={}
@@ -277,7 +288,6 @@ type Database struct {
 	PostgresExtraArgs []string `json:"postgres_extra_args,omitempty"`
 
 	// +kubebuilder:default:="/var/lib/postgresql/data/pgdata"
-	// +kubebuilder:validation:Optional
 	PostgresDataPath string `json:"postgres_data_path"`
 
 	// +kubebuilder:default:="--auth-host=scram-sha-256"
@@ -304,11 +314,12 @@ type Database struct {
 	// +kubebuilder:validation:Optional
 	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 
-	// +kubebuilder:validation:Optional
-	PostgresStorageRequirements corev1.ResourceRequirements `json:"postgres_storage_requirements,omitempty"`
+	// +kubebuilder:default:="8Gi"
+	PostgresStorageRequirements resource.Quantity `json:"postgres_storage_requirements,omitempty"`
 
 	// Name of the StorageClass required by the claim.
 	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:="standard"
 	PostgresStorageClass *string `json:"postgres_storage_class,omitempty"`
 }
 

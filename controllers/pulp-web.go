@@ -121,6 +121,7 @@ func (r *PulpReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *apps
 
 	ls := labelsForPulpWeb(m)
 	replicas := m.Spec.Web.Replicas
+	resources := m.Spec.Web.ResourceRequirements
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -146,8 +147,9 @@ func (r *PulpReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *apps
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image: m.Spec.ImageWeb + ":" + m.Spec.ImageWebVersion,
-						Name:  "web",
+						Image:     m.Spec.ImageWeb + ":" + m.Spec.ImageWebVersion,
+						Name:      "web",
+						Resources: resources,
 						Env: []corev1.EnvVar{
 							{
 								Name: "NODE_IP",

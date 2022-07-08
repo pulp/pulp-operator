@@ -138,7 +138,8 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 
 	// Create the secret in case it is not found
 	if err != nil && errors.IsNotFound(err) {
-		adminPwd := r.pulpAdminPasswordSecret(pulp)
+		adminPwd := pulpAdminPasswordSecret(pulp)
+		ctrl.SetControllerReference(pulp, adminPwd, r.Scheme)
 		log.Info("Creating a new pulp-admin-password secret", "Secret.Namespace", adminPwd.Namespace, "Secret.Name", adminPwd.Name)
 		err = r.Create(ctx, adminPwd)
 		if err != nil {
@@ -258,9 +259,16 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		topologySpreadConstraint = m.Spec.Api.TopologySpreadConstraints
 	}
 
+	containerPort := 0
+	if m.Spec.Database.PostgresPort == 0 {
+		containerPort = 5432
+	} else {
+		containerPort = m.Spec.Database.PostgresPort
+	}
+
 	envVars := []corev1.EnvVar{
 		{Name: "POSTGRES_SERVICE_HOST", Value: m.Name + "-database-svc." + m.Namespace + ".svc"},
-		{Name: "POSTGRES_SERVICE_PORT", Value: strconv.Itoa(m.Spec.Database.PostgresPort)},
+		{Name: "POSTGRES_SERVICE_PORT", Value: strconv.Itoa(containerPort)},
 		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(m.Spec.Api.GunicornTimeout)},
 		{Name: "PULP_API_WORKERS", Value: strconv.Itoa(m.Spec.Api.GunicornWorkers)},
 	}
@@ -501,42 +509,38 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 
 	resources := m.Spec.Api.ResourceRequirements
 
-	/*
-		// Removing because the values we set were not fine to run the app
-		// in my minikube env. issue #10
-			readinessProbe := &corev1.Probe{
-				ProbeHandler: corev1.ProbeHandler{
-					Exec: &corev1.ExecAction{
-						Command: []string{
-							"/usr/bin/readyz.py",
-							"/api/galaxy/pulp/api/v3/status/",
-						},
-					},
+	readinessProbe := &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			Exec: &corev1.ExecAction{
+				Command: []string{
+					"/usr/bin/readyz.py",
+					m.Spec.PulpSettings.ApiRoot + "api/v3/status/",
 				},
-				FailureThreshold:    10,
-				InitialDelaySeconds: 30,
-				PeriodSeconds:       10,
-				SuccessThreshold:    1,
-				TimeoutSeconds:      5,
-			}
+			},
+		},
+		FailureThreshold:    10,
+		InitialDelaySeconds: 30,
+		PeriodSeconds:       10,
+		SuccessThreshold:    1,
+		TimeoutSeconds:      5,
+	}
 
-			livenessProbe := &corev1.Probe{
-				FailureThreshold: 5,
-				ProbeHandler: corev1.ProbeHandler{
-					HTTPGet: &corev1.HTTPGetAction{
-						Path: "/api/galaxy/pulp/api/v3/status/",
-						Port: intstr.IntOrString{
-							IntVal: 24817,
-						},
-						Scheme: corev1.URIScheme("HTTP"),
-					},
+	livenessProbe := &corev1.Probe{
+		FailureThreshold: 5,
+		ProbeHandler: corev1.ProbeHandler{
+			HTTPGet: &corev1.HTTPGetAction{
+				Path: m.Spec.PulpSettings.ApiRoot + "api/v3/status/",
+				Port: intstr.IntOrString{
+					IntVal: 24817,
 				},
-				InitialDelaySeconds: 60,
-				PeriodSeconds:       10,
-				SuccessThreshold:    1,
-				TimeoutSeconds:      5,
-			}
-	*/
+				Scheme: corev1.URIScheme("HTTP"),
+			},
+		},
+		InitialDelaySeconds: 60,
+		PeriodSeconds:       10,
+		SuccessThreshold:    1,
+		TimeoutSeconds:      5,
+	}
 
 	// the following variables are defined to avoid issues with reconciliation
 	restartPolicy := corev1.RestartPolicy("Always")
@@ -589,11 +593,11 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 							ContainerPort: 24817,
 							Protocol:      "TCP",
 						}},
-						/* WIP
+
 						LivenessProbe:  livenessProbe,
-						ReadinessProbe: readinessProbe, */
-						Resources:    resources,
-						VolumeMounts: volumeMounts,
+						ReadinessProbe: readinessProbe,
+						Resources:      resources,
+						VolumeMounts:   volumeMounts,
 					}},
 
 					/* the following configs are not defined on pulp-operator (ansible version)  */
@@ -679,8 +683,8 @@ func pulpDBFieldsEncryptionSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
 }
 
 // pulp-admin-passowrd
-func (r *PulpReconciler) pulpAdminPasswordSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
-	sec := &corev1.Secret{
+func pulpAdminPasswordSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
+	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-admin-password",
 			Namespace: m.Namespace,
@@ -689,10 +693,6 @@ func (r *PulpReconciler) pulpAdminPasswordSecret(m *repomanagerv1alpha1.Pulp) *c
 			"password": createPwd(32),
 		},
 	}
-
-	// Set Pulp instance as the owner and controller
-	ctrl.SetControllerReference(m, sec, r.Scheme)
-	return sec
 }
 
 // serviceForAPI returns a service object for pulp-api

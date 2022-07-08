@@ -163,10 +163,13 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 	volumes := []corev1.Volume{
 		{
 			Name: m.Name + "-redis-data",
-			VolumeSource: corev1.VolumeSource{
+			/*VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 					ClaimName: m.Name + "-redis-data",
 				},
+			},*/
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
 		},
 	}

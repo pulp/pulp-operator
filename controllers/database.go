@@ -18,11 +18,13 @@ package controllers
 
 import (
 	"context"
+	"path/filepath"
 	"reflect"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -139,6 +141,27 @@ func (r *PulpReconciler) statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *ap
 		args = m.Spec.Database.PostgresExtraArgs
 	}
 
+	postgresDataPath := ""
+	if m.Spec.Database.PostgresDataPath == "" {
+		postgresDataPath = "/var/lib/postgresql/data/pgdata"
+	} else {
+		postgresDataPath = m.Spec.Database.PostgresDataPath
+	}
+
+	postgresInitdbArgs := ""
+	if m.Spec.Database.PostgresInitdbArgs == "" {
+		postgresInitdbArgs = "--auth-host=scram-sha-256"
+	} else {
+		postgresInitdbArgs = m.Spec.Database.PostgresInitdbArgs
+	}
+
+	postgresHostAuthMethod := ""
+	if m.Spec.Database.PostgresHostAuthMethod == "" {
+		postgresHostAuthMethod = "scram-sha-256"
+	} else {
+		postgresHostAuthMethod = m.Spec.Database.PostgresHostAuthMethod
+	}
+
 	envVars := []corev1.EnvVar{
 		{
 			Name: "POSTGRESQL_DATABASE",
@@ -206,42 +229,55 @@ func (r *PulpReconciler) statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *ap
 				},
 			},
 		},
-		{Name: "PGDATA", Value: m.Spec.Database.PostgresDataPath},
-		{Name: "POSTGRES_INITDB_ARGS", Value: m.Spec.Database.PostgresInitdbArgs},
-		{Name: "POSTGRES_HOST_AUTH_METHOD", Value: m.Spec.Database.PostgresHostAuthMethod},
+		{Name: "PGDATA", Value: postgresDataPath},
+		{Name: "POSTGRES_INITDB_ARGS", Value: postgresInitdbArgs},
+		{Name: "POSTGRES_HOST_AUTH_METHOD", Value: postgresHostAuthMethod},
 	}
 
-	/*
-		pvcSpec := corev1.PersistentVolumeClaimSpec{}
-		if m.Spec.Database.PostgresStorageClass != nil {
-			pvcSpec = corev1.PersistentVolumeClaimSpec{
-				AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-				Resources:        m.Spec.Database.PostgresStorageRequirements,
-				StorageClassName: m.Spec.Database.PostgresStorageClass,
-			}
-		} else {
-			pvcSpec = corev1.PersistentVolumeClaimSpec{
-				AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-				Resources:   m.Spec.Database.PostgresStorageRequirements,
-			}
-		}
+	postgresStorageSize := resource.Quantity{}
+	if reflect.DeepEqual(m.Spec.Database.PostgresStorageRequirements, resource.Quantity{}) {
+		postgresStorageSize = resource.MustParse("8Gi")
+	} else {
+		postgresStorageSize = m.Spec.Database.PostgresStorageRequirements
+	}
 
-			volumeClaimTemplate := []corev1.PersistentVolumeClaim{{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "postgres",
+	pvcSpec := corev1.PersistentVolumeClaimSpec{}
+	if m.Spec.Database.PostgresStorageClass != nil {
+		pvcSpec = corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceName(corev1.ResourceStorage): postgresStorageSize,
 				},
-				Spec: pvcSpec,
 			},
-			}
-
-			volumeMounts := []corev1.VolumeMount{
-				{
-					Name:      "postgres",
-					MountPath: filepath.Dir(m.Spec.Database.PostgresDataPath),
-					SubPath:   filepath.Base(m.Spec.Database.PostgresDataPath),
+			StorageClassName: m.Spec.Database.PostgresStorageClass,
+		}
+	} else {
+		pvcSpec = corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceName(corev1.ResourceStorage): postgresStorageSize,
 				},
-			}
-	*/
+			},
+		}
+	}
+
+	volumeClaimTemplate := []corev1.PersistentVolumeClaim{{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "postgres",
+		},
+		Spec: pvcSpec,
+	},
+	}
+
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      "postgres",
+			MountPath: filepath.Dir(postgresDataPath),
+			SubPath:   filepath.Base(postgresDataPath),
+		},
+	}
 
 	resources := m.Spec.Database.ResourceRequirements
 
@@ -281,6 +317,20 @@ func (r *PulpReconciler) statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *ap
 		SuccessThreshold:    1,
 	}
 
+	postgresImage := ""
+	if m.Spec.Database.PostgresImage == "" {
+		postgresImage = "postgres:13"
+	} else {
+		postgresImage = m.Spec.Database.PostgresImage
+	}
+
+	containerPort := int32(0)
+	if m.Spec.Database.PostgresPort == 0 {
+		containerPort = int32(5432)
+	} else {
+		containerPort = int32(m.Spec.Database.PostgresPort)
+	}
+
 	dep := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-database",
@@ -309,22 +359,22 @@ func (r *PulpReconciler) statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *ap
 					Tolerations:        toleration,
 					ServiceAccountName: "pulp-operator-go-controller-manager",
 					Containers: []corev1.Container{{
-						Image: m.Spec.Database.PostgresImage,
+						Image: postgresImage,
 						Name:  "postgres",
 						Args:  args,
 						Env:   envVars,
 						Ports: []corev1.ContainerPort{{
-							ContainerPort: int32(m.Spec.Database.PostgresPort),
+							ContainerPort: containerPort,
 							Name:          "postgres",
 						}},
 						LivenessProbe:  livenessProbe,
 						ReadinessProbe: readinessProbe,
-						/* WIP VolumeMounts: volumeMounts,  */
-						Resources: resources,
+						VolumeMounts:   volumeMounts,
+						Resources:      resources,
 					}},
 				},
 			},
-			//VolumeClaimTemplates: volumeClaimTemplate,
+			VolumeClaimTemplates: volumeClaimTemplate,
 		},
 	}
 	// Set Pulp instance as the owner and controller
@@ -404,6 +454,14 @@ func serviceDBSpec(name string) corev1.ServiceSpec {
 
 // pulp-postgres-configuration secret
 func (r *PulpReconciler) databaseConfigSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
+
+	sslMode := ""
+	if m.Spec.Database.PostgresSSLMode == "" {
+		sslMode = "prefer"
+	} else {
+		sslMode = m.Spec.Database.PostgresSSLMode
+	}
+
 	sec := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-postgres-configuration",
@@ -415,7 +473,7 @@ func (r *PulpReconciler) databaseConfigSecret(m *repomanagerv1alpha1.Pulp) *core
 			"database": m.Spec.DeploymentType,
 			"port":     "5432",
 			"host":     m.Name + "-postgres-" + m.Spec.Database.PostgresVersion,
-			"sslmode":  m.Spec.Database.PostgresSSLMode,
+			"sslmode":  sslMode,
 			"type":     "managed",
 		},
 	}

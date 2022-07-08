@@ -28,7 +28,7 @@ spec:
     api_root: "/pulp/"
 
   database:
-    postgres_extra_args: []
+#    postgres_storage_requirements: "5Gi"
 
   file_storage_access_mode: "ReadWriteOnce"
   file_storage_size: "2Gi"

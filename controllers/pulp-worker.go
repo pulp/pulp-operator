@@ -79,6 +79,7 @@ func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *a
 
 	ls := labelsForPulpWorker(m)
 	replicas := m.Spec.Worker.Replicas
+	resources := m.Spec.Worker.ResourceRequirements
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -104,9 +105,10 @@ func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *a
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image: "quay.io/pulp/pulp",
-						Name:  "worker",
-						Args:  []string{"pulp-worker"},
+						Image:     "quay.io/pulp/pulp",
+						Name:      "worker",
+						Resources: resources,
+						Args:      []string{"pulp-worker"},
 						Env: []corev1.EnvVar{
 							{
 								Name:  "POSTGRES_SERVICE_HOST",
