@@ -171,7 +171,7 @@ jobs:
         run: sudo -E ./up.sh
         shell: bash
       - name: Check and wait pulp-operator deploy
-        run: sudo -E kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
+        run: sudo -E kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
         shell: bash
       - name: KubeLinter
         run: .ci/scripts/kubelinter.sh
@@ -261,7 +261,7 @@ jobs:
         run: sudo -E CI_TEST=galaxy ./up.sh
         shell: bash
       - name: Check and wait pulp-operator deploy
-        run: sudo -E kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
+        run: sudo -E kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
         shell: bash
       - name: KubeLinter
         run: .ci/scripts/kubelinter.sh

@@ -44,7 +44,7 @@ $KUBECTL logs -l app.kubernetes.io/name=pulp-operator -c pulp-manager --tail=100
 echo ::endgroup::
 
 sudo pkill -f "port-forward" || true
-time $KUBECTL wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
+time $KUBECTL wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
 
 KUBE="k3s"
 SERVER=$(hostname)
