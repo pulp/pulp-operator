@@ -122,7 +122,7 @@ echo "=================================== Operator Up ==========================
 sudo -E ./up.sh || failure_message
 echo "=================================== Check and wait ==================================="
 echo ""
-$KUBECTL wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s || test $? = 100 || failure_message
+time $KUBECTL wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=-1s || test $? = 100 || failure_message
 set +x
 echo "Pulp has been installed in insta-demo mode."
 echo ""
