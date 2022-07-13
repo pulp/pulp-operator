@@ -51,7 +51,7 @@
     - ingress_type | lower == 'route'
     - route_tls_termination_mechanism | lower == 'passthrough'
 
-- name: Check that status and it returns a status 200
+- name: Check, through pulp-web, if the app is ready to serve requests
   uri:
     url: '{{ status_protocol }}://{{ ansible_operator_meta.name }}-web-svc.{{ ansible_operator_meta.namespace }}.svc.cluster.local:{{ status_port }}{{ pulp_combined_settings.api_root }}api/v3/status/'
   register: result_not_route
@@ -67,7 +67,7 @@
   when:
     - ingress_type | lower != 'route'
 
-- name: Check that status and it returns a status 200
+- name: Check, through pulp-route, if the app is ready to serve requests
   uri:
     url: 'https://{{ route_host }}{{ pulp_combined_settings.api_root }}api/v3/status/'
     validate_certs: no
