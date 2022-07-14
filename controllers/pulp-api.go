@@ -275,7 +275,7 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 
 	if m.Spec.CacheEnabled {
 		redisEnvVars := []corev1.EnvVar{
-			{Name: "REDIS_SERVICE_HOST", Value: m.Name + "-redis-svc"},
+			{Name: "REDIS_SERVICE_HOST", Value: m.Name + "-redis-svc." + m.Namespace},
 			{Name: "REDIS_SERVICE_PORT", Value: strconv.Itoa(m.Spec.RedisPort)},
 		}
 		envVars = append(envVars, redisEnvVars...)
@@ -509,38 +509,40 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 
 	resources := m.Spec.Api.ResourceRequirements
 
-	/*readinessProbe := &corev1.Probe{
-		ProbeHandler: corev1.ProbeHandler{
-			Exec: &corev1.ExecAction{
-				Command: []string{
-					"/usr/bin/readyz.py",
-					m.Spec.PulpSettings.ApiRoot + "api/v3/status/",
+	/*
+		readinessProbe := &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				Exec: &corev1.ExecAction{
+					Command: []string{
+						"/usr/bin/readyz.py",
+						m.Spec.PulpSettings.ApiRoot + "api/v3/status/",
+					},
 				},
 			},
-		},
-		FailureThreshold:    10,
-		InitialDelaySeconds: 30,
-		PeriodSeconds:       10,
-		SuccessThreshold:    1,
-		TimeoutSeconds:      5,
-	}
+			FailureThreshold:    10,
+			InitialDelaySeconds: 30,
+			PeriodSeconds:       10,
+			SuccessThreshold:    1,
+			TimeoutSeconds:      5,
+		}
 
-	livenessProbe := &corev1.Probe{
-		FailureThreshold: 5,
-		ProbeHandler: corev1.ProbeHandler{
-			HTTPGet: &corev1.HTTPGetAction{
-				Path: m.Spec.PulpSettings.ApiRoot + "api/v3/status/",
-				Port: intstr.IntOrString{
-					IntVal: 24817,
+		livenessProbe := &corev1.Probe{
+			FailureThreshold: 5,
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: m.Spec.PulpSettings.ApiRoot + "api/v3/status/",
+					Port: intstr.IntOrString{
+						IntVal: 24817,
+					},
+					Scheme: corev1.URIScheme("HTTP"),
 				},
-				Scheme: corev1.URIScheme("HTTP"),
 			},
-		},
-		InitialDelaySeconds: 60,
-		PeriodSeconds:       10,
-		SuccessThreshold:    1,
-		TimeoutSeconds:      5,
-	} */
+			InitialDelaySeconds: 60,
+			PeriodSeconds:       10,
+			SuccessThreshold:    1,
+			TimeoutSeconds:      5,
+		}
+	*/
 
 	// the following variables are defined to avoid issues with reconciliation
 	restartPolicy := corev1.RestartPolicy("Always")
@@ -593,8 +595,10 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 							ContainerPort: 24817,
 							Protocol:      "TCP",
 						}},
-						/* LivenessProbe:  livenessProbe,
-						ReadinessProbe: readinessProbe, */
+
+						/*
+							LivenessProbe:  livenessProbe,
+							ReadinessProbe: readinessProbe,*/
 						Resources:    resources,
 						VolumeMounts: volumeMounts,
 					}},
@@ -655,9 +659,9 @@ DATABASES = {
 		'OPTIONS': { 'sslmode': '` + sslmode + `' },
 	}
 }
-REDIS_HOST: "` + m.Name + `-redis-svc"
-REDIS_PORT: "6379"
-REDIS_PASSWORD: ""
+REDIS_HOST =  "` + m.Name + `-redis-svc.` + m.Namespace + `"
+REDIS_PORT =  "6379"
+REDIS_PASSWORD = ""
 `,
 		},
 	}
