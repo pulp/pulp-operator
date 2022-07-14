@@ -75,31 +75,43 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	pulpController, err := r.databaseController(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
+	} else if pulpController.Requeue {
+		return pulpController, nil
 	}
 
 	pulpController, err = r.pulpCacheController(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
+	} else if pulpController.Requeue {
+		return pulpController, nil
 	}
 
 	pulpController, err = r.pulpApiController(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
+	} else if pulpController.Requeue {
+		return pulpController, nil
 	}
 
 	pulpController, err = r.pulpContentController(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
+	} else if pulpController.Requeue {
+		return pulpController, nil
 	}
 
 	pulpController, err = r.pulpWorkerController(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
+	} else if pulpController.Requeue {
+		return pulpController, nil
 	}
 
 	pulpController, err = r.pulpWebController(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
+	} else if pulpController.Requeue {
+		return pulpController, nil
 	}
 
 	return pulpController, nil

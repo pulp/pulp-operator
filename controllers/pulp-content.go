@@ -29,7 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	"github.com/go-logr/logr"
@@ -99,9 +98,9 @@ func (r *PulpReconciler) pulpContentController(ctx context.Context, pulp *repoma
 		err = r.Update(ctx, serviceContentObject(pulp.Name, pulp.Namespace))
 		if err != nil {
 			log.Error(err, "Error trying to update the Content Service object ... ")
-			return reconcile.Result{}, err
+			return ctrl.Result{}, err
 		}
-		return reconcile.Result{Requeue: true}, nil
+		return ctrl.Result{Requeue: true}, nil
 	}
 
 	return ctrl.Result{}, nil
