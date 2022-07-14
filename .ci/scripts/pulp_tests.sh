@@ -24,9 +24,9 @@ password password\
 export BASE_ADDR="http://$SERVER:$WEB_PORT"
 echo $BASE_ADDR
 
-if [ -z "$(pip freeze | grep pulp-cli)" ]; then
+if [ -z "$(pip3 freeze | grep pulp-cli)" ]; then
   echo "Installing pulp-cli"
-  pip install pulp-cli[pygments]
+  pip3 install pulp-cli[pygments]
 fi
 
 if [ ! -f ~/.config/pulp/settings.toml ]; then
