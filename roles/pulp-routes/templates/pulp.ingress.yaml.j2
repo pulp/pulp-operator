@@ -40,6 +40,9 @@ metadata:
 {% if ingress_annotations %}
   annotations:
     {{ ingress_annotations | indent(width=4) }}
+{% if plugin.rewrite is defined %}
+    haproxy.router.openshift.io/rewrite-target: '{{ plugin.rewrite }}'
+{% endif %}
 {% endif %}
 spec:
 {% if route_host != '' %}
