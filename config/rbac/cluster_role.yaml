@@ -1,0 +1,14 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pulp-manager-cluster-role
+rules:
+  - apiGroups:
+      - config.openshift.io
+    resourceNames:
+      - cluster
+    resources:
+      - ingresses
+    verbs:
+      - get

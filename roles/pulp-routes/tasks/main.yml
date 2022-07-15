@@ -10,6 +10,18 @@
     pulp_combined_settings: "{{ default_settings|combine(raw_pulp_settings, recursive=True) if pulp_settings is defined and pulp_settings is not none else default_settings }}"
   no_log: "{{ no_log }}"
 
+- name: Get default ingress domain
+  k8s_info:
+    api_version: config.openshift.io/v1
+    kind: Ingress
+    name: cluster
+  register: _default_ingress_domain
+  when:
+    - ingress_type | lower == 'route'
+
+- set_fact:
+    route_host: "{{ (route_host != '') | ternary(route_host,ansible_operator_meta.name + '.' + _default_ingress_domain.resources[0].spec.domain | default('')) }}"
+
 - name: Load Route TLS certificate
   include_tasks: load_route_tls_secret.yml
   when:
@@ -29,6 +41,7 @@
       - { name: "{{ ansible_operator_meta.name }}-registry-token", path: "/token/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
       - { name: "{{ ansible_operator_meta.name }}-python", path: "/pypi/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
       - { name: "{{ ansible_operator_meta.name }}-ansible", path: "/pulp_ansible/galaxy/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
+      - { name: "{{ ansible_operator_meta.name }}-galaxy-ui", path: "/ui/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc", rewrite: "/static/galaxy_ng/index.html" }
   when:
     - ingress_type | lower == 'route'
 
