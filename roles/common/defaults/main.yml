@@ -1,4 +1,5 @@
 ---
+route_host: ''
 image_pull_secret: ''
 image_pull_secrets: []
 operator_service_account_name: '{{ lookup("env","OPERATOR_SA_NAME") | default("pulp-operator-sa",true) }}'
