@@ -63,6 +63,7 @@ RUN pip install  \
 	rhsm \
 	setproctitle \
 	gunicorn \
+        python-nginx \
 	"django-storages[boto3,azure]>=1.12.2" \
 	"azure-storage-blob<12.10.0" \
 	"requests[use_chardet_on_py3]"
@@ -101,6 +102,7 @@ RUN pip install {{ plugin }}
 {% endif %}
 
 COPY pulp-operator/containers/images/pulp/container-assets/readyz.py /usr/bin/readyz.py
+COPY pulp-operator/containers/images/pulp/container-assets/route_paths.py /usr/bin/route_paths.py
 COPY pulp-operator/containers/images/pulp/container-assets/wait_on_postgres.py /usr/bin/wait_on_postgres.py
 COPY pulp-operator/containers/images/pulp/container-assets/wait_on_database_migrations.sh /usr/bin/wait_on_database_migrations.sh
 COPY pulp-operator/containers/images/pulp/container-assets/pulp-common-entrypoint.sh /pulp-common-entrypoint.sh

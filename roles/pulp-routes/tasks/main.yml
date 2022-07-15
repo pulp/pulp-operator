@@ -1,47 +1,34 @@
 ---
-- name: Getting raw pulp_settings
-  set_fact:
-    raw_pulp_settings: "{{ raw_spec['pulp_settings'] | default({}) }}"
-  no_log: "{{ no_log }}"
-  when: pulp_settings is defined
-
-- name: Combining pulp_settings
-  set_fact:
-    pulp_combined_settings: "{{ default_settings|combine(raw_pulp_settings, recursive=True) if pulp_settings is defined and pulp_settings is not none else default_settings }}"
-  no_log: "{{ no_log }}"
-
-- name: Get default ingress domain
-  k8s_info:
-    api_version: config.openshift.io/v1
-    kind: Ingress
-    name: cluster
-  register: _default_ingress_domain
-  when:
-    - ingress_type | lower == 'route'
-
-- set_fact:
-    route_host: "{{ (route_host != '') | ternary(route_host,ansible_operator_meta.name + '.' + _default_ingress_domain.resources[0].spec.domain | default('')) }}"
-
 - name: Load Route TLS certificate
   include_tasks: load_route_tls_secret.yml
   when:
     - ingress_type | lower == 'route'
     - route_tls_secret != ''
 
-- set_fact:
-    _pulp_plugins:
-      - { name: "{{ ansible_operator_meta.name }}-content", path: "{{ pulp_combined_settings.content_path_prefix | default('/pulp/content/') }}", targetPort: "content-24816", serviceName: "{{ ansible_operator_meta.name }}-content-svc" }
-      - { name: "{{ ansible_operator_meta.name }}-container", path: "/pulp/container/", targetPort: "content-24816", serviceName: "{{ ansible_operator_meta.name }}-content-svc" }
-      - { name: "{{ ansible_operator_meta.name }}-cookbook", path: "/pulp_cookbook/content/", targetPort: "content-24816", serviceName: "{{ ansible_operator_meta.name }}-content-svc" }
-      - { name: "{{ ansible_operator_meta.name }}", path: "/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
-      - { name: "{{ ansible_operator_meta.name }}-api-v3", path: "{{ pulp_combined_settings.api_root }}api/v3/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
-      - { name: "{{ ansible_operator_meta.name }}-auth", path: "/auth/login/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
-      - { name: "{{ ansible_operator_meta.name }}-registry-v2", path: "/v2/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
-      - { name: "{{ ansible_operator_meta.name }}-registry-extensions-v2", path: "/extensions/v2/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
-      - { name: "{{ ansible_operator_meta.name }}-registry-token", path: "/token/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
-      - { name: "{{ ansible_operator_meta.name }}-python", path: "/pypi/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
-      - { name: "{{ ansible_operator_meta.name }}-ansible", path: "/pulp_ansible/galaxy/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
-      - { name: "{{ ansible_operator_meta.name }}-galaxy-ui", path: "/ui/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc", rewrite: "/static/galaxy_ng/index.html" }
+- block:
+    - set_fact:
+        _pulp_plugins:
+          - { name: "{{ ansible_operator_meta.name }}-content", path: "{{ pulp_combined_settings.content_path_prefix | default('/pulp/content/') }}", targetPort: "content-24816", serviceName: "{{ ansible_operator_meta.name }}-content-svc" }
+          - { name: "{{ ansible_operator_meta.name }}-api-v3", path: "{{ pulp_combined_settings.api_root }}api/v3/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
+          - { name: "{{ ansible_operator_meta.name }}-auth", path: "/auth/login/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
+          - { name: "{{ ansible_operator_meta.name }}", path: "/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
+
+    - k8s_info:
+        kind: Pod
+        namespace: "{{ ansible_operator_meta.namespace }}"
+        label_selectors:
+          - "app.kubernetes.io/component = api"
+      register: _pod_list
+
+    - k8s_exec:
+        namespace: "{{ ansible_operator_meta.namespace }}"
+        pod: "{{ _pod_list.resources[0].metadata.name }}"
+        command: "/usr/bin/route_paths.py {{ ansible_operator_meta.name }}"
+      register: _route_paths_output
+
+    - set_fact:
+        _pulp_plugins: "{{ _pulp_plugins + _route_paths_output.stdout | from_json }}"
+
   when:
     - ingress_type | lower == 'route'
 
