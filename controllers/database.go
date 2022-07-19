@@ -20,9 +20,11 @@ import (
 	"context"
 	"path/filepath"
 	"reflect"
+	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,13 +44,16 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 	pgConfigSecret := &corev1.Secret{}
 	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-postgres-configuration", Namespace: pulp.Namespace}, pgConfigSecret)
 
+	expected_secret := databaseConfigSecret(pulp)
+
 	// Create the secret in case it is not found
 	if err != nil && errors.IsNotFound(err) {
-		newPgConfigSecret := r.databaseConfigSecret(pulp)
-		log.Info("Creating a new pulp-postgres-configuration secret", "Secret.Namespace", newPgConfigSecret.Namespace, "Secret.Name", newPgConfigSecret.Name)
-		err = r.Create(ctx, newPgConfigSecret)
+		log.Info("Creating a new pulp-postgres-configuration secret", "Secret.Namespace", expected_secret.Namespace, "Secret.Name", expected_secret.Name)
+		// Set Pulp instance as the owner and controller
+		ctrl.SetControllerReference(pulp, expected_secret, r.Scheme)
+		err = r.Create(ctx, expected_secret)
 		if err != nil {
-			log.Error(err, "Failed to create new pulp-postgres-configuration secret secret", "Secret.Namespace", newPgConfigSecret.Namespace, "Secret.Name", newPgConfigSecret.Name)
+			log.Error(err, "Failed to create new pulp-postgres-configuration secret secret", "Secret.Namespace", expected_secret.Namespace, "Secret.Name", expected_secret.Name)
 			return ctrl.Result{}, err
 		}
 		// Secret created successfully - return and requeue
@@ -58,17 +63,32 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 		return ctrl.Result{}, err
 	}
 
-	// DEPLOYMENT
-	found := &appsv1.StatefulSet{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-database", Namespace: pulp.Namespace}, found)
+	// Reconcile secret (NOT WORKING!)
+	// IT IS NOT GETTING INTO THIS IF CONDITION
+	if !equality.Semantic.DeepDerivative(expected_secret.Data, pgConfigSecret.Data) {
+		log.Info("The pulp-postgres-configuration secret has been modified! Reconciling ...")
+		// Set Pulp instance as the owner and controller
+		ctrl.SetControllerReference(pulp, expected_secret, r.Scheme)
+		err = r.Update(ctx, expected_secret)
+		if err != nil {
+			log.Error(err, "Error trying to update the pulp-postgres-configuration secret object ... ")
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
+	}
+
+	// StatefulSet
+	pgSts := &appsv1.StatefulSet{}
+	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-database", Namespace: pulp.Namespace}, pgSts)
+	expected_sts := statefulSetForDatabase(pulp)
 
 	if err != nil && errors.IsNotFound(err) {
-		// Define a new statefulset
-		sts := r.statefulSetForDatabase(pulp)
-		log.Info("Creating a new Database StatefulSet", "StatefulSet.Namespace", sts.Namespace, "StatefulSet.Name", sts.Name)
-		err = r.Create(ctx, sts)
+		log.Info("Creating a new Database StatefulSet", "StatefulSet.Namespace", pgSts.Namespace, "StatefulSet.Name", pgSts.Name)
+		// Set Pulp instance as the owner and controller
+		ctrl.SetControllerReference(pulp, expected_sts, r.Scheme)
+		err = r.Create(ctx, expected_sts)
 		if err != nil {
-			log.Error(err, "Failed to create new Database StatefulSet", "StatefulSet.Namespace", sts.Namespace, "StatefulSet.Name", sts.Name)
+			log.Error(err, "Failed to create new Database StatefulSet", "StatefulSet.Namespace", expected_sts.Namespace, "StatefulSet.Name", expected_sts.Name)
 			return ctrl.Result{}, err
 		}
 		// Deployment created successfully - return and requeue
@@ -78,17 +98,33 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 		return ctrl.Result{}, err
 	}
 
+	// Reconcile StatefulSet
+	if !equality.Semantic.DeepDerivative(expected_sts.Spec.Template.Spec, pgSts.Spec.Template.Spec) {
+		log.Info("The Database StatefulSet has been modified! Reconciling ...")
+		// Set Pulp instance as the owner and controller
+		// not sure if this is the best way to do this, but every time that
+		// a reconciliation occurred the object lost the owner reference
+		ctrl.SetControllerReference(pulp, expected_sts, r.Scheme)
+		err = r.Update(ctx, expected_sts)
+		if err != nil {
+			log.Error(err, "Error trying to update the Database StatefulSet object ... ")
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
+	}
+
 	// SERVICE
 	dbSvc := &corev1.Service{}
 	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-database-svc", Namespace: pulp.Namespace}, dbSvc)
+	expected_svc := serviceForDatabase(pulp)
 
 	if err != nil && errors.IsNotFound(err) {
-		// Define a new service
-		svc := r.serviceForDatabase(pulp)
-		log.Info("Creating a new Database Service", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
-		err = r.Create(ctx, svc)
+		log.Info("Creating a new Database Service", "Service.Namespace", expected_svc.Namespace, "Service.Name", expected_svc.Name)
+		// Set Pulp instance as the owner and controller
+		ctrl.SetControllerReference(pulp, expected_svc, r.Scheme)
+		err = r.Create(ctx, expected_svc)
 		if err != nil {
-			log.Error(err, "Failed to create new Database Service", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
+			log.Error(err, "Failed to create new Database Service", "Service.Namespace", expected_svc.Namespace, "Service.Name", expected_svc.Name)
 			return ctrl.Result{}, err
 		}
 		// Service created successfully - return and requeue
@@ -98,24 +134,26 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 		return ctrl.Result{}, err
 	}
 
-	// Ensure the service spec is as expected
-	expected_spec := serviceDBSpec(pulp.Name)
-
-	if !reflect.DeepEqual(expected_spec, dbSvc.Spec) {
+	// Reconcile Service
+	if !equality.Semantic.DeepDerivative(expected_svc.Spec, dbSvc.Spec) {
 		log.Info("The Database service has been modified! Reconciling ...")
-		err = r.Update(ctx, serviceDBObject(pulp.Name, pulp.Namespace))
+		// Set Pulp instance as the owner and controller
+		// not sure if this is the best way to do this, but every time that
+		// a reconciliation occurred the object lost the owner reference
+		ctrl.SetControllerReference(pulp, expected_svc, r.Scheme)
+		err = r.Update(ctx, expected_svc)
 		if err != nil {
 			log.Error(err, "Error trying to update the Database Service object ... ")
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{Requeue: true}, nil
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
 
 	return ctrl.Result{}, nil
 }
 
-// deploymentForDatabase returns a postgresql Deployment object
-func (r *PulpReconciler) statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
+// statefulSetForDatabase returns a postgresql Deployment object
+func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 	ls := labelsForDatabase(m)
 	//replicas := m.Spec.Database.Replicas
 	replicas := int32(1)
@@ -330,7 +368,7 @@ func (r *PulpReconciler) statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *ap
 		containerPort = int32(m.Spec.Database.PostgresPort)
 	}
 
-	dep := &appsv1.StatefulSet{
+	return &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-database",
 			Namespace: m.Namespace,
@@ -376,9 +414,6 @@ func (r *PulpReconciler) statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *ap
 			VolumeClaimTemplates: volumeClaimTemplate,
 		},
 	}
-	// Set Pulp instance as the owner and controller
-	ctrl.SetControllerReference(m, dep, r.Scheme)
-	return dep
 }
 
 // labelsForDatabase returns the labels for selecting the resources
@@ -397,33 +432,7 @@ func labelsForDatabase(m *repomanagerv1alpha1.Pulp) map[string]string {
 }
 
 // serviceForDatabase returns a service object for postgres pods
-func (r *PulpReconciler) serviceForDatabase(m *repomanagerv1alpha1.Pulp) *corev1.Service {
-
-	svc := serviceDBObject(m.Name, m.Namespace)
-
-	// Set Pulp instance as the owner and controller
-	ctrl.SetControllerReference(m, svc, r.Scheme)
-	return svc
-}
-
-func serviceDBObject(name, namespace string) *corev1.Service {
-	return &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name + "-database-svc",
-			Namespace: namespace,
-		},
-		Spec: serviceDBSpec(name),
-	}
-}
-
-// database service spec
-// [TO-DO]
-// - the other services will probably be the same as this one with only other
-//   names, ports and selectors. This function could be modified to address all pulp
-//   service configurations (maybe just adding the corev1.ServicePort and a dictionary
-//   for the selectors as function parameters would be enough).
-func serviceDBSpec(name string) corev1.ServiceSpec {
-
+func serviceForDatabase(m *repomanagerv1alpha1.Pulp) *corev1.Service {
 	serviceInternalTrafficPolicyCluster := corev1.ServiceInternalTrafficPolicyType("Cluster")
 	ipFamilyPolicyType := corev1.IPFamilyPolicyType("SingleStack")
 	serviceAffinity := corev1.ServiceAffinity("None")
@@ -431,28 +440,35 @@ func serviceDBSpec(name string) corev1.ServiceSpec {
 	targetPort := intstr.IntOrString{IntVal: 5432}
 	serviceType := corev1.ServiceType("ClusterIP")
 
-	return corev1.ServiceSpec{
-		ClusterIP:             "None",
-		ClusterIPs:            []string{"None"},
-		InternalTrafficPolicy: &serviceInternalTrafficPolicyCluster,
-		IPFamilies:            []corev1.IPFamily{"IPv4"},
-		IPFamilyPolicy:        &ipFamilyPolicyType,
-		Ports: []corev1.ServicePort{{
-			Port:       5432,
-			Protocol:   servicePortProto,
-			TargetPort: targetPort,
-		}},
-		Selector: map[string]string{
-			"app":     "postgresql",
-			"pulp_cr": name,
+	return &corev1.Service{
+
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      m.Name + "-database-svc",
+			Namespace: m.Namespace,
 		},
-		SessionAffinity: serviceAffinity,
-		Type:            serviceType,
+		Spec: corev1.ServiceSpec{
+			ClusterIP:             "None",
+			ClusterIPs:            []string{"None"},
+			InternalTrafficPolicy: &serviceInternalTrafficPolicyCluster,
+			IPFamilies:            []corev1.IPFamily{"IPv4"},
+			IPFamilyPolicy:        &ipFamilyPolicyType,
+			Ports: []corev1.ServicePort{{
+				Port:       5432,
+				Protocol:   servicePortProto,
+				TargetPort: targetPort,
+			}},
+			Selector: map[string]string{
+				"app":     "postgresql",
+				"pulp_cr": m.Name,
+			},
+			SessionAffinity: serviceAffinity,
+			Type:            serviceType,
+		},
 	}
 }
 
 // pulp-postgres-configuration secret
-func (r *PulpReconciler) databaseConfigSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
+func databaseConfigSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
 
 	sslMode := ""
 	if m.Spec.Database.PostgresSSLMode == "" {
@@ -461,7 +477,7 @@ func (r *PulpReconciler) databaseConfigSecret(m *repomanagerv1alpha1.Pulp) *core
 		sslMode = m.Spec.Database.PostgresSSLMode
 	}
 
-	sec := &corev1.Secret{
+	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-postgres-configuration",
 			Namespace: m.Namespace,
@@ -477,7 +493,4 @@ func (r *PulpReconciler) databaseConfigSecret(m *repomanagerv1alpha1.Pulp) *core
 		},
 	}
 
-	// Set Pulp instance as the owner and controller
-	ctrl.SetControllerReference(m, sec, r.Scheme)
-	return sec
 }

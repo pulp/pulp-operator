@@ -77,6 +77,8 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return pulpController, err
 	} else if pulpController.Requeue {
 		return pulpController, nil
+	} else if pulpController.RequeueAfter > 0 {
+		return pulpController, nil
 	}
 
 	pulpController, err = r.pulpCacheController(ctx, pulp, log)
