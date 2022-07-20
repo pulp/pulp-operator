@@ -4,7 +4,7 @@ set -euo pipefail
 KUBE="k3s"
 SERVER=$(hostname)
 WEB_PORT="24817"
-if [[ "$1" == "--minikube" ]] || [[ "$1" == "-m" ]]; then
+if [[ "${1-null}" == "--minikube" ]] || [[ "${1-null}" == "-m" ]]; then
   KUBE="minikube"
   SERVER="localhost"
   if [[ "$CI_TEST" == "true" ]]; then
@@ -14,7 +14,7 @@ if [[ "$1" == "--minikube" ]] || [[ "$1" == "-m" ]]; then
   fi
 fi
 
-pip install ansible
+pip3 install ansible
 
 BASE_ADDR="http://$SERVER:$WEB_PORT"
 echo $BASE_ADDR
