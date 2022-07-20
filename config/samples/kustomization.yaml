@@ -5,6 +5,7 @@ resources:
 - pulpproject_v1beta1_pulprestore_cr.default.yaml
 - pulpproject_v1beta1_pulpbackup_cr.ci.yaml
 - pulpproject_v1beta1_pulprestore_cr.ci.yaml
+- pulpproject_v1beta1_pulp_cr.ocp.ci.yaml
 - pulpproject_v1beta1_pulp_cr.galaxy.yaml
 - pulpproject_v1beta1_pulp_cr.object_storage.aws.yaml
 - pulpproject_v1beta1_pulp_cr.object_storage.azure.yaml
