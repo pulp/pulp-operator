@@ -2,11 +2,13 @@ package controllers
 
 import (
 	"context"
+	"time"
 
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,8 +22,8 @@ func (r *PulpReconciler) pulpCacheController(ctx context.Context, pulp *repomana
 	// pulp-redis-data PVC
 	pvcFound := &corev1.PersistentVolumeClaim{}
 	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-redis-data", Namespace: pulp.Namespace}, pvcFound)
+	pvc := redisDataPVC(pulp)
 	if err != nil && errors.IsNotFound(err) {
-		pvc := redisDataPVC(pulp)
 		ctrl.SetControllerReference(pulp, pvc, r.Scheme)
 		log.Info("Creating a new Pulp Redis Data PVC", "PVC.Namespace", pvc.Namespace, "PVC.Name", pvc.Name)
 		err = r.Create(ctx, pvc)
@@ -36,11 +38,23 @@ func (r *PulpReconciler) pulpCacheController(ctx context.Context, pulp *repomana
 		return ctrl.Result{}, err
 	}
 
+	// Reconcile PVC
+	if !equality.Semantic.DeepDerivative(pvc.Spec, pvcFound.Spec) {
+		log.Info("The Redis PVC has been modified! Reconciling ...")
+		ctrl.SetControllerReference(pulp, pvc, r.Scheme)
+		err = r.Update(ctx, pvc)
+		if err != nil {
+			log.Error(err, "Error trying to update the Redis PVC object ... ")
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{RequeueAfter: time.Second}, nil
+	}
+
 	// redis-svc Service
 	svcFound := &corev1.Service{}
 	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-redis-svc", Namespace: pulp.Namespace}, svcFound)
+	svc := redisSvc(pulp)
 	if err != nil && errors.IsNotFound(err) {
-		svc := redisSvc(pulp)
 		ctrl.SetControllerReference(pulp, svc, r.Scheme)
 		log.Info("Creating a new Redis Service", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
 		err = r.Create(ctx, svc)
@@ -55,11 +69,23 @@ func (r *PulpReconciler) pulpCacheController(ctx context.Context, pulp *repomana
 		return ctrl.Result{}, err
 	}
 
+	// Reconcile Service
+	if !equality.Semantic.DeepDerivative(svc.Spec, svcFound.Spec) {
+		log.Info("The Redis Service has been modified! Reconciling ...")
+		ctrl.SetControllerReference(pulp, svc, r.Scheme)
+		err = r.Update(ctx, svc)
+		if err != nil {
+			log.Error(err, "Error trying to update the Redis Service object ... ")
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{RequeueAfter: time.Second}, nil
+	}
+
 	// redis Deployment
 	deploymentFound := &appsv1.Deployment{}
 	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-redis", Namespace: pulp.Namespace}, deploymentFound)
+	dep := redisDeployment(pulp)
 	if err != nil && errors.IsNotFound(err) {
-		dep := redisDeployment(pulp)
 		ctrl.SetControllerReference(pulp, dep, r.Scheme)
 		log.Info("Creating a new Pulp Redis Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 		err = r.Create(ctx, dep)
@@ -72,6 +98,18 @@ func (r *PulpReconciler) pulpCacheController(ctx context.Context, pulp *repomana
 	} else if err != nil {
 		log.Error(err, "Failed to get Pulp Redis Deployment")
 		return ctrl.Result{}, err
+	}
+
+	// Reconcile Deployment
+	if !equality.Semantic.DeepDerivative(dep.Spec, deploymentFound.Spec) {
+		log.Info("The Redis Deployment has been modified! Reconciling ...")
+		ctrl.SetControllerReference(pulp, dep, r.Scheme)
+		err = r.Update(ctx, dep)
+		if err != nil {
+			log.Error(err, "Error trying to update the Redis Deployment object ... ")
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{RequeueAfter: time.Second}, nil
 	}
 
 	return ctrl.Result{}, nil

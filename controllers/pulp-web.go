@@ -23,6 +23,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -36,12 +37,11 @@ import (
 
 func (r *PulpReconciler) pulpWebController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
+	// pulp-web Configmap
 	webConfigMap := &corev1.ConfigMap{}
 	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-configmap", Namespace: pulp.Namespace}, webConfigMap)
-
+	newWebConfigMap := r.pulpWebConfigMap(pulp)
 	if err != nil && errors.IsNotFound(err) {
-		// Define a new ConfigMap
-		newWebConfigMap := r.pulpWebConfigMap(pulp)
 		log.Info("Creating a new Pulp Web ConfigMap", "ConfigMap.Namespace", newWebConfigMap.Namespace, "ConfigMap.Name", newWebConfigMap.Name)
 		err = r.Create(ctx, newWebConfigMap)
 		if err != nil {
@@ -55,12 +55,11 @@ func (r *PulpReconciler) pulpWebController(ctx context.Context, pulp *repomanage
 		return ctrl.Result{}, err
 	}
 
+	// pulp-web Deployment
 	webDeployment := &appsv1.Deployment{}
 	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web", Namespace: pulp.Namespace}, webDeployment)
-
+	newWebDeployment := r.deploymentForPulpWeb(pulp)
 	if err != nil && errors.IsNotFound(err) {
-		// Define a new deployment
-		newWebDeployment := r.deploymentForPulpWeb(pulp)
 		log.Info("Creating a new Pulp Web Deployment", "Deployment.Namespace", newWebDeployment.Namespace, "Deployment.Name", newWebDeployment.Name)
 		err = r.Create(ctx, newWebDeployment)
 		if err != nil {
@@ -74,28 +73,22 @@ func (r *PulpReconciler) pulpWebController(ctx context.Context, pulp *repomanage
 		return ctrl.Result{}, err
 	}
 
-	// Ensure the deployment size is the same as the spec
-	webReplicas := pulp.Spec.Web.Replicas
-	if *webDeployment.Spec.Replicas != webReplicas {
-		log.Info("Reconciling Pulp Web Deployment", "Deployment.Namespace", webDeployment.Namespace, "Deployment.Name", webDeployment.Name)
-		webDeployment.Spec.Replicas = &webReplicas
-		err = r.Update(ctx, webDeployment)
+	// Reconcile Deployment
+	if !equality.Semantic.DeepDerivative(newWebDeployment.Spec, webDeployment.Spec) {
+		log.Info("The PULP-WEB Deployment has been modified! Reconciling ...")
+		err = r.Update(ctx, newWebDeployment)
 		if err != nil {
-			log.Error(err, "Failed to update Pulp Web Deployment", "Deployment.Namespace", webDeployment.Namespace, "Deployment.Name", webDeployment.Name)
+			log.Error(err, "Error trying to update the PULP-WEB Deployment object ... ")
 			return ctrl.Result{}, err
 		}
-		// Ask to requeue after 1 minute in order to give enough time for the
-		// pods be created on the cluster side and the operand be able
-		// to do the next update step accurately.
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
+		return ctrl.Result{RequeueAfter: time.Second}, nil
 	}
 
 	// SERVICE
 	webSvc := &corev1.Service{}
 	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web-svc", Namespace: pulp.Namespace}, webSvc)
+	newWebSvc := serviceForPulpWeb(pulp)
 	if err != nil && errors.IsNotFound(err) {
-		// Define a new service
-		newWebSvc := serviceForPulpWeb(pulp)
 		ctrl.SetControllerReference(pulp, newWebSvc, r.Scheme)
 		log.Info("Creating a new Web Service", "Service.Namespace", newWebSvc.Namespace, "Service.Name", newWebSvc.Name)
 		err = r.Create(ctx, newWebSvc)
@@ -109,6 +102,20 @@ func (r *PulpReconciler) pulpWebController(ctx context.Context, pulp *repomanage
 		log.Error(err, "Failed to get Web Service")
 		return ctrl.Result{}, err
 	}
+
+	/* This reconcile is getting into an infinite loop.
+	// Reconcile Service
+	if !equality.Semantic.DeepDerivative(newWebSvc.Spec, webSvc.Spec) {
+		log.Info("The PULP-WEB Service has been modified! Reconciling ...")
+		ctrl.SetControllerReference(pulp, newWebSvc, r.Scheme)
+		err = r.Update(ctx, newWebSvc)
+		if err != nil {
+			log.Error(err, "Error trying to update the PULP-WEB Service object ... ")
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{RequeueAfter: time.Second}, nil
+	}
+	*/
 
 	return ctrl.Result{}, nil
 }

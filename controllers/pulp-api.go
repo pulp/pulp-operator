@@ -18,8 +18,8 @@ package controllers
 
 import (
 	"context"
-	"reflect"
 	"strconv"
+	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -41,37 +41,13 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 	if pulp.Spec.IsFileStorage {
 		pvcFound := &corev1.PersistentVolumeClaim{}
 		err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-file-storage", Namespace: pulp.Namespace}, pvcFound)
-		if err != nil && errors.IsNotFound(err) {
-			// Define the new PVC
-			pvc := &corev1.PersistentVolumeClaim{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      pulp.Name + "-file-storage",
-					Namespace: pulp.Namespace,
-					Labels: map[string]string{
-						"app.kubernetes.io/name":       pulp.Spec.DeploymentType + "-storage",
-						"app.kubernetes.io/instance":   pulp.Spec.DeploymentType + "-storage-" + pulp.Name,
-						"app.kubernetes.io/component":  "storage",
-						"app.kubernetes.io/part-of":    pulp.Spec.DeploymentType,
-						"app.kubernetes.io/managed-by": pulp.Spec.DeploymentType + "-operator",
-					},
-				},
-				Spec: corev1.PersistentVolumeClaimSpec{
-					Resources: corev1.ResourceRequirements{
-						Requests: corev1.ResourceList{
-							corev1.ResourceName(corev1.ResourceStorage): resource.MustParse(pulp.Spec.FileStorageSize),
-						},
-					},
-					AccessModes: []corev1.PersistentVolumeAccessMode{
-						corev1.PersistentVolumeAccessMode(pulp.Spec.FileStorageAccessMode),
-					},
-					StorageClassName: &pulp.Spec.FileStorageClass,
-				},
-			}
+		expected_pvc := r.fileStoragePVC(pulp)
 
-			log.Info("Creating a new Pulp API File Storage PVC", "PVC.Namespace", pvc.Namespace, "PVC.Name", pvc.Name)
-			err = r.Create(ctx, pvc)
+		if err != nil && errors.IsNotFound(err) {
+			log.Info("Creating a new Pulp API File Storage PVC", "PVC.Namespace", expected_pvc.Namespace, "PVC.Name", expected_pvc.Name)
+			err = r.Create(ctx, expected_pvc)
 			if err != nil {
-				log.Error(err, "Failed to create new Pulp File Storage PVC", "PVC.Namespace", pvc.Namespace, "PVC.Name", pvc.Name)
+				log.Error(err, "Failed to create new Pulp File Storage PVC", "PVC.Namespace", expected_pvc.Namespace, "PVC.Name", expected_pvc.Name)
 				return ctrl.Result{}, err
 			}
 			// PVC created successfully - return and requeue
@@ -80,9 +56,18 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 			log.Error(err, "Failed to get Pulp API File Storage PVC")
 			return ctrl.Result{}, err
 		}
-	}
 
-	// PENDING RECONCILE LOGIC FOR THE PULP-FILE-STORAGE PVC
+		// Reconcile PVC
+		if !equality.Semantic.DeepDerivative(expected_pvc.Spec, pvcFound.Spec) {
+			log.Info("The PVC has been modified! Reconciling ...")
+			err = r.Update(ctx, expected_pvc)
+			if err != nil {
+				log.Error(err, "Error trying to update the PVC object ... ")
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{RequeueAfter: time.Second}, nil
+		}
+	}
 
 	// Create pulp-server secret
 	secret := &corev1.Secret{}
@@ -156,10 +141,10 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 	// Create pulp-api deployment
 	found := &appsv1.Deployment{}
 	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, found)
+	dep := r.deploymentForPulpApi(pulp)
 
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new deployment
-		dep := r.deploymentForPulpApi(pulp)
 		log.Info("Creating a new Pulp API Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 		err = r.Create(ctx, dep)
 		if err != nil {
@@ -175,11 +160,9 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 
 	// Ensure the deployment template spec is as expected
 	// https://github.com/kubernetes-sigs/kubebuilder/issues/592
-	expected_deployment := r.deploymentForPulpApi(pulp)
-	if !equality.Semantic.DeepDerivative(expected_deployment.Spec.Template.Spec, found.Spec.Template.Spec) {
+	if !equality.Semantic.DeepDerivative(dep.Spec, found.Spec) {
 		log.Info("The API deployment has been modified! Reconciling ...")
-		found.Spec.Template.Spec = expected_deployment.Spec.Template.Spec
-		err = r.Update(ctx, found)
+		err = r.Update(ctx, dep)
 		if err != nil {
 			log.Error(err, "Error trying to update the API deployment object ... ")
 			return ctrl.Result{}, err
@@ -190,10 +173,9 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 	// SERVICE
 	apiSvc := &corev1.Service{}
 	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api-svc", Namespace: pulp.Namespace}, apiSvc)
+	newApiSvc := r.serviceForAPI(pulp)
 
 	if err != nil && errors.IsNotFound(err) {
-		// Define a new service
-		newApiSvc := r.serviceForAPI(pulp)
 		log.Info("Creating a new API Service", "Service.Namespace", newApiSvc.Namespace, "Service.Name", newApiSvc.Name)
 		err = r.Create(ctx, newApiSvc)
 		if err != nil {
@@ -208,11 +190,9 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 	}
 
 	// Ensure the service spec is as expected
-	expected_api_spec := serviceAPISpec(pulp.Name)
-
-	if !reflect.DeepEqual(expected_api_spec, apiSvc.Spec) {
+	if !equality.Semantic.DeepDerivative(newApiSvc.Spec, apiSvc.Spec) {
 		log.Info("The API service has been modified! Reconciling ...")
-		err = r.Update(ctx, serviceAPIObject(pulp.Name, pulp.Namespace))
+		err = r.Update(ctx, newApiSvc)
 		if err != nil {
 			log.Error(err, "Error trying to update the API Service object ... ")
 			return ctrl.Result{}, err
@@ -221,6 +201,42 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 	}
 
 	return ctrl.Result{}, nil
+}
+
+// fileStoragePVC returns a PVC object
+func (r *PulpReconciler) fileStoragePVC(m *repomanagerv1alpha1.Pulp) *corev1.PersistentVolumeClaim {
+
+	// Define the new PVC
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      m.Name + "-file-storage",
+			Namespace: m.Namespace,
+			Labels: map[string]string{
+				"app.kubernetes.io/name":       m.Spec.DeploymentType + "-storage",
+				"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-storage-" + m.Name,
+				"app.kubernetes.io/component":  "storage",
+				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
+				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
+			},
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceName(corev1.ResourceStorage): resource.MustParse(m.Spec.FileStorageSize),
+				},
+			},
+			AccessModes: []corev1.PersistentVolumeAccessMode{
+				corev1.PersistentVolumeAccessMode(m.Spec.FileStorageAccessMode),
+			},
+			StorageClassName: &m.Spec.FileStorageClass,
+		},
+	}
+
+	// Set Pulp instance as the owner and controller
+	ctrl.SetControllerReference(m, pvc, r.Scheme)
+
+	return pvc
+
 }
 
 // deploymentForPulpApi returns a pulp-api Deployment object

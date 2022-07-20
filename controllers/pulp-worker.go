@@ -22,6 +22,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -33,12 +34,12 @@ import (
 )
 
 func (r *PulpReconciler) pulpWorkerController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+
+	// Worker Deployment
 	workerDeployment := &appsv1.Deployment{}
 	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-worker", Namespace: pulp.Namespace}, workerDeployment)
-
+	newWorkerDeployment := r.deploymentForPulpWorker(pulp)
 	if err != nil && errors.IsNotFound(err) {
-		// Define a new deployment
-		newWorkerDeployment := r.deploymentForPulpWorker(pulp)
 		log.Info("Creating a new Pulp Worker Deployment", "Deployment.Namespace", newWorkerDeployment.Namespace, "Deployment.Name", newWorkerDeployment.Name)
 		err = r.Create(ctx, newWorkerDeployment)
 		if err != nil {
@@ -52,20 +53,15 @@ func (r *PulpReconciler) pulpWorkerController(ctx context.Context, pulp *repoman
 		return ctrl.Result{}, err
 	}
 
-	// Ensure the deployment size is the same as the spec
-	workerReplicas := pulp.Spec.Worker.Replicas
-	if *workerDeployment.Spec.Replicas != workerReplicas {
-		log.Info("Reconciling Pulp Worker Deployment", "Deployment.Namespace", workerDeployment.Namespace, "Deployment.Name", workerDeployment.Name)
-		workerDeployment.Spec.Replicas = &workerReplicas
-		err = r.Update(ctx, workerDeployment)
+	// Reconcile Deployment
+	if !equality.Semantic.DeepDerivative(newWorkerDeployment.Spec, workerDeployment.Spec) {
+		log.Info("The Worker Deployment has been modified! Reconciling ...")
+		err = r.Update(ctx, newWorkerDeployment)
 		if err != nil {
-			log.Error(err, "Failed to update Pulp Worker Deployment", "Deployment.Namespace", workerDeployment.Namespace, "Deployment.Name", workerDeployment.Name)
+			log.Error(err, "Error trying to update the Worker Deployment object ... ")
 			return ctrl.Result{}, err
 		}
-		// Ask to requeue after 1 minute in order to give enough time for the
-		// pods be created on the cluster side and the operand be able
-		// to do the next update step accurately.
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
+		return ctrl.Result{RequeueAfter: time.Second}, nil
 	}
 
 	return ctrl.Result{}, nil

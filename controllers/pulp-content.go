@@ -18,11 +18,11 @@ package controllers
 
 import (
 	"context"
-	"reflect"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -35,12 +35,12 @@ import (
 )
 
 func (r *PulpReconciler) pulpContentController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+
+	// Controller Deployment
 	cntDeployment := &appsv1.Deployment{}
 	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-content", Namespace: pulp.Namespace}, cntDeployment)
-
+	newCntDeployment := r.deploymentForPulpContent(pulp)
 	if err != nil && errors.IsNotFound(err) {
-		// Define a new deployment
-		newCntDeployment := r.deploymentForPulpContent(pulp)
 		log.Info("Creating a new Pulp Content Deployment", "Deployment.Namespace", newCntDeployment.Namespace, "Deployment.Name", newCntDeployment.Name)
 		err = r.Create(ctx, newCntDeployment)
 		if err != nil {
@@ -54,29 +54,23 @@ func (r *PulpReconciler) pulpContentController(ctx context.Context, pulp *repoma
 		return ctrl.Result{}, err
 	}
 
-	// Ensure the deployment size is the same as the spec
-	cntReplicas := pulp.Spec.Content.Replicas
-	if *cntDeployment.Spec.Replicas != cntReplicas {
-		log.Info("Reconciling Pulp Content Deployment", "Deployment.Namespace", cntDeployment.Namespace, "Deployment.Name", cntDeployment.Name)
-		cntDeployment.Spec.Replicas = &cntReplicas
-		err = r.Update(ctx, cntDeployment)
+	// Reconcile Deployment
+	if !equality.Semantic.DeepDerivative(newCntDeployment.Spec, cntDeployment.Spec) {
+		log.Info("The Content Deployment has been modified! Reconciling ...")
+		err = r.Update(ctx, newCntDeployment)
 		if err != nil {
-			log.Error(err, "Failed to update Pulp Content Deployment", "Deployment.Namespace", cntDeployment.Namespace, "Deployment.Name", cntDeployment.Name)
+			log.Error(err, "Error trying to update the Content Deployment object ... ")
 			return ctrl.Result{}, err
 		}
-		// Ask to requeue after 1 minute in order to give enough time for the
-		// pods be created on the cluster side and the operand be able
-		// to do the next update step accurately.
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
+		return ctrl.Result{RequeueAfter: time.Second}, nil
 	}
 
 	// SERVICE
 	cntSvc := &corev1.Service{}
 	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-content-svc", Namespace: pulp.Namespace}, cntSvc)
-
+	newCntSvc := r.serviceForContent(pulp)
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new service
-		newCntSvc := r.serviceForContent(pulp)
 		log.Info("Creating a new Content Service", "Service.Namespace", newCntSvc.Namespace, "Service.Name", newCntSvc.Name)
 		err = r.Create(ctx, newCntSvc)
 		if err != nil {
@@ -90,17 +84,15 @@ func (r *PulpReconciler) pulpContentController(ctx context.Context, pulp *repoma
 		return ctrl.Result{}, err
 	}
 
-	// Ensure the service spec is as expected
-	expected_content_spec := serviceContentSpec(pulp.Name)
-
-	if !reflect.DeepEqual(expected_content_spec, cntSvc.Spec) {
-		log.Info("The Content service has been modified! Reconciling ...")
-		err = r.Update(ctx, serviceContentObject(pulp.Name, pulp.Namespace))
+	// Reconcile Service
+	if !equality.Semantic.DeepDerivative(newCntSvc.Spec, cntSvc.Spec) {
+		log.Info("The Content Service has been modified! Reconciling ...")
+		err = r.Update(ctx, newCntSvc)
 		if err != nil {
 			log.Error(err, "Error trying to update the Content Service object ... ")
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{Requeue: true}, nil
+		return ctrl.Result{RequeueAfter: time.Second}, nil
 	}
 
 	return ctrl.Result{}, nil

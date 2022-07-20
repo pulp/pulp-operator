@@ -63,20 +63,6 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 		return ctrl.Result{}, err
 	}
 
-	// Reconcile secret (NOT WORKING!)
-	// IT IS NOT GETTING INTO THIS IF CONDITION
-	if !equality.Semantic.DeepDerivative(expected_secret.Data, pgConfigSecret.Data) {
-		log.Info("The pulp-postgres-configuration secret has been modified! Reconciling ...")
-		// Set Pulp instance as the owner and controller
-		ctrl.SetControllerReference(pulp, expected_secret, r.Scheme)
-		err = r.Update(ctx, expected_secret)
-		if err != nil {
-			log.Error(err, "Error trying to update the pulp-postgres-configuration secret object ... ")
-			return ctrl.Result{}, err
-		}
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
-	}
-
 	// StatefulSet
 	pgSts := &appsv1.StatefulSet{}
 	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-database", Namespace: pulp.Namespace}, pgSts)
@@ -99,7 +85,7 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 	}
 
 	// Reconcile StatefulSet
-	if !equality.Semantic.DeepDerivative(expected_sts.Spec.Template.Spec, pgSts.Spec.Template.Spec) {
+	if !equality.Semantic.DeepDerivative(expected_sts.Spec, pgSts.Spec) {
 		log.Info("The Database StatefulSet has been modified! Reconciling ...")
 		// Set Pulp instance as the owner and controller
 		// not sure if this is the best way to do this, but every time that
@@ -137,16 +123,13 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 	// Reconcile Service
 	if !equality.Semantic.DeepDerivative(expected_svc.Spec, dbSvc.Spec) {
 		log.Info("The Database service has been modified! Reconciling ...")
-		// Set Pulp instance as the owner and controller
-		// not sure if this is the best way to do this, but every time that
-		// a reconciliation occurred the object lost the owner reference
 		ctrl.SetControllerReference(pulp, expected_svc, r.Scheme)
 		err = r.Update(ctx, expected_svc)
 		if err != nil {
 			log.Error(err, "Error trying to update the Database Service object ... ")
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
+		return ctrl.Result{RequeueAfter: time.Second}, nil
 	}
 
 	return ctrl.Result{}, nil
