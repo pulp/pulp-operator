@@ -241,6 +241,28 @@ type Content struct {
 
 	// Resource requirements for the pulp-content container
 	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
+
+	// Defines various deployment affinities.
+	// +kubebuilder:validation:Optional
+	Affinity Affinity `json:"affinity,omitempty"`
+
+	// NodeSelector for the Pulp pods.
+	// +kubebuilder:validation:Optional
+	NodeSelector map[string]string `json:"node_selector,omitempty"`
+
+	// Node tolerations for the Pulp pods.
+	// +kubebuilder:validation:Optional
+	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
+
+	// The timeout for the gunicorn process.
+	// +kubebuilder:default:=90
+	// +kubebuilder:validation:Optional
+	GunicornTimeout int `json:"gunicorn_timeout,omitempty"`
+
+	// The number of gunicorn workers to use for the api.
+	// +kubebuilder:default:=2
+	// +kubebuilder:validation:Optional
+	GunicornWorkers int `json:"gunicorn_workers,omitempty"`
 }
 
 type Worker struct {
@@ -251,6 +273,22 @@ type Worker struct {
 
 	// Resource requirements for the pulp-api container
 	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
+
+	// Defines various deployment affinities.
+	// +kubebuilder:validation:Optional
+	Affinity Affinity `json:"affinity,omitempty"`
+
+	// NodeSelector for the Pulp pods.
+	// +kubebuilder:validation:Optional
+	NodeSelector map[string]string `json:"node_selector,omitempty"`
+
+	// Node tolerations for the Pulp pods.
+	// +kubebuilder:validation:Optional
+	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
+
+	// Topology rule(s) for the pods.
+	// +kubebuilder:validation:Optional
+	TopologySpreadConstraints []corev1.TopologySpreadConstraint `json:"topology_spread_constraints,omitempty"`
 }
 
 type Web struct {

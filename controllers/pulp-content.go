@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -101,25 +102,231 @@ func (r *PulpReconciler) pulpContentController(ctx context.Context, pulp *repoma
 // deploymentForPulpContent returns a pulp-content Deployment object
 func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 
+	labels := map[string]string{
+		"app.kubernetes.io/name":       m.Spec.DeploymentType + "-content",
+		"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-content-" + m.Name,
+		"app.kubernetes.io/component":  "content",
+		"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
+		"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
+		"owner":                        "pulp-dev",
+	}
+
+	replicas := m.Spec.Content.Replicas
+	ls := labelsForPulpContent(m)
+
+	affinity := &corev1.Affinity{}
+	if m.Spec.Api.Affinity.NodeAffinity != nil {
+		affinity.NodeAffinity = m.Spec.Content.Affinity.NodeAffinity
+	}
+
 	runAsUser := int64(0)
 	fsGroup := int64(0)
+	podSecurityContext := &corev1.PodSecurityContext{}
+	if m.Spec.IsK8s {
+		podSecurityContext = &corev1.PodSecurityContext{
+			RunAsUser: &runAsUser,
+			FSGroup:   &fsGroup,
+		}
+	}
 
-	ls := labelsForPulpContent(m)
-	replicas := m.Spec.Content.Replicas
+	nodeSelector := map[string]string{}
+	if m.Spec.Api.NodeSelector != nil {
+		nodeSelector = m.Spec.Content.NodeSelector
+	}
+
+	toleration := []corev1.Toleration{}
+	if m.Spec.Api.Tolerations != nil {
+		toleration = m.Spec.Content.Tolerations
+	}
+
+	dbFieldsEncryptionSecret := ""
+	if m.Spec.DBFieldsEncryptionSecret == "" {
+		dbFieldsEncryptionSecret = m.Name + "-db-fields-encryption"
+	} else {
+		dbFieldsEncryptionSecret = m.Spec.DBFieldsEncryptionSecret
+	}
+
+	volumes := []corev1.Volume{
+		{
+			Name: m.Name + "-server",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: m.Name + "-server",
+					Items: []corev1.KeyToPath{{
+						Key:  "settings.py",
+						Path: "settings.py",
+					}},
+				},
+			},
+		},
+		{
+			Name: m.Name + "-db-fields-encryption",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: dbFieldsEncryptionSecret,
+					Items: []corev1.KeyToPath{{
+						Key:  "database_fields.symmetric.key",
+						Path: "database_fields.symmetric.key",
+					}},
+				},
+			},
+		},
+	}
+
+	if m.Spec.SigningSecret != "" {
+		signingSecretVolume := []corev1.Volume{
+			{
+				Name: m.Name + "-signing-scripts",
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: m.Spec.SigningScriptsConfigmap,
+						},
+					},
+				},
+			},
+			{
+				Name: m.Name + "-signing-galaxy",
+				VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						SecretName: m.Spec.SigningSecret,
+						Items: []corev1.KeyToPath{
+							{
+								Key:  "signing_service.gpg",
+								Path: "signing_serivce.gpg",
+							},
+							{
+								Key:  "signing_service.asc",
+								Path: "signing_serivce.asc",
+							},
+						},
+					},
+				},
+			},
+		}
+		volumes = append(volumes, signingSecretVolume...)
+	}
+
+	if m.Spec.IsFileStorage {
+		fileStorage := corev1.Volume{
+			Name: "file-storage",
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: m.Name + "-file-storage",
+				},
+			},
+		}
+		volumes = append(volumes, fileStorage)
+	} else {
+		emptyDir := []corev1.Volume{
+			{
+				Name: "tmp-file-storage",
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{},
+				},
+			},
+		}
+		volumes = append(volumes, emptyDir...)
+	}
+
+	topologySpreadConstraint := []corev1.TopologySpreadConstraint{}
+	if m.Spec.Api.TopologySpreadConstraints != nil {
+		topologySpreadConstraint = m.Spec.Api.TopologySpreadConstraints
+	}
+
 	resources := m.Spec.Content.ResourceRequirements
+
+	containerPort := 0
+	if m.Spec.Database.PostgresPort == 0 {
+		containerPort = 5432
+	} else {
+		containerPort = m.Spec.Database.PostgresPort
+	}
+
+	envVars := []corev1.EnvVar{
+		{Name: "POSTGRES_SERVICE_HOST", Value: m.Name + "-database-svc." + m.Namespace + ".svc"},
+		{Name: "POSTGRES_SERVICE_PORT", Value: strconv.Itoa(containerPort)},
+		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(m.Spec.Content.GunicornTimeout)},
+		{Name: "PULP_CONTENT_WORKERS", Value: strconv.Itoa(m.Spec.Content.GunicornWorkers)},
+	}
+	if m.Spec.CacheEnabled {
+		redisEnvVars := []corev1.EnvVar{
+			{Name: "REDIS_SERVICE_HOST", Value: m.Name + "-redis-svc." + m.Namespace},
+			{Name: "REDIS_SERVICE_PORT", Value: strconv.Itoa(m.Spec.RedisPort)},
+		}
+		envVars = append(envVars, redisEnvVars...)
+	}
+	if m.Spec.SigningSecret != "" {
+		// for now, we are just dumping the error, but we should handle it
+		signingKeyFingerprint, _ := r.getSigningKeyFingerprint(m.Spec.SigningSecret, m.Namespace)
+		signingKeyEnvVars := []corev1.EnvVar{
+			{Name: "PULP_SIGNING_KEY_FINGERPRINT", Value: signingKeyFingerprint},
+			{Name: "SIGNING_SERVICE", Value: "ansible-default"},
+		}
+		envVars = append(envVars, signingKeyEnvVars...)
+	}
+
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      m.Name + "-server",
+			MountPath: "/etc/pulp/settings.py",
+			SubPath:   "settings.py",
+			ReadOnly:  true,
+		},
+		{
+			Name:      m.Name + "-db-fields-encryption",
+			MountPath: "/etc/pulp/keys/database_fields.symmetric.key",
+			SubPath:   "database_fields.symmetric.key",
+			ReadOnly:  true,
+		},
+	}
+
+	if m.Spec.SigningSecret != "" {
+		signingSecretMount := []corev1.VolumeMount{
+			{
+				Name:      m.Name + "-signing-scripts",
+				MountPath: "/var/lib/pulp/scripts",
+				SubPath:   "scripts",
+				ReadOnly:  true,
+			},
+			{
+				Name:      m.Name + "-signing-galaxy",
+				MountPath: "/etc/pulp/keys/signing_service.gpg",
+				SubPath:   "signing_service.gpg",
+				ReadOnly:  true,
+			},
+			{
+				Name:      m.Name + "-signing-galaxy",
+				MountPath: "/etc/pulp/keys/singing_service.asc",
+				SubPath:   "signing_service.asc",
+				ReadOnly:  true,
+			},
+		}
+		volumeMounts = append(volumeMounts, signingSecretMount...)
+	}
+
+	if m.Spec.IsFileStorage {
+		fileStorageMount := corev1.VolumeMount{
+			Name:      "file-storage",
+			ReadOnly:  false,
+			MountPath: "/var/lib/pulp",
+		}
+		volumeMounts = append(volumeMounts, fileStorageMount)
+	} else {
+		emptyDir := []corev1.VolumeMount{
+			{
+				Name:      "tmp-file-storage",
+				MountPath: "/var/lib/pulp/tmp",
+			},
+		}
+		volumeMounts = append(volumeMounts, emptyDir...)
+	}
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-content",
 			Namespace: m.Namespace,
-			Labels: map[string]string{
-				"app.kubernetes.io/name":       m.Spec.DeploymentType + "-content",
-				"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-content-" + m.Name,
-				"app.kubernetes.io/component":  "content",
-				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
-				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
-				"owner":                        "pulp-dev",
-			},
+			Labels:    labels,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
@@ -131,107 +338,28 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 					Labels: ls,
 				},
 				Spec: corev1.PodSpec{
+					Affinity:                  affinity,
+					SecurityContext:           podSecurityContext,
+					NodeSelector:              nodeSelector,
+					Tolerations:               toleration,
+					Volumes:                   volumes,
+					ServiceAccountName:        "pulp-operator-go-controller-manager",
+					TopologySpreadConstraints: topologySpreadConstraint,
 					Containers: []corev1.Container{{
-						Image:     "quay.io/pulp/pulp",
-						Name:      "content",
-						Args:      []string{"pulp-content"},
-						Resources: resources,
-						Env: []corev1.EnvVar{
-							{
-								Name:  "POSTGRES_SERVICE_HOST",
-								Value: m.Name + "-database-svc." + m.Namespace + ".svc",
-							},
-							{
-								Name:  "POSTGRES_SERVICE_PORT",
-								Value: "5432",
-							},
-							{
-								Name:  "PULP_GUNICORN_TIMEOUT",
-								Value: "60",
-							},
-							{
-								Name:  "PULP_API_WORKERS",
-								Value: "1",
-							},
-						},
+						Name:            "content",
+						Image:           m.Spec.Image + ":" + m.Spec.ImageVersion,
+						ImagePullPolicy: corev1.PullPolicy(m.Spec.ImagePullPolicy),
+						Args:            []string{"pulp-content"},
+						Resources:       resources,
+						Env:             envVars,
 						Ports: []corev1.ContainerPort{{
 							ContainerPort: 24816,
 							Protocol:      "TCP",
 						}},
-						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      m.Name + "-server",
-								MountPath: "/etc/pulp/settings.py",
-								SubPath:   "settings.py",
-								ReadOnly:  true,
-							},
-							{
-								Name:      m.Name + "-admin-password",
-								MountPath: "/etc/pulp/pulp-admin-password",
-								SubPath:   "admin-password",
-								ReadOnly:  true,
-							},
-							{
-								Name:      m.Name + "-db-fields-encryption",
-								MountPath: "/etc/pulp/keys/database_fields.symmetric.key",
-								SubPath:   "database_fields.symmetric.key",
-								ReadOnly:  true,
-							},
-							{
-								Name:      "file-storage-tmp",
-								MountPath: "/var/lib/pulp/tmp",
-								ReadOnly:  false,
-							},
-						},
+						// LivenessProbe:  livenessProbe,
+						// ReadinessProbe: readinessProbe,
+						VolumeMounts: volumeMounts,
 					}},
-					SecurityContext: &corev1.PodSecurityContext{
-						RunAsUser: &runAsUser,
-						FSGroup:   &fsGroup,
-					},
-					Volumes: []corev1.Volume{
-						{
-							Name: m.Name + "-admin-password",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: m.Name + "-admin-password",
-									Items: []corev1.KeyToPath{{
-										Path: "admin-password",
-										Key:  "password",
-									}},
-								},
-							},
-						},
-						{
-							Name: m.Name + "-server",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: m.Name + "-server",
-									Items: []corev1.KeyToPath{{
-										Key:  "settings.py",
-										Path: "settings.py",
-									}},
-								},
-							},
-						},
-						{
-							Name: m.Name + "-db-fields-encryption",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: m.Name + "-db-fields-encryption",
-									Items: []corev1.KeyToPath{{
-										Key:  "database_fields.symmetric.key",
-										Path: "database_fields.symmetric.key",
-									}},
-								},
-							},
-						},
-						{
-							Name: "file-storage-tmp",
-							VolumeSource: corev1.VolumeSource{
-								EmptyDir: &corev1.EmptyDirVolumeSource{},
-							},
-						},
-					},
 				},
 			},
 		},
