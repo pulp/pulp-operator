@@ -1,0 +1,11 @@
+presubmits:
+- name: pull-test-infra-yamllint
+  always_run: true
+  decorate: true
+  skip_report: false
+  spec:
+    containers:
+    - image: quay.io/kubermatic/yamllint:0.1
+      command:
+      - echo
+      - "it works"
