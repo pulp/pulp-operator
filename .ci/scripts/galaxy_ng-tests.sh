@@ -14,7 +14,7 @@ if [[ "${1-null}" == "--minikube" ]] || [[ "${1-null}" == "-m" ]]; then
   fi
 fi
 
-pip3 install ansible
+pip3 install "ansible<2.13.2"
 
 BASE_ADDR="http://$SERVER:$WEB_PORT"
 echo $BASE_ADDR
