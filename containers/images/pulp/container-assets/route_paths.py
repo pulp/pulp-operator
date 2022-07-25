@@ -20,7 +20,7 @@ name = sys.argv[1]
 router = []
 
 for plugin_conf in nginx_configs:
-    app = "container"
+    app = "galaxy" if "galaxy" in plugin_conf else plugin_conf.split("pulp_")[1].split("/")[0]
     conf = nginx.loadf(plugin_conf)
     for location in conf.filter("Location"):
         path = location.value
