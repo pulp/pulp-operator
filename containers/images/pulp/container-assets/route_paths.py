@@ -12,9 +12,10 @@ nginx_configs = []
 for i in pkgutil.iter_modules():
     # filter pulp and galaxy packages
     if re.search(r'pulp_.*|galaxy_ng',i.name):
+        snippet_file = i.module_finder.path + "/" + i.name + "/app/webserver_snippets/nginx.conf"
         # only add the filename to array if it exists
-        if Path(i.module_finder.path + "/" + i.name + "/app/webserver_snippets/nginx.conf").is_file():
-            nginx_configs.append(i.module_finder.path + "/" + i.name + "/app/webserver_snippets/nginx.conf")
+        if Path(snippet_file).is_file():
+            nginx_configs.append(snippet_file)
 
 name = sys.argv[1]
 router = []
