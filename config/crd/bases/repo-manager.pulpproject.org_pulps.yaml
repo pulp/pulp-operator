@@ -1214,6 +1214,9 @@ spec:
                     type: string
                   debug:
                     type: string
+                  raw_settings:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
                 type: object
               redis_image:
                 default: redis:latest

@@ -20,6 +20,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -227,6 +228,10 @@ type PulpSettings struct {
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="/pulp/"
 	ApiRoot string `json:"api_root,omitempty"`
+
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Optional
+	RawSettings runtime.RawExtension `json:"raw_settings"`
 }
 
 type GalaxyFeatureFlags struct {

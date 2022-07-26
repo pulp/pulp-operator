@@ -18,6 +18,8 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -27,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -650,14 +653,17 @@ func labelsForPulpApi(m *repomanagerv1alpha1.Pulp) map[string]string {
 }
 
 func (r *PulpReconciler) pulpServerSecret(m *repomanagerv1alpha1.Pulp, pgUser, pgPwd, database, port, sslmode string) *corev1.Secret {
-	sec := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name + "-server",
-			Namespace: m.Namespace,
-		},
-		StringData: map[string]string{
-			"settings.py": `
-API_ROOT = "/pulp/"
+
+	var pulp_settings string
+
+	if m.Spec.PulpSettings.ApiRoot != "" {
+		pulp_settings = fmt.Sprintf("API_ROOT = \"%v\"\n", m.Spec.PulpSettings.ApiRoot)
+	} else {
+		pulp_settings = fmt.Sprintln("API_ROOT = \"/pulp/\"")
+	}
+
+	if reflect.DeepEqual(m.Spec.PulpSettings.RawSettings, runtime.RawExtension{}) {
+		pulp_settings = pulp_settings + `API_ROOT = "/pulp/"
 CACHE_ENABLED = "True"
 DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
 GALAXY_COLLECTION_SIGNING_SERVICE = "ansible-default"
@@ -677,8 +683,18 @@ DATABASES = {
 }
 REDIS_HOST =  "` + m.Name + `-redis-svc.` + m.Namespace + `"
 REDIS_PORT =  "6379"
-REDIS_PASSWORD = ""
-`,
+REDIS_PASSWORD = ""`
+	} else {
+		pulp_settings = pulp_settings + convertRawPulpSettings(m)
+	}
+
+	sec := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      m.Name + "-server",
+			Namespace: m.Namespace,
+		},
+		StringData: map[string]string{
+			"settings.py": pulp_settings,
 		},
 	}
 

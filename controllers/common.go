@@ -3,10 +3,12 @@ package controllers
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strings"
 
+	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	"golang.org/x/crypto/openpgp"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -60,4 +62,23 @@ func (r *PulpReconciler) getSigningKeyFingerprint(secretName, secretNamespace st
 	fingerPrint := keyring[0].PrimaryKey.Fingerprint
 	return strings.ToUpper(hex.EncodeToString(fingerPrint[:])), nil
 
+}
+
+func convertRawPulpSettings(pulp *repomanagerv1alpha1.Pulp) string {
+	raw_settings := pulp.Spec.PulpSettings.RawSettings.Raw
+	var settingsJson map[string]interface{}
+	json.Unmarshal(raw_settings, &settingsJson)
+
+	var convertedSettings string
+	for k, v := range settingsJson {
+		switch v.(type) {
+		case map[string]interface{}:
+			rawMapping, _ := json.Marshal(v)
+			convertedSettings = convertedSettings + fmt.Sprintln(strings.ToUpper(k), "=", strings.Replace(string(rawMapping), "\"", "'", -1))
+		default:
+			convertedSettings = convertedSettings + fmt.Sprintf("%v = \"%v\"\n", strings.ToUpper(k), v)
+		}
+	}
+
+	return convertedSettings
 }

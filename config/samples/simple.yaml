@@ -25,9 +25,6 @@ spec:
   web:
     replicas: 1
 
-  pulp_settings:
-    api_root: "/pulp/"
-
   database:
 #    postgres_storage_requirements: "5Gi"
 
@@ -41,3 +38,25 @@ spec:
   redis_storage_class: standard
 
   ingress_type: nodeport
+
+  pulp_settings:
+    api_root: "/pulp/"
+    #raw_settings:
+    #  cache_enabled: true
+    #  db_encryption_key: "/etc/pulp/keys/database_fields.symmetric.key"
+    #  galaxy_collection_signing_service: ansible-default
+    #  ansible_certs_dir: "/etc/pulp/keys/"
+    #  databases:
+    #    default:
+    #      HOST: "pulp-database-svc.pulp.svc.cluster.local"
+    #      ENGINE: django.db.backends.postgresql_psycopg2
+    #      NAME: "pulp"
+    #      USER: "pulp"
+    #      PASSWORD: "{{ postgres_pass }}"
+    #      PORT: "5432"
+    #      CONN_MAX_AGE: 0
+    #      OPTIONS:
+    #        sslmode: "prefer"
+    #  redis_host: "pulp-redis-svc.pulp"
+    #  redis_port: 6379
+    #  redis_password: ""
