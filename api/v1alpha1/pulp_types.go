@@ -127,7 +127,7 @@ type PulpSpec struct {
 	//+kubebuilder:validation:Optional
 	Web Web `json:"web,omitempty"`
 
-	// +kubebuilder:default:=false
+	// +kubebuilder:default:=true
 	// +kubebuilder:validation:Optional
 	CacheEnabled bool `json:"cache_enabled,omitempty"`
 
