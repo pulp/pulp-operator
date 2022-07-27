@@ -509,7 +509,7 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 
 	resources := m.Spec.Api.ResourceRequirements
 
-	readinessProbe := &corev1.Probe{
+	/*readinessProbe := &corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
 			Exec: &corev1.ExecAction{
 				Command: []string{
@@ -540,7 +540,7 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		PeriodSeconds:       10,
 		SuccessThreshold:    1,
 		TimeoutSeconds:      5,
-	}
+	} */
 
 	// the following variables are defined to avoid issues with reconciliation
 	restartPolicy := corev1.RestartPolicy("Always")
@@ -593,11 +593,10 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 							ContainerPort: 24817,
 							Protocol:      "TCP",
 						}},
-
-						LivenessProbe:  livenessProbe,
-						ReadinessProbe: readinessProbe,
-						Resources:      resources,
-						VolumeMounts:   volumeMounts,
+						/* LivenessProbe:  livenessProbe,
+						ReadinessProbe: readinessProbe, */
+						Resources:    resources,
+						VolumeMounts: volumeMounts,
 					}},
 
 					/* the following configs are not defined on pulp-operator (ansible version)  */
