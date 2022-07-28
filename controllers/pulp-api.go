@@ -134,10 +134,32 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 			log.Error(err, "Failed to create new pulp-admin-password secret", "Secret.Namespace", adminPwd.Namespace, "Secret.Name", adminPwd.Name)
 			return ctrl.Result{}, err
 		}
-		// Deployment created successfully - return and requeue
+		// Secret created successfully - return and requeue
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get pulp-admin-password secret")
+		return ctrl.Result{}, err
+	}
+
+	// Create pulp-container-auth secret
+	containerAuth := &corev1.Secret{}
+	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-container-auth", Namespace: pulp.Namespace}, containerAuth)
+
+	// Create the secret in case it is not found
+	if pulp.Spec.ContainerTokenSecret == "" && err != nil && errors.IsNotFound(err) {
+		authSecret := pulpContainerAuth(pulp)
+		// Following legacy pulp-operator implementation we are not setting ownerReferences to avoid garbage collection
+		//ctrl.SetControllerReference(pulp, adminPwd, r.Scheme)
+		log.Info("Creating a new pulp-container-auth secret", "Secret.Namespace", authSecret.Namespace, "Secret.Name", authSecret.Name)
+		err = r.Create(ctx, authSecret)
+		if err != nil {
+			log.Error(err, "Failed to create new pulp-container-auth secret", "Secret.Namespace", authSecret.Namespace, "Secret.Name", authSecret.Name)
+			return ctrl.Result{}, err
+		}
+		// Secret created successfully - return and requeue
+		return ctrl.Result{Requeue: true}, nil
+	} else if err != nil {
+		log.Error(err, "Failed to get pulp-container-auth secret")
 		return ctrl.Result{}, err
 	}
 
@@ -420,27 +442,32 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		volumes = append(volumes, signingSecretVolume...)
 	}
 
+	var containerAuthSecretName string
 	if m.Spec.ContainerTokenSecret != "" {
-		containerTokenSecretVolume := corev1.Volume{
-			Name: m.Name + "-container-auth-certs",
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: m.Spec.ContainerTokenSecret,
-					Items: []corev1.KeyToPath{
-						{
-							Key:  "container_auth_public_key.pem",
-							Path: m.Spec.ContainerAuthPublicKey,
-						},
-						{
-							Key:  "container_auth_private_key.pem",
-							Path: m.Spec.ContainerAuthPrivateKey,
-						},
+		containerAuthSecretName = m.Spec.ContainerTokenSecret
+	} else {
+		containerAuthSecretName = m.Name + "-container-auth"
+	}
+
+	containerTokenSecretVolume := corev1.Volume{
+		Name: m.Name + "-container-auth-certs",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: containerAuthSecretName,
+				Items: []corev1.KeyToPath{
+					{
+						Key:  "container_auth_public_key.pem",
+						Path: m.Spec.ContainerAuthPublicKey,
+					},
+					{
+						Key:  "container_auth_private_key.pem",
+						Path: m.Spec.ContainerAuthPrivateKey,
 					},
 				},
 			},
-		}
-		volumes = append(volumes, containerTokenSecretVolume)
+		},
 	}
+	volumes = append(volumes, containerTokenSecretVolume)
 
 	volumeMounts := []corev1.VolumeMount{
 		{
@@ -726,6 +753,22 @@ func pulpAdminPasswordSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
 		},
 		StringData: map[string]string{
 			"password": createPwd(32),
+		},
+	}
+}
+
+// pulp-container-auth
+func pulpContainerAuth(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
+
+	privKey, pubKey := genTokenAuthKey()
+	return &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      m.Name + "-container-auth",
+			Namespace: m.Namespace,
+		},
+		StringData: map[string]string{
+			"container_auth_private_key.pem": privKey,
+			"container_auth_public_key.pem":  pubKey,
 		},
 	}
 }

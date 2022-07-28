@@ -2,8 +2,13 @@ package controllers
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	crypt_rand "crypto/rand"
+	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -81,4 +86,15 @@ func convertRawPulpSettings(pulp *repomanagerv1alpha1.Pulp) string {
 	}
 
 	return convertedSettings
+}
+
+func genTokenAuthKey() (string, string) {
+	newKey, _ := ecdsa.GenerateKey(elliptic.P256(), crypt_rand.Reader)
+	pubKeyDER, _ := x509.MarshalPKIXPublicKey(&newKey.PublicKey)
+	ecDER, _ := x509.MarshalECPrivateKey(newKey)
+
+	privateKey := string(pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: ecDER}))
+	publicKey := string(pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubKeyDER}))
+
+	return privateKey, publicKey
 }
