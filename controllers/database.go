@@ -460,6 +460,13 @@ func databaseConfigSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
 		sslMode = m.Spec.Database.PostgresSSLMode
 	}
 
+	pgVersion := ""
+	if m.Spec.Database.PostgresVersion == "" {
+		pgVersion = "13"
+	} else {
+		pgVersion = m.Spec.Database.PostgresVersion
+	}
+
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-postgres-configuration",
@@ -470,7 +477,7 @@ func databaseConfigSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
 			"username": m.Spec.DeploymentType,
 			"database": m.Spec.DeploymentType,
 			"port":     "5432",
-			"host":     m.Name + "-postgres-" + m.Spec.Database.PostgresVersion,
+			"host":     m.Name + "-postgres-" + pgVersion,
 			"sslmode":  sslMode,
 			"type":     "managed",
 		},
