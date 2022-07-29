@@ -484,7 +484,7 @@ spec:
                     type: array
                 type: object
               cache_enabled:
-                default: false
+                default: true
                 type: boolean
               container_auth_private_key_name:
                 default: container_auth_private_key.pem
@@ -1019,6 +1019,31 @@ spec:
                             type: object
                         type: object
                     type: object
+                  external_db:
+                    properties:
+                      postgres_con_max_age:
+                        default: "0"
+                        type: string
+                      postgres_db_name:
+                        type: string
+                      postgres_host:
+                        type: string
+                      postgres_password:
+                        type: string
+                      postgres_port:
+                        type: integer
+                      postgres_ssl_mode:
+                        type: string
+                      postgres_user:
+                        type: string
+                    required:
+                    - postgres_db_name
+                    - postgres_host
+                    - postgres_password
+                    - postgres_port
+                    - postgres_ssl_mode
+                    - postgres_user
+                    type: object
                   node_selector:
                     additionalProperties:
                       type: string
@@ -1044,21 +1069,7 @@ spec:
                   postgres_port:
                     default: 5432
                     type: integer
-                  postgres_ssl_mode:
-                    default: prefer
-                    type: string
-                  postgres_storage_class:
-                    default: standard
-                    description: Name of the StorageClass required by the claim.
-                    type: string
-                  postgres_storage_requirements:
-                    anyOf:
-                    - type: integer
-                    - type: string
-                    default: 8Gi
-                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                    x-kubernetes-int-or-string: true
-                  resource_requirements:
+                  postgres_resource_requirements:
                     description: Resource requirements for the database container.
                     properties:
                       limits:
@@ -1084,6 +1095,20 @@ spec:
                           to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                     type: object
+                  postgres_ssl_mode:
+                    default: prefer
+                    type: string
+                  postgres_storage_class:
+                    default: standard
+                    description: Name of the StorageClass required by the claim.
+                    type: string
+                  postgres_storage_requirements:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    default: 8Gi
+                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                    x-kubernetes-int-or-string: true
                   tolerations:
                     description: Node tolerations for the database pod.
                     items:
@@ -1128,8 +1153,6 @@ spec:
                   version:
                     default: "13"
                     type: string
-                required:
-                - postgres_data_path
                 type: object
               db_fields_encryption_secret:
                 description: Secret where the Fernet symmetric encryption key is stored.

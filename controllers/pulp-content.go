@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -236,16 +237,24 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 
 	resources := m.Spec.Content.ResourceRequirements
 
-	containerPort := 0
-	if m.Spec.Database.PostgresPort == 0 {
-		containerPort = 5432
+	var dbHost, dbPort string
+	if reflect.DeepEqual(m.Spec.Database.ExternalDB, repomanagerv1alpha1.ExternalDB{}) {
+		containerPort := 0
+		if m.Spec.Database.PostgresPort == 0 {
+			containerPort = 5432
+		} else {
+			containerPort = m.Spec.Database.PostgresPort
+		}
+		dbHost = m.Name + "-database-svc"
+		dbPort = strconv.Itoa(containerPort)
 	} else {
-		containerPort = m.Spec.Database.PostgresPort
+		dbHost = m.Spec.Database.ExternalDB.PostgresHost
+		dbPort = strconv.Itoa(m.Spec.Database.ExternalDB.PostgresPort)
 	}
 
 	envVars := []corev1.EnvVar{
-		{Name: "POSTGRES_SERVICE_HOST", Value: m.Name + "-database-svc." + m.Namespace + ".svc"},
-		{Name: "POSTGRES_SERVICE_PORT", Value: strconv.Itoa(containerPort)},
+		{Name: "POSTGRES_SERVICE_HOST", Value: dbHost},
+		{Name: "POSTGRES_SERVICE_PORT", Value: dbPort},
 		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(m.Spec.Content.GunicornTimeout)},
 		{Name: "PULP_CONTENT_WORKERS", Value: strconv.Itoa(m.Spec.Content.GunicornWorkers)},
 	}

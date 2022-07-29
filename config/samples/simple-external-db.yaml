@@ -1,0 +1,40 @@
+apiVersion: repo-manager.pulpproject.org/v1alpha1
+kind: Pulp
+metadata:
+  name: pulp
+spec:
+  deployment_type: pulp
+  is_k8s: true
+  cache_enabled: true
+  image_version: latest
+  api:
+    replicas: 1
+  content:
+    replicas: 1
+  worker:
+    replicas: 1
+  web:
+    replicas: 1
+
+  database:
+    external_db:
+      postgres_port: 5432
+      postgres_ssl_mode: prefer
+      postgres_host: postgres.db.svc.cluster.local
+      postgres_user: pulp-admin
+      postgres_password: password
+      postgres_db_name: pulp
+
+  file_storage_access_mode: "ReadWriteOnce"
+  file_storage_size: "2Gi"
+  file_storage_storage_class: "standard"
+  signing_secret: "signing-galaxy"
+  signing_scripts_configmap: "signing-scripts"
+  image_web: "quay.io/pulp/galaxy-web"
+
+  redis_storage_class: standard
+
+  ingress_type: nodeport
+
+  pulp_settings:
+    api_root: "/pulp/"

@@ -79,12 +79,15 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 	// Create pulp-server secret in case it is not found
 	if err != nil && errors.IsNotFound(err) {
 
-		log.Info("Retrieving Postgres credentials from "+pulp.Name+"-postgres-configuration secret", "Secret.Namespace", pulp.Namespace, "Secret.Name", pulp.Name)
-		pgCredentials, err := r.retrieveSecretData(ctx, pulp.Name+"-postgres-configuration", pulp.Namespace, "username", "password", "database", "port", "sslmode")
-		if err != nil {
-			log.Error(err, "Secret Not Found!", "Secret.Namespace", pulp.Namespace, "Secret.Name", pulp.Name)
+		// retrieve database credentials from postgres-secret only if we are not passing an external database settings
+		pgCredentials := map[string]string{}
+		if reflect.DeepEqual(pulp.Spec.Database.ExternalDB, repomanagerv1alpha1.ExternalDB{}) {
+			log.Info("Retrieving Postgres credentials from "+pulp.Name+"-postgres-configuration secret", "Secret.Namespace", pulp.Namespace, "Secret.Name", pulp.Name)
+			pgCredentials, err = r.retrieveSecretData(ctx, pulp.Name+"-postgres-configuration", pulp.Namespace, "username", "password", "database", "port", "sslmode")
+			if err != nil {
+				log.Error(err, "Secret Not Found!", "Secret.Namespace", pulp.Namespace, "Secret.Name", pulp.Name)
+			}
 		}
-
 		sec := r.pulpServerSecret(pulp, pgCredentials["username"], pgCredentials["password"], pgCredentials["database"], pgCredentials["port"], pgCredentials["sslmode"])
 		log.Info("Creating a new pulp-server secret", "Secret.Namespace", sec.Namespace, "Secret.Name", sec.Name)
 		err = r.Create(ctx, sec)
@@ -300,16 +303,24 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		topologySpreadConstraint = m.Spec.Api.TopologySpreadConstraints
 	}
 
-	containerPort := 0
-	if m.Spec.Database.PostgresPort == 0 {
-		containerPort = 5432
+	var dbHost, dbPort string
+	if reflect.DeepEqual(m.Spec.Database.ExternalDB, repomanagerv1alpha1.ExternalDB{}) {
+		containerPort := 0
+		if m.Spec.Database.PostgresPort == 0 {
+			containerPort = 5432
+		} else {
+			containerPort = m.Spec.Database.PostgresPort
+		}
+		dbHost = m.Name + "-database-svc"
+		dbPort = strconv.Itoa(containerPort)
 	} else {
-		containerPort = m.Spec.Database.PostgresPort
+		dbHost = m.Spec.Database.ExternalDB.PostgresHost
+		dbPort = strconv.Itoa(m.Spec.Database.ExternalDB.PostgresPort)
 	}
 
 	envVars := []corev1.EnvVar{
-		{Name: "POSTGRES_SERVICE_HOST", Value: m.Name + "-database-svc." + m.Namespace + ".svc"},
-		{Name: "POSTGRES_SERVICE_PORT", Value: strconv.Itoa(containerPort)},
+		{Name: "POSTGRES_SERVICE_HOST", Value: dbHost},
+		{Name: "POSTGRES_SERVICE_PORT", Value: dbPort},
 		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(m.Spec.Api.GunicornTimeout)},
 		{Name: "PULP_API_WORKERS", Value: strconv.Itoa(m.Spec.Api.GunicornWorkers)},
 	}
@@ -689,23 +700,39 @@ func (r *PulpReconciler) pulpServerSecret(m *repomanagerv1alpha1.Pulp, pgUser, p
 		pulp_settings = fmt.Sprintln("API_ROOT = \"/pulp/\"")
 	}
 
+	var dbHost, dbPort, dbUser, dbPass, dbName, dbSSLMode string
+	if reflect.DeepEqual(m.Spec.Database.ExternalDB, repomanagerv1alpha1.ExternalDB{}) {
+		dbHost = m.Name + "-database-svc"
+		dbPort = port
+		dbUser = pgUser
+		dbPass = pgPwd
+		dbName = database
+		dbSSLMode = sslmode
+	} else {
+		dbHost = m.Spec.Database.ExternalDB.PostgresHost
+		dbPort = strconv.Itoa(m.Spec.Database.ExternalDB.PostgresPort)
+		dbUser = m.Spec.Database.ExternalDB.PostgresUser
+		dbPass = m.Spec.Database.ExternalDB.PostgresPassword
+		dbName = m.Spec.Database.ExternalDB.PostgresDBName
+		dbSSLMode = m.Spec.Database.ExternalDB.PostgresSSLMode
+	}
+
 	if reflect.DeepEqual(m.Spec.PulpSettings.RawSettings, runtime.RawExtension{}) {
-		pulp_settings = pulp_settings + `API_ROOT = "/pulp/"
-CACHE_ENABLED = "True"
+		pulp_settings = pulp_settings + `CACHE_ENABLED = "True"
 DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
 GALAXY_COLLECTION_SIGNING_SERVICE = "ansible-default"
 ANSIBLE_CERTS_DIR = "/etc/pulp/keys/"
 CONTENT_ORIGIN = "http://` + m.Name + `-content-svc.` + m.Namespace + `.svc.cluster.local:24816"
 DATABASES = {
 	'default': {
-		'HOST': '` + m.Name + `-database-svc.` + m.Namespace + `.svc.cluster.local',
+		'HOST': '` + dbHost + `',
 		'ENGINE': 'django.db.backends.postgresql_psycopg2',
-		'NAME': '` + database + `',
-		'USER': '` + pgUser + `',
-		'PASSWORD': '` + pgPwd + `',
-		'PORT': '` + port + `',
+		'NAME': '` + dbName + `',
+		'USER': '` + dbUser + `',
+		'PASSWORD': '` + dbPass + `',
+		'PORT': '` + dbPort + `',
 		'CONN_MAX_AGE': 0,
-		'OPTIONS': { 'sslmode': '` + sslmode + `' },
+		'OPTIONS': { 'sslmode': '` + dbSSLMode + `' },
 	}
 }
 REDIS_HOST =  "` + m.Name + `-redis-svc.` + m.Namespace + `"

@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"reflect"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -27,6 +28,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 )
@@ -72,13 +74,18 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 
-	pulpController, err := r.databaseController(ctx, pulp, log)
-	if err != nil {
-		return pulpController, err
-	} else if pulpController.Requeue {
-		return pulpController, nil
-	} else if pulpController.RequeueAfter > 0 {
-		return pulpController, nil
+	var pulpController reconcile.Result
+
+	// Do not provision postgres resources if using external DB
+	if reflect.DeepEqual(pulp.Spec.Database.ExternalDB, repomanagerv1alpha1.ExternalDB{}) {
+		pulpController, err = r.databaseController(ctx, pulp, log)
+		if err != nil {
+			return pulpController, err
+		} else if pulpController.Requeue {
+			return pulpController, nil
+		} else if pulpController.RequeueAfter > 0 {
+			return pulpController, nil
+		}
 	}
 
 	pulpController, err = r.pulpCacheController(ctx, pulp, log)

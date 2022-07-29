@@ -306,10 +306,26 @@ type Web struct {
 	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
 }
 
+type ExternalDB struct {
+	PostgresPort     int    `json:"postgres_port"`
+	PostgresSSLMode  string `json:"postgres_ssl_mode"`
+	PostgresHost     string `json:"postgres_host"`
+	PostgresUser     string `json:"postgres_user"`
+	PostgresPassword string `json:"postgres_password"`
+	PostgresDBName   string `json:"postgres_db_name"`
+
+	// +kubebuilder:default:="0"
+	// +kubebuilder:validation:Optional
+	PostgresConMaxAge string `json:"postgres_con_max_age"`
+}
+
 type Database struct {
 	// Size is the size of number of db replicas
 	// The default postgres image does not provide clustering
 	//Replicas int32 `json:"replicas,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	ExternalDB ExternalDB `json:"external_db"`
 
 	// +kubebuilder:default:="13"
 	// +kubebuilder:validation:Optional
@@ -331,6 +347,7 @@ type Database struct {
 	PostgresExtraArgs []string `json:"postgres_extra_args,omitempty"`
 
 	// +kubebuilder:default:="/var/lib/postgresql/data/pgdata"
+	// +kubebuilder:validation:Optional
 	PostgresDataPath string `json:"postgres_data_path"`
 
 	// +kubebuilder:default:="--auth-host=scram-sha-256"
@@ -343,7 +360,7 @@ type Database struct {
 
 	// Resource requirements for the database container.
 	// +kubebuilder:validation:Optional
-	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
+	ResourceRequirements corev1.ResourceRequirements `json:"postgres_resource_requirements,omitempty"`
 
 	// Defines various deployment affinities.
 	// +kubebuilder:validation:Optional
