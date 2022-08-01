@@ -33,10 +33,14 @@
     when:
     - ingress_type | lower == 'route'
 
-  - set_fact:
-      route_host: "{{ (route_host != '') | ternary(route_host,ansible_operator_meta.name + '.' + _default_ingress_domain.resources[0].spec.domain | default('')) }}"
-
-  - name: Define web RUL
+  - name: Ensure route host
     set_fact:
-      web_url: route_host
+      route_host: "{{ ansible_operator_meta.name + '.' + _default_ingress_domain.resources[0].spec.domain | default('') }}"
+    when:
+      - route_host == ''
+      - ingress_type | lower == 'route'
+
+  - name: Define web URL
+    set_fact:
+      web_url: "https://{{ route_host }}"
   when: ingress_type | lower == 'route'
