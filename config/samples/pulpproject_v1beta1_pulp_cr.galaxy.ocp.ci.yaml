@@ -11,6 +11,7 @@ spec:
   admin_password_secret: "example-pulp-admin-password"
   storage_type: File
   ingress_type: route
+  route_host: route_host_placeholder
   route_tls_termination_mechanism: edge
   # k3s local-path requires this
   file_storage_access_mode: "ReadWriteOnce"

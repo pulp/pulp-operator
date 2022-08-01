@@ -5,30 +5,11 @@
     - ingress_type | lower == 'route'
     - route_tls_secret != ''
 
-- block:
-    - set_fact:
-        _pulp_plugins:
-          - { name: "{{ ansible_operator_meta.name }}-content", path: "{{ pulp_combined_settings.content_path_prefix | default('/pulp/content/') }}", targetPort: "content-24816", serviceName: "{{ ansible_operator_meta.name }}-content-svc" }
-          - { name: "{{ ansible_operator_meta.name }}-api-v3", path: "{{ pulp_combined_settings.api_root }}api/v3/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
-          - { name: "{{ ansible_operator_meta.name }}-auth", path: "/auth/login/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
-          - { name: "{{ ansible_operator_meta.name }}", path: "/", targetPort: "api-24817", serviceName: "{{ ansible_operator_meta.name }}-api-svc" }
-
-    - k8s_info:
-        kind: Pod
-        namespace: "{{ ansible_operator_meta.namespace }}"
-        label_selectors:
-          - "app.kubernetes.io/component = api"
-      register: _pod_list
-
-    - k8s_exec:
-        namespace: "{{ ansible_operator_meta.namespace }}"
-        pod: "{{ _pod_list.resources[0].metadata.name }}"
-        command: "/usr/bin/route_paths.py {{ ansible_operator_meta.name }}"
-      register: _route_paths_output
-
-    - set_fact:
-        _pulp_plugins: "{{ _pulp_plugins + _route_paths_output.stdout | from_json }}"
-
+- name: Gathering routes
+  include_tasks: load_routes.yml
+  vars:
+    max_retries: 30
+    retry_delay: 5
   when:
     - ingress_type | lower == 'route'
 
@@ -41,3 +22,16 @@
   when:
     - ingress_type is defined
     - ('route' == ingress_type|lower) or ('ingress' == ingress_type|lower)
+
+- k8s_status:
+    api_version: "{{ api_version }}"
+    kind: "{{ kind }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    conditions:
+      - type: "{{ deployment_type|capitalize }}-Routes-Ready"
+        message: Checking routes
+        reason: CheckingRoutes
+        status: "True"
+        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+
