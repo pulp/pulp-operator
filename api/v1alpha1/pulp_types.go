@@ -385,10 +385,7 @@ type Database struct {
 
 // PulpStatus defines the observed state of Pulp
 type PulpStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	Nodes []string `json:"nodes"`
+	Conditions []metav1.Condition `json:"conditions"`
 }
 
 // Pulp is the Schema for the pulps API

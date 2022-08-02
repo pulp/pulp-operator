@@ -16,6 +16,8 @@ import (
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	"golang.org/x/crypto/openpgp"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -97,4 +99,28 @@ func genTokenAuthKey() (string, string) {
 	publicKey := string(pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubKeyDER}))
 
 	return privateKey, publicKey
+}
+
+func (r *PulpReconciler) updateStatus(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, conditionStatus metav1.ConditionStatus, conditionType, conditionReason, conditionMessage string) {
+
+	// if we are updating a status it means that operator didn't finish its execution
+
+	if !v1.IsStatusConditionPresentAndEqual(pulp.Status.Conditions, pulp.Name+"-Operator-Finished-Execution", metav1.ConditionTrue) {
+		v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
+			Type:               pulp.Spec.DeploymentType + "-Operator-Finished-Execution",
+			Status:             metav1.ConditionFalse,
+			Reason:             "OperatorRunning",
+			LastTransitionTime: metav1.Now(),
+			Message:            pulp.Name + " operator tasks running",
+		})
+	}
+
+	v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
+		Type:               conditionType,
+		Status:             conditionStatus,
+		Reason:             conditionReason,
+		LastTransitionTime: metav1.Now(),
+		Message:            conditionMessage,
+	})
+	r.Status().Update(ctx, pulp)
 }

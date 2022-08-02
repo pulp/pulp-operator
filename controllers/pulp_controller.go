@@ -25,9 +25,13 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	v1 "k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
+
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
@@ -131,6 +135,17 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return pulpController, nil
 	} else if pulpController.RequeueAfter > 0 {
 		return pulpController, nil
+	}
+
+	if v1.IsStatusConditionFalse(pulp.Status.Conditions, pulp.Name+"-Operator-Finished-Execution") {
+		v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
+			Type:               pulp.Name + "-Operator-Finished-Execution",
+			Status:             metav1.ConditionTrue,
+			Reason:             "OperatorFinishedExecution",
+			LastTransitionTime: metav1.Now(),
+			Message:            "All tasks ran successfully",
+		})
+		r.Status().Update(ctx, pulp)
 	}
 
 	return pulpController, nil
