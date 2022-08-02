@@ -151,7 +151,6 @@ bundle: kustomize ## Generate bundle manifests and metadata, then validate gener
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle $(BUNDLE_GEN_FLAGS)
-	sed -i "s|$(IMAGE_TAG_BASE):devel|${IMG}|g" bundle/manifests/pulp-operator.clusterserviceversion.yaml
 	operator-sdk bundle validate ./bundle
 
 .PHONY: bundle-build

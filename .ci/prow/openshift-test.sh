@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e #fail in case of non zero return
+set -euo pipefail
 
 CI_TEST=${CI_TEST:-pulp}
 API_ROOT=${API_ROOT:-"/pulp/"}
@@ -23,8 +23,6 @@ show_logs() {
   exit 1
 }
 
-sed -i 's/kubectl/oc/g' Makefile
-make deploy IMG=quay.io/pulp/pulp-operator:devel
 oc apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
 
 ROUTE_HOST="pulpci.$(oc get ingresses.config/cluster -o jsonpath={.spec.domain})"
@@ -61,8 +59,7 @@ for tries in {0..180}; do
     fi
     if [[ $tries -eq 180 ]]; then
       echo "ERROR 3: Pods never all transitioned to Running state"
-      storage_debug
-      exit 3
+      show_logs
     fi
   fi
   sleep 5
