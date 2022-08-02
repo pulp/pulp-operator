@@ -10,11 +10,6 @@ kind: Deployment
 metadata:
   name: controller-manager
   namespace: system
-  annotations: # About kube-linter checks: https://docs.kubelinter.io/#/generated/checks
-    email: pulp-dev@redhat.com
-    ignore-check.kube-linter.io/minimum-three-replicas: "Operator should be unique"
-    ignore-check.kube-linter.io/no-read-only-root-fs: "Operator needs to generate files"
-    ignore-check.kube-linter.io/no-node-affinity: "Do not check node affinity"
   labels:
     control-plane: controller-manager
     app.kubernetes.io/name: pulp-operator
@@ -25,8 +20,6 @@ spec:
     matchLabels:
       control-plane: controller-manager
   replicas: 1
-  strategy:
-    type: RollingUpdate
   template:
     metadata:
       annotations:
@@ -38,42 +31,36 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+        # TODO(user): For common cases that do not require escalating privileges
+        # it is recommended to ensure that all your Pods/Containers are restrictive.
+        # More info: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
+        # Please uncomment the following code if your project does NOT have to work on old Kubernetes
+        # versions < 1.19 or on vendors versions which do NOT support this field by default (i.e. Openshift < 4.11 ).
+        # seccompProfile:
+        #   type: RuntimeDefault
       containers:
-      - args:
+      - command:
+        - /manager
+        args:
         - --leader-elect
-        - --leader-election-id=pulp-operator
         image: controller:latest
-        name: pulp-manager
-        env:
-          # Watch one namespace (namespace-scoped).
-            - name: WATCH_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: ANSIBLE_GATHERING
-              value: explicit
-            - name: ANSIBLE_DEBUG_LOGS
-              value: 'false'
-            - name: RELATED_IMAGE_PULP
-              value: quay.io/pulp/pulp:stable
-            - name: RELATED_IMAGE_PULP_WEB
-              value: quay.io/pulp/pulp-web:stable
-            - name: RELATED_IMAGE_PULP_REDIS
-              value: redis:latest
-            - name: RELATED_IMAGE_PULP_POSTGRES
-              value: postgres:13
+        name: manager
         securityContext:
           allowPrivilegeEscalation: false
+        # TODO(user): uncomment for common cases that do not require escalating privileges
+        # capabilities:
+        #   drop:
+        #     - "ALL"
         livenessProbe:
           httpGet:
             path: /healthz
-            port: 6789
+            port: 8081
           initialDelaySeconds: 15
           periodSeconds: 20
         readinessProbe:
           httpGet:
             path: /readyz
-            port: 6789
+            port: 8081
           initialDelaySeconds: 5
           periodSeconds: 10
         # TODO(user): Configure the resources accordingly based on the project requirements.
@@ -81,11 +68,9 @@ spec:
         resources:
           limits:
             cpu: 500m
-            memory: 768Mi
+            memory: 128Mi
           requests:
             cpu: 10m
-            memory: 256Mi
-      serviceAccountName: sa
-      imagePullSecrets:
-        - name: redhat-operators-pull-secret
+            memory: 64Mi
+      serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10

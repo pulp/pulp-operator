@@ -1,75 +1,94 @@
-![Pulp CI](https://github.com/pulp/pulp-operator/workflows/Pulp%20CI/badge.svg)
+# pulp-operator-go
+// TODO(user): Add simple overview of use/purpose
 
-# Pulp
+## Description
+// TODO(user): An in-depth paragraph about your project and overview of use
 
-[Pulp](https://pulpproject.org/) is a platform for managing repositories of content, such as software packages, and making them available to a large number of consumers.
+## Getting Started
+You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
+**Note:** Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
 
-With Pulp you can:
+### Running on the cluster
+1. Install Instances of Custom Resources:
 
-* Locally mirror all or part of a repository
-* Host your own content in a new repository
-* Manage content from multiple sources in one place
-* Promote content through different repos in an organized way
+```sh
+kubectl apply -f config/samples/
+```
 
-If you have dozens, hundreds, or thousands of software packages and need a better way to manage them, Pulp can help.
+2. Build and push your image to the location specified by `IMG`:
+	
+```sh
+make docker-build docker-push IMG=<some-registry>/pulp-operator-go:tag
+```
+	
+3. Deploy the controller to the cluster with the image specified by `IMG`:
 
-Pulp is completely free and open-source!
+```sh
+make deploy IMG=<some-registry>/pulp-operator-go:tag
+```
 
-* License: GPLv2+
-* Documentation: [https://docs.pulpproject.org/](https://docs.pulpproject.org/)
-* Source: [https://github.com/pulp/pulpcore/](https://github.com/pulp/pulpcore/)
-* Bugs: [https://pulp.plan.io/projects/pulp](https://pulp.plan.io/projects/pulp)
+### Uninstall CRDs
+To delete the CRDs from the cluster:
 
-For more information, check out the project website: [https://pulpproject.org](https://pulpproject.org)
+```sh
+make uninstall
+```
 
-If you want to evaluate Pulp quickly, try [Pulp in One Container](https://pulpproject.org/pulp-in-one-container/)
+### Undeploy controller
+UnDeploy the controller to the cluster:
 
-## Pulp Operator
+```sh
+make undeploy
+```
 
-An [Ansible Operator](https://www.ansible.com/blog/ansible-operator) for Pulp 3.
+## Contributing
+// TODO(user): Add detailed information on how you would like others to contribute to this project
 
-Pulp Operator is under active development and not production ready yet. The goal is to provide a scalable and robust cluster for Pulp 3.
+### How it works
+This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
 
-Note that Pulp operator works with three different types of service containers (the operator itself, the main service and the web service):
+It uses [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/) 
+which provides a reconcile function responsible for synchronizing resources untile the desired state is reached on the cluster 
 
-|           | Operator | Main | Web |
-| --------- | -------- | ---- | --- |
-| **Image** | [pulp-operator](https://quay.io/repository/pulp/pulp-operator?tab=tags) |[pulp](https://quay.io/repository/pulp/pulp?tab=tags) | [pulp-web](https://quay.io/repository/pulp/pulp-web?tab=tags) |
-| **Image** | [pulp-operator](https://quay.io/repository/pulp/pulp-operator?tab=tags) |[galaxy](https://quay.io/repository/pulp/galaxy?tab=tags) | [galaxy-web](https://quay.io/repository/pulp/galaxy-web?tab=tags) |
+### Test It Out
+1. Install the CRDs into the cluster:
 
-<br>Pulp operator is manually built and [hosted on quay.io](https://quay.io/repository/pulp/pulp-operator). Read more about the container images [here](https://docs.pulpproject.org/pulp_operator/container/).
+```sh
+make install
+```
 
-## Custom Resource Definitions
-Pulp Operator currently provides three different kinds of [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#custom-resources): Pulp, Pulp Backup and Pulp Restore.
-### Pulp
-Manages the Pulp application and its deployments, services, etc. Through the following ansible roles:
+2. Run your controller (this will run in the foreground, so switch to a new terminal if you want to leave it running):
 
-* [API](https://docs.pulpproject.org/pulp_operator/roles/pulp-api/)
-* [Content](https://docs.pulpproject.org/pulp_operator/roles/pulp-content/)
-* [Routes](https://docs.pulpproject.org/pulp_operator/roles/pulp-routes/)
-* [Worker](https://docs.pulpproject.org/pulp_operator/roles/pulp-worker/)
-* [Web](https://docs.pulpproject.org/pulp_operator/roles/pulp-web/)
-* [Status](https://docs.pulpproject.org/pulp_operator/roles/pulp-status/)
-* [Postgres](https://docs.pulpproject.org/pulp_operator/roles/postgres/)
-* [Redis](https://docs.pulpproject.org/pulp_operator/roles/redis/)
+```sh
+make run
+```
 
-### Pulp Backup
-Manages pulp backup through the following ansible role:
+**NOTE:** You can also run this in one step by running: `make install run`
 
-* [Backup](https://docs.pulpproject.org/pulp_operator/roles/backup/)
+### Modifying the API definitions
+If you are editing the API definitions, generate the manifests such as CRs or CRDs using:
 
-### Pulp Restore
-Manages the restoration of a pulp backup through the following ansible role:
+```sh
+make manifests
+```
 
-* [Restore](https://docs.pulpproject.org/pulp_operator/roles/restore/)
-## Get Help
+**NOTE:** Run `make --help` for more information on all potential `make` targets
 
-Documentation: [https://docs.pulpproject.org/pulp_operator/](https://docs.pulpproject.org/pulp_operator/)
+More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
 
-Issue Tracker: [https://github.com/pulp/pulp-operator/issues](https://github.com/pulp/pulp-operator/issues)
+## License
 
-Forum: [https://discourse.pulpproject.org/](https://discourse.pulpproject.org/)
+Copyright 2022.
 
-Join [**#pulp** on Matrix](https://matrix.to/#/#pulp:matrix.org)
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-Join [**#pulp-dev** on Matrix](https://matrix.to/#/#pulp-dev:matrix.org) for Developer discussion.
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+

@@ -1,8 +1,0 @@
----
-apiVersion: pulp.pulpproject.org/v1beta
-kind: PulpRestore
-metadata:
-  name: example-pulprestore
-spec:
-  backup_name: ''
-  postgres_label_selector: ''

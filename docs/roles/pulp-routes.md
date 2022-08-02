@@ -1,1 +1,0 @@
-../../roles/pulp-routes/README.md

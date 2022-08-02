@@ -1,113 +1,68 @@
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
-  name: pulp-manager-role
+  creationTimestamp: null
+  name: manager-role
 rules:
-  ##
-  ## Base operator rules
-  ##
-  - apiGroups:
-      - route.openshift.io
-    resources:
-      - routes
-      - routes/custom-host
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - ""
-    resources:
-      - secrets
-      - pods
-      - pods/exec
-      - pods/log
-      - services
-      - services/finalizers
-      - endpoints
-      - persistentvolumeclaims
-      - events
-      - configmaps
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - apps
-      - networking.k8s.io
-    resources:
-      - deployments
-      - daemonsets
-      - replicasets
-      - statefulsets
-      - ingresses
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - ""
-    resources:
-      - nodes
-    verbs:
-      - get
-      - list
-  - apiGroups:
-      - apps
-    resources:
-      - deployments/scale
-    verbs:
-      - patch
-  - apiGroups:
-      - ""
-    resources:
-      - serviceaccounts
-    verbs:
-      - list
-      - watch
-  - apiGroups:
-      - ""
-    resourceNames:
-      - pulp-operator-sa
-    resources:
-      - serviceaccounts
-    verbs:
-      - patch
-      - get
-  ##
-  ## Rules for pulp.pulpproject.org/v1beta1, Kind: Pulp
-  ##
-  - apiGroups:
-      - pulp.pulpproject.org
-    resources:
-      - pulps
-      - pulps/status
-      - pulps/finalizers
-      - pulpbackups
-      - pulpbackups/status
-      - pulpbackups/finalizers
-      - pulprestores
-      - pulprestores/status
-      - pulprestores/finalizers
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-#+kubebuilder:scaffold:rules
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - persistentvolumeclaims
+  - secrets
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - repo-manager.pulpproject.org
+  resources:
+  - pulps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - repo-manager.pulpproject.org
+  resources:
+  - pulps/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - repo-manager.pulpproject.org
+  resources:
+  - pulps/status
+  verbs:
+  - get
+  - patch
+  - update

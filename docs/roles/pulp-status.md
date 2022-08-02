@@ -1,1 +1,0 @@
-../../roles/pulp-status/README.md
