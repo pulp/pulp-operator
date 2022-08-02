@@ -721,8 +721,9 @@ func (r *PulpReconciler) pulpServerSecret(m *repomanagerv1alpha1.Pulp, pgUser, p
 		pulp_settings = pulp_settings + `CACHE_ENABLED = "True"
 DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
 GALAXY_COLLECTION_SIGNING_SERVICE = "ansible-default"
+ANSIBLE_API_HOSTNAME = "http://` + m.Name + `-web-svc.` + m.Namespace + `.svc.cluster.local:24880"
 ANSIBLE_CERTS_DIR = "/etc/pulp/keys/"
-CONTENT_ORIGIN = "http://` + m.Name + `-content-svc.` + m.Namespace + `.svc.cluster.local:24816"
+CONTENT_ORIGIN = "http://` + m.Name + `-web-svc.` + m.Namespace + `.svc.cluster.local:24880"
 DATABASES = {
 	'default': {
 		'HOST': '` + dbHost + `',
@@ -735,9 +736,17 @@ DATABASES = {
 		'OPTIONS': { 'sslmode': '` + dbSSLMode + `' },
 	}
 }
+GALAXY_FEATURE_FLAGS = {
+	'execution_environments': 'True',
+}
+PRIVATE_KEY_PATH = "/etc/pulp/keys/container_auth_private_key.pem"
+PUBLIC_KEY_PATH = "/etc/pulp/keys/container_auth_public_key.pem"
 REDIS_HOST =  "` + m.Name + `-redis-svc.` + m.Namespace + `"
 REDIS_PORT =  "6379"
-REDIS_PASSWORD = ""`
+REDIS_PASSWORD = ""
+TOKEN_AUTH_DISABLED = "False"
+TOKEN_SERVER = "http://` + m.Name + `-web-svc.` + m.Namespace + `.svc.cluster.local:24880/token/"
+TOKEN_SIGNATURE_ALGORITHM = "ES256"`
 	} else {
 		pulp_settings = pulp_settings + convertRawPulpSettings(m)
 	}

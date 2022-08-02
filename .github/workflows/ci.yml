@@ -100,9 +100,9 @@ jobs:
       - name: Check and wait pulp-operator deploy
         run: .ci/scripts/pulp-operator-check-and-wait.sh -m
         shell: bash
-      # - name: Test
-      #   run: .ci/scripts/galaxy_ng-tests.sh -m
-      #   shell: bash
+      - name: Test
+        run: .ci/scripts/galaxy_ng-tests.sh -m
+        shell: bash
       - name: Logs
         if: always()
         run: .github/workflows/scripts/show_logs.sh
