@@ -38,32 +38,12 @@ sed -i "s/route_host_placeholder/$ROUTE_HOST/g" $CR_FILE
 oc apply -f $CR_FILE
 oc wait --for condition=Pulp-Routes-Ready --timeout=-1s -f $CR_FILE || show_logs
 
-API_POD=$(oc get pods -l app.kubernetes.io/component=api -oname)
-for tries in {0..180}; do
-  pods=$(oc get pods -o wide)
-  if [[ $(kubectl logs "$API_POD"|grep 'Listening at: ') ]]; then
-    echo "PODS:"
-    echo "$pods"
-    break
-  else
-    # Often after 30 tries (150 secs), not all of the pods are running yet.
-    # Let's keep Travis from ending the build by outputting.
-    if [[ $(( tries % 30 )) == 0 ]]; then
-      echo "STATUS: Still waiting on pods to transition to running state."
-      echo "PODS:"
-      echo "$pods"
-      if [ -x "$(command -v docker)" ]; then
-        echo "DOCKER IMAGE CACHE:"
-        docker images
-      fi
-    fi
-    if [[ $tries -eq 180 ]]; then
-      echo "ERROR 3: Pods never all transitioned to Running state"
-      show_logs
-    fi
-  fi
-  sleep 5
+while [[ $(oc get pods -l app.kubernetes.io/component=api -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
+  echo "STATUS: Still waiting on pods to transition to running state."
+  oc get pods -o wide
+  sleep 1
 done
+API_POD=$(oc get pods -l app.kubernetes.io/component=api -oname)
 oc exec ${API_POD} -- curl -L http://localhost:24817${API_ROOT}api/v3/status/ || show_logs
 
 BASE_ADDR="https://${ROUTE_HOST}"
