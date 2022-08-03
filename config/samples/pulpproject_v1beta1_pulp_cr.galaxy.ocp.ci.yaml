@@ -4,9 +4,7 @@ metadata:
   name: ocp-example
 spec:
   image: quay.io/pulp/galaxy
-  image_version: latest
   image_web: quay.io/pulp/galaxy-web
-  image_web_version: latest
   no_log: false
   admin_password_secret: "example-pulp-admin-password"
   storage_type: File

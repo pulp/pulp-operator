@@ -36,19 +36,19 @@ fi
 
 sed -i "s/route_host_placeholder/$ROUTE_HOST/g" $CR_FILE
 oc apply -f $CR_FILE
-# oc wait --for condition=Pulp-Routes-Ready --timeout=-1s -f $CR_FILE || show_logs
+oc wait --for condition=Pulp-Routes-Ready --timeout=-1s -f $CR_FILE || show_logs
 
-# while [[ $(oc get pods -l app.kubernetes.io/component=api -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
-#   echo "STATUS: Still waiting on pods to transition to running state."
-#   oc get pods -o wide
-#   sleep 1
-# done
-# sleep 1
-# oc get pods -o wide
-# echo "Check status endpoint:"
-# API_POD=$(oc get pods -l app.kubernetes.io/component=api -oname)
-# oc exec ${API_POD} -- curl -L http://localhost:24817${API_ROOT}api/v3/status/ || show_logs
+while [[ $(oc get pods -l app.kubernetes.io/component=api -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
+  echo "STATUS: Still waiting on pods to transition to running state."
+  oc get pods -o wide
+  sleep 1
+done
+sleep 1
+oc get pods -o wide
+echo "Check status endpoint:"
+API_POD=$(oc get pods -l app.kubernetes.io/component=api -oname)
+oc exec ${API_POD} -- curl -L http://localhost:24817${API_ROOT}api/v3/status/ || show_logs
 
-# BASE_ADDR="https://${ROUTE_HOST}"
-# echo ${BASE_ADDR}${API_ROOT}api/v3/status/
+BASE_ADDR="https://${ROUTE_HOST}"
+echo ${BASE_ADDR}${API_ROOT}api/v3/status/
 # curl --insecure --fail --location ${BASE_ADDR}${API_ROOT}api/v3/status/ || show_logs
