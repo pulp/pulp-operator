@@ -15,6 +15,8 @@ import (
 
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	"golang.org/x/crypto/openpgp"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -105,9 +107,9 @@ func (r *PulpReconciler) updateStatus(ctx context.Context, pulp *repomanagerv1al
 
 	// if we are updating a status it means that operator didn't finish its execution
 
-	if !v1.IsStatusConditionPresentAndEqual(pulp.Status.Conditions, pulp.Name+"-Operator-Finished-Execution", metav1.ConditionTrue) {
+	if !v1.IsStatusConditionPresentAndEqual(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Operator-Finished-Execution", metav1.ConditionTrue) {
 		v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
-			Type:               pulp.Spec.DeploymentType + "-Operator-Finished-Execution",
+			Type:               cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Operator-Finished-Execution",
 			Status:             metav1.ConditionFalse,
 			Reason:             "OperatorRunning",
 			LastTransitionTime: metav1.Now(),
@@ -116,7 +118,7 @@ func (r *PulpReconciler) updateStatus(ctx context.Context, pulp *repomanagerv1al
 	}
 
 	v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
-		Type:               conditionType,
+		Type:               cases.Title(language.English, cases.Compact).String(conditionType),
 		Status:             conditionStatus,
 		Reason:             conditionReason,
 		LastTransitionTime: metav1.Now(),

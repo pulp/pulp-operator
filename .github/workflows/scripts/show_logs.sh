@@ -48,13 +48,12 @@ kubectl logs -l app.kubernetes.io/name=pulp-worker --tail=10000
 echo ::endgroup::
 
 echo ::group::PULP_WEB_LOGS
-kubectl logs -l app.kubernetes.io/name=pulp-web --tail=10000
+kubectl logs -l app.kubernetes.io/name=nginx --tail=10000
 echo ::endgroup::
 
 echo ::group::POSTGRES
 kubectl logs -l app.kubernetes.io/name=postgres --tail=10000
 echo ::endgroup::
 
-API_NODE=$(kubectl get pods -l app.kubernetes.io/component=api -oname)
-STATUS=$(kubectl exec ${API_NODE} -- curl -L http://localhost:24817/pulp/api/v3/status/)
-echo $STATUS | jq
+echo "Status endpoint"
+http --follow --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/ || true

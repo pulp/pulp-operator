@@ -98,7 +98,7 @@ jobs:
           kubectl apply -f config/samples/galaxy.yaml
         shell: bash
       - name: Check and wait pulp-operator deploy
-        run: .ci/scripts/pulp-operator-check-and-wait.sh -m
+        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
         shell: bash
       - name: Test
         run: .ci/scripts/galaxy_ng-tests.sh -m

@@ -43,11 +43,11 @@ func (r *PulpReconciler) pulpWorkerController(ctx context.Context, pulp *repoman
 	newWorkerDeployment := r.deploymentForPulpWorker(pulp)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new Pulp Worker Deployment", "Deployment.Namespace", newWorkerDeployment.Namespace, "Deployment.Name", newWorkerDeployment.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Name+"-Worker-Ready", "CreatingWorkerDeployment", "Creating "+pulp.Name+"-worker deployment resource")
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Worker-Ready", "CreatingWorkerDeployment", "Creating "+pulp.Name+"-worker deployment resource")
 		err = r.Create(ctx, newWorkerDeployment)
 		if err != nil {
 			log.Error(err, "Failed to create new Pulp Worker Deployment", "Deployment.Namespace", newWorkerDeployment.Namespace, "Deployment.Name", newWorkerDeployment.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Name+"-Worker-Ready", "ErrorCreatingWorkerDeployment", "Failed to create "+pulp.Name+"-worker deployment resource: "+err.Error())
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Worker-Ready", "ErrorCreatingWorkerDeployment", "Failed to create "+pulp.Name+"-worker deployment resource: "+err.Error())
 			return ctrl.Result{}, err
 		}
 		// Deployment created successfully - return and requeue
@@ -60,17 +60,17 @@ func (r *PulpReconciler) pulpWorkerController(ctx context.Context, pulp *repoman
 	// Reconcile Deployment
 	if !equality.Semantic.DeepDerivative(newWorkerDeployment.Spec, workerDeployment.Spec) {
 		log.Info("The Worker Deployment has been modified! Reconciling ...")
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Name+"-Worker-Ready", "UpdatingWorkerDeployment", "Reconciling "+pulp.Name+"-worker deployment resource")
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Worker-Ready", "UpdatingWorkerDeployment", "Reconciling "+pulp.Name+"-worker deployment resource")
 		err = r.Update(ctx, newWorkerDeployment)
 		if err != nil {
 			log.Error(err, "Error trying to update the Worker Deployment object ... ")
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Name+"-Worker-Ready", "ErrorUpdatingWorkerDeployment", "Failed to reconcile "+pulp.Name+"-worker deployment resource: "+err.Error())
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Worker-Ready", "ErrorUpdatingWorkerDeployment", "Failed to reconcile "+pulp.Name+"-worker deployment resource: "+err.Error())
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{RequeueAfter: time.Second}, nil
 	}
 
-	r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Name+"-Worker-Ready", "WorkerTasksFinished", "All Worker tasks ran successfully")
+	r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Worker-Ready", "WorkerTasksFinished", "All Worker tasks ran successfully")
 	return ctrl.Result{}, nil
 }
 
