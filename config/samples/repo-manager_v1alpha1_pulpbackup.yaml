@@ -1,0 +1,6 @@
+apiVersion: repo-manager.pulpproject.org/v1alpha1
+kind: PulpBackup
+metadata:
+  name: pulpbackup-sample
+spec:
+  # TODO(user): Add fields here

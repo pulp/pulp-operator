@@ -16,4 +16,13 @@ resources:
   kind: Pulp
   path: github.com/git-hyagi/pulp-operator-go/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: pulpproject.org
+  group: repo-manager
+  kind: PulpBackup
+  path: github.com/git-hyagi/pulp-operator-go/api/v1alpha1
+  version: v1alpha1
 version: "3"

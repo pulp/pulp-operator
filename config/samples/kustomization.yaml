@@ -3,4 +3,5 @@ resources:
 - repo-manager_v1alpha1_pulp.yaml
 - simple.yaml
 - galaxy.yaml
+- repo-manager_v1alpha1_pulpbackup.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

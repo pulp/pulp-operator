@@ -1,0 +1,20 @@
+# permissions for end users to view pulpbackups.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pulpbackup-viewer-role
+rules:
+- apiGroups:
+  - repo-manager.pulpproject.org
+  resources:
+  - pulpbackups
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - repo-manager.pulpproject.org
+  resources:
+  - pulpbackups/status
+  verbs:
+  - get

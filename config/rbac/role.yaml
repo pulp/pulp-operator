@@ -43,6 +43,32 @@ rules:
 - apiGroups:
   - repo-manager.pulpproject.org
   resources:
+  - pulpbackups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - repo-manager.pulpproject.org
+  resources:
+  - pulpbackups/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - repo-manager.pulpproject.org
+  resources:
+  - pulpbackups/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - repo-manager.pulpproject.org
+  resources:
   - pulps
   verbs:
   - create
