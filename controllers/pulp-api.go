@@ -72,7 +72,7 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 				r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "ErrorUpdatingFileStoragePVC", "Failed to reconcile "+pulp.Name+"-file-storage PVC resource")
 				return ctrl.Result{}, err
 			}
-			return ctrl.Result{RequeueAfter: time.Second}, nil
+			return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 		}
 	}
 
@@ -255,7 +255,8 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 	// } else if pulpController.RequeueAfter > 0 {
 	// 	return pulpController, nil
 	// }
-	r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-API-Ready", "ApiTasksFinished", "All API tasks ran successfully")
+
+	//r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-API-Ready", "ApiTasksFinished", "All API tasks ran successfully")
 	return ctrl.Result{}, nil
 }
 
@@ -594,40 +595,38 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 
 	resources := m.Spec.Api.ResourceRequirements
 
-	/*
-		readinessProbe := &corev1.Probe{
-			ProbeHandler: corev1.ProbeHandler{
-				Exec: &corev1.ExecAction{
-					Command: []string{
-						"/usr/bin/readyz.py",
-						m.Spec.PulpSettings.ApiRoot + "api/v3/status/",
-					},
+	readinessProbe := &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			Exec: &corev1.ExecAction{
+				Command: []string{
+					"/usr/bin/readyz.py",
+					m.Spec.PulpSettings.ApiRoot + "api/v3/status/",
 				},
 			},
-			FailureThreshold:    10,
-			InitialDelaySeconds: 30,
-			PeriodSeconds:       10,
-			SuccessThreshold:    1,
-			TimeoutSeconds:      5,
-		}
+		},
+		FailureThreshold:    10,
+		InitialDelaySeconds: 60,
+		PeriodSeconds:       10,
+		SuccessThreshold:    1,
+		TimeoutSeconds:      10,
+	}
 
-		livenessProbe := &corev1.Probe{
-			FailureThreshold: 5,
-			ProbeHandler: corev1.ProbeHandler{
-				HTTPGet: &corev1.HTTPGetAction{
-					Path: m.Spec.PulpSettings.ApiRoot + "api/v3/status/",
-					Port: intstr.IntOrString{
-						IntVal: 24817,
-					},
-					Scheme: corev1.URIScheme("HTTP"),
+	livenessProbe := &corev1.Probe{
+		FailureThreshold: 5,
+		ProbeHandler: corev1.ProbeHandler{
+			HTTPGet: &corev1.HTTPGetAction{
+				Path: m.Spec.PulpSettings.ApiRoot + "api/v3/status/",
+				Port: intstr.IntOrString{
+					IntVal: 24817,
 				},
+				Scheme: corev1.URIScheme("HTTP"),
 			},
-			InitialDelaySeconds: 60,
-			PeriodSeconds:       10,
-			SuccessThreshold:    1,
-			TimeoutSeconds:      5,
-		}
-	*/
+		},
+		InitialDelaySeconds: 120,
+		PeriodSeconds:       20,
+		SuccessThreshold:    1,
+		TimeoutSeconds:      10,
+	}
 
 	// the following variables are defined to avoid issues with reconciliation
 	restartPolicy := corev1.RestartPolicy("Always")
@@ -681,11 +680,10 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 							Protocol:      "TCP",
 						}},
 
-						/*
-							LivenessProbe:  livenessProbe,
-							ReadinessProbe: readinessProbe,*/
-						Resources:    resources,
-						VolumeMounts: volumeMounts,
+						LivenessProbe:  livenessProbe,
+						ReadinessProbe: readinessProbe,
+						Resources:      resources,
+						VolumeMounts:   volumeMounts,
 					}},
 
 					/* the following configs are not defined on pulp-operator (ansible version)  */

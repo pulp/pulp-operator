@@ -47,7 +47,7 @@ func (r *PulpReconciler) pulpCacheController(ctx context.Context, pulp *repomana
 			log.Error(err, "Error trying to update the Redis PVC object ... ")
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{RequeueAfter: time.Second}, nil
+		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 	}
 
 	// redis-svc Service
@@ -78,7 +78,7 @@ func (r *PulpReconciler) pulpCacheController(ctx context.Context, pulp *repomana
 			log.Error(err, "Error trying to update the Redis Service object ... ")
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{RequeueAfter: time.Second}, nil
+		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 	}
 
 	// redis Deployment
@@ -109,7 +109,7 @@ func (r *PulpReconciler) pulpCacheController(ctx context.Context, pulp *repomana
 			log.Error(err, "Error trying to update the Redis Deployment object ... ")
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{RequeueAfter: time.Second}, nil
+		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 	}
 
 	return ctrl.Result{}, nil

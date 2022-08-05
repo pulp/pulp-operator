@@ -103,7 +103,7 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Database-Ready", "ErrorUpdatingDatabaseSts", "Failed to reconcile "+pulp.Name+"-database statefulset resource")
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
+		return ctrl.Result{Requeue: true, RequeueAfter: time.Minute}, nil
 	}
 
 	// SERVICE
@@ -140,7 +140,7 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Database-Ready", "ErrorUpdatingDatabaseService", "Failed to reconcile "+pulp.Name+"-database-svc service resource: "+err.Error())
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{RequeueAfter: time.Second}, nil
+		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 	}
 
 	r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Database-Ready", "DatabaseTasksFinished", "All Database tasks ran successfully")

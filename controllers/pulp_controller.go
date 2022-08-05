@@ -19,17 +19,11 @@ package controllers
 import (
 	"context"
 	"reflect"
-	"time"
 
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-
-	v1 "k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -140,46 +134,11 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return pulpController, nil
 	}
 
-	podList := &corev1.PodList{}
-	labels := map[string]string{
-		"app.kubernetes.io/part-of":    pulp.Spec.DeploymentType,
-		"app.kubernetes.io/managed-by": pulp.Spec.DeploymentType + "-operator",
-		"pulp_cr":                      pulp.Name,
-	}
-	listOpts := []client.ListOption{
-		client.InNamespace(pulp.Namespace),
-		client.MatchingLabels(labels),
-	}
-	if err := r.List(ctx, podList, listOpts...); err != nil {
-		log.Error(err, "Failed to list pods", "Pulp.Namespace", pulp.Namespace, "Pulp.Name", pulp.Name)
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
-	}
-	var IsPodRunning bool = false
-	for _, p := range podList.Items {
-		log.Info("Checking pod", "Pod", p.Name, "Status", p.Status.Phase)
-		if p.Status.Phase == "Running" {
-			log.Info("Running!", "Pod", p.Name, "Status", p.Status.Phase)
-			IsPodRunning = true
-		} else {
-			log.Info("Pod isn't running yet!", "Pod", p.Name, "Status", p.Status.Phase)
-			return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
-		}
-	}
-
-	if !IsPodRunning {
-		log.Info("Pod isn't running yet!")
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
-	}
-
-	if v1.IsStatusConditionFalse(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Operator-Finished-Execution") {
-		v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
-			Type:               cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Operator-Finished-Execution",
-			Status:             metav1.ConditionTrue,
-			Reason:             "OperatorFinishedExecution",
-			LastTransitionTime: metav1.Now(),
-			Message:            "All tasks ran successfully",
-		})
-		r.Status().Update(ctx, pulp)
+	pulpController, err = r.pulpStatus(ctx, pulp, log)
+	if err != nil {
+		return pulpController, err
+	} else if pulpController.Requeue {
+		return pulpController, nil
 	}
 
 	return pulpController, nil

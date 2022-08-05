@@ -67,7 +67,7 @@ func (r *PulpReconciler) pulpWorkerController(ctx context.Context, pulp *repoman
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Worker-Ready", "ErrorUpdatingWorkerDeployment", "Failed to reconcile "+pulp.Name+"-worker deployment resource: "+err.Error())
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{RequeueAfter: time.Second}, nil
+		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 	}
 
 	r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Worker-Ready", "WorkerTasksFinished", "All Worker tasks ran successfully")

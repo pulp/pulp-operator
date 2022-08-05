@@ -68,7 +68,7 @@ func (r *PulpReconciler) pulpContentController(ctx context.Context, pulp *repoma
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Content-Ready", "ErrorUpdatingContentDeployment", "Failed to reconcile "+pulp.Name+"-content deployment resource: "+err.Error())
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{RequeueAfter: time.Second}, nil
+		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 	}
 
 	// SERVICE
@@ -102,7 +102,7 @@ func (r *PulpReconciler) pulpContentController(ctx context.Context, pulp *repoma
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Content-Ready", "ErrorUpdatingContentService", "Failed to reconcile "+pulp.Name+"-content-svc service: "+err.Error())
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{RequeueAfter: time.Second}, nil
+		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 	}
 
 	r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Content-Ready", "ContentTasksFinished", "All Content tasks ran successfully")

@@ -87,7 +87,7 @@ func (r *PulpReconciler) pulpWebController(ctx context.Context, pulp *repomanage
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Web-Ready", "ErrorUpdatingWebDeployment", "Failed to reconcile "+pulp.Name+"-web deployment resource: "+err.Error())
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{RequeueAfter: time.Second}, nil
+		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 	}
 
 	// SERVICE
@@ -125,7 +125,7 @@ func (r *PulpReconciler) pulpWebController(ctx context.Context, pulp *repomanage
 	}
 	*/
 
-	r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Web-Ready", "WebTasksFinished", "All Web tasks ran successfully")
+	//r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Web-Ready", "WebTasksFinished", "All Web tasks ran successfully")
 	return ctrl.Result{}, nil
 }
 
