@@ -7,6 +7,7 @@ API_ROOT=${API_ROOT:-"/pulp/"}
 
 show_logs() {
   oc get pods -o wide
+  oc get routes -o yaml
   oc get routes -o wide
   echo "======================== Operator ========================"
   oc logs -l app.kubernetes.io/name=pulp-operator -c pulp-manager --tail=10000
@@ -36,7 +37,7 @@ fi
 
 sed -i "s/route_host_placeholder/$ROUTE_HOST/g" $CR_FILE
 oc apply -f $CR_FILE
-oc wait --for condition=Pulp-Routes-Ready --timeout=-1s -f $CR_FILE || show_logs
+oc wait --for condition=Pulp-Operator-Finished-Execution --timeout=600s -f $CR_FILE || show_logs
 
 while [[ $(oc get pods -l app.kubernetes.io/component=api -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
   echo "STATUS: Still waiting on pods to transition to running state."
@@ -51,4 +52,4 @@ oc exec ${API_POD} -- curl -L http://localhost:24817${API_ROOT}api/v3/status/ ||
 
 BASE_ADDR="https://${ROUTE_HOST}"
 echo ${BASE_ADDR}${API_ROOT}api/v3/status/
-# curl --insecure --fail --location ${BASE_ADDR}${API_ROOT}api/v3/status/ || show_logs
+curl --insecure --fail --location ${BASE_ADDR}${API_ROOT}api/v3/status/ || show_logs
