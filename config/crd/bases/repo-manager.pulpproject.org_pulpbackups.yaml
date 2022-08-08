@@ -50,17 +50,14 @@ spec:
               deployment_name:
                 description: Name of the deployment to be backed up
                 type: string
+              deployment_type:
+                type: string
               postgres_label_selector:
                 description: Label selector used to identify postgres pod for executing
                   migration
                 type: string
             required:
-            - backup_pvc
-            - backup_pvc_namespace
-            - backup_storage_class
-            - backup_storage_requirements
-            - deployment_name
-            - postgres_label_selector
+            - deployment_type
             type: object
           status:
             description: PulpBackupStatus defines the observed state of PulpBackup

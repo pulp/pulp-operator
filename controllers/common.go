@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -9,6 +10,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -20,7 +22,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/remotecommand"
 )
 
 // Generate a random string with length pwdSize
@@ -73,8 +77,7 @@ func (r *PulpReconciler) getSigningKeyFingerprint(secretName, secretNamespace st
 	// Read public key
 	keyring, err := openpgp.ReadArmoredKeyRing(secretReader)
 	if err != nil {
-		fmt.Println("Read Key Ring Error! " + err.Error())
-		return "", err
+		return "", errors.New("Read Key Ring Error! " + err.Error())
 	}
 
 	fingerPrint := keyring[0].PrimaryKey.Fingerprint
@@ -139,4 +142,39 @@ func (r *PulpReconciler) updateStatus(ctx context.Context, pulp *repomanagerv1al
 		Message:            conditionMessage,
 	})
 	r.Status().Update(ctx, pulp)
+}
+
+func (r *PulpBackupReconciler) containerExec(pod *corev1.Pod, command []string, container, namespace string) (string, error) {
+	execReq := r.RESTClient.
+		Post().
+		Namespace(namespace).
+		Resource("pods").
+		Name(pod.Name).
+		SubResource("exec").
+		VersionedParams(&corev1.PodExecOptions{
+			Container: container,
+			Command:   command,
+			Stdout:    true,
+			Stderr:    true,
+		}, runtime.NewParameterCodec(r.Scheme))
+
+	exec, err := remotecommand.NewSPDYExecutor(r.RESTConfig, "POST", execReq.URL())
+	if err != nil {
+		return "", err
+	}
+
+	stdout := new(bytes.Buffer)
+	stderr := new(bytes.Buffer)
+	err = exec.Stream(remotecommand.StreamOptions{
+		Stdout: stdout,
+		Stderr: stderr,
+		Tty:    false,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	result := strings.TrimSpace(stdout.String()) + "\n" + strings.TrimSpace(stderr.String())
+	result = strings.TrimSpace(result)
+	return result, nil
 }

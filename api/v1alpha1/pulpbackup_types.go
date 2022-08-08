@@ -25,21 +25,27 @@ type PulpBackupSpec struct {
 	DeploymentType string `json:"deployment_type"`
 
 	// Name of the deployment to be backed up
+	// +kubebuilder:validation:Optional
 	DeploymentName string `json:"deployment_name"`
 
 	// Name of the PVC to be used for storing the backup
+	// +kubebuilder:validation:Optional
 	BackupPVC string `json:"backup_pvc"`
 
 	// Namespace PVC is in
+	// +kubebuilder:validation:Optional
 	BackupPVCNamespace string `json:"backup_pvc_namespace"`
 
 	// Storage requirements for the backup
+	// +kubebuilder:validation:Optional
 	BackupStorageReq string `json:"backup_storage_requirements"`
 
 	// Storage class to use when creating PVC for backup
+	// +kubebuilder:validation:Optional
 	BackupSC string `json:"backup_storage_class"`
 
 	// Label selector used to identify postgres pod for executing migration
+	// +kubebuilder:validation:Optional
 	PostgresLabelSelector string `json:"postgres_label_selector"`
 }
 

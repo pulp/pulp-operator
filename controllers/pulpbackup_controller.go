@@ -25,6 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
@@ -35,7 +36,9 @@ import (
 // PulpBackupReconciler reconciles a PulpBackup object
 type PulpBackupReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	RESTClient rest.Interface
+	RESTConfig *rest.Config
+	Scheme     *runtime.Scheme
 }
 
 //+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulpbackups,verbs=get;list;watch;create;update;patch;delete
@@ -178,7 +181,7 @@ func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	err = r.Get(ctx, types.NamespacedName{Name: pulpBackup.Name + "-backup-manager", Namespace: pulpBackup.Namespace}, podFound)
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      pulpBackup.Name + "-backup-claim",
+			Name:      pulpBackup.Name + "-backup-manager",
 			Namespace: pulpBackup.Namespace,
 			Labels:    labels,
 		},
@@ -212,10 +215,41 @@ func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	// run command in container:
-	//   https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/#execaction-v1-core
-	//corev1.ExecAction
+	backupFile := "/tmp/pulp.db"
 
+	log.Info("Backup pod running")
+	execCmd := []string{"touch", backupFile}
+	_, err = r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
+	if err != nil {
+		log.Error(err, "Failed to execute command inside container")
+		return ctrl.Result{}, err
+	}
+
+	execCmd = []string{"chmod", "0600", backupFile}
+	_, err = r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
+	if err != nil {
+		log.Error(err, "Failed to execute command inside container")
+		return ctrl.Result{}, err
+	}
+
+	postgresHost := "postgres.db.svc.cluster.local"
+	postgresUser := "pulp-admin"
+	postgresDB := "pulp"
+	postgresPort := "5432"
+	postgresPwd := "password"
+	execCmd = []string{
+		"pg_dump", "--clean", "--create",
+		"-d", "postgresql://" + postgresUser + ":" + postgresPwd + "@" + postgresHost + ":" + postgresPort + "/" + postgresDB,
+		"-f", backupFile,
+	}
+
+	_, err = r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
+	if err != nil {
+		log.Error(err, "Failed to execute command inside container")
+		return ctrl.Result{}, err
+	}
+
+	log.Info("DONE!")
 	return ctrl.Result{}, nil
 }
 
@@ -223,5 +257,6 @@ func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *PulpBackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&repomanagerv1alpha1.PulpBackup{}).
+		Owns(&corev1.Pod{}).
 		Complete(r)
 }

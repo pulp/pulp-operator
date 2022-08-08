@@ -3,4 +3,5 @@ kind: PulpBackup
 metadata:
   name: pulpbackup-sample
 spec:
-  # TODO(user): Add fields here
+  deployment_type: pulp
+  backup_storage_class: standard
