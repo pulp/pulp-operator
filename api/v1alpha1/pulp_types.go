@@ -50,6 +50,10 @@ type PulpSpec struct {
 	// +kubebuilder:validation:Optional
 	FileStorageClass string `json:"file_storage_storage_class,omitempty"`
 
+	// The secret for Azure compliant object storage configuration.
+	// +kubebuilder:validation:Optional
+	ObjectStorageAzureSecret string `json:"object_storage_azure_secret,omitempty"`
+
 	// The secret for S3 compliant object storage configuration.
 	// +kubebuilder:validation:Optional
 	ObjectStorageS3Secret string `json:"object_storage_s3_secret,omitempty"`

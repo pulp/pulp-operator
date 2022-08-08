@@ -1,50 +1,43 @@
 #!/bin/bash
 set -euo pipefail
 
-if command -v kubectl > /dev/null; then
-  KUBECTL=$(command -v kubectl)
-elif [ -x /usr/local/bin/kubectl ]; then
-  KUBECTL=/usr/local/bin/kubectl
-else
-    echo "$0: ERROR 1: Cannot find kubectl"
-fi
-
 echo "Set context"
-$KUBECTL config set-context --current --namespace=pulp-operator-system
+kubectl config set-context --current --namespace=pulp-operator-system
+
+BACKUP_RESOURCE=backup_cr.ci.yaml
+RESTORE_RESOURCE=restore_cr.ci.yaml
 
 if [[ "$CI_TEST" == "true" ]]; then
-  CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.ci.yaml
-  BACKUP_RESOURCE=pulpproject_v1beta1_pulpbackup_cr.ci.yaml
-  RESTORE_RESOURCE=pulpproject_v1beta1_pulprestore_cr.ci.yaml
-elif [[ "$CI_TEST" == "galaxy" ]]; then
-  CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.galaxy.ci.yaml
-  BACKUP_RESOURCE=pulpproject_v1beta1_pulpbackup_cr.ci.yaml
-  RESTORE_RESOURCE=pulpproject_v1beta1_pulprestore_cr.ci.yaml
+  CUSTOM_RESOURCE=simple.yaml
+elif [[ "$CI_TEST" == "galaxy" && "$CI_TEST_STORAGE" == "filesystem" ]]; then
+  CUSTOM_RESOURCE=galaxy.yaml
+elif [[ "$CI_TEST" == "galaxy" && "$CI_TEST_STORAGE" == "azure" ]]; then
+  CUSTOM_RESOURCE=galaxy.azure.ci.yaml.yaml
 fi
 
 echo ::group::PRE_BACKUP_LOGS
-$KUBECTL logs -l app.kubernetes.io/name=pulp-operator -c pulp-manager --tail=10000
+kubectl logs -l app.kubernetes.io/name=pulp-operator -c pulp-manager --tail=10000
 echo ::endgroup::
 
-$KUBECTL apply -f config/samples/$BACKUP_RESOURCE
-time $KUBECTL wait --for condition=BackupComplete --timeout=-1s -f config/samples/$BACKUP_RESOURCE
+kubectl apply -f config/samples/$BACKUP_RESOURCE
+time kubectl wait --for condition=BackupComplete --timeout=-1s -f config/samples/$BACKUP_RESOURCE
 
 echo ::group::AFTER_BACKUP_LOGS
-$KUBECTL logs -l app.kubernetes.io/name=pulp-operator -c pulp-manager --tail=10000
+kubectl logs -l app.kubernetes.io/name=pulp-operator -c pulp-manager --tail=10000
 echo ::endgroup::
 
-$KUBECTL delete --cascade=foreground -f config/samples/$CUSTOM_RESOURCE
-$KUBECTL wait --for=delete -f config/samples/$CUSTOM_RESOURCE
+kubectl delete --cascade=foreground -f config/samples/$CUSTOM_RESOURCE
+kubectl wait --for=delete -f config/samples/$CUSTOM_RESOURCE
 
-$KUBECTL apply -f config/samples/$RESTORE_RESOURCE
-time $KUBECTL wait --for condition=RestoreComplete --timeout=-1s -f config/samples/$RESTORE_RESOURCE
+kubectl apply -f config/samples/$RESTORE_RESOURCE
+time kubectl wait --for condition=RestoreComplete --timeout=-1s -f config/samples/$RESTORE_RESOURCE
 
 echo ::group::AFTER_RESTORE_LOGS
-$KUBECTL logs -l app.kubernetes.io/name=pulp-operator -c pulp-manager --tail=10000
+kubectl logs -l app.kubernetes.io/name=pulp-operator -c pulp-manager --tail=10000
 echo ::endgroup::
 
 sudo pkill -f "port-forward" || true
-time $KUBECTL wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=-1s
+time kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=-1s
 
 KUBE="k3s"
 SERVER=$(hostname)
@@ -53,12 +46,12 @@ if [[ "$1" == "--minikube" ]] || [[ "$1" == "-m" ]]; then
   KUBE="minikube"
   SERVER="localhost"
   if [[ "$CI_TEST" == "true" ]] || [[ "$CI_TEST" == "galaxy" ]]; then
-    services=$($KUBECTL get services)
+    services=$(kubectl get services)
     WEB_PORT=$( echo "$services" | awk -F '[ :/]+' '/web-svc/{print $5}')
     SVC_NAME=$( echo "$services" | awk -F '[ :/]+' '/web-svc/{print $1}')
     sudo pkill -f "port-forward" || true
     echo "port-forwarding service/$SVC_NAME $WEB_PORT:$WEB_PORT"
-    $KUBECTL port-forward service/$SVC_NAME $WEB_PORT:$WEB_PORT &
+    kubectl port-forward service/$SVC_NAME $WEB_PORT:$WEB_PORT &
   fi
 fi
 

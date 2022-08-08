@@ -17,6 +17,12 @@ env:
 jobs:
   galaxy:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - STORAGE: filesystem
+          - STORAGE: azure
     steps:
       - uses: actions/checkout@v2
         with:
@@ -40,7 +46,7 @@ jobs:
           echo ::endgroup::
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
-          echo "CI_TEST_STORAGE=filesystem" >> $GITHUB_ENV
+          echo "CI_TEST_STORAGE=${{ matrix.STORAGE }}" >> $GITHUB_ENV
           echo "API_ROOT=/api/galaxy/pulp/" >> $GITHUB_ENV
         shell: bash
       - name: Start minikube
@@ -85,6 +91,9 @@ jobs:
       - name: List images
         run: |
           docker images
+      - name: Prepare Object Storage
+        run: |
+          .ci/scripts/prepare-object-storage.sh
         shell: bash
       - name: Deploy pulp-operator to K8s
         run: |
@@ -95,7 +104,12 @@ jobs:
           kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
           kubectl apply -f .ci/assets/kubernetes/galaxy_sign.secret.yaml
           kubectl apply -f .ci/assets/kubernetes/signing_scripts.configmap.yaml
-          kubectl apply -f config/samples/galaxy.yaml
+          if [[ "$CI_TEST_STORAGE" == "azure" ]]; then
+            kubectl apply -f .ci/assets/kubernetes/pulp-object-storage.azure.secret.yaml
+            kubectl apply -f config/samples/galaxy.azure.ci.yaml
+          elif [[ "$CI_TEST_STORAGE" == "filesystem" ]]; then
+            kubectl apply -f config/samples/galaxy.yaml
+          fi
         shell: bash
       - name: Check and wait pulp-operator deploy
         run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
@@ -103,6 +117,11 @@ jobs:
       - name: Test
         run: .ci/scripts/galaxy_ng-tests.sh -m
         shell: bash
+      # - name: Backup & Restore
+      #   run: CI_TEST=galaxy .ci/scripts/backup_and_restore.sh -m
+      #   shell: bash
+      #   env:
+      #     PY_COLORS: '1'
       - name: Logs
         if: always()
         run: .github/workflows/scripts/show_logs.sh
