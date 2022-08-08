@@ -12,14 +12,15 @@ fi
 echo "Set context"
 $KUBECTL config set-context --current --namespace=pulp-operator-system
 
+BACKUP_RESOURCE=pulpproject_v1beta1_pulpbackup_cr.ci.yaml
+RESTORE_RESOURCE=pulpproject_v1beta1_pulprestore_cr.ci.yaml
+
 if [[ "$CI_TEST" == "true" ]]; then
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.ci.yaml
-  BACKUP_RESOURCE=pulpproject_v1beta1_pulpbackup_cr.ci.yaml
-  RESTORE_RESOURCE=pulpproject_v1beta1_pulprestore_cr.ci.yaml
-elif [[ "$CI_TEST" == "galaxy" ]]; then
+elif [[ "$CI_TEST" == "galaxy" && "$CI_TEST_STORAGE" == "filesystem" ]]; then
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.galaxy.ci.yaml
-  BACKUP_RESOURCE=pulpproject_v1beta1_pulpbackup_cr.ci.yaml
-  RESTORE_RESOURCE=pulpproject_v1beta1_pulprestore_cr.ci.yaml
+elif [[ "$CI_TEST" == "galaxy" && "$CI_TEST_STORAGE" == "azure" ]]; then
+  CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.galaxy.azure.ci.yaml
 fi
 
 echo ::group::PRE_BACKUP_LOGS
