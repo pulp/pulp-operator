@@ -18,7 +18,9 @@ package controllers
 
 import (
 	"context"
+	"time"
 
+	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -29,8 +31,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
-
-	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 )
 
 // PulpBackupReconciler reconciles a PulpBackup object
@@ -55,6 +55,7 @@ type PulpBackupReconciler struct {
 //   as a first step?
 func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := ctrllog.FromContext(ctx)
+	backupDir := "/backup"
 
 	pulpBackup := &repomanagerv1alpha1.PulpBackup{}
 	err := r.Get(ctx, req.NamespacedName, pulpBackup)
@@ -72,17 +73,61 @@ func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	var storageClassName string
-	if pulpBackup.Spec.BackupSC != "" {
-		storageClassName = pulpBackup.Spec.BackupSC
+	err = r.createBackupPVC(ctx, pulpBackup)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	pod, err := r.createBackupPod(ctx, pulpBackup, backupDir)
+	if err != nil {
+		return ctrl.Result{}, err
 	}
 
-	var storageRequirements string
-	if pulpBackup.Spec.BackupStorageReq != "" {
-		storageRequirements = pulpBackup.Spec.BackupStorageReq
-	} else {
-		storageRequirements = "5Gi"
+	pulpBackupController, err := r.backupDatabase(ctx, pulpBackup, backupDir, pod)
+	if err != nil {
+		return pulpBackupController, err
+	} else if pulpBackupController.Requeue {
+		return pulpBackupController, nil
+	} else if pulpBackupController.RequeueAfter > 0 {
+		return pulpBackupController, nil
 	}
+
+	pulpBackupController, err = r.backupCR(ctx, pulpBackup, backupDir, pod)
+	if err != nil {
+		return pulpBackupController, err
+	} else if pulpBackupController.Requeue {
+		return pulpBackupController, nil
+	} else if pulpBackupController.RequeueAfter > 0 {
+		return pulpBackupController, nil
+	}
+
+	r.backupSecret(ctx, pulpBackup, backupDir, pod)
+
+	log.Info("Pulp CR Backup finished!")
+	return ctrl.Result{}, nil
+}
+
+// waitPodReady waits until pod get into "Running" state
+func (r *PulpBackupReconciler) waitPodReady(ctx context.Context, namespace, podName string) (*corev1.Pod, error) {
+	var err error
+	for timeout := 0; timeout < 120; timeout++ {
+		pod := &corev1.Pod{}
+		err = r.Get(ctx, types.NamespacedName{Name: podName, Namespace: namespace}, pod)
+		if pod.Status.Phase == corev1.PodRunning {
+			return pod, nil
+		}
+		time.Sleep(time.Second)
+	}
+	return &corev1.Pod{}, err
+}
+
+func (r *PulpBackupReconciler) createBackupPod(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string) (*corev1.Pod, error) {
+	log := ctrllog.FromContext(ctx)
+
+	// we are considering that pulp CR instance is running in the same namespace as pulpbackup and
+	// that there is only a single instance of pulp CR available
+	// we could also let users pass the name of pulp instance
+	pulp := &repomanagerv1alpha1.Pulp{}
+	r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.PulpInstanceName, Namespace: pulpBackup.Namespace}, pulp)
 
 	labels := map[string]string{
 		"app.kubernetes.io/name":       pulpBackup.Spec.DeploymentType + "-backup-storage",
@@ -92,49 +137,6 @@ func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		"app.kubernetes.io/managed-by": pulpBackup.Spec.DeploymentType + "-operator",
 	}
 
-	// create backup pvc
-	pvcFound := &corev1.PersistentVolumeClaim{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulpBackup.Name + "-backup-claim", Namespace: pulpBackup.Namespace}, pvcFound)
-	pvc := &corev1.PersistentVolumeClaim{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      pulpBackup.Name + "-backup-claim",
-			Namespace: pulpBackup.Namespace,
-			Labels:    labels,
-		},
-		Spec: corev1.PersistentVolumeClaimSpec{
-			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceName(corev1.ResourceStorage): resource.MustParse(storageRequirements),
-				},
-			},
-			AccessModes: []corev1.PersistentVolumeAccessMode{
-				corev1.PersistentVolumeAccessMode(corev1.ReadWriteOnce),
-			},
-			StorageClassName: &storageClassName,
-		},
-	}
-
-	if err != nil && errors.IsNotFound(err) {
-		log.Info("Creating a new PulpBackup PVC", "PVC.Namespace", pvc.Namespace, "PVC.Name", pvc.Name)
-		err = r.Create(ctx, pvc)
-		if err != nil {
-			log.Error(err, "Failed to create new PulpBackup PVC", "PVC.Namespace", pvc.Namespace, "PVC.Name", pvc.Name)
-			return ctrl.Result{}, err
-		}
-		// PVC created successfully - return and requeue
-		return ctrl.Result{Requeue: true}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get PulpBackup PVC")
-		return ctrl.Result{}, err
-	}
-
-	// create management pod
-	labels = map[string]string{
-		"app.kubernetes.io/name":      pulpBackup.Spec.DeploymentType + "-backup-manager",
-		"app.kubernetes.io/instance":  pulpBackup.Spec.DeploymentType + "-backup-manager-" + pulpBackup.Name,
-		"app.kubernetes.io/component": "backup-manager",
-	}
-
 	// [TO-DO] define postgres image based on the database implementation type
 	// if external database: we should gather from an user input (pulpbackup CR) postgres version
 	// if provisioned by operator: we should gather, for example, from pulp CR spec or from database deployment spec
@@ -142,7 +144,7 @@ func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	volumeMounts := []corev1.VolumeMount{{
 		Name:      pulpBackup.Name + "-backup",
 		ReadOnly:  false,
-		MountPath: "/backups",
+		MountPath: backupDir,
 	}}
 
 	volumes := []corev1.Volume{{
@@ -153,12 +155,6 @@ func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			},
 		},
 	}}
-
-	// we are considering that pulp CR instance is running in the same namespace as pulpbackup and
-	// that there is only a single instance of pulp CR available
-	// we could also let users pass the name of pulp instance
-	pulp := &repomanagerv1alpha1.Pulp{}
-	r.Get(ctx, types.NamespacedName{Namespace: pulpBackup.Namespace}, pulp)
 
 	if pulp.Spec.IsFileStorage {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
@@ -171,14 +167,14 @@ func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			Name: "file-storage",
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: pulpBackup.Name + "-file-storage",
+					ClaimName: pulp.Name + "-file-storage",
 				},
 			},
 		})
 	}
 
-	podFound := &corev1.Pod{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulpBackup.Name + "-backup-manager", Namespace: pulpBackup.Namespace}, podFound)
+	bkpPod := &corev1.Pod{}
+	err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Name + "-backup-manager", Namespace: pulpBackup.Namespace}, bkpPod)
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      pulpBackup.Name + "-backup-manager",
@@ -206,51 +202,79 @@ func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		err = r.Create(ctx, pod)
 		if err != nil {
 			log.Error(err, "Failed to create new backup manager Pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
-			return ctrl.Result{}, err
+			return &corev1.Pod{}, err
 		}
-		// Pod created successfully - return and requeue
-		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get backup manager Pod")
-		return ctrl.Result{}, err
+		return &corev1.Pod{}, err
 	}
 
-	backupFile := "/tmp/pulp.db"
-
-	log.Info("Backup pod running")
-	execCmd := []string{"touch", backupFile}
-	_, err = r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
+	pod, err = r.waitPodReady(ctx, pulpBackup.Namespace, pulpBackup.Name+"-backup-manager")
 	if err != nil {
-		log.Error(err, "Failed to execute command inside container")
-		return ctrl.Result{}, err
+		log.Error(err, "Backup pod not found")
+		return &corev1.Pod{}, err
+	}
+	return pod, nil
+}
+
+func (r *PulpBackupReconciler) createBackupPVC(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup) error {
+	log := ctrllog.FromContext(ctx)
+
+	var storageClassName string
+	if pulpBackup.Spec.BackupSC != "" {
+		storageClassName = pulpBackup.Spec.BackupSC
 	}
 
-	execCmd = []string{"chmod", "0600", backupFile}
-	_, err = r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
-	if err != nil {
-		log.Error(err, "Failed to execute command inside container")
-		return ctrl.Result{}, err
+	var storageRequirements string
+	if pulpBackup.Spec.BackupStorageReq != "" {
+		storageRequirements = pulpBackup.Spec.BackupStorageReq
+	} else {
+		storageRequirements = "5Gi"
 	}
 
-	postgresHost := "postgres.db.svc.cluster.local"
-	postgresUser := "pulp-admin"
-	postgresDB := "pulp"
-	postgresPort := "5432"
-	postgresPwd := "password"
-	execCmd = []string{
-		"pg_dump", "--clean", "--create",
-		"-d", "postgresql://" + postgresUser + ":" + postgresPwd + "@" + postgresHost + ":" + postgresPort + "/" + postgresDB,
-		"-f", backupFile,
+	labels := map[string]string{
+		"app.kubernetes.io/name":       pulpBackup.Spec.DeploymentType + "-backup-storage",
+		"app.kubernetes.io/instance":   pulpBackup.Spec.DeploymentType + "-backup-storage-" + pulpBackup.Name,
+		"app.kubernetes.io/component":  "backup-storage",
+		"app.kubernetes.io/part-of":    pulpBackup.Spec.DeploymentType,
+		"app.kubernetes.io/managed-by": pulpBackup.Spec.DeploymentType + "-operator",
 	}
 
-	_, err = r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
-	if err != nil {
-		log.Error(err, "Failed to execute command inside container")
-		return ctrl.Result{}, err
+	// create backup pvc
+	pvcFound := &corev1.PersistentVolumeClaim{}
+	err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Name + "-backup-claim", Namespace: pulpBackup.Namespace}, pvcFound)
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      pulpBackup.Name + "-backup-claim",
+			Namespace: pulpBackup.Namespace,
+			Labels:    labels,
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceName(corev1.ResourceStorage): resource.MustParse(storageRequirements),
+				},
+			},
+			AccessModes: []corev1.PersistentVolumeAccessMode{
+				corev1.PersistentVolumeAccessMode(corev1.ReadWriteOnce),
+			},
+			StorageClassName: &storageClassName,
+		},
 	}
 
-	log.Info("DONE!")
-	return ctrl.Result{}, nil
+	if err != nil && errors.IsNotFound(err) {
+		log.Info("Creating a new PulpBackup PVC", "PVC.Namespace", pvc.Namespace, "PVC.Name", pvc.Name)
+		err = r.Create(ctx, pvc)
+		if err != nil {
+			log.Error(err, "Failed to create new PulpBackup PVC", "PVC.Namespace", pvc.Namespace, "PVC.Name", pvc.Name)
+			return err
+		}
+	} else if err != nil {
+		log.Error(err, "Failed to get PulpBackup PVC")
+		return err
+	}
+
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

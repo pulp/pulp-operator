@@ -28,6 +28,9 @@ type PulpBackupSpec struct {
 	// +kubebuilder:validation:Optional
 	DeploymentName string `json:"deployment_name"`
 
+	// +kubebuilder:default:="pulp"
+	PulpInstanceName string `json:"pulp_instance_name"`
+
 	// Name of the PVC to be used for storing the backup
 	// +kubebuilder:validation:Optional
 	BackupPVC string `json:"backup_pvc"`
@@ -47,6 +50,10 @@ type PulpBackupSpec struct {
 	// Label selector used to identify postgres pod for executing migration
 	// +kubebuilder:validation:Optional
 	PostgresLabelSelector string `json:"postgres_label_selector"`
+
+	// Secret where the administrator password can be found
+	// +kubebuilder:default:="pulp-admin-password"
+	AdminPasswordSecret string `json:"admin_password_secret,omitempty"`
 }
 
 // PulpBackupStatus defines the observed state of PulpBackup

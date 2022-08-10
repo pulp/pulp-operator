@@ -35,6 +35,10 @@ spec:
           spec:
             description: PulpBackupSpec defines the desired state of PulpBackup
             properties:
+              admin_password_secret:
+                default: pulp-admin-password
+                description: Secret where the administrator password can be found
+                type: string
               backup_pvc:
                 description: Name of the PVC to be used for storing the backup
                 type: string
@@ -56,8 +60,12 @@ spec:
                 description: Label selector used to identify postgres pod for executing
                   migration
                 type: string
+              pulp_instance_name:
+                default: pulp
+                type: string
             required:
             - deployment_type
+            - pulp_instance_name
             type: object
           status:
             description: PulpBackupStatus defines the observed state of PulpBackup

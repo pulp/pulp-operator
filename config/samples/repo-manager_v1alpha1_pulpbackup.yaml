@@ -5,3 +5,5 @@ metadata:
 spec:
   deployment_type: pulp
   backup_storage_class: standard
+  pulp_instance_name: pulp
+  admin_password_secret: example-pulp-admin-password
