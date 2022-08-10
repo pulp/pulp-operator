@@ -7,11 +7,10 @@ import (
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	ctrl "sigs.k8s.io/controller-runtime"
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-func (r *PulpBackupReconciler) backupCR(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string, pod *corev1.Pod) (ctrl.Result, error) {
+func (r *PulpBackupReconciler) backupCR(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string, pod *corev1.Pod) error {
 	log := ctrllog.FromContext(ctx)
 
 	// we are considering that pulp CR instance is running in the same namespace as pulpbackup and
@@ -29,7 +28,7 @@ func (r *PulpBackupReconciler) backupCR(ctx context.Context, pulpBackup *repoman
 	_, err := r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to backup pulp CR")
-		return ctrl.Result{}, err
+		return err
 	}
-	return ctrl.Result{}, nil
+	return nil
 }

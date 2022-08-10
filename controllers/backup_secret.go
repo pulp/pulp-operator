@@ -42,130 +42,167 @@ type containerTokenSecret struct {
 	Container_auth_public_key  string `json:"container_auth_public_key"`
 }
 
-func (r *PulpBackupReconciler) backupSecret(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string, pod *corev1.Pod) {
+func (r *PulpBackupReconciler) backupSecret(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string, pod *corev1.Pod) error {
 	log := ctrllog.FromContext(ctx)
+
+	// ADMIN AND POSTGRES SECRETS
+	err := r.createSecret(ctx, pulpBackup, backupDir, pod, "admin_and_postgres")
+	if err != nil {
+		return err
+	}
+	log.Info("Admin and postgres secrets backup finished")
+
+	// FIELDS ENCRYPTION SECRET
+	err = r.createSecret(ctx, pulpBackup, backupDir, pod, "fields_encryption_secret")
+	if err != nil {
+		return err
+	}
+	log.Info("Fields encryption secret backup finished")
+
+	// SIGNING SECRET
+	err = r.createSecret(ctx, pulpBackup, backupDir, pod, "signing_secret")
+	if err != nil {
+		return err
+	}
+	log.Info("Signing secret backup finished")
+
+	// CONTAINER TOKEN SECRET
+	err = r.createSecret(ctx, pulpBackup, backupDir, pod, "container_token")
+	if err != nil {
+		return err
+	}
+	log.Info("Container token secret backup finished")
+
+	// [WIP] OBJECT STORAGE S3 SECRET
+	//r.createSecret(ctx, pulpBackup, backupDir, pod, "s3_secret")
+
+	// [WIP] OBJECT STORAGE AZURE SECRET
+	//r.createSecret(ctx, pulpBackup, backupDir, pod, "azure_secret")
+
+	// [WIP] OBJECT SSO CONFIG SECRET
+	//r.createSecret(ctx, pulpBackup, backupDir, pod, "sso_config_secret")
+
+	return nil
+}
+
+func (r *PulpBackupReconciler) createSecret(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string, pod *corev1.Pod, secretType string) error {
+	log := ctrllog.FromContext(ctx)
+
+	var secretSerialized []byte
+	backupFile := ""
+	secret := &corev1.Secret{}
 
 	// we are considering that pulp CR instance is running in the same namespace as pulpbackup and
 	// that there is only a single instance of pulp CR available
 	// we could also let users pass the name of pulp instance
 	pulp := &repomanagerv1alpha1.Pulp{}
-	r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.PulpInstanceName, Namespace: pulpBackup.Namespace}, pulp)
-
-	// ADMIN AND POSTGRES SECRETS
-	secretData := adminSecret{}
-	adminPwd := &corev1.Secret{}
-	err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.AdminPasswordSecret, Namespace: pulpBackup.Namespace}, adminPwd)
+	err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.PulpInstanceName, Namespace: pulpBackup.Namespace}, pulp)
 	if err != nil {
-		log.Error(err, "Error trying to find pulp-admin-password secret")
-		//return ctrl.Result{}, err
+		log.Error(err, "Failed to get PulpBackup")
+		return err
 	}
 
-	secretData.Admin_password_name = pulpBackup.Spec.AdminPasswordSecret
-	secretData.Admin_password = string(adminPwd.Data["password"])
+	switch secretType {
+	case "admin_and_postgres":
+		err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.AdminPasswordSecret, Namespace: pulpBackup.Namespace}, secret)
+		if err != nil {
+			log.Error(err, "Error trying to find pulp-admin-password secret")
+			return err
+		}
 
-	pgSecret := &corev1.Secret{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.PulpInstanceName + "-postgres-configuration", Namespace: pulpBackup.Namespace}, pgSecret)
-	if err != nil {
-		log.Error(err, "Error trying to find pulp-postgres-configuration secret")
-		//return ctrl.Result{}, err
+		adminPwdSecret := adminSecret{
+			Admin_password_name: pulpBackup.Spec.AdminPasswordSecret,
+			Admin_password:      string(secret.Data["password"]),
+		}
+
+		err = r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.PulpInstanceName + "-postgres-configuration", Namespace: pulpBackup.Namespace}, secret)
+		if err != nil {
+			log.Error(err, "Error trying to find pulp-postgres-configuration secret")
+			return err
+		}
+
+		adminPwdSecret.Database_password = string(secret.Data["password"])
+		adminPwdSecret.Database_username = string(secret.Data["username"])
+		adminPwdSecret.Database_name = string(secret.Data["database"])
+		adminPwdSecret.Database_port = string(secret.Data["port"])
+		adminPwdSecret.Database_host = string(secret.Data["host"])
+		adminPwdSecret.Database_type = string(secret.Data["type"])
+		adminPwdSecret.Database_sslmode = string(secret.Data["sslmode"])
+
+		if string(secret.Data["type"]) != "" {
+			adminPwdSecret.Database_type = string(secret.Data["type"])
+		}
+
+		secretSerialized, _ = yaml.Marshal(adminPwdSecret)
+		backupFile = "secrets.yaml"
+
+	case "container_token":
+		err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.PulpInstanceName + "-container-auth", Namespace: pulpBackup.Namespace}, secret)
+		if err != nil {
+			log.Error(err, "Error trying to find container token secret")
+			return err
+		}
+
+		bkpTokenSecret := containerTokenSecret{
+			Container_token_secret:     pulpBackup.Spec.PulpInstanceName + "-container-auth",
+			Container_auth_public_key:  string(secret.Data["container_auth_public_key.pem"]),
+			Container_auth_private_key: string(secret.Data["container_auth_private_key.pem"]),
+		}
+		secretSerialized, _ = yaml.Marshal(bkpTokenSecret)
+		backupFile = "db_fields_encryption_secret.yaml"
+
+	case "signing_secret":
+		err := r.Get(ctx, types.NamespacedName{Name: pulp.Spec.SigningSecret, Namespace: pulpBackup.Namespace}, secret)
+		if err != nil {
+			log.Error(err, "Error trying to find singing-secret secret")
+			return err
+		}
+
+		bkpSigningSecret := signingSecret{
+			Signing_secret:      pulp.Spec.SigningSecret,
+			Signing_service_asc: string(secret.Data["signing_service.asc"]),
+			Signing_service_gpg: string(secret.Data["signing_service.gpg"]),
+		}
+		secretSerialized, _ = yaml.Marshal(bkpSigningSecret)
+		backupFile = "signing_secret.yaml"
+
+	case "fields_encryption_secret":
+		err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.PulpInstanceName + "-db-fields-encryption", Namespace: pulpBackup.Namespace}, secret)
+		if err != nil {
+			log.Error(err, "Error trying to find pulp-db-fields-encryption secret")
+			return err
+		}
+
+		encSecret := encryptionFieldSecret{
+			Db_fields_encryption_key:    string(secret.Data["database_fields.symmetric.key"]),
+			Db_fields_encryption_secret: pulpBackup.Spec.PulpInstanceName + "-db-fields-encryption",
+		}
+		secretSerialized, _ = yaml.Marshal(encSecret)
+		backupFile = "container_token_secret.yaml"
+
+	case "s3_secret":
+		if pulp.Spec.ObjectStorageS3Secret != "" {
+			log.Info("Backing up storage s3 secret ...")
+		}
+	case "azure_secret":
+		if pulp.Spec.ObjectStorageAzureSecret != "" {
+			log.Info("Backing up storage azure secret ...")
+		}
+	case "sso_config_secret":
+		if pulp.Spec.SSOSecret != "" {
+			log.Info("Backing up sso configuration secret ...")
+		}
 	}
 
-	secretData.Database_password = string(pgSecret.Data["password"])
-	secretData.Database_username = string(pgSecret.Data["username"])
-	secretData.Database_name = string(pgSecret.Data["database"])
-	secretData.Database_port = string(pgSecret.Data["port"])
-	secretData.Database_host = string(pgSecret.Data["host"])
-	secretData.Database_type = string(pgSecret.Data["type"])
-	secretData.Database_sslmode = string(pgSecret.Data["sslmode"])
-
-	if string(pgSecret.Data["type"]) != "" {
-		secretData.Database_type = string(pgSecret.Data["type"])
-	}
-
-	secretSerialized, _ := yaml.Marshal(secretData)
 	execCmd := []string{
-		"bash", "-c", "echo '" + string(secretSerialized) + "' > " + backupDir + "/secrets.yaml",
+		"bash", "-c", "echo '" + string(secretSerialized) + "' > " + backupDir + "/" + backupFile,
 	}
 	_, err = r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
 	if err != nil {
-		log.Error(err, "Failed to backup admin and postgres secrets")
-		//return ctrl.Result{}, err
-	}
-
-	log.Info("Admin and postgres secrets backup finished")
-
-	// FIELDS ENCRYPTION SECRET
-	encSecret := encryptionFieldSecret{}
-	fieldEncryptionSecret := &corev1.Secret{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.PulpInstanceName + "-db-fields-encryption", Namespace: pulpBackup.Namespace}, fieldEncryptionSecret)
-	if err != nil {
-		log.Error(err, "Error trying to find pulp-db-fields-encryption secret")
-		//return ctrl.Result{}, err
-	}
-
-	encSecret.Db_fields_encryption_key = string(fieldEncryptionSecret.Data["database_fields.symmetric.key"])
-	encSecret.Db_fields_encryption_secret = pulpBackup.Spec.PulpInstanceName + "-db-fields-encryption"
-	secretSerialized, _ = yaml.Marshal(encSecret)
-	execCmd = []string{
-		"bash", "-c", "echo '" + string(secretSerialized) + "' > " + backupDir + "/db_fields_encryption_secret.yaml",
-	}
-	_, err = r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
-	if err != nil {
-		log.Error(err, "Failed to backup fields encryption secret")
-		//return ctrl.Result{}, err
-	}
-
-	log.Info("Fields encryption secret backup finished")
-
-	// SIGNING SECRET
-	bkpSigningSecret := signingSecret{}
-	signingConfig := &corev1.Secret{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulp.Spec.SigningSecret, Namespace: pulpBackup.Namespace}, signingConfig)
-	if err != nil {
-		log.Error(err, "Error trying to find signing secret")
-		//return ctrl.Result{}, err
-	}
-	bkpSigningSecret.Signing_secret = pulp.Spec.SigningSecret
-	bkpSigningSecret.Signing_service_asc = string(signingConfig.Data["signing_service.asc"])
-	bkpSigningSecret.Signing_service_gpg = string(signingConfig.Data["signing_service.gpg"])
-	secretSerialized, _ = yaml.Marshal(bkpSigningSecret)
-	execCmd = []string{
-		"bash", "-c", "echo '" + string(secretSerialized) + "' > " + backupDir + "/signing_secret.yaml",
-	}
-	_, err = r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
-	if err != nil {
-		log.Error(err, "Failed to backup signing secret")
-		//return ctrl.Result{}, err
-	}
-
-	log.Info("Signing secret backup finished")
-
-	// CONTAINER TOKEN SECRET
-	bkpTokenSecret := containerTokenSecret{}
-	tokenSecret := &corev1.Secret{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.PulpInstanceName + "-container-auth", Namespace: pulpBackup.Namespace}, tokenSecret)
-	if err != nil {
-		log.Error(err, "Error trying to find container token secret")
-		//return ctrl.Result{}, err
-	}
-	bkpTokenSecret.Container_token_secret = pulpBackup.Spec.PulpInstanceName + "-container-auth"
-	bkpTokenSecret.Container_auth_public_key = string(tokenSecret.Data["container_auth_public_key.pem"])
-	bkpTokenSecret.Container_auth_private_key = string(tokenSecret.Data["container_auth_private_key.pem"])
-	secretSerialized, _ = yaml.Marshal(bkpTokenSecret)
-	execCmd = []string{
-		"bash", "-c", "echo '" + string(secretSerialized) + "' > " + backupDir + "/container_token_secret.yaml",
-	}
-	_, err = r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
-	if err != nil {
-		log.Error(err, "Failed to backup container token secret")
-		//return ctrl.Result{}, err
+		log.Error(err, "Failed to backup "+secretType+" secret")
+		return err
 	}
 
 	log.Info("Container token secret backup finished")
-
-	// [WIP] OBJECT STORAGE S3 SECRET
-	if pulp.Spec.ObjectStorageS3Secret != "" {
-		log.Info("Backing up storage s3 secret ...")
-	}
-
+	return nil
 }

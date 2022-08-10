@@ -5,11 +5,11 @@ import (
 
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-	ctrl "sigs.k8s.io/controller-runtime"
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-func (r *PulpBackupReconciler) backupDatabase(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string, pod *corev1.Pod) (ctrl.Result, error) {
+// backupDatabase runs a pg_dump inside backup-manager pod and store it in backup PVC
+func (r *PulpBackupReconciler) backupDatabase(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string, pod *corev1.Pod) error {
 	log := ctrllog.FromContext(ctx)
 	backupFile := "pulp.db"
 
@@ -17,17 +17,20 @@ func (r *PulpBackupReconciler) backupDatabase(ctx context.Context, pulpBackup *r
 	execCmd := []string{"touch", backupDir + "/" + backupFile}
 	_, err := r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
 	if err != nil {
-		log.Error(err, "Failed to create backup file")
-		return ctrl.Result{}, err
+		log.Error(err, "Failed to create pulp.db backup file")
+		return err
 	}
 
 	execCmd = []string{"chmod", "0600", backupDir + "/" + backupFile}
 	_, err = r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to modify backup file permissions")
-		return ctrl.Result{}, err
+		return err
 	}
 
+	// [WIP] GET POSTGRES CREDENTIALS AND HOST
+	// [WIP] GET POSTGRES CREDENTIALS AND HOST
+	// [WIP] GET POSTGRES CREDENTIALS AND HOST
 	postgresHost := "pulp-database-svc"
 	postgresUser := "pulp"
 	postgresDB := "pulp"
@@ -42,9 +45,9 @@ func (r *PulpBackupReconciler) backupDatabase(ctx context.Context, pulpBackup *r
 	_, err = r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to run pg_dump")
-		return ctrl.Result{}, err
+		return err
 	}
 
 	log.Info("Database Backup finished!")
-	return ctrl.Result{}, nil
+	return nil
 }

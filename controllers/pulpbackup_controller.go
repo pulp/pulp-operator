@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
@@ -50,9 +51,8 @@ type PulpBackupReconciler struct {
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 
-// [TO-DO]
-// - should we follow the same approach of deleting the backup manager pod if it is available
-//   as a first step?
+// [BUG?] Something is triggering a reconcile loop even after all the backup tasks are done.
+// I'm not sure, but I guess it is the pod termination event.
 func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := ctrllog.FromContext(ctx)
 	backupDir := "/backup"
@@ -73,6 +73,8 @@ func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
+	r.cleanup(ctx, pulpBackup)
+
 	err = r.createBackupPVC(ctx, pulpBackup)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -82,37 +84,40 @@ func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	pulpBackupController, err := r.backupDatabase(ctx, pulpBackup, backupDir, pod)
+	err = r.backupDatabase(ctx, pulpBackup, backupDir, pod)
 	if err != nil {
-		return pulpBackupController, err
-	} else if pulpBackupController.Requeue {
-		return pulpBackupController, nil
-	} else if pulpBackupController.RequeueAfter > 0 {
-		return pulpBackupController, nil
+		return ctrl.Result{}, err
 	}
 
-	pulpBackupController, err = r.backupCR(ctx, pulpBackup, backupDir, pod)
+	err = r.backupCR(ctx, pulpBackup, backupDir, pod)
 	if err != nil {
-		return pulpBackupController, err
-	} else if pulpBackupController.Requeue {
-		return pulpBackupController, nil
-	} else if pulpBackupController.RequeueAfter > 0 {
-		return pulpBackupController, nil
+		return ctrl.Result{}, err
 	}
 
-	r.backupSecret(ctx, pulpBackup, backupDir, pod)
+	err = r.backupSecret(ctx, pulpBackup, backupDir, pod)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
+	err = r.backupPulpDir(ctx, pulpBackup, backupDir, pod)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	log.Info("Cleaning up backup resources ...")
+	r.cleanup(ctx, pulpBackup)
 	log.Info("Pulp CR Backup finished!")
 	return ctrl.Result{}, nil
 }
 
-// waitPodReady waits until pod get into "Running" state
+// waitPodReady waits until container gets into a "READY" state
 func (r *PulpBackupReconciler) waitPodReady(ctx context.Context, namespace, podName string) (*corev1.Pod, error) {
 	var err error
 	for timeout := 0; timeout < 120; timeout++ {
 		pod := &corev1.Pod{}
 		err = r.Get(ctx, types.NamespacedName{Name: podName, Namespace: namespace}, pod)
-		if pod.Status.Phase == corev1.PodRunning {
+
+		if len(pod.Status.ContainerStatuses) > 0 && pod.Status.ContainerStatuses[0].Ready {
 			return pod, nil
 		}
 		time.Sleep(time.Second)
@@ -120,6 +125,7 @@ func (r *PulpBackupReconciler) waitPodReady(ctx context.Context, namespace, podN
 	return &corev1.Pod{}, err
 }
 
+// createBackupPod provisions the backup-manager pod where the backup steps will run
 func (r *PulpBackupReconciler) createBackupPod(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string) (*corev1.Pod, error) {
 	log := ctrllog.FromContext(ctx)
 
@@ -173,6 +179,19 @@ func (r *PulpBackupReconciler) createBackupPod(ctx context.Context, pulpBackup *
 		})
 	}
 
+	// running a dumb command on bkp mount point just to make sure that
+	// the pod is ready to execute the backup commands (mkdir,cp,echo,etc)
+	readinessProbe := &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			Exec: &corev1.ExecAction{Command: []string{"ls", backupDir}},
+		},
+		FailureThreshold:    10,
+		InitialDelaySeconds: 3,
+		PeriodSeconds:       10,
+		SuccessThreshold:    1,
+		TimeoutSeconds:      10,
+	}
+
 	bkpPod := &corev1.Pod{}
 	err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Name + "-backup-manager", Namespace: pulpBackup.Namespace}, bkpPod)
 	pod := &corev1.Pod{
@@ -190,7 +209,8 @@ func (r *PulpBackupReconciler) createBackupPod(ctx context.Context, pulpBackup *
 					"sleep",
 					"infinity",
 				},
-				VolumeMounts: volumeMounts,
+				VolumeMounts:   volumeMounts,
+				ReadinessProbe: readinessProbe,
 			}},
 			Volumes:       volumes,
 			RestartPolicy: corev1.RestartPolicyNever,
@@ -217,6 +237,25 @@ func (r *PulpBackupReconciler) createBackupPod(ctx context.Context, pulpBackup *
 	return pod, nil
 }
 
+// cleanup deletes the backup-manager pod
+func (r *PulpBackupReconciler) cleanup(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup) error {
+	log := ctrllog.FromContext(ctx)
+	bkpPod := &corev1.Pod{}
+	err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Name + "-backup-manager", Namespace: pulpBackup.Namespace}, bkpPod)
+	if err != nil {
+		log.Info("Backup manager Pod not found")
+		return err
+	}
+
+	err = r.Delete(ctx, bkpPod)
+	if err != nil {
+		log.Error(err, "Failed to delete the backup manager Pod")
+		return err
+	}
+	return nil
+}
+
+// createBackupPVC provisions the pulp-backup-claim PVC that will store the backup
 func (r *PulpBackupReconciler) createBackupPVC(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup) error {
 	log := ctrllog.FromContext(ctx)
 

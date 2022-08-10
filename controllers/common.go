@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"time"
 
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	"golang.org/x/crypto/openpgp"
@@ -144,6 +145,7 @@ func (r *PulpReconciler) updateStatus(ctx context.Context, pulp *repomanagerv1al
 	r.Status().Update(ctx, pulp)
 }
 
+// containerExec runs []command in the container
 func (r *PulpBackupReconciler) containerExec(pod *corev1.Pod, command []string, container, namespace string) (string, error) {
 	execReq := r.RESTClient.
 		Post().
@@ -176,5 +178,10 @@ func (r *PulpBackupReconciler) containerExec(pod *corev1.Pod, command []string, 
 
 	result := strings.TrimSpace(stdout.String()) + "\n" + strings.TrimSpace(stderr.String())
 	result = strings.TrimSpace(result)
+
+	// I think the exec.Stream command is not synchronous and sometimes when a task depends
+	// on the results of the previous one it is failing.
+	// But this is just a guess!!! We need to investigate it further.
+	time.Sleep(time.Second)
 	return result, nil
 }
