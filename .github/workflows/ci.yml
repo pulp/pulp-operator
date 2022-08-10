@@ -23,6 +23,7 @@ jobs:
         include:
           - STORAGE: filesystem
           - STORAGE: azure
+          - STORAGE: s3
     steps:
       - uses: actions/checkout@v2
         with:
@@ -100,13 +101,15 @@ jobs:
           make deploy
           kubectl get namespace
           kubectl config set-context --current --namespace=pulp-operator-go-system
-          #kubectl apply -f config/samples/simple.yaml
           kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
           kubectl apply -f .ci/assets/kubernetes/galaxy_sign.secret.yaml
           kubectl apply -f .ci/assets/kubernetes/signing_scripts.configmap.yaml
           if [[ "$CI_TEST_STORAGE" == "azure" ]]; then
             kubectl apply -f .ci/assets/kubernetes/pulp-object-storage.azure.secret.yaml
             kubectl apply -f config/samples/galaxy.azure.ci.yaml
+          elif [[ "$CI_TEST_STORAGE" == "s3" ]]; then
+            kubectl apply -f .ci/assets/kubernetes/pulp-object-storage.aws.secret.yaml
+            kubectl apply -f config/samples/galaxy.s3.ci.yaml
           elif [[ "$CI_TEST_STORAGE" == "filesystem" ]]; then
             kubectl apply -f config/samples/galaxy.yaml
           fi

@@ -12,7 +12,9 @@ if [[ "$CI_TEST" == "true" ]]; then
 elif [[ "$CI_TEST" == "galaxy" && "$CI_TEST_STORAGE" == "filesystem" ]]; then
   CUSTOM_RESOURCE=galaxy.yaml
 elif [[ "$CI_TEST" == "galaxy" && "$CI_TEST_STORAGE" == "azure" ]]; then
-  CUSTOM_RESOURCE=galaxy.azure.ci.yaml.yaml
+  CUSTOM_RESOURCE=galaxy.azure.ci.yaml
+elif [[ "$CI_TEST" == "galaxy" && "$CI_TEST_STORAGE" == "s3" ]]; then
+  CUSTOM_RESOURCE=galaxy.s3.ci.yaml
 fi
 
 echo ::group::PRE_BACKUP_LOGS
