@@ -209,6 +209,7 @@ jobs:
         include:
           - STORAGE: filesystem
           - STORAGE: azure
+          - STORAGE: s3
     steps:
       - uses: actions/checkout@v2
         with:

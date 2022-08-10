@@ -20,7 +20,8 @@
 
 - name: pulp-file-storage
   block:
-    - k8s_status:
+    - name: "Creating {{ deployment_type|capitalize }}-api PVC resource"
+      k8s_status:
         api_version: "{{ api_version }}"
         kind: "{{ kind }}"
         name: "{{ ansible_operator_meta.name }}"
@@ -39,7 +40,8 @@
       with_items:
         - pulp-file-storage
 
-    - k8s_status:
+    - name: "Removing ownerReferences from {{ ansible_operator_meta.name}}-file-storage PVC"
+      k8s_status:
         api_version: "{{ api_version }}"
         kind: "{{ kind }}"
         name: "{{ ansible_operator_meta.name }}"

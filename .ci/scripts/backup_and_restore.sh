@@ -21,6 +21,8 @@ elif [[ "$CI_TEST" == "galaxy" && "$CI_TEST_STORAGE" == "filesystem" ]]; then
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.galaxy.ci.yaml
 elif [[ "$CI_TEST" == "galaxy" && "$CI_TEST_STORAGE" == "azure" ]]; then
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.galaxy.azure.ci.yaml
+elif [[ "$CI_TEST" == "galaxy" && "$CI_TEST_STORAGE" == "s3" ]]; then
+  CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.galaxy.s3.ci.yaml
 fi
 
 echo ::group::PRE_BACKUP_LOGS

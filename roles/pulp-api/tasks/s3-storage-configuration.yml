@@ -1,5 +1,6 @@
 ---
-- k8s_status:
+- name: Checking s3 storage configurations
+  k8s_status:
     api_version: "{{ api_version }}"
     kind: "{{ kind }}"
     name: "{{ ansible_operator_meta.name }}"
@@ -7,7 +8,7 @@
     conditions:
       - type: "{{ deployment_type|capitalize }}-API-Ready"
         message: Checking s3 storage configurations
-        reason: CheckingS3StorageConfigs
+        reason: CheckingStorageConfig
         status: "False"
         lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
 
@@ -29,7 +30,8 @@
     - _custom_s3_configuration.resources[0].data is defined
 
 - block:
-  - k8s_status:
+  - name: Checking format in s3 Secret
+    k8s_status:
       api_version: "{{ api_version }}"
       kind: "{{ kind }}"
       name: "{{ ansible_operator_meta.name }}"
@@ -89,7 +91,8 @@
     - _custom_s3_configuration.resources[0].data['s3-endpoint'] | length
 
 - block:
-  - k8s_status:
+  - name: Checking Missing s3 fields in Secret
+    k8s_status:
       api_version: "{{ api_version }}"
       kind: "{{ kind }}"
       name: "{{ ansible_operator_meta.name }}"
