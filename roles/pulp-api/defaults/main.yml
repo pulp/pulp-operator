@@ -62,6 +62,7 @@ default_s3_settings:
   AWS_S3_SIGNATURE_VERSION: "s3v4"
   AWS_S3_ADDRESSING_STYLE: "path"
   DEFAULT_FILE_STORAGE: "storages.backends.s3boto3.S3Boto3Storage"
+  MEDIA_ROOT: ""
 
 azure_secret_data_avaiable: false
 azure_account_name_available: false
