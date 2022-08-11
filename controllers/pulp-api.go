@@ -707,9 +707,13 @@ func labelsForPulpApi(m *repomanagerv1alpha1.Pulp) map[string]string {
 	}
 }
 
+// pulpServerSecret creates the pulp-server secret object which is used to
+// populate the /etc/pulp/settings.py config file
 func (r *PulpReconciler) pulpServerSecret(ctx context.Context, m *repomanagerv1alpha1.Pulp, log logr.Logger) *corev1.Secret {
 
 	var dbHost, dbPort, dbUser, dbPass, dbName, dbSSLMode string
+
+	// if there is no external database configuration get the databaseconfig from pulp-postgres-configuration secret
 	if reflect.DeepEqual(m.Spec.Database.ExternalDB, repomanagerv1alpha1.ExternalDB{}) {
 		log.Info("Retrieving Postgres credentials from "+m.Name+"-postgres-configuration secret", "Secret.Namespace", m.Namespace, "Secret.Name", m.Name)
 		pgCredentials, err := r.retrieveSecretData(ctx, m.Name+"-postgres-configuration", m.Namespace, "username", "password", "database", "port", "sslmode")
@@ -730,6 +734,8 @@ func (r *PulpReconciler) pulpServerSecret(ctx context.Context, m *repomanagerv1a
 		dbName = m.Spec.Database.ExternalDB.PostgresDBName
 		dbSSLMode = m.Spec.Database.ExternalDB.PostgresSSLMode
 	}
+
+	// default settings.py configuration
 	var pulp_settings = `CACHE_ENABLED = "True"
 DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
 GALAXY_COLLECTION_SIGNING_SERVICE = "ansible-default"
@@ -804,6 +810,11 @@ AWS_S3_ADDRESSING_STYLE = "path"
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 MEDIA_ROOT = ""
 `
+	}
+
+	// configure settings.py with keycloak integration variables
+	if len(m.Spec.SSOSecret) > 0 {
+		r.ssoConfig(ctx, m, &pulp_settings)
 	}
 
 	pulp_settings = addCustomPulpSettings(m, pulp_settings)

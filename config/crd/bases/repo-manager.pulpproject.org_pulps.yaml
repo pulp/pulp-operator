@@ -1211,9 +1211,6 @@ spec:
                 - NodePort
                 - nodeport
                 type: string
-              is_file_storage:
-                default: true
-                type: boolean
               is_k8s:
                 default: false
                 type: boolean
@@ -1221,6 +1218,9 @@ spec:
                 description: Provide requested port value
                 format: int32
                 type: integer
+              object_storage_azure_secret:
+                description: The secret for Azure compliant object storage configuration.
+                type: string
               object_storage_s3_secret:
                 description: The secret for S3 compliant object storage configuration.
                 type: string
@@ -1235,11 +1235,11 @@ spec:
                   api_root:
                     default: /pulp/
                     type: string
-                  debug:
-                    type: string
                   custom_settings:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
+                  debug:
+                    type: string
                 type: object
               redis_image:
                 default: redis:latest

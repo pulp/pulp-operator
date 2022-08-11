@@ -73,6 +73,7 @@ func (r *PulpReconciler) getSigningKeyFingerprint(secretName, secretNamespace st
 
 }
 
+// addCustomPulpSettings appends custom settings defined in Pulp CR to settings.py
 func addCustomPulpSettings(pulp *repomanagerv1alpha1.Pulp, current_settings string) string {
 	custom_settings := pulp.Spec.PulpSettings.CustomSettings.Raw
 	var settingsJson map[string]interface{}
