@@ -35,9 +35,6 @@ type PulpSpec struct {
 	//+kubebuilder:default:="pulp"
 	DeploymentType string `json:"deployment_type,omitempty"`
 
-	// +kubebuilder:default:=true
-	IsFileStorage bool `json:"is_file_storage,omitempty"`
-
 	// The size of the file storage; for example 100Gi.
 	FileStorageSize string `json:"file_storage_size,omitempty"`
 
@@ -235,7 +232,7 @@ type PulpSettings struct {
 
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Optional
-	RawSettings runtime.RawExtension `json:"raw_settings"`
+	CustomSettings runtime.RawExtension `json:"custom_settings"`
 }
 
 type GalaxyFeatureFlags struct {

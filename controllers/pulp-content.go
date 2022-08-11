@@ -217,7 +217,7 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 		volumes = append(volumes, signingSecretVolume...)
 	}
 
-	if m.Spec.IsFileStorage {
+	if len(m.Spec.ObjectStorageAzureSecret) == 0 && len(m.Spec.ObjectStorageS3Secret) == 0 {
 		fileStorage := corev1.Volume{
 			Name: "file-storage",
 			VolumeSource: corev1.VolumeSource{
@@ -323,7 +323,7 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 		volumeMounts = append(volumeMounts, signingSecretMount...)
 	}
 
-	if m.Spec.IsFileStorage {
+	if len(m.Spec.ObjectStorageAzureSecret) == 0 && len(m.Spec.ObjectStorageS3Secret) == 0 {
 		fileStorageMount := corev1.VolumeMount{
 			Name:      "file-storage",
 			ReadOnly:  false,

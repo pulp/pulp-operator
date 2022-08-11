@@ -29,7 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -41,7 +40,7 @@ import (
 func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// pulp-file-storage
-	if pulp.Spec.IsFileStorage {
+	if len(pulp.Spec.ObjectStorageAzureSecret) == 0 && len(pulp.Spec.ObjectStorageS3Secret) == 0 {
 		pvcFound := &corev1.PersistentVolumeClaim{}
 		err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-file-storage", Namespace: pulp.Namespace}, pvcFound)
 		expected_pvc := r.fileStoragePVC(pulp)
@@ -83,15 +82,7 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 	// Create pulp-server secret in case it is not found
 	if err != nil && errors.IsNotFound(err) {
 		// retrieve database credentials from postgres-secret only if we are not passing an external database settings
-		pgCredentials := map[string]string{}
-		if reflect.DeepEqual(pulp.Spec.Database.ExternalDB, repomanagerv1alpha1.ExternalDB{}) {
-			log.Info("Retrieving Postgres credentials from "+pulp.Name+"-postgres-configuration secret", "Secret.Namespace", pulp.Namespace, "Secret.Name", pulp.Name)
-			pgCredentials, err = r.retrieveSecretData(ctx, pulp.Name+"-postgres-configuration", pulp.Namespace, "username", "password", "database", "port", "sslmode")
-			if err != nil {
-				log.Error(err, "Secret Not Found!", "Secret.Namespace", pulp.Namespace, "Secret.Name", pulp.Name)
-			}
-		}
-		sec := r.pulpServerSecret(pulp, pgCredentials["username"], pgCredentials["password"], pgCredentials["database"], pgCredentials["port"], pgCredentials["sslmode"])
+		sec := r.pulpServerSecret(ctx, pulp, log)
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "CreatingServerSecret", "Creating "+pulp.Name+"-server secret")
 		log.Info("Creating a new pulp-server secret", "Secret.Namespace", sec.Namespace, "Secret.Name", sec.Name)
 		err = r.Create(ctx, sec)
@@ -420,7 +411,7 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		},
 	}
 
-	if m.Spec.IsFileStorage {
+	if len(m.Spec.ObjectStorageAzureSecret) == 0 && len(m.Spec.ObjectStorageS3Secret) == 0 {
 		fileStorage := corev1.Volume{
 			Name: "file-storage",
 			VolumeSource: corev1.VolumeSource{
@@ -530,7 +521,7 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		},
 	}
 
-	if m.Spec.IsFileStorage {
+	if len(m.Spec.ObjectStorageAzureSecret) == 0 && len(m.Spec.ObjectStorageS3Secret) == 0 {
 		fileStorageMount := corev1.VolumeMount{
 			Name:      "file-storage",
 			ReadOnly:  false,
@@ -716,24 +707,21 @@ func labelsForPulpApi(m *repomanagerv1alpha1.Pulp) map[string]string {
 	}
 }
 
-func (r *PulpReconciler) pulpServerSecret(m *repomanagerv1alpha1.Pulp, pgUser, pgPwd, database, port, sslmode string) *corev1.Secret {
-
-	var pulp_settings string
-
-	if m.Spec.PulpSettings.ApiRoot != "" {
-		pulp_settings = fmt.Sprintf("API_ROOT = \"%v\"\n", m.Spec.PulpSettings.ApiRoot)
-	} else {
-		pulp_settings = fmt.Sprintln("API_ROOT = \"/pulp/\"")
-	}
+func (r *PulpReconciler) pulpServerSecret(ctx context.Context, m *repomanagerv1alpha1.Pulp, log logr.Logger) *corev1.Secret {
 
 	var dbHost, dbPort, dbUser, dbPass, dbName, dbSSLMode string
 	if reflect.DeepEqual(m.Spec.Database.ExternalDB, repomanagerv1alpha1.ExternalDB{}) {
+		log.Info("Retrieving Postgres credentials from "+m.Name+"-postgres-configuration secret", "Secret.Namespace", m.Namespace, "Secret.Name", m.Name)
+		pgCredentials, err := r.retrieveSecretData(ctx, m.Name+"-postgres-configuration", m.Namespace, "username", "password", "database", "port", "sslmode")
+		if err != nil {
+			log.Error(err, "Secret Not Found!", "Secret.Namespace", m.Namespace, "Secret.Name", m.Name)
+		}
 		dbHost = m.Name + "-database-svc"
-		dbPort = port
-		dbUser = pgUser
-		dbPass = pgPwd
-		dbName = database
-		dbSSLMode = sslmode
+		dbPort = pgCredentials["port"]
+		dbUser = pgCredentials["username"]
+		dbPass = pgCredentials["password"]
+		dbName = pgCredentials["database"]
+		dbSSLMode = pgCredentials["sslmode"]
 	} else {
 		dbHost = m.Spec.Database.ExternalDB.PostgresHost
 		dbPort = strconv.Itoa(m.Spec.Database.ExternalDB.PostgresPort)
@@ -742,9 +730,7 @@ func (r *PulpReconciler) pulpServerSecret(m *repomanagerv1alpha1.Pulp, pgUser, p
 		dbName = m.Spec.Database.ExternalDB.PostgresDBName
 		dbSSLMode = m.Spec.Database.ExternalDB.PostgresSSLMode
 	}
-
-	if reflect.DeepEqual(m.Spec.PulpSettings.RawSettings, runtime.RawExtension{}) {
-		pulp_settings = pulp_settings + `CACHE_ENABLED = "True"
+	var pulp_settings = `CACHE_ENABLED = "True"
 DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
 GALAXY_COLLECTION_SIGNING_SERVICE = "ansible-default"
 ANSIBLE_API_HOSTNAME = "http://` + m.Name + `-web-svc.` + m.Namespace + `.svc.cluster.local:24880"
@@ -772,10 +758,55 @@ REDIS_PORT =  "6379"
 REDIS_PASSWORD = ""
 TOKEN_AUTH_DISABLED = "False"
 TOKEN_SERVER = "http://` + m.Name + `-web-svc.` + m.Namespace + `.svc.cluster.local:24880/token/"
-TOKEN_SIGNATURE_ALGORITHM = "ES256"`
+TOKEN_SIGNATURE_ALGORITHM = "ES256"
+`
+
+	if m.Spec.PulpSettings.ApiRoot != "" {
+		pulp_settings = pulp_settings + fmt.Sprintf("API_ROOT = \"%v\"\n", m.Spec.PulpSettings.ApiRoot)
 	} else {
-		pulp_settings = pulp_settings + convertRawPulpSettings(m)
+		pulp_settings = pulp_settings + fmt.Sprintln("API_ROOT = \"/pulp/\"")
 	}
+
+	if len(m.Spec.ObjectStorageAzureSecret) > 0 {
+		log.Info("Retrieving Azure data from " + m.Spec.ObjectStorageAzureSecret)
+		storageData, err := r.retrieveSecretData(ctx, m.Spec.ObjectStorageAzureSecret, m.Namespace, "azure-account-name", "azure-account-key", "azure-container", "azure-container-path", "azure-connection-string")
+		if err != nil {
+			log.Error(err, "Secret Not Found!", "Secret.Namespace", m.Namespace, "Secret.Name", m.Spec.ObjectStorageAzureSecret)
+		}
+		pulp_settings = pulp_settings + `AZURE_CONNECTION_STRING = '` + storageData["azure-connection-string"] + `'
+AZURE_LOCATION = '` + storageData["azure-container-path"] + `'
+AZURE_ACCOUNT_NAME = '` + storageData["azure-account-name"] + `'
+AZURE_ACCOUNT_KEY = '` + storageData["azure-account-key"] + `'
+AZURE_CONTAINER = '` + storageData["azure-container"] + `'
+AZURE_URL_EXPIRATION_SECS = 60
+AZURE_OVERWRITE_FILES = "True"
+DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
+`
+	}
+
+	if len(m.Spec.ObjectStorageS3Secret) > 0 {
+		log.Info("Retrieving S3 data from " + m.Spec.ObjectStorageS3Secret)
+		storageData, err := r.retrieveSecretData(ctx, m.Spec.ObjectStorageS3Secret, m.Namespace, "s3-access-key-id", "s3-secret-access-key", "s3-bucket-name", "s3-region", "s3-endpoint")
+		if err != nil {
+			log.Error(err, "Secret Not Found!", "Secret.Namespace", m.Namespace, "Secret.Name", m.Spec.ObjectStorageS3Secret)
+		}
+		if len(storageData["s3-endpoint"]) > 0 {
+			pulp_settings = pulp_settings + fmt.Sprintf("AWS_S3_ENDPOINT_URL = \"%v\"\n", storageData["s3-endpoint"])
+		}
+		pulp_settings = pulp_settings + `AWS_ACCESS_KEY_ID = '` + storageData["s3-access-key-id"] + `'
+AWS_SECRET_ACCESS_KEY = '` + storageData["s3-secret-access-key"] + `'
+AWS_STORAGE_BUCKET_NAME = '` + storageData["s3-bucket-name"] + `'
+AWS_S3_REGION_NAME = '` + storageData["s3-region"] + `'
+AWS_DEFAULT_ACL = "@none None"
+S3_USE_SIGV4 = "True"
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+AWS_S3_ADDRESSING_STYLE = "path"
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+MEDIA_ROOT = ""
+`
+	}
+
+	pulp_settings = addCustomPulpSettings(m, pulp_settings)
 
 	sec := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{

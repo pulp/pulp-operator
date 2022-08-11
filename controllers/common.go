@@ -73,13 +73,17 @@ func (r *PulpReconciler) getSigningKeyFingerprint(secretName, secretNamespace st
 
 }
 
-func convertRawPulpSettings(pulp *repomanagerv1alpha1.Pulp) string {
-	raw_settings := pulp.Spec.PulpSettings.RawSettings.Raw
+func addCustomPulpSettings(pulp *repomanagerv1alpha1.Pulp, current_settings string) string {
+	custom_settings := pulp.Spec.PulpSettings.CustomSettings.Raw
 	var settingsJson map[string]interface{}
-	json.Unmarshal(raw_settings, &settingsJson)
+	json.Unmarshal(custom_settings, &settingsJson)
 
 	var convertedSettings string
 	for k, v := range settingsJson {
+		if strings.Contains(current_settings, strings.ToUpper(k)) {
+			lines := strings.Split(current_settings, strings.ToUpper(k))
+			current_settings = lines[0] + strings.Join(strings.Split(lines[1], "\n")[1:], "\n")
+		}
 		switch v.(type) {
 		case map[string]interface{}:
 			rawMapping, _ := json.Marshal(v)
@@ -89,7 +93,7 @@ func convertRawPulpSettings(pulp *repomanagerv1alpha1.Pulp) string {
 		}
 	}
 
-	return convertedSettings
+	return current_settings + convertedSettings
 }
 
 func genTokenAuthKey() (string, string) {
