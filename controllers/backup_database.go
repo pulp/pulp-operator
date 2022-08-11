@@ -5,6 +5,7 @@ import (
 
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -28,17 +29,15 @@ func (r *PulpBackupReconciler) backupDatabase(ctx context.Context, pulpBackup *r
 		return err
 	}
 
-	// [WIP] GET POSTGRES CREDENTIALS AND HOST
-	// [WIP] GET POSTGRES CREDENTIALS AND HOST
-	// [WIP] GET POSTGRES CREDENTIALS AND HOST
-	postgresHost := "pulp-database-svc"
-	postgresUser := "pulp"
-	postgresDB := "pulp"
-	postgresPort := "5432"
-	postgresPwd := "pXs5dKOL9dtKWAWIzBWNO8GkAh3QI9Go"
+	pgConfig := &corev1.Secret{}
+	err = r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.PostgresConfigurationSecret, Namespace: pulpBackup.Namespace}, pgConfig)
+	if err != nil {
+		log.Error(err, "Failed to find postgres-configuration secret")
+		return err
+	}
 	execCmd = []string{
 		"pg_dump", "--clean", "--create",
-		"-d", "postgresql://" + postgresUser + ":" + postgresPwd + "@" + postgresHost + ":" + postgresPort + "/" + postgresDB,
+		"-d", "postgresql://" + string(pgConfig.Data["username"]) + ":" + string(pgConfig.Data["password"]) + "@" + string(pgConfig.Data["host"]) + ":" + string(pgConfig.Data["port"]) + "/" + string(pgConfig.Data["database"]),
 		"-f", backupDir + "/" + backupFile,
 	}
 

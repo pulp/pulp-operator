@@ -54,6 +54,10 @@ type PulpBackupSpec struct {
 	// Secret where the administrator password can be found
 	// +kubebuilder:default:="pulp-admin-password"
 	AdminPasswordSecret string `json:"admin_password_secret,omitempty"`
+
+	// Secret where the database configuration can be found
+	// +kubebuilder:default:="pulp-postgres-configuration"
+	PostgresConfigurationSecret string `json:"postgres_configuration_secret"`
 }
 
 // PulpBackupStatus defines the observed state of PulpBackup
