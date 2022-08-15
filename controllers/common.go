@@ -34,7 +34,7 @@ func createPwd(pwdSize int) string {
 }
 
 // Retrieve specific keys from secret object
-func (r *PulpReconciler) retrieveSecretData(ctx context.Context, secretName, secretNamespace string, keys ...string) (map[string]string, error) {
+func (r *PulpReconciler) retrieveSecretData(ctx context.Context, secretName, secretNamespace string, required bool, keys ...string) (map[string]string, error) {
 	found := &corev1.Secret{}
 	err := r.Get(ctx, types.NamespacedName{Name: secretName, Namespace: secretNamespace}, found)
 	if err != nil {
@@ -43,6 +43,15 @@ func (r *PulpReconciler) retrieveSecretData(ctx context.Context, secretName, sec
 
 	secret := map[string]string{}
 	for _, key := range keys {
+		// all provided keys should be present on secret, if not return error
+		if required && found.Data[key] == nil {
+			return nil, fmt.Errorf("could not find %v key in %v secret", key, secretName)
+		}
+
+		// if the keys provided are not mandatory and are also not defined, just skip them
+		if !required && found.Data[key] == nil {
+			continue
+		}
 		secret[key] = string(found.Data[key])
 	}
 
@@ -53,7 +62,7 @@ func (r *PulpReconciler) retrieveSecretData(ctx context.Context, secretName, sec
 func (r *PulpReconciler) getSigningKeyFingerprint(secretName, secretNamespace string) (string, error) {
 
 	ctx := context.TODO()
-	secretData, err := r.retrieveSecretData(ctx, secretName, secretNamespace, "signing_service.gpg")
+	secretData, err := r.retrieveSecretData(ctx, secretName, secretNamespace, true, "signing_service.gpg")
 	if err != nil {
 		return "", err
 	}

@@ -37,25 +37,26 @@ func (r *PulpReconciler) ssoConfig(ctx context.Context, pulp *repomanagerv1alpha
 		"keycloak_admin_role", "keycloak_group_token_claim", "keycloak_role_token_claim", "keycloak_host_loopback",
 	}
 
-	settings := map[string]string{}
-	for _, key := range requiredKeys {
-
-		// Check to make sure all required sso config values are set before proceeding
-		if secret.Data[key] == nil {
-			return fmt.Errorf("secret %v is missing required configuration data (%v)", pulp.Spec.SSOSecret, key)
-		}
-		settings[strings.ToUpper(key)] = string(secret.Data[key])
+	// retrieve mandatory keys from sso_secret
+	settings, err := r.retrieveSecretData(ctx, pulp.Spec.SSOSecret, pulp.Namespace, true, requiredKeys...)
+	if err != nil {
+		return err
 	}
 
-	for _, key := range optionalKeys {
-		if secret.Data[key] != nil {
-			settings[strings.ToUpper(key)] = string(secret.Data[key])
-		}
+	// retrieve optional keys from sso_secret
+	optionalSettings, err := r.retrieveSecretData(ctx, pulp.Spec.SSOSecret, pulp.Namespace, false, optionalKeys...)
+	if err != nil {
+		return err
+	}
+
+	// merge required + optional keys
+	for key, value := range optionalSettings {
+		settings[key] = value
 	}
 
 	// Inject SSO settings into pulp_settings
 	for key := range settings {
-		*pulpSettings = *pulpSettings + fmt.Sprintf("%v = \"%v\"\n", key, settings[key])
+		*pulpSettings = *pulpSettings + fmt.Sprintf("%v = \"%v\"\n", strings.ToUpper(key), settings[key])
 	}
 
 	return nil

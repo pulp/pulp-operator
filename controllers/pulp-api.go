@@ -716,7 +716,7 @@ func (r *PulpReconciler) pulpServerSecret(ctx context.Context, m *repomanagerv1a
 	// if there is no external database configuration get the databaseconfig from pulp-postgres-configuration secret
 	if reflect.DeepEqual(m.Spec.Database.ExternalDB, repomanagerv1alpha1.ExternalDB{}) {
 		log.Info("Retrieving Postgres credentials from "+m.Name+"-postgres-configuration secret", "Secret.Namespace", m.Namespace, "Secret.Name", m.Name)
-		pgCredentials, err := r.retrieveSecretData(ctx, m.Name+"-postgres-configuration", m.Namespace, "username", "password", "database", "port", "sslmode")
+		pgCredentials, err := r.retrieveSecretData(ctx, m.Name+"-postgres-configuration", m.Namespace, true, "username", "password", "database", "port", "sslmode")
 		if err != nil {
 			log.Error(err, "Secret Not Found!", "Secret.Namespace", m.Namespace, "Secret.Name", m.Name)
 		}
@@ -775,7 +775,7 @@ TOKEN_SIGNATURE_ALGORITHM = "ES256"
 
 	if len(m.Spec.ObjectStorageAzureSecret) > 0 {
 		log.Info("Retrieving Azure data from " + m.Spec.ObjectStorageAzureSecret)
-		storageData, err := r.retrieveSecretData(ctx, m.Spec.ObjectStorageAzureSecret, m.Namespace, "azure-account-name", "azure-account-key", "azure-container", "azure-container-path", "azure-connection-string")
+		storageData, err := r.retrieveSecretData(ctx, m.Spec.ObjectStorageAzureSecret, m.Namespace, true, "azure-account-name", "azure-account-key", "azure-container", "azure-container-path", "azure-connection-string")
 		if err != nil {
 			log.Error(err, "Secret Not Found!", "Secret.Namespace", m.Namespace, "Secret.Name", m.Spec.ObjectStorageAzureSecret)
 		}
@@ -792,13 +792,16 @@ DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
 
 	if len(m.Spec.ObjectStorageS3Secret) > 0 {
 		log.Info("Retrieving S3 data from " + m.Spec.ObjectStorageS3Secret)
-		storageData, err := r.retrieveSecretData(ctx, m.Spec.ObjectStorageS3Secret, m.Namespace, "s3-access-key-id", "s3-secret-access-key", "s3-bucket-name", "s3-region", "s3-endpoint")
+		storageData, err := r.retrieveSecretData(ctx, m.Spec.ObjectStorageS3Secret, m.Namespace, true, "s3-access-key-id", "s3-secret-access-key", "s3-bucket-name", "s3-region")
 		if err != nil {
 			log.Error(err, "Secret Not Found!", "Secret.Namespace", m.Namespace, "Secret.Name", m.Spec.ObjectStorageS3Secret)
 		}
-		if len(storageData["s3-endpoint"]) > 0 {
-			pulp_settings = pulp_settings + fmt.Sprintf("AWS_S3_ENDPOINT_URL = \"%v\"\n", storageData["s3-endpoint"])
+
+		optionalKey, err := r.retrieveSecretData(ctx, m.Spec.ObjectStorageS3Secret, m.Namespace, false, "s3-endpoint")
+		if err == nil {
+			pulp_settings = pulp_settings + fmt.Sprintf("AWS_S3_ENDPOINT_URL = \"%v\"\n", optionalKey["s3-endpoint"])
 		}
+
 		pulp_settings = pulp_settings + `AWS_ACCESS_KEY_ID = '` + storageData["s3-access-key-id"] + `'
 AWS_SECRET_ACCESS_KEY = '` + storageData["s3-secret-access-key"] + `'
 AWS_STORAGE_BUCKET_NAME = '` + storageData["s3-bucket-name"] + `'
