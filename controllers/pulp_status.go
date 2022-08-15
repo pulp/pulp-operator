@@ -72,7 +72,7 @@ func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alph
 			Message:            "All tasks ran successfully",
 		})
 		r.Status().Update(ctx, pulp)
-		log.Info("Pulp operator finished execution ...")
+		log.Info(pulp.Spec.DeploymentType + " operator finished execution ...")
 	}
 	return ctrl.Result{}, nil
 }

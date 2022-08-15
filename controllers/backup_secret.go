@@ -41,7 +41,7 @@ func (r *PulpBackupReconciler) backupSecret(ctx context.Context, pulpBackup *rep
 	// that there is only a single instance of pulp CR available
 	// we could also let users pass the name of pulp instance
 	pulp := &repomanagerv1alpha1.Pulp{}
-	err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.PulpInstanceName, Namespace: pulpBackup.Namespace}, pulp)
+	err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.InstanceName, Namespace: pulpBackup.Namespace}, pulp)
 	if err != nil {
 		log.Error(err, "Failed to get PulpBackup")
 		return err
@@ -57,14 +57,14 @@ func (r *PulpBackupReconciler) backupSecret(ctx context.Context, pulpBackup *rep
 	log.Info("Admin secret backup finished")
 
 	// POSTGRES SECRET (we are not following the same name for the keys that we defined in pulp-operator)
-	err = r.createBackupFile(ctx, secretType{"postgres_secret", pulpBackup, backupDir, "postgres_configuration_secret.yaml", pulpBackup.Spec.PulpInstanceName + "-postgres-configuration", pod})
+	err = r.createBackupFile(ctx, secretType{"postgres_secret", pulpBackup, backupDir, "postgres_configuration_secret.yaml", pulpBackup.Spec.InstanceName + "-postgres-configuration", pod})
 	if err != nil {
 		return err
 	}
 	log.Info("Postgres configuration secret backup finished")
 
 	// FIELDS ENCRYPTION SECRET
-	err = r.createBackupFile(ctx, secretType{"db_fields_encryption_secret", pulpBackup, backupDir, "container_token_secret.yaml", pulpBackup.Spec.PulpInstanceName + "-db-fields-encryption", pod})
+	err = r.createBackupFile(ctx, secretType{"db_fields_encryption_secret", pulpBackup, backupDir, "container_token_secret.yaml", pulpBackup.Spec.InstanceName + "-db-fields-encryption", pod})
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func (r *PulpBackupReconciler) backupSecret(ctx context.Context, pulpBackup *rep
 	log.Info("Signing secret backup finished")
 
 	// CONTAINER TOKEN SECRET
-	err = r.createBackupFile(ctx, secretType{"container_token_secret", pulpBackup, backupDir, "db_fields_encryption_secret.yaml", pulpBackup.Spec.PulpInstanceName + "-container-auth", pod})
+	err = r.createBackupFile(ctx, secretType{"container_token_secret", pulpBackup, backupDir, "db_fields_encryption_secret.yaml", pulpBackup.Spec.InstanceName + "-container-auth", pod})
 	if err != nil {
 		return err
 	}

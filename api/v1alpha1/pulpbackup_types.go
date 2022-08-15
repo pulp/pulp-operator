@@ -29,7 +29,7 @@ type PulpBackupSpec struct {
 	DeploymentName string `json:"deployment_name"`
 
 	// +kubebuilder:default:="pulp"
-	PulpInstanceName string `json:"pulp_instance_name"`
+	InstanceName string `json:"instance_name"`
 
 	// Name of the PVC to be used for storing the backup
 	// +kubebuilder:validation:Optional

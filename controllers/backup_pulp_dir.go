@@ -31,6 +31,6 @@ func (r *PulpBackupReconciler) backupPulpDir(ctx context.Context, pulpBackup *re
 		return err
 	}
 
-	log.Info("Pulp's directory backup finished!")
+	log.Info(pulpBackup.Spec.DeploymentType + "'s directory backup finished!")
 	return nil
 }

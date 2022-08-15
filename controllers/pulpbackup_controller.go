@@ -133,7 +133,7 @@ func (r *PulpBackupReconciler) createBackupPod(ctx context.Context, pulpBackup *
 	// that there is only a single instance of pulp CR available
 	// we could also let users pass the name of pulp instance
 	pulp := &repomanagerv1alpha1.Pulp{}
-	r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.PulpInstanceName, Namespace: pulpBackup.Namespace}, pulp)
+	r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.InstanceName, Namespace: pulpBackup.Namespace}, pulp)
 
 	labels := map[string]string{
 		"app.kubernetes.io/name":       pulpBackup.Spec.DeploymentType + "-backup-storage",
@@ -162,7 +162,7 @@ func (r *PulpBackupReconciler) createBackupPod(ctx context.Context, pulpBackup *
 		},
 	}}
 
-	if pulp.Spec.IsFileStorage {
+	if len(pulp.Spec.ObjectStorageAzureSecret) == 0 && len(pulp.Spec.ObjectStorageS3Secret) == 0 {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      "file-storage",
 			ReadOnly:  false,
