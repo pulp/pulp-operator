@@ -27,7 +27,7 @@ func (r *PulpBackupReconciler) backupCR(ctx context.Context, pulpBackup *repoman
 	}
 	_, err := r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
 	if err != nil {
-		log.Error(err, "Failed to backup"+pulpBackup.Spec.DeploymentType+"CR")
+		log.Error(err, "Failed to backup "+pulpBackup.Spec.DeploymentType+" CR")
 		return err
 	}
 	return nil

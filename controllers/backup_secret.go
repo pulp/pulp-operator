@@ -84,14 +84,32 @@ func (r *PulpBackupReconciler) backupSecret(ctx context.Context, pulpBackup *rep
 	}
 	log.Info("Container token secret backup finished")
 
-	// [WIP] OBJECT STORAGE S3 SECRET
-	//r.createBackupFile(ctx, pulpBackup, backupDir, pod, "s3_secret")
+	// OBJECT STORAGE S3 SECRET
+	if len(pulp.Spec.ObjectStorageS3Secret) > 0 {
+		err = r.createBackupFile(ctx, secretType{"storage_secret", pulpBackup, backupDir, "objectstorage_secret.yaml", pulp.Spec.ObjectStorageS3Secret, pod})
+		if err != nil {
+			return err
+		}
+		log.Info("Object storage s3 secret backup finished")
+	}
 
-	// [WIP] OBJECT STORAGE AZURE SECRET
-	//r.createBackupFile(ctx, pulpBackup, backupDir, pod, "azure_secret")
+	// OBJECT STORAGE AZURE SECRET
+	if len(pulp.Spec.ObjectStorageAzureSecret) > 0 {
+		err = r.createBackupFile(ctx, secretType{"storage_secret", pulpBackup, backupDir, "objectstorage_secret.yaml", pulp.Spec.ObjectStorageAzureSecret, pod})
+		if err != nil {
+			return err
+		}
+		log.Info("Object storage azure secret backup finished")
+	}
 
-	// [WIP] OBJECT SSO CONFIG SECRET
-	//r.createBackupFile(ctx, pulpBackup, backupDir, pod, "sso_config_secret")
+	// OBJECT SSO CONFIG SECRET
+	if len(pulp.Spec.SSOSecret) > 0 {
+		err = r.createBackupFile(ctx, secretType{"sso_secret", pulpBackup, backupDir, "sso_secret.yaml", pulp.Spec.SSOSecret, pod})
+		if err != nil {
+			return err
+		}
+		log.Info("Object storage azure secret backup finished")
+	}
 
 	return nil
 }

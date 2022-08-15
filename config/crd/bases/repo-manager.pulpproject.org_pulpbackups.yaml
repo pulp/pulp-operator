@@ -56,6 +56,9 @@ spec:
                 type: string
               deployment_type:
                 type: string
+              instance_name:
+                default: pulp
+                type: string
               postgres_configuration_secret:
                 default: pulp-postgres-configuration
                 description: Secret where the database configuration can be found
@@ -64,13 +67,10 @@ spec:
                 description: Label selector used to identify postgres pod for executing
                   migration
                 type: string
-              pulp_instance_name:
-                default: pulp
-                type: string
             required:
             - deployment_type
+            - instance_name
             - postgres_configuration_secret
-            - pulp_instance_name
             type: object
           status:
             description: PulpBackupStatus defines the observed state of PulpBackup
