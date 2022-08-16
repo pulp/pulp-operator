@@ -15,6 +15,100 @@ env:
   COLORTERM: 'yes'
   TERM: 'xterm-256color'
 jobs:
+  components:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # by default, it uses a depth of 1
+          # this fetches all history so that we can read each commit
+          fetch-depth: 0
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.8'
+      - name: Setup Go environment
+        uses: actions/setup-go@v3.2.0
+        with:
+          go-version: '1.18.3'
+          cache: true
+      - name: Install httpie
+        run: |
+          echo ::group::HTTPIE
+          sudo apt-get update -yq
+          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
+          echo ::endgroup::
+          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
+          echo "CI_TEST=true" >> $GITHUB_ENV
+        shell: bash
+      - name: Start minikube
+        run: |
+          minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
+          minikube addons enable metrics-server
+        # now you can run kubectl to see the pods in the cluster
+      - name: Try the cluster !
+        run: kubectl get pods -A
+      - name: Setup a minikube docker env
+        run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
+      - name: Uninstalling GHA kustomize
+        run: |
+          # hack for uninstalling kustomize from GHA
+          mv /usr/local/bin/kustomize /usr/local/bin/ghakustomize
+          make kustomize
+          mv ./bin/kustomize /usr/local/bin/kustomize
+          kustomize version
+        shell: bash
+      - name: Check code format and generate manifests
+        run: |
+          make test
+        shell: bash
+      - name: setup docker context for buildx
+        id: buildx-context
+        run: |
+          docker context create builders
+      - name: setup docker buildx
+        uses: docker/setup-buildx-action@v2.0.0
+        with:
+          endpoint: builders
+      - name: Build image
+        uses: docker/build-push-action@v3.0.0
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          load: true
+          tags: quay.io/rhn_support_hyagi/pulp-operator-go:0.0.1 # Temporarily until we find a way to pass it as a var
+          cache-from: type=gha, scope=${{ github.workflow }}
+          cache-to: type=gha, scope=${{ github.workflow }}
+      - name: List images
+        run: |
+          docker images
+      - name: Prepare Object Storage
+        run: |
+          .ci/scripts/prepare-object-storage.sh
+        shell: bash
+      - name: Deploy pulp-operator to K8s
+        run: |
+          make deploy
+          kubectl get namespace
+          kubectl config set-context --current --namespace=pulp-operator-go-system
+          kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
+          kubectl apply -f config/samples/simple.yaml
+        shell: bash
+      - name: Check and wait pulp-operator deploy
+        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
+        shell: bash
+      - name: Test all components
+        run: |
+          git clone --depth=1 https://github.com/pulp/pulp_ansible.git
+          git clone --depth=1 https://github.com/pulp/pulp_container.git
+          .ci/scripts/pulp_tests.sh -m
+        shell: bash
+        env:
+          PY_COLORS: '1'
+      - name: Logs
+        if: always()
+        run: .github/workflows/scripts/show_logs.sh
   galaxy:
     runs-on: ubuntu-latest
     strategy:

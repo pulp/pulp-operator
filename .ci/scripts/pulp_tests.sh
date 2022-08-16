@@ -41,6 +41,7 @@ EOF
 fi
 
 cat ~/.config/pulp/cli.toml | tee ~/.config/pulp/settings.toml
+echo 127.0.0.1   example-pulp-web-svc.pulp-operator-go-system.svc.cluster.local | sudo tee -a /etc/hosts
 
 pulp status | jq
 
