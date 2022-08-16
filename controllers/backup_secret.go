@@ -108,7 +108,7 @@ func (r *PulpBackupReconciler) backupSecret(ctx context.Context, pulpBackup *rep
 		if err != nil {
 			return err
 		}
-		log.Info("Object storage azure secret backup finished")
+		log.Info("SSO secret backup finished")
 	}
 
 	return nil

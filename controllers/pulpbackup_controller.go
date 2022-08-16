@@ -23,6 +23,7 @@ import (
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -31,7 +32,9 @@ import (
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 // PulpBackupReconciler reconciles a PulpBackup object
@@ -50,9 +53,6 @@ type PulpBackupReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-
-// [BUG?] Something is triggering a reconcile loop even after all the backup tasks are done.
-// I'm not sure, but I guess it is the pod termination event.
 func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := ctrllog.FromContext(ctx)
 	backupDir := "/backup"
@@ -73,40 +73,57 @@ func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
+	r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Backup process running ...", "StartingBackupProcess")
 	r.cleanup(ctx, pulpBackup)
 
+	r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Creating backup pvc ...", "CreatingPVC")
 	err = r.createBackupPVC(ctx, pulpBackup)
 	if err != nil {
+		r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Failed to create backup pvc!", "FailedCreatingPVC")
 		return ctrl.Result{}, err
 	}
+
+	r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Creating backup pod ...", "CreatingPod")
 	pod, err := r.createBackupPod(ctx, pulpBackup, backupDir)
 	if err != nil {
+		r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Failed to create backup pod!", "FailedCreatingPod")
 		return ctrl.Result{}, err
 	}
 
+	r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Running database backup ...", "BackupDB")
 	err = r.backupDatabase(ctx, pulpBackup, backupDir, pod)
 	if err != nil {
+		r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Failed to backup database!", "FailedBackupDB")
 		return ctrl.Result{}, err
 	}
 
+	r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Running CR backup ...", "BackupCR")
 	err = r.backupCR(ctx, pulpBackup, backupDir, pod)
 	if err != nil {
+		r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Failed to backup CR!", "FailedBackupCR")
 		return ctrl.Result{}, err
 	}
 
+	r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Running secrets backup ...", "BackupSecrets")
 	err = r.backupSecret(ctx, pulpBackup, backupDir, pod)
 	if err != nil {
+		r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Failed to backup secrets!", "FailedBackupSecrets")
 		return ctrl.Result{}, err
 	}
 
+	r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Running "+pulpBackup.Spec.DeploymentType+" dir backup ...", "BackupDir")
 	err = r.backupPulpDir(ctx, pulpBackup, backupDir, pod)
 	if err != nil {
+		r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Failed to backup "+pulpBackup.Spec.DeploymentType+" dir!", "FailedBackupDir")
 		return ctrl.Result{}, err
 	}
 
 	log.Info("Cleaning up backup resources ...")
+	r.updateStatus(ctx, pulpBackup, metav1.ConditionTrue, "BackupComplete", "Cleaning up backup resources ...", "DeletingBkpPod")
 	r.cleanup(ctx, pulpBackup)
-	log.Info("Pulp CR Backup finished!")
+	r.updateStatus(ctx, pulpBackup, metav1.ConditionTrue, "BackupComplete", "All backup tasks run!", "BackupTasksFinished")
+	log.Info(pulpBackup.Spec.DeploymentType + " CR Backup finished!")
+
 	return ctrl.Result{}, nil
 }
 
@@ -239,19 +256,20 @@ func (r *PulpBackupReconciler) createBackupPod(ctx context.Context, pulpBackup *
 
 // cleanup deletes the backup-manager pod
 func (r *PulpBackupReconciler) cleanup(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup) error {
-	log := ctrllog.FromContext(ctx)
 	bkpPod := &corev1.Pod{}
-	err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Name + "-backup-manager", Namespace: pulpBackup.Namespace}, bkpPod)
-	if err != nil {
-		log.Info("Backup manager Pod not found")
-		return err
+	r.Get(ctx, types.NamespacedName{Name: pulpBackup.Name + "-backup-manager", Namespace: pulpBackup.Namespace}, bkpPod)
+	r.Delete(ctx, bkpPod)
+
+	// the Delete method is not synchronous, so this loop will wait until the pod is not present anymore or
+	// the 120 seconds timeout
+	for timeout := 0; timeout < 120; timeout++ {
+		err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Name + "-backup-manager", Namespace: pulpBackup.Namespace}, bkpPod)
+		if err != nil && errors.IsNotFound(err) {
+			break
+		}
+		time.Sleep(time.Second * 5)
 	}
 
-	err = r.Delete(ctx, bkpPod)
-	if err != nil {
-		log.Error(err, "Failed to delete the backup manager Pod")
-		return err
-	}
 	return nil
 }
 
@@ -316,10 +334,32 @@ func (r *PulpBackupReconciler) createBackupPVC(ctx context.Context, pulpBackup *
 	return nil
 }
 
+// updateStatus modifies a .status.condition from pulpbackup CR
+func (r *PulpBackupReconciler) updateStatus(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, conditionStatus metav1.ConditionStatus, conditionType, conditionMessage, conditionReason string) {
+	v1.SetStatusCondition(&pulpBackup.Status.Conditions, metav1.Condition{
+		Type:               conditionType,
+		Status:             conditionStatus,
+		Reason:             conditionReason,
+		LastTransitionTime: metav1.Now(),
+		Message:            conditionMessage,
+	})
+	r.Status().Update(ctx, pulpBackup)
+}
+
+// ignoreUpdateCRStatusPredicate filters update events on pulpbackup CR status
+func ignoreUpdateCRStatusPredicate() predicate.Predicate {
+	return predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			// Ignore updates to CR status in which case metadata.Generation does not change
+			return e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()
+		},
+	}
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *PulpBackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&repomanagerv1alpha1.PulpBackup{}).
-		Owns(&corev1.Pod{}).
+		WithEventFilter(ignoreUpdateCRStatusPredicate()).
 		Complete(r)
 }
