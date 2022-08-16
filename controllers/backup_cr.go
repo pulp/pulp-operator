@@ -20,7 +20,7 @@ func (r *PulpBackupReconciler) backupCR(ctx context.Context, pulpBackup *repoman
 	r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.InstanceName, Namespace: pulpBackup.Namespace}, pulp)
 
 	// CR BACKUP
-	log.Info("Starting pulp CR backup process ...")
+	log.Info("Starting " + pulpBackup.Spec.DeploymentType + " CR backup process ...")
 	pulpSpec, _ := json.Marshal(pulp.Spec)
 	execCmd := []string{
 		"bash", "-c", "echo '" + string(pulpSpec) + "' > " + backupDir + "/cr_object",
