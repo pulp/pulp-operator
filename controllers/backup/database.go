@@ -16,14 +16,14 @@ func (r *PulpBackupReconciler) backupDatabase(ctx context.Context, pulpBackup *r
 
 	log.Info("Starting database backup process ...")
 	execCmd := []string{"touch", backupDir + "/" + backupFile}
-	_, err := r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
+	_, err := containerExec(pod, r, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to create pulp.db backup file")
 		return err
 	}
 
 	execCmd = []string{"chmod", "0600", backupDir + "/" + backupFile}
-	_, err = r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
+	_, err = containerExec(pod, r, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to modify backup file permissions")
 		return err
@@ -41,7 +41,7 @@ func (r *PulpBackupReconciler) backupDatabase(ctx context.Context, pulpBackup *r
 		"-f", backupDir + "/" + backupFile,
 	}
 
-	_, err = r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
+	_, err = containerExec(pod, r, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to run pg_dump")
 		return err

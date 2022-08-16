@@ -127,6 +127,15 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "PulpBackup")
 		os.Exit(1)
 	}
+	if err = (&controllers.PulpRestoreReconciler{
+		Client:     mgr.GetClient(),
+		RESTClient: restClient,
+		RESTConfig: mgr.GetConfig(),
+		Scheme:     mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "PulpRestore")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

@@ -1,0 +1,24 @@
+# permissions for end users to edit pulprestores.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pulprestore-editor-role
+rules:
+- apiGroups:
+  - repo-manager.pulpproject.org
+  resources:
+  - pulprestores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - repo-manager.pulpproject.org
+  resources:
+  - pulprestores/status
+  verbs:
+  - get

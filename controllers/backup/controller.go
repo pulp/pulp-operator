@@ -32,9 +32,7 @@ import (
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 // PulpBackupReconciler reconciles a PulpBackup object
@@ -119,7 +117,7 @@ func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	log.Info("Cleaning up backup resources ...")
-	r.updateStatus(ctx, pulpBackup, metav1.ConditionTrue, "BackupComplete", "Cleaning up backup resources ...", "DeletingBkpPod")
+	r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Cleaning up backup resources ...", "DeletingBkpPod")
 	r.cleanup(ctx, pulpBackup)
 	r.updateStatus(ctx, pulpBackup, metav1.ConditionTrue, "BackupComplete", "All backup tasks run!", "BackupTasksFinished")
 	log.Info(pulpBackup.Spec.DeploymentType + " CR Backup finished!")
@@ -344,16 +342,6 @@ func (r *PulpBackupReconciler) updateStatus(ctx context.Context, pulpBackup *rep
 		Message:            conditionMessage,
 	})
 	r.Status().Update(ctx, pulpBackup)
-}
-
-// ignoreUpdateCRStatusPredicate filters update events on pulpbackup CR status
-func ignoreUpdateCRStatusPredicate() predicate.Predicate {
-	return predicate.Funcs{
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			// Ignore updates to CR status in which case metadata.Generation does not change
-			return e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()
-		},
-	}
 }
 
 // SetupWithManager sets up the controller with the Manager.

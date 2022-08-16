@@ -137,7 +137,7 @@ func (r *PulpBackupReconciler) createBackupFile(ctx context.Context, secretType 
 	execCmd := []string{
 		"bash", "-c", "echo '" + string(secretSerialized) + "' > " + secretType.backupDir + "/" + secretType.backupFile,
 	}
-	_, err = r.containerExec(secretType.pod, execCmd, secretType.pulpBackup.Name+"-backup-manager", secretType.pod.Namespace)
+	_, err = containerExec(secretType.pod, r, execCmd, secretType.pulpBackup.Name+"-backup-manager", secretType.pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to backup "+secretType.secretName+" secret")
 		return err

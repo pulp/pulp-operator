@@ -22,6 +22,9 @@ import (
 	v1 "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/remotecommand"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 // Generate a random string with length pwdSize
@@ -120,7 +123,6 @@ func genTokenAuthKey() (string, string) {
 func (r *PulpReconciler) updateStatus(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, conditionStatus metav1.ConditionStatus, conditionType, conditionReason, conditionMessage string) {
 
 	// if we are updating a status it means that operator didn't finish its execution
-
 	if !v1.IsStatusConditionPresentAndEqual(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Operator-Finished-Execution", metav1.ConditionTrue) {
 		v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
 			Type:               cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Operator-Finished-Execution",
@@ -139,4 +141,79 @@ func (r *PulpReconciler) updateStatus(ctx context.Context, pulp *repomanagerv1al
 		Message:            conditionMessage,
 	})
 	r.Status().Update(ctx, pulp)
+}
+
+// containerExec runs []command in the container
+func containerExec(pod *corev1.Pod, r interface{}, command []string, container, namespace string) (string, error) {
+
+	var exec remotecommand.Executor
+	var err error
+
+	// https://go.dev/ref/spec#Type_switches
+	// "In clauses with a case listing exactly one type, the variable has that type; otherwise, the variable has the type of the expression in the TypeSwitchGuard."
+	switch r := r.(type) {
+	case *PulpBackupReconciler:
+		execReq := r.RESTClient.
+			Post().
+			Namespace(namespace).
+			Resource("pods").
+			Name(pod.Name).
+			SubResource("exec").
+			VersionedParams(&corev1.PodExecOptions{
+				Container: container,
+				Command:   command,
+				Stdout:    true,
+				Stderr:    true,
+			}, runtime.NewParameterCodec(r.Scheme))
+		exec, err = remotecommand.NewSPDYExecutor(r.RESTConfig, "POST", execReq.URL())
+
+	case *PulpRestoreReconciler:
+		execReq := r.RESTClient.
+			Post().
+			Namespace(namespace).
+			Resource("pods").
+			Name(pod.Name).
+			SubResource("exec").
+			VersionedParams(&corev1.PodExecOptions{
+				Container: container,
+				Command:   command,
+				Stdout:    true,
+				Stderr:    true,
+			}, runtime.NewParameterCodec(r.Scheme))
+		exec, err = remotecommand.NewSPDYExecutor(r.RESTConfig, "POST", execReq.URL())
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	stdout := new(bytes.Buffer)
+	stderr := new(bytes.Buffer)
+	err = exec.Stream(remotecommand.StreamOptions{
+		Stdout: stdout,
+		Stderr: stderr,
+		Tty:    false,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	result := strings.TrimSpace(stdout.String()) + "\n" + strings.TrimSpace(stderr.String())
+	result = strings.TrimSpace(result)
+
+	// I think the exec.Stream command is not synchronous and sometimes when a task depends
+	// on the results of the previous one it is failing.
+	// But this is just a guess!!! We need to investigate it further.
+	time.Sleep(time.Second)
+	return result, nil
+}
+
+// ignoreUpdateCRStatusPredicate filters update events on pulpbackup CR status
+func ignoreUpdateCRStatusPredicate() predicate.Predicate {
+	return predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			// Ignore updates to CR status in which case metadata.Generation does not change
+			return e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()
+		},
+	}
 }
