@@ -37,7 +37,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
-	"github.com/git-hyagi/pulp-operator-go/controllers"
+	pulp_backup "github.com/git-hyagi/pulp-operator-go/controllers/backup"
+	pulp "github.com/git-hyagi/pulp-operator-go/controllers/pulp"
 
 	zaplogfmt "github.com/sykesm/zap-logfmt"
 	uzap "go.uber.org/zap"
@@ -110,14 +111,14 @@ func main() {
 		setupLog.Error(err, "failed to construct a new REST client")
 	}
 
-	if err = (&controllers.PulpReconciler{
+	if err = (&pulp.PulpReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Pulp")
 		os.Exit(1)
 	}
-	if err = (&controllers.PulpBackupReconciler{
+	if err = (&pulp_backup.PulpBackupReconciler{
 		Client:     mgr.GetClient(),
 		RESTClient: restClient,
 		RESTConfig: mgr.GetConfig(),
