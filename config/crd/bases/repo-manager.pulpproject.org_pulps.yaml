@@ -728,7 +728,7 @@ spec:
                     description: NodeSelector for the Pulp pods.
                     type: object
                   replicas:
-                    default: 1
+                    default: 2
                     description: Size is the size of number of pulp-content replicas
                     format: int32
                     type: integer
@@ -1554,7 +1554,7 @@ spec:
                     description: NodeSelector for the Pulp pods.
                     type: object
                   replicas:
-                    default: 1
+                    default: 2
                     description: Size is the size of number of pulp-worker replicas
                     format: int32
                     minimum: 1

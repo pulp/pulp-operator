@@ -242,7 +242,7 @@ type GalaxyFeatureFlags struct {
 
 type Content struct {
 	// Size is the size of number of pulp-content replicas
-	//+kubebuilder:default:=1
+	//+kubebuilder:default:=2
 	Replicas int32 `json:"replicas,omitempty"`
 
 	// Resource requirements for the pulp-content container
@@ -274,7 +274,7 @@ type Content struct {
 type Worker struct {
 	// Size is the size of number of pulp-worker replicas
 	//+kubebuilder:validation:Minimum=1
-	//+kubebuilder:default:=1
+	//+kubebuilder:default:=2
 	Replicas int32 `json:"replicas,omitempty"`
 
 	// Resource requirements for the pulp-api container
