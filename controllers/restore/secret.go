@@ -1,4 +1,4 @@
-package controllers
+package pulp_restore
 
 import (
 	"context"
@@ -24,7 +24,7 @@ func (r *PulpRestoreReconciler) restoreSecret(ctx context.Context, pulpRestore *
 	execCmd := []string{
 		"cat", backupDir + "/admin_secret.yaml",
 	}
-	cmdOutput, err := containerExec(pod, r, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
+	cmdOutput, err := r.containerExec(pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
 	if err != nil {
 		r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Failed to find "+backupDir+" dir!", "BackupDirNotFound")
 		return err

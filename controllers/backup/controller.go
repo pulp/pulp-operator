@@ -21,6 +21,7 @@ import (
 	"time"
 
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
+	"github.com/git-hyagi/pulp-operator-go/controllers"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
@@ -348,6 +349,6 @@ func (r *PulpBackupReconciler) updateStatus(ctx context.Context, pulpBackup *rep
 func (r *PulpBackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&repomanagerv1alpha1.PulpBackup{}).
-		WithEventFilter(ignoreUpdateCRStatusPredicate()).
+		WithEventFilter(controllers.IgnoreUpdateCRStatusPredicate()).
 		Complete(r)
 }

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controllers
+package pulp_restore
 
 import (
 	"context"
@@ -30,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
+	"github.com/git-hyagi/pulp-operator-go/controllers"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -129,7 +130,7 @@ func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	execCmd := []string{
 		"stat", backupDir,
 	}
-	_, err = containerExec(pod, r, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
+	_, err = r.containerExec(pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
 	if err != nil {
 		r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Failed to find "+backupDir+" dir!", "BackupDirNotFound")
 		return ctrl.Result{}, err
@@ -315,6 +316,6 @@ func (r *PulpRestoreReconciler) waitPodReady(ctx context.Context, namespace, pod
 func (r *PulpRestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&repomanagerv1alpha1.PulpRestore{}).
-		WithEventFilter(ignoreUpdateCRStatusPredicate()).
+		WithEventFilter(controllers.IgnoreUpdateCRStatusPredicate()).
 		Complete(r)
 }

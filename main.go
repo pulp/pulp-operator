@@ -39,6 +39,7 @@ import (
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	pulp_backup "github.com/git-hyagi/pulp-operator-go/controllers/backup"
 	pulp "github.com/git-hyagi/pulp-operator-go/controllers/pulp"
+	pulp_restore "github.com/git-hyagi/pulp-operator-go/controllers/restore"
 
 	zaplogfmt "github.com/sykesm/zap-logfmt"
 	uzap "go.uber.org/zap"
@@ -127,7 +128,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "PulpBackup")
 		os.Exit(1)
 	}
-	if err = (&controllers.PulpRestoreReconciler{
+	if err = (&pulp_restore.PulpRestoreReconciler{
 		Client:     mgr.GetClient(),
 		RESTClient: restClient,
 		RESTConfig: mgr.GetConfig(),

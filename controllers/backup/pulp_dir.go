@@ -21,7 +21,7 @@ func (r *PulpBackupReconciler) backupPulpDir(ctx context.Context, pulpBackup *re
 		execCmd := []string{
 			"mkdir", "-p", backupDir + "/pulp",
 		}
-		_, err := containerExec(pod, r, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
+		_, err := r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
 		if err != nil {
 			log.Error(err, "Failed to create pulp backup dir")
 			return err
@@ -30,7 +30,7 @@ func (r *PulpBackupReconciler) backupPulpDir(ctx context.Context, pulpBackup *re
 		execCmd = []string{
 			"bash", "-c", "cp -fr /var/lib/pulp/. " + backupDir + "/pulp",
 		}
-		_, err = containerExec(pod, r, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
+		_, err = r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
 		if err != nil {
 			log.Error(err, "Failed to backup pulp dir")
 			return err
