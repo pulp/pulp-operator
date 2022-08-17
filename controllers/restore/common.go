@@ -13,7 +13,7 @@ import (
 // [TO-DO] refactor containerExec method so that it can be used by pulpBackup and pulpRestore resources
 // containerExec runs []command in the container
 //func (r *PulpRestoreReconciler) containerExec(pod *corev1.Pod, command []string, container, namespace string) (string, error) {
-func containerExec(pod *corev1.Pod, r interface{}, command []string, container, namespace string) (string, error) {
+func (r *PulpRestoreReconciler) containerExec(pod *corev1.Pod, command []string, container, namespace string) (string, error) {
 	execReq := r.RESTClient.
 		Post().
 		Namespace(namespace).

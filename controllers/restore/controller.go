@@ -138,6 +138,8 @@ func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	r.restoreSecret(ctx, pulpRestore, backupDir, pod)
 
+	r.restorePulpCR(ctx, pulpRestore, backupDir, pod)
+
 	log.Info("Cleaning up restore resources ...")
 	r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Cleaning up restore resources ...", "DeletingMgmtPod")
 	//r.cleanup(ctx, pulpRestore)
