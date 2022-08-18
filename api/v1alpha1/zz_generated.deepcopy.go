@@ -141,7 +141,6 @@ func (in *Database) DeepCopyInto(out *Database) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	out.PostgresStorageRequirements = in.PostgresStorageRequirements.DeepCopy()
 	if in.PostgresStorageClass != nil {
 		in, out := &in.PostgresStorageClass, &out.PostgresStorageClass
 		*out = new(string)

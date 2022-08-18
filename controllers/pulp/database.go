@@ -19,7 +19,6 @@ package pulp
 import (
 	"context"
 	"path/filepath"
-	"reflect"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -267,10 +266,17 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 	}
 
 	postgresStorageSize := resource.Quantity{}
-	if reflect.DeepEqual(m.Spec.Database.PostgresStorageRequirements, resource.Quantity{}) {
+
+	// Temporarily while we don't find a fix for backup and json.Unmarshal issue
+	/* if reflect.DeepEqual(m.Spec.Database.PostgresStorageRequirements, resource.Quantity{}) {
 		postgresStorageSize = resource.MustParse("8Gi")
 	} else {
 		postgresStorageSize = m.Spec.Database.PostgresStorageRequirements
+	} */
+	if m.Spec.Database.PostgresStorageRequirements == "" {
+		postgresStorageSize = resource.MustParse("8Gi")
+	} else {
+		postgresStorageSize = resource.MustParse(m.Spec.Database.PostgresStorageRequirements)
 	}
 
 	pvcSpec := corev1.PersistentVolumeClaimSpec{}

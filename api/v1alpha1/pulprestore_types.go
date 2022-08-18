@@ -64,6 +64,8 @@ type PulpRestoreSpec struct {
 // PulpRestoreStatus defines the observed state of PulpRestore
 type PulpRestoreStatus struct {
 	Conditions []metav1.Condition `json:"conditions"`
+
+	PostgresSecret string `json:"postgres_secret"`
 }
 
 //+kubebuilder:object:root=true

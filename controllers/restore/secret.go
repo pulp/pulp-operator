@@ -6,7 +6,9 @@ import (
 
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -17,14 +19,14 @@ type adminPassword struct {
 }
 
 type postgresSecret struct {
-	Database        string `json:"database"`
-	Host            string `json:"host"`
-	Password        string `json:"password"`
-	Port            string `json:"port"`
-	Postgres_secret string `json:"postgres_secret"`
-	Sslmode         string `json:"sslmode"`
-	Type            string `json:"type"`
-	Username        string `json:"username"`
+	Database       string `json:"database"`
+	Host           string `json:"host"`
+	Password       string `json:"password"`
+	Port           string `json:"port"`
+	PostgresSecret string `json:"postgres_secret"`
+	Sslmode        string `json:"sslmode"`
+	Type           string `json:"type"`
+	Username       string `json:"username"`
 }
 
 type containerTokenSecret struct {
@@ -112,6 +114,7 @@ func (r *PulpRestoreReconciler) restoreSecret(ctx context.Context, pulpRestore *
 // resourceType: the type of the secret (like AdminPassword, or ObjectStorage, or ContainerToken, etc)
 // secretNameKey: is the secret's key that contains the secret name to be restored
 func (r *PulpRestoreReconciler) secret(ctx context.Context, resourceType, secretNameKey, backupDir, backupFile string, pod *corev1.Pod, pulpRestore *repomanagerv1alpha1.PulpRestore) error {
+
 	log := ctrllog.FromContext(ctx)
 
 	secretNameData := ""
@@ -174,6 +177,7 @@ func (r *PulpRestoreReconciler) secret(ctx context.Context, resourceType, secret
 			// secretData because it should not be part of the secret data itself
 			if v.Type().Field(i).Tag.Get("json") == secretNameKey {
 				secretNameData = v.Field(i).String()
+				setStatusField(secretNameKey, v.Field(i).String(), pulpRestore)
 				continue
 			}
 
@@ -191,14 +195,40 @@ func (r *PulpRestoreReconciler) secret(ctx context.Context, resourceType, secret
 			},
 			StringData: secretData,
 		}
-		err = r.Create(ctx, secret)
-		if err != nil {
-			log.Error(err, "Failed to create "+resourceType+" secret!")
-			r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Error trying to restore "+resourceType+" secret!", "FailedCreate"+resourceType+"Secret")
-			return err
+
+		// we'll recreate the secret only if it was not found
+		// in situations like during a pulpRestore reconcile loop (because of an error) the secret could have been previously created
+		// this will avoid an infinite reconciliation loop trying to recreate a resource that already exists
+		if err := r.Get(ctx, types.NamespacedName{Name: secretNameData, Namespace: pulpRestore.Namespace}, secret); err != nil && errors.IsNotFound(err) {
+			if err := r.Create(ctx, secret); err != nil {
+				log.Error(err, "Failed to create "+resourceType+" secret!")
+				r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Error trying to restore "+resourceType+" secret!", "FailedCreate"+resourceType+"Secret")
+				return err
+			}
+			log.Info(resourceType + " secret restored")
+			r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", resourceType+" secret restored", resourceType+"SecretRestored")
 		}
-		log.Info(resourceType + " secret restored")
-		r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", resourceType+" secret restored", resourceType+"SecretRestored")
+	}
+
+	return nil
+}
+
+// setStatusField sets the pulpRestore.Status.FieldName with fieldValue
+func setStatusField(fieldName, fieldValue string, pulpRestore *repomanagerv1alpha1.PulpRestore) error {
+
+	s := reflect.ValueOf(pulpRestore.Status)
+	// iterate over the fields from pulpRestore.Status struct
+	for i := 0; i < s.NumField(); i++ {
+
+		// if this is the field that we want to update
+		if s.Type().Field(i).Tag.Get("json") == fieldName {
+
+			// set the new value of .Status.fieldName with fieldValue
+			// we need to pass a pointer to pulpRestore.Status because we want to modify
+			// its contents
+			reflect.ValueOf(&pulpRestore.Status).Elem().Field(i).SetString(fieldValue)
+			break
+		}
 	}
 
 	return nil

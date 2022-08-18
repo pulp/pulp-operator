@@ -36,7 +36,7 @@ func (r *PulpBackupReconciler) backupDatabase(ctx context.Context, pulpBackup *r
 		return err
 	}
 	execCmd = []string{
-		"pg_dump", "--clean", "--create",
+		"pg_dump", "--clean", "--create", "-Ft",
 		"-d", "postgresql://" + string(pgConfig.Data["username"]) + ":" + string(pgConfig.Data["password"]) + "@" + string(pgConfig.Data["host"]) + ":" + string(pgConfig.Data["port"]) + "/" + string(pgConfig.Data["database"]),
 		"-f", backupDir + "/" + backupFile,
 	}

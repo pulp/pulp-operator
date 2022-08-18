@@ -47,16 +47,6 @@ type PulpRestoreReconciler struct {
 //+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulprestores/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulprestores/finalizers,verbs=update
 //+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulpbackup;pulp,verbs=get;list;
-
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the PulpRestore object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.2/pkg/reconcile
 func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	backupDir := "/backup"
@@ -140,6 +130,10 @@ func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	r.restorePulpCR(ctx, pulpRestore, backupDir, pod)
 
+	if err = r.restoreDatabaseData(ctx, pulpRestore, backupDir, pod); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	log.Info("Cleaning up restore resources ...")
 	r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Cleaning up restore resources ...", "DeletingMgmtPod")
 	//r.cleanup(ctx, pulpRestore)
@@ -183,12 +177,6 @@ func (r *PulpRestoreReconciler) cleanup(ctx context.Context, pulpRestore *repoma
 func (r *PulpRestoreReconciler) createRestorePod(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupPVCName, backupDir string) (*corev1.Pod, error) {
 	log := log.FromContext(ctx)
 
-	// we are considering that pulp CR instance is running in the same namespace as pulpbackup and
-	// that there is only a single instance of pulp CR available
-	// we could also let users pass the name of pulp instance
-	pulp := &repomanagerv1alpha1.Pulp{}
-	r.Get(ctx, types.NamespacedName{Name: pulpRestore.Spec.DeploymentType, Namespace: pulpRestore.Namespace}, pulp)
-
 	labels := map[string]string{
 		"app.kubernetes.io/name":       pulpRestore.Spec.DeploymentType + "-backup-storage",
 		"app.kubernetes.io/instance":   pulpRestore.Spec.DeploymentType + "-backup-storage-" + pulpRestore.Name,
@@ -217,23 +205,6 @@ func (r *PulpRestoreReconciler) createRestorePod(ctx context.Context, pulpRestor
 		},
 	}}
 
-	if len(pulp.Spec.ObjectStorageAzureSecret) == 0 && len(pulp.Spec.ObjectStorageS3Secret) == 0 {
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      "file-storage",
-			ReadOnly:  false,
-			MountPath: "/var/lib/pulp",
-		})
-
-		volumes = append(volumes, corev1.Volume{
-			Name: "file-storage",
-			VolumeSource: corev1.VolumeSource{
-				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: pulp.Name + "-file-storage",
-				},
-			},
-		})
-	}
-
 	// running a dumb command on bkp mount point just to make sure that
 	// the pod is ready to execute the backup commands (mkdir,cp,echo,etc)
 	readinessProbe := &corev1.Probe{
@@ -249,7 +220,7 @@ func (r *PulpRestoreReconciler) createRestorePod(ctx context.Context, pulpRestor
 
 	serviceAccount := ""
 	if pulpRestore.Spec.DeploymentType == "" {
-		serviceAccount = pulp.Name + "-operator-sa"
+		serviceAccount = pulpRestore.Spec.DeploymentName + "-operator-sa"
 	} else {
 		serviceAccount = pulpRestore.Spec.DeploymentType + "-operator-sa"
 	}

@@ -18,7 +18,6 @@ package v1alpha1
 
 import (
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -184,9 +183,11 @@ type Affinity struct {
 
 type Api struct {
 	// Size is the size of number of pulp-api replicas.
-	//+kubebuilder:validation:Minimum=1
-	//+kubebuilder:default:=1
-	Replicas int32 `json:"replicas,omitempty"`
+	// +kubebuilder:default:=1
+	// +kubebuilder:validation:Minimum:=0
+	// +kubebuilder:validation:Optional
+	// +nullable
+	Replicas int32 `json:"replicas"`
 
 	// Defines various deployment affinities.
 	// +kubebuilder:validation:Optional
@@ -232,7 +233,7 @@ type PulpSettings struct {
 
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Optional
-	CustomSettings runtime.RawExtension `json:"custom_settings"`
+	CustomSettings runtime.RawExtension `json:"custom_settings,omitempty"`
 }
 
 type GalaxyFeatureFlags struct {
@@ -242,8 +243,11 @@ type GalaxyFeatureFlags struct {
 
 type Content struct {
 	// Size is the size of number of pulp-content replicas
-	//+kubebuilder:default:=2
-	Replicas int32 `json:"replicas,omitempty"`
+	// +kubebuilder:default:=2
+	// +kubebuilder:validation:Minimum:=0
+	// +kubebuilder:validation:Optional
+	// +nullable
+	Replicas int32 `json:"replicas"`
 
 	// Resource requirements for the pulp-content container
 	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
@@ -273,9 +277,11 @@ type Content struct {
 
 type Worker struct {
 	// Size is the size of number of pulp-worker replicas
-	//+kubebuilder:validation:Minimum=1
-	//+kubebuilder:default:=2
-	Replicas int32 `json:"replicas,omitempty"`
+	// +kubebuilder:default:=2
+	// +kubebuilder:validation:Minimum:=0
+	// +kubebuilder:validation:Optional
+	// +nullable
+	Replicas int32 `json:"replicas"`
 
 	// Resource requirements for the pulp-api container
 	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
@@ -299,25 +305,26 @@ type Worker struct {
 
 type Web struct {
 	// Size is the size of number of pulp-web replicas
-	//+kubebuilder:validation:Minimum=1
-	//+kubebuilder:default:=1
-	Replicas int32 `json:"replicas,omitempty"`
+	// +kubebuilder:default:=1
+	// +kubebuilder:validation:Minimum:=0
+	// +kubebuilder:validation:Optional
+	// +nullable
+	Replicas int32 `json:"replicas"`
 
 	// Resource requirements for the pulp-web container
 	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
 }
 
 type ExternalDB struct {
-	PostgresPort     int    `json:"postgres_port"`
-	PostgresSSLMode  string `json:"postgres_ssl_mode"`
-	PostgresHost     string `json:"postgres_host"`
-	PostgresUser     string `json:"postgres_user"`
-	PostgresPassword string `json:"postgres_password"`
-	PostgresDBName   string `json:"postgres_db_name"`
+	PostgresPort     int    `json:"postgres_port,omitempty"`
+	PostgresSSLMode  string `json:"postgres_ssl_mode,omitempty"`
+	PostgresHost     string `json:"postgres_host,omitempty"`
+	PostgresUser     string `json:"postgres_user,omitempty"`
+	PostgresPassword string `json:"postgres_password,omitempty"`
+	PostgresDBName   string `json:"postgres_db_name,omitempty"`
 
-	// +kubebuilder:default:="0"
 	// +kubebuilder:validation:Optional
-	PostgresConMaxAge string `json:"postgres_con_max_age"`
+	PostgresConMaxAge string `json:"postgres_con_max_age,omitempty"`
 }
 
 type Database struct {
@@ -326,7 +333,7 @@ type Database struct {
 	//Replicas int32 `json:"replicas,omitempty"`
 
 	// +kubebuilder:validation:Optional
-	ExternalDB ExternalDB `json:"external_db"`
+	ExternalDB ExternalDB `json:"external_db,omitempty"`
 
 	// +kubebuilder:default:="13"
 	// +kubebuilder:validation:Optional
@@ -349,15 +356,15 @@ type Database struct {
 
 	// +kubebuilder:default:="/var/lib/postgresql/data/pgdata"
 	// +kubebuilder:validation:Optional
-	PostgresDataPath string `json:"postgres_data_path"`
+	PostgresDataPath string `json:"postgres_data_path,omitempty"`
 
 	// +kubebuilder:default:="--auth-host=scram-sha-256"
 	// +kubebuilder:validation:Optional
-	PostgresInitdbArgs string `json:"postgres_initdb_args"`
+	PostgresInitdbArgs string `json:"postgres_initdb_args,omitempty"`
 
 	// +kubebuilder:default:="scram-sha-256"
 	// +kubebuilder:validation:Optional
-	PostgresHostAuthMethod string `json:"postgres_host_auth_method"`
+	PostgresHostAuthMethod string `json:"postgres_host_auth_method,omitempty"`
 
 	// Resource requirements for the database container.
 	// +kubebuilder:validation:Optional
@@ -375,8 +382,11 @@ type Database struct {
 	// +kubebuilder:validation:Optional
 	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 
-	// +kubebuilder:default:="8Gi"
-	PostgresStorageRequirements resource.Quantity `json:"postgres_storage_requirements,omitempty"`
+	// Temporarily modifying it as a string to avoid an issue with backup and json.Unmarshal
+	// when set as resource.Quantity and no value passed on pulp CR, during backup steps
+	// json.Unmarshal is settings it with "0"
+	// +kubebuilder:validation:Optional
+	PostgresStorageRequirements string `json:"postgres_storage_requirements,omitempty"`
 
 	// Name of the StorageClass required by the claim.
 	// +kubebuilder:validation:Optional

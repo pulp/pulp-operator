@@ -275,7 +275,8 @@ spec:
                     default: 1
                     description: Size is the size of number of pulp-api replicas.
                     format: int32
-                    minimum: 1
+                    minimum: 0
+                    nullable: true
                     type: integer
                   resource_requirements:
                     description: Resource requirements for the pulp content container.
@@ -731,6 +732,8 @@ spec:
                     default: 2
                     description: Size is the size of number of pulp-content replicas
                     format: int32
+                    minimum: 0
+                    nullable: true
                     type: integer
                   resource_requirements:
                     description: Resource requirements for the pulp-content container
@@ -1022,7 +1025,6 @@ spec:
                   external_db:
                     properties:
                       postgres_con_max_age:
-                        default: "0"
                         type: string
                       postgres_db_name:
                         type: string
@@ -1036,13 +1038,6 @@ spec:
                         type: string
                       postgres_user:
                         type: string
-                    required:
-                    - postgres_db_name
-                    - postgres_host
-                    - postgres_password
-                    - postgres_port
-                    - postgres_ssl_mode
-                    - postgres_user
                     type: object
                   node_selector:
                     additionalProperties:
@@ -1103,12 +1098,11 @@ spec:
                     description: Name of the StorageClass required by the claim.
                     type: string
                   postgres_storage_requirements:
-                    anyOf:
-                    - type: integer
-                    - type: string
-                    default: 8Gi
-                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                    x-kubernetes-int-or-string: true
+                    description: Temporarily modifying it as a string to avoid an
+                      issue with backup and json.Unmarshal when set as resource.Quantity
+                      and no value passed on pulp CR, during backup steps json.Unmarshal
+                      is settings it with "0"
+                    type: string
                   tolerations:
                     description: Node tolerations for the database pod.
                     items:
@@ -1300,7 +1294,8 @@ spec:
                     default: 1
                     description: Size is the size of number of pulp-web replicas
                     format: int32
-                    minimum: 1
+                    minimum: 0
+                    nullable: true
                     type: integer
                   resource_requirements:
                     description: Resource requirements for the pulp-web container
@@ -1557,7 +1552,8 @@ spec:
                     default: 2
                     description: Size is the size of number of pulp-worker replicas
                     format: int32
-                    minimum: 1
+                    minimum: 0
+                    nullable: true
                     type: integer
                   resource_requirements:
                     description: Resource requirements for the pulp-api container
