@@ -54,6 +54,7 @@ type PulpRestoreSpec struct {
 
 	// Configuration for the storage type utilized in the backup
 	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:="file"
 	StorageType string `json:"storage_type"`
 
 	// Label selector used to identify postgres pod for executing migration

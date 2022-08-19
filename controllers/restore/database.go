@@ -16,6 +16,14 @@ func (r *PulpRestoreReconciler) restoreDatabaseData(ctx context.Context, pulpRes
 	log := log.FromContext(ctx)
 	backupFile := "pulp.db"
 
+	//[TODO] fix this
+	// WORKAROUND!!!! Giving some time to pulp CR be created
+	// sometimes the scale down process was failing with kube-api returning an error
+	// because the object has been modified and asking to try again
+	// I think one of the reasons that it is happening is because pulp CR
+	// was in the middle of its "creation process" and this kludge did a "relief"
+	time.Sleep(5 * time.Second)
+
 	// scaling down pods
 	log.Info("Scaling down pods to restore postgres data ...")
 	pulp := &repomanagerv1alpha1.Pulp{}
@@ -44,6 +52,16 @@ func (r *PulpRestoreReconciler) restoreDatabaseData(ctx context.Context, pulpRes
 	log.Info("Waiting db pod get into a READY state ...")
 	r.waitDBReady(ctx, pulpRestore.Namespace, pulpRestore.Spec.DeploymentName+"-database")
 
+	// [TODO] we need to define when to run pg_restore
+	// in the "first" execution everything goes fine
+	// during a reconcile loop (or, for example, if the operator pod gets reprovisioned) the pg_restore will fail
+	// Here is an error from a subsequent execution of pg_restore:
+	/* pg_restore: from TOC entry 4583; 2606 18967 FK CONSTRAINT rpm_variant rpm_variant_repository_id_621855c9_fk_core_repository_pulp_id pulp
+	pg_restore: error: could not execute query: ERROR:  constraint "rpm_variant_repository_id_621855c9_fk_core_repository_pulp_id" for relation "rpm_variant" already exists
+	Command was: ALTER TABLE ONLY public.rpm_variant
+	    ADD CONSTRAINT rpm_variant_repository_id_621855c9_fk_core_repository_pulp_id FOREIGN KEY (repository_id) REFERENCES public.core_repository(pulp_id) DEFERRABLE INITIALLY DEFERRED;
+	pg_restore: warning: errors ignored on restore: 843 */
+
 	// run pg_restore
 	execCmd := []string{
 		"pg_restore", "-d",
@@ -58,6 +76,7 @@ func (r *PulpRestoreReconciler) restoreDatabaseData(ctx context.Context, pulpRes
 	}
 
 	log.Info("Database restore finished!")
+
 	return nil
 }
 

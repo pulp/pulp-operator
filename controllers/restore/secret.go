@@ -72,38 +72,48 @@ const (
 	resourceTypeObjectStorage  = "ObjectStorage"
 	resourceTypeSigningSecret  = "Signing"
 	resourceTypeContainerToken = "ContainerToken"
+	resourceTypeSSOSecret      = "SSO"
 )
 
 // restoreSecret restores the operator secrets created by pulpbackup CR
 func (r *PulpRestoreReconciler) restoreSecret(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupDir string, pod *corev1.Pod) error {
 
+	// [TODO]
+	// type secretTypes struct {resourceType string, secretNameKey string, backupFile string}
+	// secrets := []secretTypes{ ... }
+	// for i in range secrets { r.secret(...) }
+
 	// restore admin password secret
-	if err := r.secret(ctx, resourceTypeAdminPassword, "admin_password_secret", backupDir, "admin_secret.yaml", pod, pulpRestore); err != nil {
+	if _, err := r.secret(ctx, resourceTypeAdminPassword, "admin_password_secret", backupDir, "admin_secret.yaml", pod, pulpRestore); err != nil {
 		return err
 	}
 
 	// restore postgres secret
-	if err := r.secret(ctx, resourceTypePostgres, "postgres_secret", backupDir, "postgres_configuration_secret.yaml", pod, pulpRestore); err != nil {
-		return err
-	}
-
-	// restore object storage secret
-	if err := r.secret(ctx, resourceTypeObjectStorage, "storage_secret", backupDir, "objectstorage_secret.yaml", pod, pulpRestore); err != nil {
+	if _, err := r.secret(ctx, resourceTypePostgres, "postgres_secret", backupDir, "postgres_configuration_secret.yaml", pod, pulpRestore); err != nil {
 		return err
 	}
 
 	// restore container token secret
-	if err := r.secret(ctx, resourceTypeContainerToken, "db_fields_encryption_secret", backupDir, "container_token_secret.yaml", pod, pulpRestore); err != nil {
+	// this secret is not mandatory. If the backup file is not found is not an error
+	if found, err := r.secret(ctx, resourceTypeContainerToken, "db_fields_encryption_secret", backupDir, "container_token_secret.yaml", pod, pulpRestore); found && err != nil {
+		return err
+	}
+
+	// restore object storage secret
+	// this secret is not mandatory. If the backup file is not found is not an error
+	if found, err := r.secret(ctx, resourceTypeObjectStorage, "storage_secret", backupDir, "objectstorage_secret.yaml", pod, pulpRestore); found && err != nil {
 		return err
 	}
 
 	// restore signing secret
-	if err := r.secret(ctx, resourceTypeSigningSecret, "signing_secret", backupDir, "signing_secret.yaml", pod, pulpRestore); err != nil {
+	// this secret is not mandatory. If the backup file is not found is not an error
+	if found, err := r.secret(ctx, resourceTypeSigningSecret, "signing_secret", backupDir, "signing_secret.yaml", pod, pulpRestore); found && err != nil {
 		return err
 	}
 
 	// restore sso secret
-	if err := r.secret(ctx, resourceTypeSigningSecret, "sso_secret", backupDir, "sso_secret.yaml", pod, pulpRestore); err != nil {
+	// this secret is not mandatory. If the backup file is not found is not an error
+	if found, err := r.secret(ctx, resourceTypeSSOSecret, "sso_secret", backupDir, "sso_secret.yaml", pod, pulpRestore); found && err != nil {
 		return err
 	}
 
@@ -113,7 +123,8 @@ func (r *PulpRestoreReconciler) restoreSecret(ctx context.Context, pulpRestore *
 // secret creates the secret k8s resource from the backup file (backupFile) based on
 // resourceType: the type of the secret (like AdminPassword, or ObjectStorage, or ContainerToken, etc)
 // secretNameKey: is the secret's key that contains the secret name to be restored
-func (r *PulpRestoreReconciler) secret(ctx context.Context, resourceType, secretNameKey, backupDir, backupFile string, pod *corev1.Pod, pulpRestore *repomanagerv1alpha1.PulpRestore) error {
+// it returns false and the error if the file is not found
+func (r *PulpRestoreReconciler) secret(ctx context.Context, resourceType, secretNameKey, backupDir, backupFile string, pod *corev1.Pod, pulpRestore *repomanagerv1alpha1.PulpRestore) (bool, error) {
 
 	log := ctrllog.FromContext(ctx)
 
@@ -122,10 +133,11 @@ func (r *PulpRestoreReconciler) secret(ctx context.Context, resourceType, secret
 		"test", "-f", backupDir + "/" + backupFile,
 	}
 	_, err := r.containerExec(pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
-	if err != nil {
-		return err
-	} else { // if backupFile file found
 
+	// if backupFile file is not found return the error
+	if err != nil {
+		return false, err
+	} else {
 		// retrieving backup file content
 		log.Info("Restoring " + resourceType + " secret ...")
 		r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Restoring "+resourceType+" secret", "Restoring"+resourceType+"Secret")
@@ -136,7 +148,7 @@ func (r *PulpRestoreReconciler) secret(ctx context.Context, resourceType, secret
 		if err != nil {
 			log.Error(err, "Failed to get "+backupFile+"!")
 			r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Failed to get "+backupFile, "FailedGet"+resourceType+"Secret")
-			return err
+			return true, err
 		}
 
 		// "assert" struct type based on secretNameKey
@@ -203,14 +215,14 @@ func (r *PulpRestoreReconciler) secret(ctx context.Context, resourceType, secret
 			if err := r.Create(ctx, secret); err != nil {
 				log.Error(err, "Failed to create "+resourceType+" secret!")
 				r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Error trying to restore "+resourceType+" secret!", "FailedCreate"+resourceType+"Secret")
-				return err
+				return true, err
 			}
 			log.Info(resourceType + " secret restored")
 			r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", resourceType+" secret restored", resourceType+"SecretRestored")
 		}
 	}
 
-	return nil
+	return true, nil
 }
 
 // setStatusField sets the pulpRestore.Status.FieldName with fieldValue

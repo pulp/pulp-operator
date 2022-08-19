@@ -18,9 +18,7 @@ package pulp_restore
 
 import (
 	"context"
-	"time"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -31,7 +29,6 @@ import (
 
 	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	"github.com/git-hyagi/pulp-operator-go/controllers"
-	v1 "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -69,6 +66,14 @@ func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Restore process running ...", "StartingRestoreProcess")
 
+	// [TODO] REVIEW THIS
+	// I'm not sure if we should keep this approach
+	// in a DR scenario where ocp cluster is lost but the storage data is safe we should be able to recover
+	// pulp without a running pulpBackup
+	// Another scenario is recovering from a Pulp project/namespace removal without losing backup PV
+	// we should be able to recover only with the data from pulpRestore CR + backup PVC
+	// the problem with this approach is that users will need to know (or manually retrieve from the backup) the name of the bkp secrets,
+	// the name of the files, and manually configure pulpRestore CR with them
 	/* 	// Look up details for the backup
 	   	pulpBackup := &repomanagerv1alpha1.PulpBackup{}
 	   	err = r.Get(ctx, types.NamespacedName{Name: pulpRestore.Spec.BackupName, Namespace: pulpRestore.Namespace}, pulpBackup)
@@ -80,9 +85,11 @@ func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	   		return ctrl.Result{}, err
 	   	}
 
-	   	// make sure that pulpBackup ran before continue
+	   	// make sure that there is a bkpPVC and pulpBackup ran before continue
+		// checking only for bkpPVC can get into a state where pulpBackup controller is running and the content from bkpPVC is outdated
+		// checking only for pulpBackup status can get into a situation where it ran before but the pvc was removed
 	   	for timeout := 0; timeout < 300; timeout++ {
-	   		if v1.IsStatusConditionTrue(pulpBackup.Status.Conditions, "BackupComplete") {
+	   		if ###CHECK BKPPVC ### && v1.IsStatusConditionTrue(pulpBackup.Status.Conditions, "BackupComplete") {
 	   			break
 	   		}
 	   		time.Sleep(time.Second * 5)
@@ -90,25 +97,18 @@ func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	   	} */
 
 	// Fail early if pvc is defined but does not exist
-	backupPVCName := ""
-	if pulpRestore.Spec.BackupPVC == "" {
-		//backupPVCName = pulpBackup.Name + "-backup-claim"
-		backupPVCName = "pulpbackup-sample-backup-claim"
-	} else {
-		backupPVCName = pulpRestore.Spec.BackupPVC
-	}
-	backupPVC := &corev1.PersistentVolumeClaim{}
-	err = r.Get(ctx, types.NamespacedName{Name: backupPVCName, Namespace: pulpRestore.Namespace}, backupPVC)
-	if err != nil && errors.IsNotFound(err) {
+	backupPVCName, PVCfound := r.backupPVCFound(ctx, pulpRestore)
+	if !PVCfound {
 		log.Error(err, "PVC "+backupPVCName+" not found!")
-		r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "PVC "+backupPVCName+" not found!", "PVCNotFound")
+		r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "PVC "+backupPVCName+" not found!", "BackupPVCNotFound")
 		return ctrl.Result{}, err
 	}
 
 	// Delete any existing management pod
 	r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Removing old manager pod ...", "RemovingOldPod")
-	//r.cleanup(ctx, pulpRestore)
+	r.cleanup(ctx, pulpRestore)
 
+	// Create a new management pod
 	r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Creating manager pod ...", "CreatingPod")
 	pod, err := r.createRestorePod(ctx, pulpRestore, backupPVCName, backupDir)
 	if err != nil {
@@ -122,167 +122,54 @@ func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 	_, err = r.containerExec(pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
 	if err != nil {
+		// requeue request when backupDir is not found
 		r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Failed to find "+backupDir+" dir!", "BackupDirNotFound")
 		return ctrl.Result{}, err
 	}
 
-	r.restoreSecret(ctx, pulpRestore, backupDir, pod)
+	// Restoring the secrets
+	if err := r.restoreSecret(ctx, pulpRestore, backupDir, pod); err != nil {
+		// requeue request when there is an error with a secret restore
+		return ctrl.Result{}, err
+	}
 
-	r.restorePulpCR(ctx, pulpRestore, backupDir, pod)
+	// Restoring pulp CR
+	if err := r.restorePulpCR(ctx, pulpRestore, backupDir, pod); err != nil {
+		// requeue request when there is an error with a pulp CR restore
+		return ctrl.Result{}, err
+	}
 
-	if err = r.restoreDatabaseData(ctx, pulpRestore, backupDir, pod); err != nil {
+	// Restoring database
+	if err := r.restoreDatabaseData(ctx, pulpRestore, backupDir, pod); err != nil {
+		// requeue request when there is an error with a database restore
+		return ctrl.Result{}, err
+	}
+
+	// Restoring /var/lib/pulp data
+	if err := r.restorePulpDir(ctx, pulpRestore, backupPVCName, backupDir, pod); err != nil {
+		// requeue request when there is an error with pulp dir restore
+		return ctrl.Result{}, err
+	}
+
+	// reprovision pods
+	pulp := &repomanagerv1alpha1.Pulp{}
+	r.Get(ctx, types.NamespacedName{Name: pulpRestore.Spec.DeploymentName, Namespace: pulpRestore.Namespace}, pulp)
+	pulp.Spec.Api.Replicas = 1
+	pulp.Spec.Content.Replicas = 2
+	pulp.Spec.Worker.Replicas = 2
+	pulp.Spec.Web.Replicas = 1
+	if err := r.Update(ctx, pulp); err != nil {
+		log.Error(err, "Failed to scale up deployment replicas!")
 		return ctrl.Result{}, err
 	}
 
 	log.Info("Cleaning up restore resources ...")
 	r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Cleaning up restore resources ...", "DeletingMgmtPod")
-	//r.cleanup(ctx, pulpRestore)
+
+	r.cleanup(ctx, pulpRestore)
 	r.updateStatus(ctx, pulpRestore, metav1.ConditionTrue, "RestoreComplete", "All restore tasks run!", "RestoreTasksFinished")
 	log.Info("Restore tasks finished!")
 	return ctrl.Result{}, nil
-}
-
-// updateStatus modifies a .status.condition from pulpbackup CR
-func (r *PulpRestoreReconciler) updateStatus(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, conditionStatus metav1.ConditionStatus, conditionType, conditionMessage, conditionReason string) {
-	v1.SetStatusCondition(&pulpRestore.Status.Conditions, metav1.Condition{
-		Type:               conditionType,
-		Status:             conditionStatus,
-		Reason:             conditionReason,
-		LastTransitionTime: metav1.Now(),
-		Message:            conditionMessage,
-	})
-	r.Status().Update(ctx, pulpRestore)
-}
-
-// cleanup deletes the backup-manager pod
-func (r *PulpRestoreReconciler) cleanup(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore) error {
-	restorePod := &corev1.Pod{}
-	r.Get(ctx, types.NamespacedName{Name: pulpRestore.Name + "-backup-manager", Namespace: pulpRestore.Namespace}, restorePod)
-	r.Delete(ctx, restorePod)
-
-	// the Delete method is not synchronous, so this loop will wait until the pod is not present anymore or
-	// the 120 seconds timeout
-	for timeout := 0; timeout < 120; timeout++ {
-		err := r.Get(ctx, types.NamespacedName{Name: pulpRestore.Name + "-backup-manager", Namespace: pulpRestore.Namespace}, restorePod)
-		if err != nil && errors.IsNotFound(err) {
-			break
-		}
-		time.Sleep(time.Second * 5)
-	}
-
-	return nil
-}
-
-// createBackupPod provisions the backup-manager pod where the restore steps will run
-func (r *PulpRestoreReconciler) createRestorePod(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupPVCName, backupDir string) (*corev1.Pod, error) {
-	log := log.FromContext(ctx)
-
-	labels := map[string]string{
-		"app.kubernetes.io/name":       pulpRestore.Spec.DeploymentType + "-backup-storage",
-		"app.kubernetes.io/instance":   pulpRestore.Spec.DeploymentType + "-backup-storage-" + pulpRestore.Name,
-		"app.kubernetes.io/component":  "backup-storage",
-		"app.kubernetes.io/part-of":    pulpRestore.Spec.DeploymentType,
-		"app.kubernetes.io/managed-by": pulpRestore.Spec.DeploymentType + "-operator",
-	}
-
-	// [TO-DO] define postgres image based on the database implementation type
-	// if external database: we should gather from an user input (pulpbackup CR) postgres version
-	// if provisioned by operator: we should gather, for example, from pulp CR spec or from database deployment spec
-	postgresImage := "postgres:13"
-
-	volumeMounts := []corev1.VolumeMount{{
-		Name:      pulpRestore.Name + "-backup",
-		ReadOnly:  false,
-		MountPath: backupDir,
-	}}
-
-	volumes := []corev1.Volume{{
-		Name: pulpRestore.Name + "-backup",
-		VolumeSource: corev1.VolumeSource{
-			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-				ClaimName: backupPVCName,
-			},
-		},
-	}}
-
-	// running a dumb command on bkp mount point just to make sure that
-	// the pod is ready to execute the backup commands (mkdir,cp,echo,etc)
-	readinessProbe := &corev1.Probe{
-		ProbeHandler: corev1.ProbeHandler{
-			Exec: &corev1.ExecAction{Command: []string{"ls", backupDir}},
-		},
-		FailureThreshold:    10,
-		InitialDelaySeconds: 3,
-		PeriodSeconds:       10,
-		SuccessThreshold:    1,
-		TimeoutSeconds:      10,
-	}
-
-	serviceAccount := ""
-	if pulpRestore.Spec.DeploymentType == "" {
-		serviceAccount = pulpRestore.Spec.DeploymentName + "-operator-sa"
-	} else {
-		serviceAccount = pulpRestore.Spec.DeploymentType + "-operator-sa"
-	}
-	restorePod := &corev1.Pod{}
-	err := r.Get(ctx, types.NamespacedName{Name: pulpRestore.Name + "-backup-manager", Namespace: pulpRestore.Namespace}, restorePod)
-	pod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      pulpRestore.Name + "-backup-manager",
-			Namespace: pulpRestore.Namespace,
-			Labels:    labels,
-		},
-		Spec: corev1.PodSpec{
-			ServiceAccountName: serviceAccount,
-			Containers: []corev1.Container{{
-				Name:            pulpRestore.Name + "-backup-manager",
-				Image:           postgresImage,
-				ImagePullPolicy: corev1.PullAlways,
-				Command: []string{
-					"sleep",
-					"infinity",
-				},
-				VolumeMounts:   volumeMounts,
-				ReadinessProbe: readinessProbe,
-			}},
-			Volumes:       volumes,
-			RestartPolicy: corev1.RestartPolicyNever,
-		},
-	}
-	if err != nil && errors.IsNotFound(err) {
-		log.Info("Creating a new manager Pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
-		ctrl.SetControllerReference(pulpRestore, pod, r.Scheme)
-		err = r.Create(ctx, pod)
-		if err != nil {
-			log.Error(err, "Failed to create new manager Pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
-			return &corev1.Pod{}, err
-		}
-	} else if err != nil {
-		log.Error(err, "Failed to get manager Pod")
-		return &corev1.Pod{}, err
-	}
-
-	pod, err = r.waitPodReady(ctx, pulpRestore.Namespace, pulpRestore.Name+"-backup-manager")
-	if err != nil {
-		log.Error(err, "Manager pod not found")
-		return &corev1.Pod{}, err
-	}
-	return pod, nil
-}
-
-// waitPodReady waits until container gets into a "READY" state
-func (r *PulpRestoreReconciler) waitPodReady(ctx context.Context, namespace, podName string) (*corev1.Pod, error) {
-	var err error
-	for timeout := 0; timeout < 120; timeout++ {
-		pod := &corev1.Pod{}
-		err = r.Get(ctx, types.NamespacedName{Name: podName, Namespace: namespace}, pod)
-
-		if len(pod.Status.ContainerStatuses) > 0 && pod.Status.ContainerStatuses[0].Ready {
-			return pod, nil
-		}
-		time.Sleep(time.Second)
-	}
-	return &corev1.Pod{}, err
 }
 
 // SetupWithManager sets up the controller with the Manager.

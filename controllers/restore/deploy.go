@@ -17,7 +17,7 @@ func (r *PulpRestoreReconciler) restorePulpCR(ctx context.Context, pulpRestore *
 	pulp := &repomanagerv1alpha1.Pulp{}
 
 	// we'll recreate pulp instance only if it was not found
-	// in situations like during a pulpRestore reconcile loop (because of an error) pulp instance could have been previously created
+	// in situations like during a pulpRestore reconcile loop (because of an error, for example) pulp instance could have been previously created
 	// this will avoid an infinite reconciliation loop trying to recreate a resource that already exists
 	if err := r.Get(ctx, types.NamespacedName{Name: pulpRestore.Spec.DeploymentName, Namespace: pulpRestore.Namespace}, pulp); err != nil && errors.IsNotFound(err) {
 		log := ctrllog.FromContext(ctx)
