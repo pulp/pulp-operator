@@ -189,12 +189,6 @@ func (r *PulpRestoreReconciler) createRestorePod(ctx context.Context, pulpRestor
 		TimeoutSeconds:      10,
 	}
 
-	serviceAccount := ""
-	if pulpRestore.Spec.DeploymentType == "" {
-		serviceAccount = pulpRestore.Spec.DeploymentName + "-operator-sa"
-	} else {
-		serviceAccount = pulpRestore.Spec.DeploymentType + "-operator-sa"
-	}
 	restorePod := &corev1.Pod{}
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -203,7 +197,7 @@ func (r *PulpRestoreReconciler) createRestorePod(ctx context.Context, pulpRestor
 			Labels:    labels,
 		},
 		Spec: corev1.PodSpec{
-			ServiceAccountName: serviceAccount,
+			ServiceAccountName: "pulp-operator-go-controller-manager",
 			Containers: []corev1.Container{{
 				Name:            pulpRestore.Name + "-backup-manager",
 				Image:           postgresImage,

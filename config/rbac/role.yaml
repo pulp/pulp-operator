@@ -55,9 +55,23 @@ rules:
   - get
   - list
 - apiGroups:
+  - ""
+  resources:
+  - pods/exec
+  verbs:
+  - create
+- apiGroups:
   - repo-manager.pulpproject.org
   resources:
   - pulp
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - repo-manager.pulpproject.org
+  resources:
+  - pulp
+  - pulpbackup
   verbs:
   - get
   - list
@@ -83,6 +97,32 @@ rules:
   - repo-manager.pulpproject.org
   resources:
   - pulpbackups/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - repo-manager.pulpproject.org
+  resources:
+  - pulprestores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - repo-manager.pulpproject.org
+  resources:
+  - pulprestores/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - repo-manager.pulpproject.org
+  resources:
+  - pulprestores/status
   verbs:
   - get
   - patch

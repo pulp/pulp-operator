@@ -4,3 +4,4 @@ metadata:
   name: ci-pulprestore
 spec:
   backup_name: pulpbackup-sample
+  deployment_name: example-pulp

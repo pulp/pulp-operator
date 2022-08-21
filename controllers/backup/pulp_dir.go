@@ -14,7 +14,11 @@ func (r *PulpBackupReconciler) backupPulpDir(ctx context.Context, pulpBackup *re
 	log := ctrllog.FromContext(ctx)
 
 	pulp := &repomanagerv1alpha1.Pulp{}
-	r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.InstanceName, Namespace: pulpBackup.Namespace}, pulp)
+	err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.DeploymentName, Namespace: pulpBackup.Namespace}, pulp)
+	if err != nil {
+		log.Error(err, "Failed to get Pulp")
+		return err
+	}
 
 	if len(pulp.Spec.ObjectStorageAzureSecret) == 0 && len(pulp.Spec.ObjectStorageS3Secret) == 0 {
 		log.Info("Starting pulp dir backup ...")

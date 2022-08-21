@@ -24,23 +24,6 @@ func (r *PulpRestoreReconciler) restoreDatabaseData(ctx context.Context, pulpRes
 	// was in the middle of its "creation process" and this kludge did a "relief"
 	time.Sleep(5 * time.Second)
 
-	// scaling down pods
-	log.Info("Scaling down pods to restore postgres data ...")
-	pulp := &repomanagerv1alpha1.Pulp{}
-	if err := r.Get(ctx, types.NamespacedName{Name: pulpRestore.Spec.DeploymentName, Namespace: pulpRestore.Namespace}, pulp); err != nil {
-		log.Error(err, "Failed to retrieve "+pulpRestore.Spec.DeploymentName+" instance!")
-		return err
-	} else {
-		pulp.Spec.Api.Replicas = 0
-		pulp.Spec.Content.Replicas = 0
-		pulp.Spec.Worker.Replicas = 0
-		pulp.Spec.Web.Replicas = 0
-		if err := r.Update(ctx, pulp); err != nil {
-			log.Error(err, "Failed to scale down deployment replicas!")
-			return err
-		}
-	}
-
 	// retrieve pg credentials and address
 	pgConfig := &corev1.Secret{}
 	if err := r.Get(ctx, types.NamespacedName{Name: pulpRestore.Status.PostgresSecret, Namespace: pulpRestore.Namespace}, pgConfig); err != nil {
@@ -52,21 +35,14 @@ func (r *PulpRestoreReconciler) restoreDatabaseData(ctx context.Context, pulpRes
 	log.Info("Waiting db pod get into a READY state ...")
 	r.waitDBReady(ctx, pulpRestore.Namespace, pulpRestore.Spec.DeploymentName+"-database")
 
-	// [TODO] we need to define when to run pg_restore
-	// in the "first" execution everything goes fine
-	// during a reconcile loop (or, for example, if the operator pod gets reprovisioned) the pg_restore will fail
-	// Here is an error from a subsequent execution of pg_restore:
-	/* pg_restore: from TOC entry 4583; 2606 18967 FK CONSTRAINT rpm_variant rpm_variant_repository_id_621855c9_fk_core_repository_pulp_id pulp
-	pg_restore: error: could not execute query: ERROR:  constraint "rpm_variant_repository_id_621855c9_fk_core_repository_pulp_id" for relation "rpm_variant" already exists
-	Command was: ALTER TABLE ONLY public.rpm_variant
-	    ADD CONSTRAINT rpm_variant_repository_id_621855c9_fk_core_repository_pulp_id FOREIGN KEY (repository_id) REFERENCES public.core_repository(pulp_id) DEFERRABLE INITIALLY DEFERRED;
-	pg_restore: warning: errors ignored on restore: 843 */
-
 	// run pg_restore
 	execCmd := []string{
-		"pg_restore", "-d",
-		"postgresql://" + string(pgConfig.Data["username"]) + ":" + string(pgConfig.Data["password"]) + "@" + string(pgConfig.Data["host"]) + ":" + string(pgConfig.Data["port"]) + "/" + string(pgConfig.Data["database"]),
-		backupDir + "/" + backupFile,
+		"bash", "-c", "cat" + backupDir + "/" + backupFile + "| PGPASSWORD=" + string(pgConfig.Data["password"]),
+		"psql -U " + string(pgConfig.Data["username"]),
+		"-h " + string(pgConfig.Data["host"]),
+		"-U " + string(pgConfig.Data["username"]),
+		"-d " + string(pgConfig.Data["database"]),
+		"-p " + string(pgConfig.Data["port"]),
 	}
 
 	log.Info("Running db restore ...")

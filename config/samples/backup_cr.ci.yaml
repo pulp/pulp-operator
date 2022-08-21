@@ -1,7 +1,0 @@
----
-apiVersion: repo-manager.pulpproject.org/v1alpha1
-kind: PulpBackup
-metadata:
-  name: ci-pulpbackup
-spec:
-  deployment_name: example-pulp

@@ -48,6 +48,7 @@ type PulpBackupReconciler struct {
 //+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulpbackups/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulpbackups/finalizers,verbs=update
 //+kubebuilder:rbac:groups=core,resources=pods;persistentvolumes;persistentvolumeclaims,verbs=create;update;patch;delete;watch;get;list;
+//+kubebuilder:rbac:groups=core,resources=pods/exec,verbs=create;
 //+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulp,verbs=get;list;
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
@@ -149,7 +150,11 @@ func (r *PulpBackupReconciler) createBackupPod(ctx context.Context, pulpBackup *
 	// that there is only a single instance of pulp CR available
 	// we could also let users pass the name of pulp instance
 	pulp := &repomanagerv1alpha1.Pulp{}
-	r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.InstanceName, Namespace: pulpBackup.Namespace}, pulp)
+	err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.DeploymentName, Namespace: pulpBackup.Namespace}, pulp)
+	if err != nil {
+		log.Error(err, "Failed to get Pulp")
+		return nil, err
+	}
 
 	labels := map[string]string{
 		"app.kubernetes.io/name":       pulpBackup.Spec.DeploymentType + "-backup-storage",
@@ -209,7 +214,7 @@ func (r *PulpBackupReconciler) createBackupPod(ctx context.Context, pulpBackup *
 	}
 
 	bkpPod := &corev1.Pod{}
-	err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Name + "-backup-manager", Namespace: pulpBackup.Namespace}, bkpPod)
+	err = r.Get(ctx, types.NamespacedName{Name: pulpBackup.Name + "-backup-manager", Namespace: pulpBackup.Namespace}, bkpPod)
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      pulpBackup.Name + "-backup-manager",

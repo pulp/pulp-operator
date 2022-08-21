@@ -79,11 +79,11 @@ func (r *PulpReconciler) pulpWebController(ctx context.Context, pulp *repomanage
 
 	// Reconcile Deployment
 	if !equality.Semantic.DeepDerivative(newWebDeployment.Spec, webDeployment.Spec) {
-		log.Info("The PULP-WEB Deployment has been modified! Reconciling ...")
+		log.Info("The Web Deployment has been modified! Reconciling ...")
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Web-Ready", "UpdatingWebDeployment", "Reconciling "+pulp.Name+"-web deployment resource")
 		err = r.Update(ctx, newWebDeployment)
 		if err != nil {
-			log.Error(err, "Error trying to update the PULP-WEB Deployment object ... ")
+			log.Error(err, "Error trying to update the Web Deployment object ... ")
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Web-Ready", "ErrorUpdatingWebDeployment", "Failed to reconcile "+pulp.Name+"-web deployment resource: "+err.Error())
 			return ctrl.Result{}, err
 		}

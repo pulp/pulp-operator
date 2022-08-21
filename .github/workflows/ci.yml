@@ -214,11 +214,11 @@ jobs:
       - name: Test
         run: .ci/scripts/galaxy_ng-tests.sh -m
         shell: bash
-      # - name: Backup & Restore
-      #   run: CI_TEST=galaxy .ci/scripts/backup_and_restore.sh -m
-      #   shell: bash
-      #   env:
-      #     PY_COLORS: '1'
+      - name: Backup & Restore
+        run: CI_TEST=galaxy .ci/scripts/backup_and_restore.sh -m
+        shell: bash
+        env:
+          PY_COLORS: '1'
       - name: Logs
         if: always()
         run: .github/workflows/scripts/show_logs.sh

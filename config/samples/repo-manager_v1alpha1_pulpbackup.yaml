@@ -1,9 +1,12 @@
+---
 apiVersion: repo-manager.pulpproject.org/v1alpha1
 kind: PulpBackup
 metadata:
   name: pulpbackup-sample
 spec:
+  deployment_name: example-pulp
   deployment_type: pulp
   backup_storage_class: standard
   instance_name: pulp
   admin_password_secret: example-pulp-admin-password
+  postgres_configuration_secret: example-pulp-postgres-configuration

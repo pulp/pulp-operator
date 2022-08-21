@@ -21,7 +21,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -44,6 +43,9 @@ type PulpRestoreReconciler struct {
 //+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulprestores/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulprestores/finalizers,verbs=update
 //+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulpbackup;pulp,verbs=get;list;
+
+// Reconcile is part of the main kubernetes reconciliation loop which aims to
+// move the current state of the cluster closer to the desired state.
 func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	backupDir := "/backup"
@@ -133,12 +135,6 @@ func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
-	// Restoring pulp CR
-	if err := r.restorePulpCR(ctx, pulpRestore, backupDir, pod); err != nil {
-		// requeue request when there is an error with a pulp CR restore
-		return ctrl.Result{}, err
-	}
-
 	// Restoring database
 	if err := r.restoreDatabaseData(ctx, pulpRestore, backupDir, pod); err != nil {
 		// requeue request when there is an error with a database restore
@@ -151,15 +147,9 @@ func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
-	// reprovision pods
-	pulp := &repomanagerv1alpha1.Pulp{}
-	r.Get(ctx, types.NamespacedName{Name: pulpRestore.Spec.DeploymentName, Namespace: pulpRestore.Namespace}, pulp)
-	pulp.Spec.Api.Replicas = 1
-	pulp.Spec.Content.Replicas = 2
-	pulp.Spec.Worker.Replicas = 2
-	pulp.Spec.Web.Replicas = 1
-	if err := r.Update(ctx, pulp); err != nil {
-		log.Error(err, "Failed to scale up deployment replicas!")
+	// Restoring pulp CR
+	if err := r.restorePulpCR(ctx, pulpRestore, backupDir, pod); err != nil {
+		// requeue request when there is an error with a pulp CR restore
 		return ctrl.Result{}, err
 	}
 

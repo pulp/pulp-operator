@@ -17,7 +17,11 @@ func (r *PulpBackupReconciler) backupCR(ctx context.Context, pulpBackup *repoman
 	// that there is only a single instance of pulp CR available
 	// we could also let users pass the name of pulp instance
 	pulp := &repomanagerv1alpha1.Pulp{}
-	r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.InstanceName, Namespace: pulpBackup.Namespace}, pulp)
+	err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.DeploymentName, Namespace: pulpBackup.Namespace}, pulp)
+	if err != nil {
+		log.Error(err, "Failed to get Pulp")
+		return err
+	}
 
 	// CR BACKUP
 	log.Info("Starting " + pulpBackup.Spec.DeploymentType + " CR backup process ...")
@@ -25,7 +29,7 @@ func (r *PulpBackupReconciler) backupCR(ctx context.Context, pulpBackup *repoman
 	execCmd := []string{
 		"bash", "-c", "echo '" + string(pulpSpec) + "' > " + backupDir + "/cr_object",
 	}
-	_, err := r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
+	_, err = r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to backup "+pulpBackup.Spec.DeploymentType+" CR")
 		return err

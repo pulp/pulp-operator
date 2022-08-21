@@ -2,10 +2,10 @@
 set -euo pipefail
 
 echo "Set context"
-kubectl config set-context --current --namespace=pulp-operator-system
+kubectl config set-context --current --namespace=pulp-operator-go-system
 
-BACKUP_RESOURCE=backup_cr.ci.yaml
-RESTORE_RESOURCE=restore_cr.ci.yaml
+BACKUP_RESOURCE=repo-manager_v1alpha1_pulpbackup.yaml
+RESTORE_RESOURCE=repo-manager_v1alpha1_pulprestore.yaml
 
 if [[ "$CI_TEST" == "true" ]]; then
   CUSTOM_RESOURCE=simple.yaml
@@ -18,28 +18,30 @@ elif [[ "$CI_TEST" == "galaxy" && "$CI_TEST_STORAGE" == "s3" ]]; then
 fi
 
 echo ::group::PRE_BACKUP_LOGS
-kubectl logs -l app.kubernetes.io/name=pulp-operator -c pulp-manager --tail=10000
+kubectl logs -l app.kubernetes.io/name=pulp-operator -c manager --tail=10000
 echo ::endgroup::
 
 kubectl apply -f config/samples/$BACKUP_RESOURCE
-time kubectl wait --for condition=BackupComplete --timeout=-1s -f config/samples/$BACKUP_RESOURCE
+time kubectl wait --for condition=BackupComplete --timeout=800s -f config/samples/$BACKUP_RESOURCE
 
 echo ::group::AFTER_BACKUP_LOGS
-kubectl logs -l app.kubernetes.io/name=pulp-operator -c pulp-manager --tail=10000
+kubectl logs -l app.kubernetes.io/name=pulp-operator -c manager --tail=10000
 echo ::endgroup::
 
-kubectl delete --cascade=foreground -f config/samples/$CUSTOM_RESOURCE
-kubectl wait --for=delete -f config/samples/$CUSTOM_RESOURCE
+# kubectl delete --cascade=foreground -f config/samples/$CUSTOM_RESOURCE
+kubectl delete -f config/samples/$CUSTOM_RESOURCE
+kubectl wait --for=delete --timeout=300s -f config/samples/$CUSTOM_RESOURCE
 
 kubectl apply -f config/samples/$RESTORE_RESOURCE
-time kubectl wait --for condition=RestoreComplete --timeout=-1s -f config/samples/$RESTORE_RESOURCE
+time kubectl wait --for condition=RestoreComplete --timeout=800s -f config/samples/$RESTORE_RESOURCE
 
 echo ::group::AFTER_RESTORE_LOGS
-kubectl logs -l app.kubernetes.io/name=pulp-operator -c pulp-manager --tail=10000
+kubectl logs -l app.kubernetes.io/name=pulp-operator -c manager --tail=10000
 echo ::endgroup::
 
 sudo pkill -f "port-forward" || true
-time kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=-1s
+time kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=800s
+kubectl get pods -o wide
 
 KUBE="k3s"
 SERVER=$(hostname)
