@@ -1,4 +1,0 @@
----
-
-deployment_type: "pulp"
-_postgres_image: postgres:13
