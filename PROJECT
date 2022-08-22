@@ -1,16 +1,19 @@
 domain: pulpproject.org
 layout:
-- ansible.sdk.operatorframework.io/v1
+- go.kubebuilder.io/v3
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
-projectName: pulp-operator
+projectName: pulp-operator-go
+repo: github.com/git-hyagi/pulp-operator-go
 resources:
 - api:
     crdVersion: v1
     namespaced: true
+  controller: true
   domain: pulpproject.org
-  group: pulp
+  group: repo-manager
   kind: Pulp
-  version: v1beta1
+  path: github.com/git-hyagi/pulp-operator-go/api/v1alpha1
+  version: v1alpha1
 version: "3"

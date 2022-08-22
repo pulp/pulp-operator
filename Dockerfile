@@ -1,20 +1,27 @@
-FROM quay.io/operator-framework/ansible-operator:v1.22.1
+# Build the manager binary
+FROM golang:1.17 as builder
 
-ENV ANSIBLE_FORCE_COLOR=true
-ENV ANSIBLE_SHOW_TASK_PATH_ON_FAILURE=true
+WORKDIR /workspace
+# Copy the Go Modules manifests
+COPY go.mod go.mod
+COPY go.sum go.sum
+# cache deps before building and copying source so that we don't need to re-download as much
+# and so that source changes don't invalidate our downloaded layer
+RUN go mod download
 
-USER root
-RUN dnf update --security --bugfix -y && \
-    dnf install -y openssl
+# Copy the go source
+COPY main.go main.go
+COPY api/ api/
+COPY controllers/ controllers/
 
-USER ${USER_UID}
+# Build
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
 
-COPY requirements.yml ${HOME}/requirements.yml
-RUN ansible-galaxy collection install --force -r ${HOME}/requirements.yml \
- && chmod -R ug+rwx ${HOME}/.ansible
+# Use distroless as minimal base image to package the manager binary
+# Refer to https://github.com/GoogleContainerTools/distroless for more details
+FROM gcr.io/distroless/static:nonroot
+WORKDIR /
+COPY --from=builder /workspace/manager .
+USER 65532:65532
 
-COPY watches.yaml ${HOME}/watches.yaml
-COPY roles/ ${HOME}/roles/
-COPY playbooks/ ${HOME}/playbooks/
-
-ENTRYPOINT ["/tini", "--", "/usr/local/bin/ansible-operator", "run", "--watches-file=./watches.yaml", "--reconcile-period=0s"]
+ENTRYPOINT ["/manager"]

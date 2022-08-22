@@ -5,21 +5,11 @@ kind: Deployment
 metadata:
   name: controller-manager
   namespace: system
-  annotations: # About kube-linter checks: https://docs.kubelinter.io/#/generated/checks
-    ignore-check.kube-linter.io/no-liveness-probe: "Not linting kubebuilder"
-    ignore-check.kube-linter.io/no-readiness-probe: "Not linting kubebuilder"
-    ignore-check.kube-linter.io/run-as-non-root: "Not linting kubebuilder"
 spec:
   template:
     spec:
       containers:
       - name: kube-rbac-proxy
-        securityContext:
-          allowPrivilegeEscalation: false
-        # TODO(user): uncomment for common cases that do not require escalating privileges
-        # capabilities:
-        #   drop:
-        #     - "ALL"
         image: gcr.io/kubebuilder/kube-rbac-proxy:v0.11.0
         args:
         - "--secure-listen-address=0.0.0.0:8443"
@@ -37,9 +27,8 @@ spec:
           requests:
             cpu: 5m
             memory: 64Mi
-      - name: pulp-manager
+      - name: manager
         args:
-        - "--health-probe-bind-address=:6789"
+        - "--health-probe-bind-address=:8081"
         - "--metrics-bind-address=127.0.0.1:8080"
         - "--leader-elect"
-        - "--leader-election-id=pulp-operator"

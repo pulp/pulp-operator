@@ -7,11 +7,10 @@ generatorOptions:
 configMapGenerator:
 - files:
   - controller_manager_config.yaml
-  name: pulp-manager-config
-
+  name: manager-config
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: controller
-  newName: quay.io/pulp/pulp-operator
-  newTag: v0.14.0.dev
+  newName: quay.io/rhn_support_hyagi/operator-go-test
+  newTag: v0.0.1

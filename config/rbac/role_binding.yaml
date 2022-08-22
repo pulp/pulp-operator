@@ -1,15 +1,12 @@
----
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
-  name: pulp-manager-rolebinding
-  annotations: # About kube-linter checks: https://docs.kubelinter.io/#/generated/checks
-    ignore-check.kube-linter.io/access-to-create-pods: "Operator needs to create pods"
-    ignore-check.kube-linter.io/access-to-secrets: "Operator needs to create secrets"
+  name: manager-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: pulp-manager-role
+  kind: ClusterRole
+  name: manager-role
 subjects:
 - kind: ServiceAccount
-  name: sa
+  name: controller-manager
+  namespace: system

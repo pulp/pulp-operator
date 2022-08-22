@@ -1,12 +1,4 @@
 ## Append samples you want in your CSV to this file as resources ##
 resources:
-- pulpproject_v1beta1_pulp_cr.pulp-demo.yaml
-- pulpproject_v1beta1_pulpbackup_cr.default.yaml
-- pulpproject_v1beta1_pulprestore_cr.default.yaml
-- pulpproject_v1beta1_pulpbackup_cr.ci.yaml
-- pulpproject_v1beta1_pulprestore_cr.ci.yaml
-- pulpproject_v1beta1_pulp_cr.ocp.ci.yaml
-- pulpproject_v1beta1_pulp_cr.galaxy.yaml
-- pulpproject_v1beta1_pulp_cr.object_storage.aws.yaml
-- pulpproject_v1beta1_pulp_cr.object_storage.azure.yaml
+- repo-manager_v1alpha1_pulp.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

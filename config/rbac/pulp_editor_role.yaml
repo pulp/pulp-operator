@@ -1,15 +1,13 @@
 # permissions for end users to edit pulps.
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
   name: pulp-editor-role
 rules:
 - apiGroups:
-  - pulp.pulpproject.org
+  - repo-manager.pulpproject.org
   resources:
   - pulps
-  - pulpbackups
-  - pulprestores
   verbs:
   - create
   - delete
@@ -19,10 +17,8 @@ rules:
   - update
   - watch
 - apiGroups:
-  - pulp.pulpproject.org
+  - repo-manager.pulpproject.org
   resources:
   - pulps/status
-  - pulpbackups/status
-  - pulprestores/status
   verbs:
   - get
