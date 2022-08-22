@@ -31,7 +31,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
+	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 )
 
 // PulpReconciler reconciles a Pulp object

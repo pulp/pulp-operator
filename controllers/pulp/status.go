@@ -29,8 +29,8 @@ import (
 
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	"github.com/go-logr/logr"
+	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 )
 
 func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
@@ -39,7 +39,7 @@ func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alph
 	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, apiDeployment)
 	if err == nil {
 		if apiDeployment.Status.ReadyReplicas != apiDeployment.Status.Replicas {
-			log.Info("Pulp api not ready yet ...")
+			log.Info(pulp.Spec.DeploymentType + " api not ready yet ...")
 			return ctrl.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
 		} else {
 			r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-API-Ready", "ApiTasksFinished", "All API tasks ran successfully")
@@ -53,7 +53,7 @@ func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alph
 	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web", Namespace: pulp.Namespace}, webDeployment)
 	if err == nil {
 		if webDeployment.Status.ReadyReplicas != webDeployment.Status.Replicas {
-			log.Info("Pulp web not ready yet ...")
+			log.Info(pulp.Spec.DeploymentType + " web not ready yet ...")
 			return ctrl.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
 		} else {
 			r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Web-Ready", "WebTasksFinished", "All Web tasks ran successfully")

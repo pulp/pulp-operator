@@ -8,7 +8,7 @@ if [[ "$1" == "--minikube" ]] || [[ "$1" == "-m" ]]; then
   KUBE="minikube"
   SERVER="localhost"
   if [[ "$CI_TEST" == "true" ]]; then
-    SVC_NAME="example-pulp-web-svc"
+    SVC_NAME="example-galaxy-web-svc"
     WEB_PORT="24880"
     kubectl port-forward service/$SVC_NAME $WEB_PORT:$WEB_PORT &
   fi
@@ -114,7 +114,7 @@ TASK_PK=$(curl -X POST -H "Authorization:Token $TOKEN" $BASE_ADDR/api/galaxy/con
 echo "$BASE_ADDR/api/galaxy/pulp/api/v3/tasks/$TASK_PK/"
 wait_until_task_finished "$BASE_ADDR/api/galaxy/pulp/api/v3/tasks/$TASK_PK/"
 
-echo 127.0.0.1   example-pulp-web-svc.pulp-operator-go-system.svc.cluster.local | sudo tee -a /etc/hosts
+echo 127.0.0.1   example-galaxy-web-svc.pulp-operator-system.svc.cluster.local | sudo tee -a /etc/hosts
 
 echo "Install pulp.squeezer collection"
 mkdir -p /tmp/ci_test

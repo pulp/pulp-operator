@@ -33,8 +33,8 @@ import (
 
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	"github.com/go-logr/logr"
+	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 )
 
 func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
@@ -395,7 +395,7 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 					Affinity:           affinity,
 					NodeSelector:       nodeSelector,
 					Tolerations:        toleration,
-					ServiceAccountName: "pulp-operator-go-controller-manager",
+					ServiceAccountName: "pulp-operator-controller-manager",
 					Containers: []corev1.Container{{
 						Image: postgresImage,
 						Name:  "postgres",

@@ -14,7 +14,7 @@ import (
 	"math/rand"
 	"strings"
 
-	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
+	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"

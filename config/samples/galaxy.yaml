@@ -1,9 +1,9 @@
 apiVersion: repo-manager.pulpproject.org/v1alpha1
 kind: Pulp
 metadata:
-  name: example-pulp
+  name: example-galaxy
 spec:
-  deployment_type: pulp
+  deployment_type: galaxy
   is_k8s: true
   image: quay.io/pulp/galaxy
   image_version: latest

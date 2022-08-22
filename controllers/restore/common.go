@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
+	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
@@ -197,7 +197,7 @@ func (r *PulpRestoreReconciler) createRestorePod(ctx context.Context, pulpRestor
 			Labels:    labels,
 		},
 		Spec: corev1.PodSpec{
-			ServiceAccountName: "pulp-operator-go-controller-manager",
+			ServiceAccountName: "pulp-operator-controller-manager",
 			Containers: []corev1.Container{{
 				Name:            pulpRestore.Name + "-backup-manager",
 				Image:           postgresImage,

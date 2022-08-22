@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	"github.com/go-logr/logr"
+	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -298,7 +298,7 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 				},
 				Spec: corev1.PodSpec{
 					Affinity:           affinity,
-					ServiceAccountName: "pulp-operator-go-controller-manager",
+					ServiceAccountName: "pulp-operator-controller-manager",
 					Containers: []corev1.Container{{
 						Name:            "redis",
 						Image:           m.Spec.RedisImage,

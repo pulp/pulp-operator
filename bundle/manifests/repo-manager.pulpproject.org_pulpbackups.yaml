@@ -1,24 +1,23 @@
----
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.9.0
   creationTimestamp: null
-  name: pulprestores.repo-manager.pulpproject.org
+  name: pulpbackups.repo-manager.pulpproject.org
 spec:
   group: repo-manager.pulpproject.org
   names:
-    kind: PulpRestore
-    listKind: PulpRestoreList
-    plural: pulprestores
-    singular: pulprestore
+    kind: PulpBackup
+    listKind: PulpBackupList
+    plural: pulpbackups
+    singular: pulpbackup
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: PulpRestore is the Schema for the pulprestores API
+        description: PulpBackup is the Schema for the pulpbackups API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,52 +32,60 @@ spec:
           metadata:
             type: object
           spec:
-            description: PulpRestoreSpec defines the desired state of PulpRestore
+            description: PulpBackupSpec defines the desired state of PulpBackup
             properties:
-              backup_dir:
-                description: Backup directory name, set as a status found on the backup
-                  object (backupDirectory)
-                type: string
-              backup_name:
-                description: Name of the backup custom resource
+              admin_password_secret:
+                default: pulp-admin-password
+                description: Secret where the administrator password can be found
                 type: string
               backup_pvc:
-                description: Name of the PVC to be restored from, set as a status
-                  found on the backup object (backupClaim)
+                description: Name of the PVC to be used for storing the backup
                 type: string
               backup_pvc_namespace:
-                description: Namespace the PVC is in
+                description: Namespace PVC is in
                 type: string
-              backup_source:
-                description: backup source
-                enum:
-                - CR
-                - PVC
+              backup_storage_class:
+                description: Storage class to use when creating PVC for backup
+                type: string
+              backup_storage_requirements:
+                description: Storage requirements for the backup
                 type: string
               deployment_name:
-                default: pulp
-                description: Name of the deployment to be restored to
+                description: Name of the deployment to be backed up
                 type: string
               deployment_type:
+                type: string
+              instance_name:
                 default: pulp
-                enum:
-                - galaxy
-                - pulp
+                type: string
+              postgres_configuration_secret:
+                default: pulp-postgres-configuration
+                description: Secret where the database configuration can be found
                 type: string
               postgres_label_selector:
                 description: Label selector used to identify postgres pod for executing
                   migration
                 type: string
-              storage_type:
-                default: file
-                description: Configuration for the storage type utilized in the backup
-                type: string
             required:
-            - backup_name
+            - deployment_type
+            - instance_name
+            - postgres_configuration_secret
             type: object
           status:
-            description: PulpRestoreStatus defines the observed state of PulpRestore
+            description: PulpBackupStatus defines the observed state of PulpBackup
             properties:
+              adminPasswordSecret:
+                description: Administrator password secret used by the deployed instance
+                type: string
+              backupClaim:
+                description: The PVC name used for the backup
+                type: string
+              backupDirectory:
+                description: The directory data is backed up to on the PVC
+                type: string
+              backupNamespace:
+                description: The namespace used for the backup claim
+                type: string
               conditions:
                 items:
                   description: "Condition contains details for one aspect of the current
@@ -147,14 +154,48 @@ spec:
                   - type
                   type: object
                 type: array
-              postgres_secret:
+              containerTokenSecret:
+                description: Container token configuration secret used by the deployed
+                  instance
+                type: string
+              databaseConfigurationSecret:
+                description: Database configuration secret used by the deployed instance
+                type: string
+              dbFieldsEncryptionSecret:
+                description: DB fields encryption configuration secret used by deployed
+                  instance
+                type: string
+              deploymentName:
+                description: Name of the deployment backed up
+                type: string
+              deploymentStorageType:
+                description: The deployment storage type
+                type: string
+              storageSecret:
+                description: Objectstorage configuration secret used by the deployed
+                  instance
                 type: string
             required:
+            - adminPasswordSecret
+            - backupClaim
+            - backupDirectory
+            - backupNamespace
             - conditions
-            - postgres_secret
+            - containerTokenSecret
+            - databaseConfigurationSecret
+            - dbFieldsEncryptionSecret
+            - deploymentName
+            - deploymentStorageType
+            - storageSecret
             type: object
         type: object
     served: true
     storage: true
     subresources:
       status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: null
+  storedVersions: null

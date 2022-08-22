@@ -36,10 +36,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
-	pulp_backup "github.com/git-hyagi/pulp-operator-go/controllers/backup"
-	pulp "github.com/git-hyagi/pulp-operator-go/controllers/pulp"
-	pulp_restore "github.com/git-hyagi/pulp-operator-go/controllers/restore"
+	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	pulp_backup "github.com/pulp/pulp-operator/controllers/backup"
+	pulp "github.com/pulp/pulp-operator/controllers/pulp"
+	pulp_restore "github.com/pulp/pulp-operator/controllers/restore"
 
 	zaplogfmt "github.com/sykesm/zap-logfmt"
 	uzap "go.uber.org/zap"

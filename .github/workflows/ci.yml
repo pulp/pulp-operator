@@ -2,11 +2,13 @@ name: Pulp CI
 on:
   push:
     branches:
-      - main
+      - go-1.0.0-beta
     tags:
       - '*'
   workflow_dispatch:
   pull_request:
+    branches:
+      - go-1.0.0-beta
   schedule:
     # * is a special character in YAML so you have to quote this string
     # runs at 3:00 UTC daily
@@ -77,7 +79,7 @@ jobs:
           file: Dockerfile
           push: false
           load: true
-          tags: quay.io/rhn_support_hyagi/pulp-operator-go:0.0.1 # Temporarily until we find a way to pass it as a var
+          tags: quay.io/pulp/pulp-operator:v1.0.0 # Temporarily until we find a way to pass it as a var
           cache-from: type=gha, scope=${{ github.workflow }}
           cache-to: type=gha, scope=${{ github.workflow }}
       - name: List images
@@ -91,7 +93,7 @@ jobs:
         run: |
           make deploy
           kubectl get namespace
-          kubectl config set-context --current --namespace=pulp-operator-go-system
+          kubectl config set-context --current --namespace=pulp-operator-system
           kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
           kubectl apply -f config/samples/simple.yaml
         shell: bash
@@ -180,7 +182,7 @@ jobs:
           file: Dockerfile
           push: false
           load: true
-          tags: quay.io/rhn_support_hyagi/pulp-operator-go:0.0.1 # Temporarily until we find a way to pass it as a var
+          tags: quay.io/pulp/pulp-operator:v1.0.0 # Temporarily until we find a way to pass it as a var
           cache-from: type=gha, scope=${{ github.workflow }}
           cache-to: type=gha, scope=${{ github.workflow }}
       - name: List images
@@ -194,7 +196,7 @@ jobs:
         run: |
           make deploy
           kubectl get namespace
-          kubectl config set-context --current --namespace=pulp-operator-go-system
+          kubectl config set-context --current --namespace=pulp-operator-system
           kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
           kubectl apply -f .ci/assets/kubernetes/galaxy_sign.secret.yaml
           kubectl apply -f .ci/assets/kubernetes/signing_scripts.configmap.yaml
@@ -209,7 +211,7 @@ jobs:
           fi
         shell: bash
       - name: Check and wait pulp-operator deploy
-        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
+        run: kubectl wait --for condition=Galaxy-Operator-Finished-Execution pulp/example-galaxy --timeout=600s
         shell: bash
       - name: Test
         run: .ci/scripts/galaxy_ng-tests.sh -m

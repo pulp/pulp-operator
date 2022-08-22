@@ -32,27 +32,27 @@ kubectl get pulp,pvc,configmap,serviceaccount,secret,networkpolicy,ingress,servi
 echo ::endgroup::
 
 echo ::group::OPERATOR_LOGS
-kubectl logs -l app.kubernetes.io/name=pulp-operator -c manager --tail=10000
+kubectl logs -l app.kubernetes.io/component=operator -c manager --tail=10000
 echo ::endgroup::
 
 echo ::group::PULP_API_LOGS
-kubectl logs -l app.kubernetes.io/name=pulp-api --tail=10000
+kubectl logs -l app.kubernetes.io/component=api --tail=10000
 echo ::endgroup::
 
 echo ::group::PULP_CONTENT_LOGS
-kubectl logs -l app.kubernetes.io/name=pulp-content --tail=10000
+kubectl logs -l app.kubernetes.io/component=content --tail=10000
 echo ::endgroup::
 
 echo ::group::PULP_WORKER_LOGS
-kubectl logs -l app.kubernetes.io/name=pulp-worker --tail=10000
+kubectl logs -l app.kubernetes.io/component=worker --tail=10000
 echo ::endgroup::
 
 echo ::group::PULP_WEB_LOGS
-kubectl logs -l app.kubernetes.io/name=nginx --tail=10000
+kubectl logs -l app.kubernetes.io/component=webserver --tail=10000
 echo ::endgroup::
 
 echo ::group::POSTGRES
-kubectl logs -l app.kubernetes.io/name=postgres --tail=10000
+kubectl logs -l app.kubernetes.io/component=database --tail=10000
 echo ::endgroup::
 
 echo "Status endpoint"

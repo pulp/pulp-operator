@@ -1,22 +1,21 @@
 apiVersion: repo-manager.pulpproject.org/v1alpha1
 kind: Pulp
 metadata:
-  name: example-galaxy
+  name: ocp-example
 spec:
-  deployment_type: galaxy
+  deployment_type: pulp
   is_k8s: true
   image: quay.io/pulp/galaxy
-  image_version: latest
   image_web: quay.io/pulp/galaxy-web
-  image_web_version: latest
   admin_password_secret: "example-pulp-admin-password"
   signing_secret: "signing-galaxy"
   signing_scripts_configmap: "signing-scripts"
-  storage_type: Azure
-  ingress_type: nodeport
-  object_storage_azure_secret: example-pulp-object-storage
+  storage_type: File
+  ingress_type: route
+  route_host: route_host_placeholder
+  route_tls_termination_mechanism: edge
   # k3s local-path requires this
-  file_storage_access_mode: "ReadWriteMany"
+  file_storage_access_mode: "ReadWriteOnce"
   # We have a little over 10GB free on GHA VMs/instances
   file_storage_size: "10Gi"
   pulp_settings:

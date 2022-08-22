@@ -1,4 +1,4 @@
-module github.com/git-hyagi/pulp-operator-go
+module github.com/pulp/pulp-operator
 
 go 1.18
 

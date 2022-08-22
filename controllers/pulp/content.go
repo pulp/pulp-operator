@@ -32,8 +32,8 @@ import (
 
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	"github.com/go-logr/logr"
+	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 )
 
 func (r *PulpReconciler) pulpContentController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
@@ -361,7 +361,7 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 					NodeSelector:              nodeSelector,
 					Tolerations:               toleration,
 					Volumes:                   volumes,
-					ServiceAccountName:        "pulp-operator-go-controller-manager",
+					ServiceAccountName:        "pulp-operator-controller-manager",
 					TopologySpreadConstraints: topologySpreadConstraint,
 					Containers: []corev1.Container{{
 						Name:            "content",

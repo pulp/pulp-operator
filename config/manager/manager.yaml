@@ -20,6 +20,8 @@ spec:
     matchLabels:
       control-plane: controller-manager
   replicas: 1
+  strategy:
+    type: RollingUpdate
   template:
     metadata:
       annotations:

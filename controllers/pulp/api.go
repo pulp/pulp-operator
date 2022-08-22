@@ -32,8 +32,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	repomanagerv1alpha1 "github.com/git-hyagi/pulp-operator-go/api/v1alpha1"
 	"github.com/go-logr/logr"
+	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -123,7 +123,11 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 
 	// Create pulp-admin-password secret
 	adminSecret := &corev1.Secret{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-admin-password", Namespace: pulp.Namespace}, adminSecret)
+	adminSecretName := pulp.Name + "-admin-password"
+	if len(pulp.Spec.AdminPasswordSecret) > 1 {
+		adminSecretName = pulp.Spec.AdminPasswordSecret
+	}
+	err = r.Get(ctx, types.NamespacedName{Name: adminSecretName, Namespace: pulp.Namespace}, adminSecret)
 
 	// Create the secret in case it is not found
 	if err != nil && errors.IsNotFound(err) {
@@ -372,6 +376,11 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		dbFieldsEncryptionSecret = m.Spec.DBFieldsEncryptionSecret
 	}
 
+	adminSecretName := m.Name + "-admin-password"
+	if len(m.Spec.AdminPasswordSecret) > 1 {
+		adminSecretName = m.Spec.AdminPasswordSecret
+	}
+
 	volumes := []corev1.Volume{
 		{
 			Name: m.Name + "-server",
@@ -386,10 +395,10 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 			},
 		},
 		{
-			Name: m.Name + "-admin-password",
+			Name: adminSecretName,
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: m.Name + "-admin-password",
+					SecretName: adminSecretName,
 					Items: []corev1.KeyToPath{{
 						Path: "admin-password",
 						Key:  "password",
@@ -508,7 +517,7 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 			ReadOnly:  true,
 		},
 		{
-			Name:      m.Name + "-admin-password",
+			Name:      adminSecretName,
 			MountPath: "/etc/pulp/pulp-admin-password",
 			SubPath:   "admin-password",
 			ReadOnly:  true,
@@ -658,7 +667,7 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 					NodeSelector:              nodeSelector,
 					Tolerations:               toleration,
 					Volumes:                   volumes,
-					ServiceAccountName:        "pulp-operator-go-controller-manager",
+					ServiceAccountName:        "pulp-operator-controller-manager",
 					TopologySpreadConstraints: topologySpreadConstraint,
 					Containers: []corev1.Container{{
 						Name:            "api",
