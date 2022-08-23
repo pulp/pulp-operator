@@ -425,6 +425,9 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		},
 	}
 
+	// issue #526
+	// if .Spec.FileStorageClass == "" and there is no default SC defined
+	// we should mount an emptyDir volume in pod
 	if len(m.Spec.ObjectStorageAzureSecret) == 0 && len(m.Spec.ObjectStorageS3Secret) == 0 {
 		fileStorage := corev1.Volume{
 			Name: "file-storage",
