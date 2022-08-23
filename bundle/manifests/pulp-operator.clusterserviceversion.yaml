@@ -122,10 +122,10 @@ metadata:
           "spec": {
             "admin_password_secret": "example-pulp-admin-password",
             "backup_storage_class": "standard",
-            "deployment_name": "example-pulp",
-            "deployment_type": "pulp",
+            "deployment_name": "example-galaxy",
+            "deployment_type": "galaxy",
             "instance_name": "pulp",
-            "postgres_configuration_secret": "example-pulp-postgres-configuration"
+            "postgres_configuration_secret": "example-galaxy-postgres-configuration"
           }
         },
         {
@@ -136,7 +136,7 @@ metadata:
           },
           "spec": {
             "backup_name": "pulpbackup-sample",
-            "deployment_name": "example-pulp"
+            "deployment_name": "example-galaxy"
           }
         }
       ]
