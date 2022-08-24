@@ -159,16 +159,453 @@ spec:
       displayName: Pulp Backup
       kind: PulpBackup
       name: pulpbackups.repo-manager.pulpproject.org
+      specDescriptors:
+      - description: Secret where the administrator password can be found
+        displayName: Admin Password Secret
+        path: admin_password_secret
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+      - description: Name of the PVC to be used for storing the backup
+        displayName: Backup PVC
+        path: backup_pvc
+      - description: Namespace PVC is in
+        displayName: Backup PVCNamespace
+        path: backup_pvc_namespace
+      - description: Storage class to use when creating PVC for backup
+        displayName: Backup SC
+        path: backup_storage_class
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:StorageClass
+      - description: Storage requirements for the backup
+        displayName: Backup Storage Req
+        path: backup_storage_requirements
+      - description: Name of the deployment to be backed up
+        displayName: Deployment Name
+        path: deployment_name
+      - displayName: Deployment Type
+        path: deployment_type
+      - displayName: Instance Name
+        path: instance_name
+      - description: Secret where the database configuration can be found
+        displayName: Database configuration
+        path: postgres_configuration_secret
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+      - description: Label selector used to identify postgres pod for executing migration
+        displayName: Postgres Label Selector
+        path: postgres_label_selector
+      statusDescriptors:
+      - description: Administrator password secret used by the deployed instance
+        displayName: Admin Password Secret
+        path: adminPasswordSecret
+      - description: The PVC name used for the backup
+        displayName: Backup Claim
+        path: backupClaim
+      - description: The directory data is backed up to on the PVC
+        displayName: Backup Directory
+        path: backupDirectory
+      - description: The namespace used for the backup claim
+        displayName: Backup Namespace
+        path: backupNamespace
+      - displayName: Conditions
+        path: conditions
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes.conditions
+      - description: Container token configuration secret used by the deployed instance
+        displayName: Container Token Secret
+        path: containerTokenSecret
+      - description: Database configuration secret used by the deployed instance
+        displayName: Database Config Secret
+        path: databaseConfigurationSecret
+      - description: DB fields encryption configuration secret used by deployed instance
+        displayName: DBFields Encryption Secret
+        path: dbFieldsEncryptionSecret
+      - description: Name of the deployment backed up
+        displayName: Deployment Name
+        path: deploymentName
+      - description: The deployment storage type
+        displayName: Deployment Storage Type
+        path: deploymentStorageType
+      - description: Objectstorage configuration secret used by the deployed instance
+        displayName: Storage Secret
+        path: storageSecret
       version: v1alpha1
     - description: PulpRestore is the Schema for the pulprestores API
       displayName: Pulp Restore
       kind: PulpRestore
       name: pulprestores.repo-manager.pulpproject.org
+      specDescriptors:
+      - description: Backup directory name, set as a status found on the backup object
+          (backupDirectory)
+        displayName: Backup Dir
+        path: backup_dir
+      - description: Name of the backup custom resource
+        displayName: Backup Name
+        path: backup_name
+      - description: Name of the PVC to be restored from, set as a status found on
+          the backup object (backupClaim)
+        displayName: Backup PVC
+        path: backup_pvc
+      - description: Namespace the PVC is in
+        displayName: Backup PVCNamespace
+        path: backup_pvc_namespace
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Namespace
+      - description: backup source
+        displayName: Backup Source
+        path: backup_source
+      - description: Name of the deployment to be restored to
+        displayName: Deployment Name
+        path: deployment_name
+      - displayName: Deployment Type
+        path: deployment_type
+      - description: Label selector used to identify postgres pod for executing migration
+        displayName: Postgres Label Selector
+        path: postgres_label_selector
+      - description: Configuration for the storage type utilized in the backup
+        displayName: Storage Type
+        path: storage_type
+      statusDescriptors:
+      - displayName: Conditions
+        path: conditions
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes.conditions
+      - displayName: Postgres Secret
+        path: postgres_secret
       version: v1alpha1
     - description: Pulp is the Schema for the pulps API
       displayName: Pulp
       kind: Pulp
       name: pulps.repo-manager.pulpproject.org
+      specDescriptors:
+      - description: Secret where the administrator password can be found NOT USEFUL
+          YET! FROM ORIGINAL PULP-OPERATOR USED BY BACKUP/RESTORE
+        displayName: Admin Password Secret
+        path: admin_password_secret
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+      - displayName: Api
+        path: api
+      - description: Defines various deployment affinities.
+        displayName: Affinity
+        path: api.affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: The timeout for the gunicorn process.
+        displayName: Gunicorn Timeout
+        path: api.gunicorn_timeout
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: The number of gunicorn workers to use for the api.
+        displayName: Gunicorn Workers
+        path: api.gunicorn_workers
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: NodeSelector for the Pulp pods.
+        displayName: Node Selector
+        path: api.node_selector
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: Size is the size of number of pulp-api replicas.
+        displayName: Replicas
+        path: api.replicas
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:podCount
+      - description: Resource requirements for the pulp content container.
+        displayName: Resource Requirements
+        path: api.resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Node tolerations for the Pulp pods.
+        displayName: Tolerations
+        path: api.tolerations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Topology rule(s) for the pods.
+        displayName: Topology Spread Constraints
+        path: api.topology_spread_constraints
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Api Root
+        path: api_root
+      - displayName: Cache Enabled
+        path: cache_enabled
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+      - displayName: Container Auth Private Key
+        path: container_auth_private_key_name
+      - displayName: Container Auth Public Key
+        path: container_auth_public_key_name
+      - description: Secret where the container token certificates are stored.
+        displayName: Container Token Secret
+        path: container_token_secret
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+      - displayName: Content
+        path: content
+      - description: Defines various deployment affinities.
+        displayName: Affinity
+        path: content.affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: The timeout for the gunicorn process.
+        displayName: Gunicorn Timeout
+        path: content.gunicorn_timeout
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: The number of gunicorn workers to use for the api.
+        displayName: Gunicorn Workers
+        path: content.gunicorn_workers
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: NodeSelector for the Pulp pods.
+        displayName: Node Selector
+        path: content.node_selector
+      - description: Size is the size of number of pulp-content replicas
+        displayName: Replicas
+        path: content.replicas
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:podCount
+      - description: Resource requirements for the pulp-content container
+        displayName: Resource Requirements
+        path: content.resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Node tolerations for the Pulp pods.
+        displayName: Tolerations
+        path: content.tolerations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Custom Settings
+        path: custom_settings
+      - displayName: Database
+        path: database
+      - description: Defines various deployment affinities.
+        displayName: Affinity
+        path: database.affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: External DB
+        path: database.external_db
+      - displayName: Postgres Con Max Age
+        path: database.external_db.postgres_con_max_age
+      - description: NodeSelector for the database pod.
+        displayName: Node Selector
+        path: database.node_selector
+      - displayName: Postgres Data Path
+        path: database.postgres_data_path
+      - displayName: Postgres Extra Args
+        path: database.postgres_extra_args
+      - displayName: Postgres Host Auth Method
+        path: database.postgres_host_auth_method
+      - description: Registry path to the PostgreSQL container to use
+        displayName: Postgres Image
+        path: database.postgres_image
+      - displayName: Postgres Initdb Args
+        path: database.postgres_initdb_args
+      - displayName: Postgres Port
+        path: database.postgres_port
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+      - description: Resource requirements for the database container.
+        displayName: Resource Requirements
+        path: database.postgres_resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Postgres SSLMode
+        path: database.postgres_ssl_mode
+      - description: Name of the StorageClass required by the claim.
+        displayName: Postgres Storage Class
+        path: database.postgres_storage_class
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:StorageClass
+      - description: Temporarily modifying it as a string to avoid an issue with backup
+          and json.Unmarshal when set as resource.Quantity and no value passed on
+          pulp CR, during backup steps json.Unmarshal is settings it with "0"
+        displayName: Postgres Storage Requirements
+        path: database.postgres_storage_requirements
+      - description: Node tolerations for the database pod.
+        displayName: Tolerations
+        path: database.tolerations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Postgres Version
+        path: database.version
+      - description: Secret where the Fernet symmetric encryption key is stored.
+        displayName: Database encryption
+        path: db_fields_encryption_secret
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+      - displayName: Debug
+        path: debug
+      - description: Name of the deployment type.
+        displayName: Deployment Type
+        path: deployment_type
+      - displayName: Execution Environments
+        path: execution_environments
+      - description: The file storage access mode.
+        displayName: File Storage Access Mode
+        path: file_storage_access_mode
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File
+        - urn:alm:descriptor:com.tectonic.ui:select:ReadWriteMany
+      - description: The size of the file storage; for example 100Gi.
+        displayName: File Storage Size
+        path: file_storage_size
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File
+      - description: Storage class to use for the file persistentVolumeClaim
+        displayName: File Storage Class
+        path: file_storage_storage_class
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File
+        - urn:alm:descriptor:io.kubernetes:StorageClass
+      - description: The image name (repo name) for the pulp image.
+        displayName: Image
+        path: image
+      - description: Image pull policy for container image
+        displayName: Image Pull Policy
+        path: image_pull_policy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: The image version for the pulp image.
+        displayName: Image Version
+        path: image_version
+      - description: The image name (repo name) for the pulp webserver image.
+        displayName: Image Web
+        path: image_web
+      - description: The image version for the pulp webserver image.
+        displayName: Image Web Version
+        path: image_web_version
+      - description: The ingress type to use to reach the deployed instance
+        displayName: Ingress Type
+        path: ingress_type
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:select:Route
+        - urn:alm:descriptor:com.tectonic.ui:select:Ingress
+        - urn:alm:descriptor:com.tectonic.ui:select:LoadBalancer
+        - urn:alm:descriptor:com.tectonic.ui:select:NodePort
+      - displayName: Is K8s
+        path: is_k8s
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+      - description: Provide requested port value
+        displayName: Node Port
+        path: nodeport_port
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:NodePort
+      - description: The secret for Azure compliant object storage configuration.
+        displayName: Azure secret
+        path: object_storage_azure_secret
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:Azure
+      - description: The secret for S3 compliant object storage configuration.
+        displayName: S3 secret
+        path: object_storage_s3_secret
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:S3
+      - description: The image name for the redis image.
+        displayName: Redis Image
+        path: redis_image
+      - displayName: Redis Port
+        path: redis_port
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+      - description: Resource requirements for the Redis container
+        displayName: Redis Resource Requirements
+        path: redis_resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Storage class to use for the Redis PVC
+        displayName: Redis Storage Class
+        path: redis_storage_class
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:StorageClass
+      - description: ConfigMap where the signing scripts are stored.
+        displayName: Signing Scripts Configmap
+        path: signing_scripts_configmap
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:ConfigMap
+      - description: Secret where the signing certificates are stored.
+        displayName: Signing Secret
+        path: signing_secret
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+      - description: Secret where Single Sign-on configuration can be found NOT USEFUL
+          YET! PENDING MIGRATION OF sso-configuration.yml task file
+        displayName: SSOSecret
+        path: sso_secret
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+      - description: Configuration for the storage type utilized in the backup NOT
+          USEFUL YET! BESIDES PULP-RESTORE AND PULP-BKP ROLES I COULD NOT FIND ANY
+          MENTION OF THIS VAR, SO NOTHING DONE WITH IT YET
+        displayName: Storage Type
+        path: storage_type
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:select:File
+        - urn:alm:descriptor:com.tectonic.ui:select:S3
+        - urn:alm:descriptor:com.tectonic.ui:select:Azure
+      - displayName: Web
+        path: web
+      - description: Size is the size of number of pulp-web replicas
+        displayName: Replicas
+        path: web.replicas
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:podCount
+      - description: Resource requirements for the pulp-web container
+        displayName: Resource Requirements
+        path: web.resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Worker
+        path: worker
+      - description: Defines various deployment affinities.
+        displayName: Affinity
+        path: worker.affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: NodeSelector for the Pulp pods.
+        displayName: Node Selector
+        path: worker.node_selector
+      - description: Size is the size of number of pulp-worker replicas
+        displayName: Replicas
+        path: worker.replicas
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:podCount
+      - description: Resource requirements for the pulp-api container
+        displayName: Resource Requirements
+        path: worker.resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Node tolerations for the Pulp pods.
+        displayName: Tolerations
+        path: worker.tolerations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Topology rule(s) for the pods.
+        displayName: Topology Spread Constraints
+        path: worker.topology_spread_constraints
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      statusDescriptors:
+      - displayName: Conditions
+        path: conditions
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes.conditions
       version: v1alpha1
   description: |-
     [Pulp](https://pulpproject.org/) is a platform for managing repositories of content, such as software packages, and making them available to a large number of consumers.
