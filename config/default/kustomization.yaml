@@ -9,8 +9,9 @@ namespace: pulp-operator-system
 namePrefix: pulp-operator-
 
 # Labels to add to all resources and selectors.
-#commonLabels:
-#  someName: someValue
+#- includeSelectors: true
+#  pairs:
+#    someName: someValue
 
 bases:
 - ../crd

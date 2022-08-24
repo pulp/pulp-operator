@@ -89,8 +89,6 @@ metadata:
             },
             "file_storage_access_mode": "ReadWriteOnce",
             "file_storage_size": "10Gi",
-            "image_version": "latest",
-            "image_web_version": "latest",
             "ingress_type": "route",
             "no_log": false,
             "route_host": "route_host_placeholder",
@@ -239,7 +237,7 @@ metadata:
     createdAt: "2021-03-26 16:57:40"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
-    operators.operatorframework.io/builder: operator-sdk-v1.22.1
+    operators.operatorframework.io/builder: operator-sdk-v1.23.0
     operators.operatorframework.io/project_layout: ansible.sdk.operatorframework.io/v1
     repository: https://github.com/pulp/pulp-operator
   name: pulp-operator.v0.14.0
@@ -261,13 +259,14 @@ spec:
       - displayName: Backup persistent volume claim
         path: backup_pvc
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Backup persistent volume claim namespace
         path: backup_pvc_namespace
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
         - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:io.kubernetes:Namespace
       - displayName: Backup PVC storage requirements
         path: backup_storage_requirements
         x-descriptors:
@@ -276,8 +275,8 @@ spec:
       - displayName: Backup PVC storage class
         path: backup_storage_class
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:text
         - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:io.kubernetes:StorageClass
       - displayName: Database backup label selector
         path: postgres_label_selector
         x-descriptors:
@@ -289,6 +288,10 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
       statusDescriptors:
+      - displayName: Conditions
+        path: conditions
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes.conditions
       - description: The name of the deployment that was backed up
         displayName: Deployment name
         path: deploymentName
@@ -303,7 +306,7 @@ spec:
         displayName: Backup claim namespace
         path: backupNamespace
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:io.kubernetes:Namespace
       - description: The directory data is backed up to on the PVC
         displayName: Backup directory
         path: backupDirectory
@@ -358,12 +361,12 @@ spec:
       - displayName: Backup persistent volume claim
         path: backup_pvc
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:backup_source:PVC
       - displayName: Backup persistent volume claim namespace
         path: backup_pvc_namespace
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:io.kubernetes:Namespace
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:backup_source:PVC
       - displayName: Backup directory in the persistent volume claim
         path: backup_dir
@@ -384,6 +387,10 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
       statusDescriptors:
+      - displayName: Conditions
+        path: conditions
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes.conditions
       - description: The state of the restore
         displayName: Restore status
         path: restoreComplete
@@ -393,7 +400,7 @@ spec:
         path: no_log
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-        - urn:alm:descriptor:com.tectonic.ui:hidden
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
       version: v1beta1
     - description: Deploy a new instance of pulp
       displayName: Pulp
@@ -461,6 +468,7 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
+        - urn:alm:descriptor:io.kubernetes:StorageClass
       - displayName: Migrant database configuration secret
         path: postgres_migrant_configuration_secret
         x-descriptors:
@@ -476,22 +484,27 @@ spec:
         path: postgres_keep_pvc_after_upgrade
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
       - displayName: Gunicorn API workers
         path: gunicorn_api_workers
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:hidden
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:number
       - displayName: Gunicorn Content workers
         path: gunicorn_content_workers
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:hidden
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:number
       - displayName: Gunicorn timeout
         path: gunicorn_timeout
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:hidden
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:number
       - displayName: HAProxy timeout
         path: haproxy_timeout
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:hidden
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Ingress type
         path: ingress_type
         x-descriptors:
@@ -587,6 +600,7 @@ spec:
         path: file_storage_storage_class
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File
+        - urn:alm:descriptor:io.kubernetes:StorageClass
       - displayName: S3 storage secret
         path: object_storage_s3_secret
         x-descriptors:
@@ -646,10 +660,16 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
+        - urn:alm:descriptor:io.kubernetes:StorageClass
       - displayName: API server configuration
         path: api
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: The number of API replicas.
+        displayName: Replicas
+        path: api.replicas
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:podCount
       - displayName: API server log level
         path: api.log_level
         x-descriptors:
@@ -664,6 +684,11 @@ spec:
         path: content
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: The number of Content replicas.
+        displayName: Replicas
+        path: content.replicas
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:podCount
       - displayName: Content server log level
         path: content.log_level
         x-descriptors:
@@ -677,16 +702,21 @@ spec:
       - displayName: Resource manager configuration
         path: resource_manager
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - displayName: Resource manager resource requirements
         path: resource_manager.resource_requirements
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
       - displayName: Worker configuration
         path: worker
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: The number of Worker replicas.
+        displayName: Replicas
+        path: worker.replicas
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:podCount
       - displayName: Worker resource requirements
         path: worker.resource_requirements
         x-descriptors:
@@ -695,11 +725,11 @@ spec:
       - displayName: Web server configuration
         path: web
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - displayName: Web server resource requirements
         path: web.resource_requirements
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
       - displayName: Deployment type
         path: deployment_type
@@ -746,6 +776,7 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
+        - urn:alm:descriptor:io.kubernetes:ConfigMap
       - displayName: Signing secret
         path: signing_secret
         x-descriptors:
@@ -762,6 +793,10 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:io.kubernetes:Secret
       statusDescriptors:
+      - displayName: Conditions
+        path: conditions
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes.conditions
       - description: Route to access the instance deployed
         displayName: URL
         path: webURL
@@ -956,7 +991,7 @@ spec:
                 - --upstream=http://127.0.0.1:8080/
                 - --logtostderr=true
                 - --v=0
-                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.11.0
+                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
                 name: kube-rbac-proxy
                 ports:
                 - containerPort: 8443
