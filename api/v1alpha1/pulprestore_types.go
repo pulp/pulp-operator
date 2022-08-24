@@ -25,47 +25,58 @@ type PulpRestoreSpec struct {
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Enum:=galaxy;pulp
 	// +kubebuilder:default:="pulp"
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	DeploymentType string `json:"deployment_type"`
 
 	// backup source
 	// +kubebuilder:validation:Enum:=CR;PVC
 	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	BackupSource string `json:"backup_source"`
 
 	// Name of the deployment to be restored to
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="pulp"
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	DeploymentName string `json:"deployment_name"`
 
 	// Name of the backup custom resource
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	BackupName string `json:"backup_name"`
 
 	// Name of the PVC to be restored from, set as a status found on the backup object (backupClaim)
 	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	BackupPVC string `json:"backup_pvc"`
 
 	// Namespace the PVC is in
 	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Namespace"}
 	BackupPVCNamespace string `json:"backup_pvc_namespace"`
 
 	// Backup directory name, set as a status found on the backup object (backupDirectory)
 	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	BackupDir string `json:"backup_dir"`
 
 	// Configuration for the storage type utilized in the backup
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="file"
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	StorageType string `json:"storage_type"`
 
 	// Label selector used to identify postgres pod for executing migration
 	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	PostgresLabelSelector string `json:"postgres_label_selector"`
 }
 
 // PulpRestoreStatus defines the observed state of PulpRestore
 type PulpRestoreStatus struct {
+	//+operator-sdk:csv:customresourcedefinitions:type=status,xDescriptors={"urn:alm:descriptor:io.kubernetes.conditions"}
 	Conditions []metav1.Condition `json:"conditions"`
 
+	//+operator-sdk:csv:customresourcedefinitions:type=status
 	PostgresSecret string `json:"postgres_secret"`
 }
 
