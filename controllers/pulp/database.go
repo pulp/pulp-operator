@@ -280,25 +280,16 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 	}
 
 	pvcSpec := corev1.PersistentVolumeClaimSpec{}
+	pvcSpec = corev1.PersistentVolumeClaimSpec{
+		AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+		Resources: corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceName(corev1.ResourceStorage): postgresStorageSize,
+			},
+		},
+	}
 	if m.Spec.Database.PostgresStorageClass != nil {
-		pvcSpec = corev1.PersistentVolumeClaimSpec{
-			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceName(corev1.ResourceStorage): postgresStorageSize,
-				},
-			},
-			StorageClassName: m.Spec.Database.PostgresStorageClass,
-		}
-	} else {
-		pvcSpec = corev1.PersistentVolumeClaimSpec{
-			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceName(corev1.ResourceStorage): postgresStorageSize,
-				},
-			},
-		}
+		pvcSpec.StorageClassName = m.Spec.Database.PostgresStorageClass
 	}
 
 	volumeClaimTemplate := []corev1.PersistentVolumeClaim{{
