@@ -119,7 +119,7 @@ func (r *PulpReconciler) pulpCacheController(ctx context.Context, pulp *repomana
 // pulp-redis-data PVC
 func redisDataPVC(m *repomanagerv1alpha1.Pulp) *corev1.PersistentVolumeClaim {
 	// Define the new PVC
-	return &corev1.PersistentVolumeClaim{
+	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-redis-data",
 			Namespace: m.Namespace,
@@ -140,9 +140,12 @@ func redisDataPVC(m *repomanagerv1alpha1.Pulp) *corev1.PersistentVolumeClaim {
 			AccessModes: []corev1.PersistentVolumeAccessMode{
 				corev1.PersistentVolumeAccessMode("ReadWriteOnce"),
 			},
-			StorageClassName: &m.Spec.RedisStorageClass,
 		},
 	}
+	if len(m.Spec.RedisStorageClass) > 0 {
+		pvc.Spec.StorageClassName = &m.Spec.RedisStorageClass
+	}
+	return pvc
 }
 
 // redis-svc Service

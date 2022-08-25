@@ -280,8 +280,11 @@ func (r *PulpReconciler) fileStoragePVC(m *repomanagerv1alpha1.Pulp) *corev1.Per
 			AccessModes: []corev1.PersistentVolumeAccessMode{
 				corev1.PersistentVolumeAccessMode(m.Spec.FileStorageAccessMode),
 			},
-			StorageClassName: &m.Spec.FileStorageClass,
 		},
+	}
+
+	if len(m.Spec.FileStorageClass) > 0 {
+		pvc.Spec.StorageClassName = &m.Spec.FileStorageClass
 	}
 
 	// Set Pulp instance as the owner and controller
