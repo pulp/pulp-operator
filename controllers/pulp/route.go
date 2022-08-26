@@ -79,18 +79,26 @@ func (r *PulpReconciler) pulpRouteController(ctx context.Context, pulp *repomana
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Route-Ready", "Failed to get routes!", "FailedGet"+pod.Name)
 		return ctrl.Result{}, err
 	}
+	ApiRoot := pulp.Spec.PulpSettings.ApiRoot
+	if len(ApiRoot) == 0 {
+		ApiRoot = "/pulp/"
+	}
+	ContentPathPrefix := pulp.Spec.PulpSettings.ContentPathPrefix
+	if len(ContentPathPrefix) == 0 {
+		ContentPathPrefix = "/pulp/content/"
+	}
 	var pulpPlugins []RoutePlugin
 	json.Unmarshal([]byte(cmdOutput), &pulpPlugins)
 	defaultPlugins := []RoutePlugin{
 		{
 			Name:        pulp.Name + "-content",
-			Path:        "/pulp/content/",
+			Path:        ContentPathPrefix,
 			TargetPort:  "content-24816",
 			ServiceName: pulp.Name + "-content-svc",
 		},
 		{
 			Name:        pulp.Name + "-api-v3",
-			Path:        "/pulp/api/v3/",
+			Path:        ApiRoot + "api/v3/",
 			TargetPort:  "api-24817",
 			ServiceName: pulp.Name + "-api-svc",
 		},

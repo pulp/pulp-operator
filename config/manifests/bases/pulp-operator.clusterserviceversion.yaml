@@ -392,6 +392,11 @@ spec:
         path: content.tolerations
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Content Path Prefix
+        path: content_path_prefix
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Custom Settings
         path: custom_settings
         x-descriptors:
