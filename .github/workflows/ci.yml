@@ -262,6 +262,8 @@ jobs:
         shell: bash
       - name: Build images
         run: |
+          sudo wget https://github.com/operator-framework/operator-sdk/releases/download/v1.23.0/operator-sdk_linux_amd64 -O /usr/local/bin/operator-sdk
+          sudo chmod +x /usr/local/bin/operator-sdk
           make manifests bundle docker-build bundle-build catalog-build
         shell: bash
       - name: Quay login
