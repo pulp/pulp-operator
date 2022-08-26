@@ -118,6 +118,8 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 		"app.kubernetes.io/component":  "content",
 		"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
 		"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
+		"app":                          "pulp-content",
+		"pulp_cr":                      m.Name,
 		"owner":                        "pulp-dev",
 	}
 
@@ -404,25 +406,34 @@ func labelsForPulpContent(m *repomanagerv1alpha1.Pulp) map[string]string {
 // serviceForContent returns a service object for pulp-content
 func (r *PulpReconciler) serviceForContent(m *repomanagerv1alpha1.Pulp) *corev1.Service {
 
-	svc := serviceContentObject(m.Name, m.Namespace)
+	svc := serviceContentObject(m.Name, m.Namespace, m.Spec.DeploymentType)
 
 	// Set Pulp instance as the owner and controller
 	ctrl.SetControllerReference(m, svc, r.Scheme)
 	return svc
 }
 
-func serviceContentObject(name, namespace string) *corev1.Service {
+func serviceContentObject(name, namespace, deployment_type string) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name + "-content-svc",
 			Namespace: namespace,
+			Labels: map[string]string{
+				"app.kubernetes.io/name":       deployment_type + "-content",
+				"app.kubernetes.io/instance":   deployment_type + "-content-" + name,
+				"app.kubernetes.io/component":  "content",
+				"app.kubernetes.io/part-of":    deployment_type,
+				"app.kubernetes.io/managed-by": deployment_type + "-operator",
+				"app":                          "pulp-content",
+				"pulp_cr":                      name,
+			},
 		},
-		Spec: serviceContentSpec(name),
+		Spec: serviceContentSpec(name, namespace, deployment_type),
 	}
 }
 
 // content service spec
-func serviceContentSpec(name string) corev1.ServiceSpec {
+func serviceContentSpec(name, namespace, deployment_type string) corev1.ServiceSpec {
 
 	serviceInternalTrafficPolicyCluster := corev1.ServiceInternalTrafficPolicyType("Cluster")
 	ipFamilyPolicyType := corev1.IPFamilyPolicyType("SingleStack")
@@ -438,13 +449,19 @@ func serviceContentSpec(name string) corev1.ServiceSpec {
 		IPFamilies:            []corev1.IPFamily{"IPv4"},
 		IPFamilyPolicy:        &ipFamilyPolicyType,
 		Ports: []corev1.ServicePort{{
+			Name:       "content-24816",
 			Port:       24816,
 			Protocol:   servicePortProto,
 			TargetPort: targetPort,
 		}},
 		Selector: map[string]string{
-			"app":     "pulp-content",
-			"pulp_cr": name,
+			"app.kubernetes.io/name":       deployment_type + "-content",
+			"app.kubernetes.io/instance":   deployment_type + "-content-" + name,
+			"app.kubernetes.io/component":  "content",
+			"app.kubernetes.io/part-of":    deployment_type,
+			"app.kubernetes.io/managed-by": deployment_type + "-operator",
+			"app":                          "pulp-content",
+			"pulp_cr":                      name,
 		},
 		SessionAffinity: serviceAffinity,
 		Type:            serviceType,

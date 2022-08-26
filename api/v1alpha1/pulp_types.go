@@ -32,7 +32,7 @@ type PulpSpec struct {
 
 	// Name of the deployment type.
 	//+kubebuilder:default:="pulp"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	DeploymentType string `json:"deployment_type,omitempty"`
 
 	// The size of the file storage; for example 100Gi.
@@ -65,24 +65,22 @@ type PulpSpec struct {
 	// Secret where the Fernet symmetric encryption key is stored.
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Database encryption"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	DBFieldsEncryptionSecret string `json:"db_fields_encryption_secret,omitempty"`
 
 	// Secret where the signing certificates are stored.
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	SigningSecret string `json:"signing_secret,omitempty"`
 
 	// ConfigMap where the signing scripts are stored.
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:ConfigMap"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:ConfigMap","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	SigningScriptsConfigmap string `json:"signing_scripts_configmap,omitempty"`
 
 	// Configuration for the storage type utilized in the backup
 	// +kubebuilder:validation:Optional
-	// NOT USEFUL YET!
-	// BESIDES PULP-RESTORE AND PULP-BKP ROLES I COULD NOT FIND
-	// ANY MENTION OF THIS VAR, SO NOTHING DONE WITH IT YET
+	// +kubebuilder:validation:Enum:=none;File;file;S3;s3;Azure;azure
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:select:File","urn:alm:descriptor:com.tectonic.ui:select:S3","urn:alm:descriptor:com.tectonic.ui:select:Azure"}
 	StorageType string `json:"storage_type,omitempty"`
 
@@ -92,36 +90,47 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:select:Route","urn:alm:descriptor:com.tectonic.ui:select:Ingress","urn:alm:descriptor:com.tectonic.ui:select:LoadBalancer","urn:alm:descriptor:com.tectonic.ui:select:NodePort"}
 	IngressType string `json:"ingress_type,omitempty"`
 
+	// Route DNS host
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route"}
+	RouteHost string `json:"route_host,omitempty"`
+
 	// Provide requested port value
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:NodePort"}
 	NodePort int32 `json:"nodeport_port,omitempty"`
 
+	// The timeout for HAProxy.
+	// +kubebuilder:default:="180s"
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	HAProxyTimeout string `json:"haproxy_timeout,omitempty"`
+
 	// Secret where the container token certificates are stored.
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ContainerTokenSecret string `json:"container_token_secret,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="container_auth_public_key.pem"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ContainerAuthPublicKey string `json:"container_auth_public_key_name,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="container_auth_private_key.pem"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ContainerAuthPrivateKey string `json:"container_auth_private_key_name,omitempty"`
 
 	// The image name (repo name) for the pulp image.
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="quay.io/pulp/pulp"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	Image string `json:"image,omitempty"`
 
 	// The image version for the pulp image.
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="stable"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ImageVersion string `json:"image_version,omitempty"`
 
 	// Image pull policy for container image
@@ -133,14 +142,14 @@ type PulpSpec struct {
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:=false
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:booleanSwitch"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	IsK8s bool `json:"is_k8s,omitempty"`
 
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	Api Api `json:"api,omitempty"`
 
 	//+kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	Database Database `json:"database,omitempty"`
 
 	//+kubebuilder:validation:Optional
@@ -152,7 +161,7 @@ type PulpSpec struct {
 	Worker Worker `json:"worker,omitempty"`
 
 	//+kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	Web Web `json:"web,omitempty"`
 
 	// +kubebuilder:default:=true
@@ -163,18 +172,18 @@ type PulpSpec struct {
 	// The image name for the redis image.
 	// +kubebuilder:default:="redis:latest"
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	RedisImage string `json:"redis_image,omitempty"`
 
 	// Storage class to use for the Redis PVC
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="standard"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:StorageClass"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:StorageClass","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	RedisStorageClass string `json:"redis_storage_class,omitempty"`
 
 	// +kubebuilder:default:=6379
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	RedisPort int `json:"redis_port,omitempty"`
 
 	// Resource requirements for the Redis container
@@ -184,33 +193,29 @@ type PulpSpec struct {
 
 	// The pulp settings.
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	PulpSettings `json:"pulp_settings,omitempty"`
 
 	// The image name (repo name) for the pulp webserver image.
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="quay.io/pulp/pulp-web"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	ImageWeb string `json:"image_web,omitempty"`
 
 	// The image version for the pulp webserver image.
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="stable"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	ImageWebVersion string `json:"image_web_version,omitempty"`
 
 	// Secret where the administrator password can be found
-	// NOT USEFUL YET!
-	// FROM ORIGINAL PULP-OPERATOR USED BY BACKUP/RESTORE
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	AdminPasswordSecret string `json:"admin_password_secret,omitempty"`
 
 	// Secret where Single Sign-on configuration can be found
-	// NOT USEFUL YET!
-	// PENDING MIGRATION OF sso-configuration.yml task file
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	SSOSecret string `json:"sso_secret,omitempty"`
 }
 
@@ -235,7 +240,7 @@ type Api struct {
 
 	// NodeSelector for the Pulp pods.
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:hidden"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	NodeSelector map[string]string `json:"node_selector,omitempty"`
 
 	// Node tolerations for the Pulp pods.
@@ -277,12 +282,12 @@ type PulpSettings struct {
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="/pulp/"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ApiRoot string `json:"api_root,omitempty"`
 
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	CustomSettings runtime.RawExtension `json:"custom_settings,omitempty"`
 }
 
@@ -312,7 +317,7 @@ type Content struct {
 
 	// NodeSelector for the Pulp pods.
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	NodeSelector map[string]string `json:"node_selector,omitempty"`
 
 	// Node tolerations for the Pulp pods.
@@ -353,7 +358,7 @@ type Worker struct {
 
 	// NodeSelector for the Pulp pods.
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	NodeSelector map[string]string `json:"node_selector,omitempty"`
 
 	// Node tolerations for the Pulp pods.
@@ -400,7 +405,7 @@ type Database struct {
 	//Replicas int32 `json:"replicas,omitempty"`
 
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ExternalDB ExternalDB `json:"external_db,omitempty"`
 
 	// +kubebuilder:default:="13"
@@ -454,7 +459,7 @@ type Database struct {
 
 	// NodeSelector for the database pod.
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	NodeSelector map[string]string `json:"node_selector,omitempty"`
 
 	// Node tolerations for the database pod.
@@ -466,13 +471,13 @@ type Database struct {
 	// when set as resource.Quantity and no value passed on pulp CR, during backup steps
 	// json.Unmarshal is settings it with "0"
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	PostgresStorageRequirements string `json:"postgres_storage_requirements,omitempty"`
 
 	// Name of the StorageClass required by the claim.
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="standard"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:StorageClass"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:StorageClass","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	PostgresStorageClass *string `json:"postgres_storage_class,omitempty"`
 }
 

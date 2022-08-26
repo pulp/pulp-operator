@@ -26,6 +26,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -36,6 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	routev1 "github.com/openshift/api/route/v1"
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 	pulp_backup "github.com/pulp/pulp-operator/controllers/backup"
 	pulp "github.com/pulp/pulp-operator/controllers/pulp"
@@ -53,6 +55,9 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+
+	utilruntime.Must(configv1.AddToScheme(scheme))
+	utilruntime.Must(routev1.AddToScheme(scheme))
 
 	utilruntime.Must(repomanagerv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
@@ -113,8 +118,10 @@ func main() {
 	}
 
 	if err = (&pulp.PulpReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:     mgr.GetClient(),
+		RESTClient: restClient,
+		RESTConfig: mgr.GetConfig(),
+		Scheme:     mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Pulp")
 		os.Exit(1)

@@ -8,7 +8,89 @@ metadata:
           "apiVersion": "repo-manager.pulpproject.org/v1alpha1",
           "kind": "Pulp",
           "metadata": {
-            "name": "example-galaxy"
+            "name": "example"
+          },
+          "spec": {
+            "api": {
+              "replicas": 1
+            },
+            "cache_enabled": true,
+            "content": {
+              "replicas": 2,
+              "resource_requirements": {
+                "limits": {
+                  "cpu": "800m",
+                  "memory": "1Gi"
+                },
+                "requests": {
+                  "cpu": "150m",
+                  "memory": "256Mi"
+                }
+              }
+            },
+            "file_storage_access_mode": "ReadWriteMany",
+            "file_storage_size": "10Gi",
+            "file_storage_storage_class": "standard",
+            "ingress_type": "Route",
+            "pulp_settings": {
+              "api_root": "/pulp/"
+            },
+            "redis_storage_class": "standard",
+            "storage_type": "File",
+            "worker": {
+              "replicas": 2,
+              "resource_requirements": {
+                "limits": {
+                  "cpu": "800m",
+                  "memory": "1Gi"
+                },
+                "requests": {
+                  "cpu": "150m",
+                  "memory": "256Mi"
+                }
+              }
+            }
+          }
+        },
+        {
+          "apiVersion": "repo-manager.pulpproject.org/v1alpha1",
+          "kind": "Pulp",
+          "metadata": {
+            "name": "example-pulp"
+          },
+          "spec": {
+            "api": {
+              "replicas": 1
+            },
+            "cache_enabled": true,
+            "content": {
+              "replicas": 1
+            },
+            "database": null,
+            "deployment_type": "pulp",
+            "file_storage_access_mode": "ReadWriteOnce",
+            "file_storage_size": "2Gi",
+            "file_storage_storage_class": "standard",
+            "image_version": "latest",
+            "ingress_type": "nodeport",
+            "is_k8s": true,
+            "pulp_settings": {
+              "api_root": "/pulp/"
+            },
+            "redis_storage_class": "standard",
+            "web": {
+              "replicas": 1
+            },
+            "worker": {
+              "replicas": 1
+            }
+          }
+        },
+        {
+          "apiVersion": "repo-manager.pulpproject.org/v1alpha1",
+          "kind": "Pulp",
+          "metadata": {
+            "name": "galaxy-example"
           },
           "spec": {
             "admin_password_secret": "example-pulp-admin-password",
@@ -73,48 +155,6 @@ metadata:
         },
         {
           "apiVersion": "repo-manager.pulpproject.org/v1alpha1",
-          "kind": "Pulp",
-          "metadata": {
-            "name": "example-pulp"
-          },
-          "spec": {
-            "api": {
-              "replicas": 1
-            },
-            "cache_enabled": true,
-            "content": {
-              "replicas": 1
-            },
-            "database": null,
-            "deployment_type": "pulp",
-            "file_storage_access_mode": "ReadWriteOnce",
-            "file_storage_size": "2Gi",
-            "file_storage_storage_class": "standard",
-            "image_version": "latest",
-            "ingress_type": "nodeport",
-            "is_k8s": true,
-            "pulp_settings": {
-              "api_root": "/pulp/"
-            },
-            "redis_storage_class": "standard",
-            "web": {
-              "replicas": 1
-            },
-            "worker": {
-              "replicas": 1
-            }
-          }
-        },
-        {
-          "apiVersion": "repo-manager.pulpproject.org/v1alpha1",
-          "kind": "Pulp",
-          "metadata": {
-            "name": "pulp-sample"
-          },
-          "spec": null
-        },
-        {
-          "apiVersion": "repo-manager.pulpproject.org/v1alpha1",
           "kind": "PulpBackup",
           "metadata": {
             "name": "pulpbackup-sample"
@@ -122,10 +162,10 @@ metadata:
           "spec": {
             "admin_password_secret": "example-pulp-admin-password",
             "backup_storage_class": "standard",
-            "deployment_name": "example-galaxy",
+            "deployment_name": "galaxy-example",
             "deployment_type": "galaxy",
             "instance_name": "pulp",
-            "postgres_configuration_secret": "example-galaxy-postgres-configuration"
+            "postgres_configuration_secret": "galaxy-example-postgres-configuration"
           }
         },
         {
@@ -136,7 +176,7 @@ metadata:
           },
           "spec": {
             "backup_name": "pulpbackup-sample",
-            "deployment_name": "example-galaxy"
+            "deployment_name": "galaxy-example"
           }
         }
       ]
@@ -146,7 +186,7 @@ metadata:
     createdAt: "2021-03-26 16:57:40"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
-    operators.operatorframework.io/builder: operator-sdk-v1.22.2
+    operators.operatorframework.io/builder: operator-sdk-v1.23.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/pulp/pulp-operator
   name: pulp-operator.v1.0.0
@@ -278,12 +318,12 @@ spec:
       kind: Pulp
       name: pulps.repo-manager.pulpproject.org
       specDescriptors:
-      - description: Secret where the administrator password can be found NOT USEFUL
-          YET! FROM ORIGINAL PULP-OPERATOR USED BY BACKUP/RESTORE
+      - description: Secret where the administrator password can be found
         displayName: Admin Password Secret
         path: admin_password_secret
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Api
         path: api
       - description: Defines various deployment affinities.
@@ -308,7 +348,6 @@ spec:
         path: api.node_selector
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: Size is the size of number of pulp-api replicas.
         displayName: Replicas
         path: api.replicas
@@ -332,19 +371,27 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Api Root
         path: api_root
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Cache Enabled
         path: cache_enabled
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
       - displayName: Container Auth Private Key
         path: container_auth_private_key_name
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Container Auth Public Key
         path: container_auth_public_key_name
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Secret where the container token certificates are stored.
         displayName: Container Token Secret
         path: container_token_secret
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Content
         path: content
       - description: Defines various deployment affinities.
@@ -367,6 +414,8 @@ spec:
       - description: NodeSelector for the Pulp pods.
         displayName: Node Selector
         path: content.node_selector
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Size is the size of number of pulp-content replicas
         displayName: Replicas
         path: content.replicas
@@ -385,8 +434,12 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Custom Settings
         path: custom_settings
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Database
         path: database
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Defines various deployment affinities.
         displayName: Affinity
         path: database.affinity
@@ -394,11 +447,15 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: External DB
         path: database.external_db
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Postgres Con Max Age
         path: database.external_db.postgres_con_max_age
       - description: NodeSelector for the database pod.
         displayName: Node Selector
         path: database.node_selector
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Postgres Data Path
         path: database.postgres_data_path
       - displayName: Postgres Extra Args
@@ -427,11 +484,14 @@ spec:
         path: database.postgres_storage_class
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:StorageClass
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Temporarily modifying it as a string to avoid an issue with backup
           and json.Unmarshal when set as resource.Quantity and no value passed on
           pulp CR, during backup steps json.Unmarshal is settings it with "0"
         displayName: Postgres Storage Requirements
         path: database.postgres_storage_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Node tolerations for the database pod.
         displayName: Tolerations
         path: database.tolerations
@@ -444,11 +504,14 @@ spec:
         path: db_fields_encryption_secret
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Debug
         path: debug
       - description: Name of the deployment type.
         displayName: Deployment Type
         path: deployment_type
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - displayName: Execution Environments
         path: execution_environments
       - description: The file storage access mode.
@@ -468,9 +531,17 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File
         - urn:alm:descriptor:io.kubernetes:StorageClass
+      - description: The timeout for HAProxy.
+        displayName: HAProxy Timeout
+        path: haproxy_timeout
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: The image name (repo name) for the pulp image.
         displayName: Image
         path: image
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Image pull policy for container image
         displayName: Image Pull Policy
         path: image_pull_policy
@@ -479,12 +550,18 @@ spec:
       - description: The image version for the pulp image.
         displayName: Image Version
         path: image_version
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: The image name (repo name) for the pulp webserver image.
         displayName: Image Web
         path: image_web
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: The image version for the pulp webserver image.
         displayName: Image Web Version
         path: image_web_version
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: The ingress type to use to reach the deployed instance
         displayName: Ingress Type
         path: ingress_type
@@ -496,7 +573,7 @@ spec:
       - displayName: Is K8s
         path: is_k8s
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: Provide requested port value
         displayName: Node Port
         path: nodeport_port
@@ -517,10 +594,13 @@ spec:
       - description: The image name for the redis image.
         displayName: Redis Image
         path: redis_image
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Redis Port
         path: redis_port
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:number
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Resource requirements for the Redis container
         displayName: Redis Resource Requirements
         path: redis_resource_requirements
@@ -532,25 +612,32 @@ spec:
         path: redis_storage_class
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:StorageClass
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Route DNS host
+        displayName: Route Host
+        path: route_host
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route
       - description: ConfigMap where the signing scripts are stored.
         displayName: Signing Scripts Configmap
         path: signing_scripts_configmap
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:ConfigMap
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Secret where the signing certificates are stored.
         displayName: Signing Secret
         path: signing_secret
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
-      - description: Secret where Single Sign-on configuration can be found NOT USEFUL
-          YET! PENDING MIGRATION OF sso-configuration.yml task file
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Secret where Single Sign-on configuration can be found
         displayName: SSOSecret
         path: sso_secret
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
-      - description: Configuration for the storage type utilized in the backup NOT
-          USEFUL YET! BESIDES PULP-RESTORE AND PULP-BKP ROLES I COULD NOT FIND ANY
-          MENTION OF THIS VAR, SO NOTHING DONE WITH IT YET
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Configuration for the storage type utilized in the backup
         displayName: Storage Type
         path: storage_type
         x-descriptors:
@@ -559,6 +646,8 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:select:Azure
       - displayName: Web
         path: web
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: Size is the size of number of pulp-web replicas
         displayName: Replicas
         path: web.replicas
@@ -580,6 +669,8 @@ spec:
       - description: NodeSelector for the Pulp pods.
         displayName: Node Selector
         path: worker.node_selector
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Size is the size of number of pulp-worker replicas
         displayName: Replicas
         path: worker.replicas
@@ -674,8 +765,10 @@ spec:
       - rules:
         - apiGroups:
           - apps
+          - networking.k8s.io
           resources:
           - deployments
+          - ingresses
           - statefulsets
           verbs:
           - create
@@ -684,6 +777,14 @@ spec:
           - list
           - patch
           - update
+          - watch
+        - apiGroups:
+          - config.openshift.io
+          resources:
+          - ingresses
+          verbs:
+          - get
+          - list
           - watch
         - apiGroups:
           - ""
@@ -820,6 +921,19 @@ spec:
           - get
           - patch
           - update
+        - apiGroups:
+          - route.openshift.io
+          resources:
+          - routes
+          - routes/custom-host
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
         - apiGroups:
           - authentication.k8s.io
           resources:

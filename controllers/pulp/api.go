@@ -597,13 +597,17 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 	}
 
 	resources := m.Spec.Api.ResourceRequirements
+	ApiRoot := m.Spec.PulpSettings.ApiRoot
+	if len(ApiRoot) == 0 {
+		ApiRoot = "/pulp/"
+	}
 
 	readinessProbe := &corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
 			Exec: &corev1.ExecAction{
 				Command: []string{
 					"/usr/bin/readyz.py",
-					m.Spec.PulpSettings.ApiRoot + "api/v3/status/",
+					ApiRoot + "api/v3/status/",
 				},
 			},
 		},
@@ -618,7 +622,7 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		FailureThreshold: 5,
 		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
-				Path: m.Spec.PulpSettings.ApiRoot + "api/v3/status/",
+				Path: ApiRoot + "api/v3/status/",
 				Port: intstr.IntOrString{
 					IntVal: 24817,
 				},
@@ -652,6 +656,8 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 				"app.kubernetes.io/component":  "api",
 				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
 				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
+				"app":                          "pulp-api",
+				"pulp_cr":                      m.Name,
 				"owner":                        "pulp-dev",
 			},
 		},
@@ -895,25 +901,34 @@ func pulpContainerAuth(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
 // serviceForAPI returns a service object for pulp-api
 func (r *PulpReconciler) serviceForAPI(m *repomanagerv1alpha1.Pulp) *corev1.Service {
 
-	svc := serviceAPIObject(m.Name, m.Namespace)
+	svc := serviceAPIObject(m.Name, m.Namespace, m.Spec.DeploymentType)
 
 	// Set Pulp instance as the owner and controller
 	ctrl.SetControllerReference(m, svc, r.Scheme)
 	return svc
 }
 
-func serviceAPIObject(name, namespace string) *corev1.Service {
+func serviceAPIObject(name, namespace, deployment_type string) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name + "-api-svc",
 			Namespace: namespace,
+			Labels: map[string]string{
+				"app.kubernetes.io/name":       deployment_type + "-api",
+				"app.kubernetes.io/instance":   deployment_type + "-api-" + name,
+				"app.kubernetes.io/component":  "api",
+				"app.kubernetes.io/part-of":    deployment_type,
+				"app.kubernetes.io/managed-by": deployment_type + "-operator",
+				"app":                          "pulp-api",
+				"pulp_cr":                      name,
+			},
 		},
-		Spec: serviceAPISpec(name),
+		Spec: serviceAPISpec(name, namespace, deployment_type),
 	}
 }
 
 // api service spec
-func serviceAPISpec(name string) corev1.ServiceSpec {
+func serviceAPISpec(name, namespace, deployment_type string) corev1.ServiceSpec {
 
 	serviceInternalTrafficPolicyCluster := corev1.ServiceInternalTrafficPolicyType("Cluster")
 	ipFamilyPolicyType := corev1.IPFamilyPolicyType("SingleStack")
@@ -929,13 +944,19 @@ func serviceAPISpec(name string) corev1.ServiceSpec {
 		IPFamilies:            []corev1.IPFamily{"IPv4"},
 		IPFamilyPolicy:        &ipFamilyPolicyType,
 		Ports: []corev1.ServicePort{{
+			Name:       "api-24817",
 			Port:       24817,
 			Protocol:   servicePortProto,
 			TargetPort: targetPort,
 		}},
 		Selector: map[string]string{
-			"app":     "pulp-api",
-			"pulp_cr": name,
+			"app.kubernetes.io/name":       deployment_type + "-api",
+			"app.kubernetes.io/instance":   deployment_type + "-api-" + name,
+			"app.kubernetes.io/component":  "api",
+			"app.kubernetes.io/part-of":    deployment_type,
+			"app.kubernetes.io/managed-by": deployment_type + "-operator",
+			"app":                          "pulp-api",
+			"pulp_cr":                      name,
 		},
 		SessionAffinity: serviceAffinity,
 		Type:            serviceType,

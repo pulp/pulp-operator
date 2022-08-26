@@ -23,7 +23,7 @@ if [[ -n "${QUAY_EXPIRE}" ]]; then
 fi
 sudo -E ./up.sh
 if [[ "$CI_TEST" == "galaxy" ]]; then
-  time $KUBECTL wait --for condition=Galaxy-Operator-Finished-Execution pulp/example-galaxy --timeout=-1s
+  time $KUBECTL wait --for condition=Galaxy-Operator-Finished-Execution pulp/galaxy-example --timeout=-1s
   CI_TEST=true .ci/scripts/galaxy_ng-tests.sh -m
 else
   time $KUBECTL wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=-1s

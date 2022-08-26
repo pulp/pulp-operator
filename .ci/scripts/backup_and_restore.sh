@@ -40,7 +40,7 @@ kubectl logs -l app.kubernetes.io/name=pulp-operator -c manager --tail=10000
 echo ::endgroup::
 
 sudo pkill -f "port-forward" || true
-time kubectl wait --for condition=Galaxy-Operator-Finished-Execution pulp/example-galaxy --timeout=800s
+time kubectl wait --for condition=Galaxy-Operator-Finished-Execution pulp/galaxy-example --timeout=800s
 kubectl get pods -o wide
 
 KUBE="k3s"
