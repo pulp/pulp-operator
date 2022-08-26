@@ -171,7 +171,7 @@ jobs:
         run: sudo -E ./up.sh
         shell: bash
       - name: Check and wait pulp-operator deploy
-        run: sudo -E time kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=-1s
+        run: sudo -E time kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/ocp-example --timeout=-1s
         shell: bash
       - name: KubeLinter
         run: .ci/scripts/kubelinter.sh
@@ -224,23 +224,26 @@ jobs:
         run: |
           echo ::group::HTTPIE
           sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
+          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie avahi-daemon libnss-mdns
           echo ::endgroup::
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
           echo "IMG=quay.io/pulp/pulp-operator:devel" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
           echo "CI_TEST_STORAGE=${{ matrix.STORAGE }}" >> $GITHUB_ENV
           echo "API_ROOT=/api/galaxy/pulp/" >> $GITHUB_ENV
+          echo "MICROSHIFT_CLUSTER_SERVICENODEPORTRANGE=80-32000" >> $GITHUB_ENV
+          echo 127.0.0.1 cluster.local | sudo tee -a /etc/hosts
         shell: bash
-      - name: Start minikube
-        run: |
-          minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
-          minikube addons enable metrics-server
-        # now you can run kubectl to see the pods in the cluster
+      - name: Setup Microshift
+        uses: container-tools/microshift-action@v0.2.1
+        with:
+          version: "4.8.0"
       - name: Try the cluster !
-        run: kubectl get pods -A
-      - name: Setup a minikube docker env
-        run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
+        run: |
+          sudo ufw disable
+          sudo service docker restart
+          sudo -E kubectl config use-context microshift
+          # sudo -E kubectl get pods -A
       - name: Uninstalling GHA kustomize
         run: |
           # hack for uninstalling kustomize from GHA
@@ -262,7 +265,7 @@ jobs:
         run: sudo -E CI_TEST=galaxy ./up.sh
         shell: bash
       - name: Check and wait pulp-operator deploy
-        run: sudo -E time kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=-1s
+        run: sudo -E time kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/ocp-example --timeout=800s
         shell: bash
       - name: KubeLinter
         run: .ci/scripts/kubelinter.sh
@@ -286,7 +289,10 @@ jobs:
           PY_COLORS: '1'
       - name: Logs
         if: always()
-        run: .github/workflows/scripts/show_logs.sh
+        run: |
+          kubectl get all --all-namespaces
+          sudo -E kubectl get ingresses --all-namespaces
+          .github/workflows/scripts/show_logs.sh
       # - name: Debugging example (uncomment when needed)
       #   if: failure()
       #   uses: mxschmitt/action-tmate@v3
