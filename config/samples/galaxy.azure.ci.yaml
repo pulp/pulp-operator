@@ -1,7 +1,7 @@
 apiVersion: repo-manager.pulpproject.org/v1alpha1
 kind: Pulp
 metadata:
-  name: example-galaxy
+  name: galaxy-example
 spec:
   deployment_type: galaxy
   is_k8s: true

@@ -7,8 +7,10 @@ metadata:
 rules:
 - apiGroups:
   - apps
+  - networking.k8s.io
   resources:
   - deployments
+  - ingresses
   - statefulsets
   verbs:
   - create
@@ -17,6 +19,14 @@ rules:
   - list
   - patch
   - update
+  - watch
+- apiGroups:
+  - config.openshift.io
+  resources:
+  - ingresses
+  verbs:
+  - get
+  - list
   - watch
 - apiGroups:
   - ""
@@ -153,3 +163,16 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - route.openshift.io
+  resources:
+  - routes
+  - routes/custom-host
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch

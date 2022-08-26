@@ -211,7 +211,7 @@ jobs:
           fi
         shell: bash
       - name: Check and wait pulp-operator deploy
-        run: kubectl wait --for condition=Galaxy-Operator-Finished-Execution pulp/example-galaxy --timeout=600s
+        run: kubectl wait --for condition=Galaxy-Operator-Finished-Execution pulp/galaxy-example --timeout=600s
         shell: bash
       - name: Test
         run: .ci/scripts/galaxy_ng-tests.sh -m

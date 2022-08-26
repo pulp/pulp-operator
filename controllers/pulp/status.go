@@ -18,6 +18,7 @@ package pulp
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"golang.org/x/text/cases"
@@ -49,18 +50,20 @@ func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alph
 		return ctrl.Result{Requeue: true, RequeueAfter: 10 * time.Second}, nil
 	}
 
-	webDeployment := &appsv1.Deployment{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web", Namespace: pulp.Namespace}, webDeployment)
-	if err == nil {
-		if webDeployment.Status.ReadyReplicas != webDeployment.Status.Replicas {
-			log.Info(pulp.Spec.DeploymentType + " web not ready yet ...")
-			return ctrl.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
+	if strings.ToLower(pulp.Spec.IngressType) != "route" {
+		webDeployment := &appsv1.Deployment{}
+		err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web", Namespace: pulp.Namespace}, webDeployment)
+		if err == nil {
+			if webDeployment.Status.ReadyReplicas != webDeployment.Status.Replicas {
+				log.Info(pulp.Spec.DeploymentType + " web not ready yet ...")
+				return ctrl.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
+			} else {
+				r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Web-Ready", "WebTasksFinished", "All Web tasks ran successfully")
+			}
 		} else {
-			r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Web-Ready", "WebTasksFinished", "All Web tasks ran successfully")
+			log.Error(err, "Failed to get Pulp Web Deployment")
+			return ctrl.Result{Requeue: true, RequeueAfter: 10 * time.Second}, nil
 		}
-	} else {
-		log.Error(err, "Failed to get Pulp Web Deployment")
-		return ctrl.Result{Requeue: true, RequeueAfter: 10 * time.Second}, nil
 	}
 
 	if v1.IsStatusConditionFalse(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Operator-Finished-Execution") {

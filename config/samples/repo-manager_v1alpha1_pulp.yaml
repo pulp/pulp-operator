@@ -1,6 +1,34 @@
 apiVersion: repo-manager.pulpproject.org/v1alpha1
 kind: Pulp
 metadata:
-  name: pulp-sample
+  name: example
 spec:
-  # TODO(user): Add fields here
+  cache_enabled: true
+  file_storage_access_mode: "ReadWriteMany"
+  file_storage_size: "10Gi"
+  file_storage_storage_class: "standard"
+  ingress_type: Route
+  pulp_settings:
+    api_root: "/pulp/"
+  redis_storage_class: standard
+  storage_type: File
+  api:
+    replicas: 1
+  content:
+    replicas: 2
+    resource_requirements:
+      requests:
+        cpu: 150m
+        memory: 256Mi
+      limits:
+        cpu: 800m
+        memory: 1Gi
+  worker:
+    replicas: 2
+    resource_requirements:
+      requests:
+        cpu: 150m
+        memory: 256Mi
+      limits:
+        cpu: 800m
+        memory: 1Gi

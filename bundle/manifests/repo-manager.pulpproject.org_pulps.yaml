@@ -36,7 +36,6 @@ spec:
             properties:
               admin_password_secret:
                 description: Secret where the administrator password can be found
-                  NOT USEFUL YET! FROM ORIGINAL PULP-OPERATOR USED BY BACKUP/RESTORE
                 type: string
               api:
                 properties:
@@ -1167,6 +1166,10 @@ spec:
                 default: standard
                 description: Storage class to use for the file persistentVolumeClaim
                 type: string
+              haproxy_timeout:
+                default: 180s
+                description: The timeout for HAProxy.
+                type: string
               image:
                 default: quay.io/pulp/pulp
                 description: The image name (repo name) for the pulp image.
@@ -1271,6 +1274,9 @@ spec:
                 default: standard
                 description: Storage class to use for the Redis PVC
                 type: string
+              route_host:
+                description: Route DNS host
+                type: string
               signing_scripts_configmap:
                 description: ConfigMap where the signing scripts are stored.
                 type: string
@@ -1279,13 +1285,17 @@ spec:
                 type: string
               sso_secret:
                 description: Secret where Single Sign-on configuration can be found
-                  NOT USEFUL YET! PENDING MIGRATION OF sso-configuration.yml task
-                  file
                 type: string
               storage_type:
                 description: Configuration for the storage type utilized in the backup
-                  NOT USEFUL YET! BESIDES PULP-RESTORE AND PULP-BKP ROLES I COULD
-                  NOT FIND ANY MENTION OF THIS VAR, SO NOTHING DONE WITH IT YET
+                enum:
+                - none
+                - File
+                - file
+                - S3
+                - s3
+                - Azure
+                - azure
                 type: string
               web:
                 properties:

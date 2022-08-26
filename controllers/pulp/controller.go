@@ -19,11 +19,13 @@ package pulp
 import (
 	"context"
 	"reflect"
+	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/rest"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -37,13 +39,17 @@ import (
 // PulpReconciler reconciles a Pulp object
 type PulpReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	RESTClient rest.Interface
+	RESTConfig *rest.Config
+	Scheme     *runtime.Scheme
 }
 
 //+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulps,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulps/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulps/finalizers,verbs=update
-//+kubebuilder:rbac:groups=apps,resources=deployments;statefulsets,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=apps;networking.k8s.io,resources=deployments;statefulsets;ingresses,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=config.openshift.io,resources=ingresses,verbs=get;list;watch
+//+kubebuilder:rbac:groups=route.openshift.io,resources=routes;routes/custom-host,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;
 //+kubebuilder:rbac:groups=core,resources=configmaps;secrets;services;persistentvolumeclaims,verbs=create;update;patch;delete;watch;get;list;
 
@@ -72,6 +78,7 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 	// Do not provision postgres resources if using external DB
 	if reflect.DeepEqual(pulp.Spec.Database.ExternalDB, repomanagerv1alpha1.ExternalDB{}) {
+		log.Info("Running database tasks")
 		pulpController, err = r.databaseController(ctx, pulp, log)
 		if err != nil {
 			return pulpController, err
@@ -82,6 +89,7 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		}
 	}
 
+	log.Info("Running cache tasks")
 	pulpController, err = r.pulpCacheController(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
@@ -91,6 +99,7 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return pulpController, nil
 	}
 
+	log.Info("Running API tasks")
 	pulpController, err = r.pulpApiController(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
@@ -100,6 +109,7 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return pulpController, nil
 	}
 
+	log.Info("Running content tasks")
 	pulpController, err = r.pulpContentController(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
@@ -109,6 +119,7 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return pulpController, nil
 	}
 
+	log.Info("Running worker tasks")
 	pulpController, err = r.pulpWorkerController(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
@@ -118,15 +129,29 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return pulpController, nil
 	}
 
-	pulpController, err = r.pulpWebController(ctx, pulp, log)
-	if err != nil {
-		return pulpController, err
-	} else if pulpController.Requeue {
-		return pulpController, nil
-	} else if pulpController.RequeueAfter > 0 {
-		return pulpController, nil
+	if strings.ToLower(pulp.Spec.IngressType) == "route" {
+		log.Info("Running route tasks")
+		pulpController, err = r.pulpRouteController(ctx, pulp, log)
+		if err != nil {
+			return pulpController, err
+		} else if pulpController.Requeue {
+			return pulpController, nil
+		} else if pulpController.RequeueAfter > 0 {
+			return pulpController, nil
+		}
+	} else {
+		log.Info("Running web tasks")
+		pulpController, err = r.pulpWebController(ctx, pulp, log)
+		if err != nil {
+			return pulpController, err
+		} else if pulpController.Requeue {
+			return pulpController, nil
+		} else if pulpController.RequeueAfter > 0 {
+			return pulpController, nil
+		}
 	}
 
+	log.Info("Running status tasks")
 	pulpController, err = r.pulpStatus(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
