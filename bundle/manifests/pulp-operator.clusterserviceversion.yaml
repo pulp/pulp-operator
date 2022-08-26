@@ -189,7 +189,7 @@ metadata:
     operators.operatorframework.io/builder: operator-sdk-v1.23.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/pulp/pulp-operator
-  name: pulp-operator.v1.0.0
+  name: pulp-operator.v1.0.0-beta
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -976,7 +976,7 @@ spec:
                 - --upstream=http://127.0.0.1:8080/
                 - --logtostderr=true
                 - --v=0
-                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.11.0
+                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
                 name: kube-rbac-proxy
                 ports:
                 - containerPort: 8443
@@ -997,7 +997,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: quay.io/pulp/pulp-operator:v1.0.0
+                image: quay.io/pulp/pulp-operator:v1.0.0-beta
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -1088,4 +1088,4 @@ spec:
   provider:
     name: Pulp Community
     url: https://github.com/pulp/pulp-operator
-  version: 1.0.0
+  version: 1.0.0-beta
