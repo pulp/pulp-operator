@@ -6,5 +6,6 @@
     ".ci/assets/kubernetes/pulp-object-storage.azure.secret.yaml",
     ".ci/assets/kubernetes/galaxy_sign.secret.yaml",
     ".ci/scripts/prepare-object-storage.sh",
+    "config/samples/pulpproject_v1beta1_pulp_cr.default.yaml",
     "containers/compose/certs/database_fields.symmetric.key",
   ]
