@@ -6,6 +6,8 @@
 Pipfile
 Pipfile.lock
 
+bin
+
 
 # Ignore generated container files
 containers/images/pulp/Containerfile.core.p*
@@ -15,5 +17,6 @@ containers/images/pulp/Containerfile.web.g*
 
 # Ignore testing directory
 testing/*
+testbin/*
 
 Containerfile.bundle
