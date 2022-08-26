@@ -1231,6 +1231,9 @@ spec:
                   api_root:
                     default: /pulp/
                     type: string
+                  content_path_prefix:
+                    default: /pulp/content/
+                    type: string
                   custom_settings:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
