@@ -597,17 +597,13 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 	}
 
 	resources := m.Spec.Api.ResourceRequirements
-	ApiRoot := m.Spec.PulpSettings.ApiRoot
-	if len(ApiRoot) == 0 {
-		ApiRoot = "/pulp/"
-	}
 
 	readinessProbe := &corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
 			Exec: &corev1.ExecAction{
 				Command: []string{
 					"/usr/bin/readyz.py",
-					ApiRoot + "api/v3/status/",
+					getPulpSetting(m, "api_root") + "api/v3/status/",
 				},
 			},
 		},
@@ -622,7 +618,7 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		FailureThreshold: 5,
 		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
-				Path: ApiRoot + "api/v3/status/",
+				Path: getPulpSetting(m, "api_root") + "api/v3/status/",
 				Port: intstr.IntOrString{
 					IntVal: 24817,
 				},
@@ -785,11 +781,7 @@ TOKEN_SERVER = "http://` + m.Name + `-web-svc.` + m.Namespace + `.svc.cluster.lo
 TOKEN_SIGNATURE_ALGORITHM = "ES256"
 `
 
-	if m.Spec.PulpSettings.ApiRoot != "" {
-		pulp_settings = pulp_settings + fmt.Sprintf("API_ROOT = \"%v\"\n", m.Spec.PulpSettings.ApiRoot)
-	} else {
-		pulp_settings = pulp_settings + fmt.Sprintln("API_ROOT = \"/pulp/\"")
-	}
+	pulp_settings = pulp_settings + fmt.Sprintln("API_ROOT = \"/pulp/\"")
 
 	if len(m.Spec.ObjectStorageAzureSecret) > 0 {
 		log.Info("Retrieving Azure data from " + m.Spec.ObjectStorageAzureSecret)

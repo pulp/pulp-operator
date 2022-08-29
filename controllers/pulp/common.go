@@ -129,11 +129,36 @@ func (r *PulpReconciler) getSigningKeyFingerprint(secretName, secretNamespace st
 
 }
 
+func getPulpSetting(pulp *repomanagerv1alpha1.Pulp, key string) string {
+	settings := pulp.Spec.PulpSettings.Raw
+	var settingsJson map[string]interface{}
+	json.Unmarshal(settings, &settingsJson)
+
+	v := settingsJson[key]
+	// default values
+	if v == nil {
+		switch key {
+		case "api_root":
+			return "/pulp/"
+		case "content_path_prefix":
+			return "/pulp/content/"
+		}
+	}
+	switch v.(type) {
+	case map[string]interface{}:
+		rawMapping, _ := json.Marshal(v)
+		return fmt.Sprintln(strings.Replace(string(rawMapping), "\"", "'", -1))
+	default:
+		return fmt.Sprintf("%v", v)
+	}
+
+}
+
 // addCustomPulpSettings appends custom settings defined in Pulp CR to settings.py
 func addCustomPulpSettings(pulp *repomanagerv1alpha1.Pulp, current_settings string) string {
-	custom_settings := pulp.Spec.PulpSettings.CustomSettings.Raw
+	settings := pulp.Spec.PulpSettings.Raw
 	var settingsJson map[string]interface{}
-	json.Unmarshal(custom_settings, &settingsJson)
+	json.Unmarshal(settings, &settingsJson)
 
 	var convertedSettings string
 	for k, v := range settingsJson {
