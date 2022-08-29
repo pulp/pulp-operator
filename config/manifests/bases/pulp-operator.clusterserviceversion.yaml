@@ -329,11 +329,6 @@ spec:
         path: api.topology_spread_constraints
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Api Root
-        path: api_root
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:text
-        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Cache Enabled
         path: cache_enabled
         x-descriptors:
@@ -390,15 +385,6 @@ spec:
       - description: Node tolerations for the Pulp pods.
         displayName: Tolerations
         path: content.tolerations
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Content Path Prefix
-        path: content_path_prefix
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:text
-        - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Custom Settings
-        path: custom_settings
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Database
@@ -470,15 +456,11 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Debug
-        path: debug
       - description: Name of the deployment type.
         displayName: Deployment Type
         path: deployment_type
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - displayName: Execution Environments
-        path: execution_environments
       - description: The file storage access mode.
         displayName: File Storage Access Mode
         path: file_storage_access_mode
@@ -556,6 +538,11 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:S3
+      - description: The pulp settings.
+        displayName: Pulp Settings
+        path: pulp_settings
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: The image name for the redis image.
         displayName: Redis Image
         path: redis_image

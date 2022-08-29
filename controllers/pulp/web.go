@@ -332,7 +332,7 @@ http {
 			proxy_pass http://pulp-content;
 		}
 
-		location ` + m.Spec.PulpSettings.ApiRoot + `api/v3/ {
+		location ` + getPulpSetting(m, "api_root") + `api/v3/ {
 			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 			proxy_set_header X-Forwarded-Proto $scheme;
 			proxy_set_header Host $http_host;

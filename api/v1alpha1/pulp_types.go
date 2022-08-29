@@ -192,9 +192,10 @@ type PulpSpec struct {
 	RedisResourceRequirements corev1.ResourceRequirements `json:"redis_resource_requirements,omitempty"`
 
 	// The pulp settings.
+	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	PulpSettings `json:"pulp_settings,omitempty"`
+	PulpSettings runtime.RawExtension `json:"pulp_settings,omitempty"`
 
 	// The image name (repo name) for the pulp webserver image.
 	// +kubebuilder:validation:Optional
@@ -269,37 +270,6 @@ type Api struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
-}
-
-type PulpSettings struct {
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	Debug string `json:"debug,omitempty"`
-
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	GalaxyFeatureFlags `json:"GALAXY_FEATURE_FLAGS,omitempty"`
-
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:default:="/pulp/"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:advanced"}
-	ApiRoot string `json:"api_root,omitempty"`
-
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:default:="/pulp/content/"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:advanced"}
-	ContentPathPrefix string `json:"content_path_prefix,omitempty"`
-
-	// +kubebuilder:pruning:PreserveUnknownFields
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	CustomSettings runtime.RawExtension `json:"custom_settings,omitempty"`
-}
-
-type GalaxyFeatureFlags struct {
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	ExecutionEnvironments string `json:"execution_environments,omitempty"`
 }
 
 type Content struct {

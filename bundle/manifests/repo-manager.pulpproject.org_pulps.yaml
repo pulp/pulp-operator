@@ -1222,24 +1222,8 @@ spec:
                 type: string
               pulp_settings:
                 description: The pulp settings.
-                properties:
-                  GALAXY_FEATURE_FLAGS:
-                    properties:
-                      execution_environments:
-                        type: string
-                    type: object
-                  api_root:
-                    default: /pulp/
-                    type: string
-                  content_path_prefix:
-                    default: /pulp/content/
-                    type: string
-                  custom_settings:
-                    type: object
-                    x-kubernetes-preserve-unknown-fields: true
-                  debug:
-                    type: string
                 type: object
+                x-kubernetes-preserve-unknown-fields: true
               redis_image:
                 default: redis:latest
                 description: The image name for the redis image.
