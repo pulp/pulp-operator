@@ -4,7 +4,6 @@ metadata:
   name: ocp-example
 spec:
   deployment_type: pulp
-  is_k8s: true
   admin_password_secret: "example-pulp-admin-password"
   storage_type: File
   ingress_type: route

@@ -34,6 +34,7 @@ import (
 
 	"github.com/go-logr/logr"
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	"github.com/pulp/pulp-operator/controllers"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -308,7 +309,8 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 	runAsUser := int64(0)
 	fsGroup := int64(0)
 	podSecurityContext := &corev1.PodSecurityContext{}
-	if m.Spec.IsK8s {
+	IsOpenShift, _ := controllers.IsOpenShift()
+	if !IsOpenShift {
 		podSecurityContext = &corev1.PodSecurityContext{
 			RunAsUser: &runAsUser,
 			FSGroup:   &fsGroup,

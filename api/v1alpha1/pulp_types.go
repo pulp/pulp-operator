@@ -140,11 +140,6 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:imagePullPolicy"}
 	ImagePullPolicy string `json:"image_pull_policy,omitempty"`
 
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:default:=false
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
-	IsK8s bool `json:"is_k8s,omitempty"`
-
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	Api Api `json:"api,omitempty"`
 

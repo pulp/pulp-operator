@@ -34,6 +34,7 @@ import (
 
 	"github.com/go-logr/logr"
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	"github.com/pulp/pulp-operator/controllers"
 )
 
 func (r *PulpReconciler) pulpContentController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
@@ -134,7 +135,8 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 	runAsUser := int64(0)
 	fsGroup := int64(0)
 	podSecurityContext := &corev1.PodSecurityContext{}
-	if m.Spec.IsK8s {
+	IsOpenShift, _ := controllers.IsOpenShift()
+	if !IsOpenShift {
 		podSecurityContext = &corev1.PodSecurityContext{
 			RunAsUser: &runAsUser,
 			FSGroup:   &fsGroup,
