@@ -18,6 +18,7 @@ package pulp
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -71,6 +72,12 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		}
 		// Error reading the object - requeue the request.
 		log.Error(err, "Failed to get Pulp")
+		return ctrl.Result{}, err
+	}
+
+	if len(pulp.Spec.ObjectStorageAzureSecret) > 0 && len(pulp.Spec.ObjectStorageS3Secret) > 0 {
+		err := fmt.Errorf("only one object storage is allowed")
+		log.Error(err, "Please choose between Azure and S3")
 		return ctrl.Result{}, err
 	}
 
