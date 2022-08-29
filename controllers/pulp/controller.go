@@ -35,6 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	"github.com/pulp/pulp-operator/controllers"
 )
 
 // PulpReconciler reconciles a Pulp object
@@ -58,6 +59,10 @@ type PulpReconciler struct {
 // move the current state of the cluster closer to the desired state.
 func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := ctrllog.FromContext(ctx)
+	IsOpenShift, _ := controllers.IsOpenShift()
+	if IsOpenShift {
+		log.Info("Running on OpenShift cluster")
+	}
 
 	pulp := &repomanagerv1alpha1.Pulp{}
 	err := r.Get(ctx, req.NamespacedName, pulp)

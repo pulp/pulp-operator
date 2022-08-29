@@ -4,7 +4,6 @@ metadata:
   name: galaxy-example
 spec:
   deployment_type: galaxy
-  is_k8s: true
   image: quay.io/pulp/galaxy
   image_version: latest
   image_web: quay.io/pulp/galaxy-web

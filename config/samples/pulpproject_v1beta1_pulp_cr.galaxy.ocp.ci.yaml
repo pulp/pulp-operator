@@ -4,7 +4,6 @@ metadata:
   name: ocp-example
 spec:
   deployment_type: pulp
-  is_k8s: true
   image: quay.io/pulp/galaxy
   image_web: quay.io/pulp/galaxy-web
   admin_password_secret: "example-pulp-admin-password"

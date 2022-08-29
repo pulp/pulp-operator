@@ -517,10 +517,6 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:select:Ingress
         - urn:alm:descriptor:com.tectonic.ui:select:LoadBalancer
         - urn:alm:descriptor:com.tectonic.ui:select:NodePort
-      - displayName: Is K8s
-        path: is_k8s
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: Provide requested port value
         displayName: Node Port
         path: nodeport_port

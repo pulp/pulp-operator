@@ -73,7 +73,6 @@ metadata:
             "file_storage_storage_class": "standard",
             "image_version": "latest",
             "ingress_type": "nodeport",
-            "is_k8s": true,
             "pulp_settings": {
               "api_root": "/pulp/"
             },
@@ -118,7 +117,6 @@ metadata:
             "image_web": "quay.io/pulp/galaxy-web",
             "image_web_version": "latest",
             "ingress_type": "nodeport",
-            "is_k8s": true,
             "pulp_settings": {
               "api_root": "/api/galaxy/pulp/"
             },
@@ -557,10 +555,6 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:select:Ingress
         - urn:alm:descriptor:com.tectonic.ui:select:LoadBalancer
         - urn:alm:descriptor:com.tectonic.ui:select:NodePort
-      - displayName: Is K8s
-        path: is_k8s
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: Provide requested port value
         displayName: Node Port
         path: nodeport_port
