@@ -46,7 +46,7 @@ spec:
       affinity:
         nodeAffinity: {{ _node_affinity }}
 {% endif %}
-      serviceAccountName: '{{ deployment_type }}-operator-sa'
+      serviceAccountName: '{{ ansible_operator_meta.name }}'
       containers:
         - image: '{{ _postgres_image }}'
           name: postgres
