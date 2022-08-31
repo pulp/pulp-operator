@@ -101,7 +101,7 @@ spec:
               - path: container_auth_private_key.pem
                 key: {{ container_auth_private_key_name }}
 {% endif %}
-      serviceAccountName: '{{ deployment_type }}-operator-sa'
+      serviceAccountName: {{ ansible_operator_meta.name }}
 {% if topology_spread_constraints %}
       topologySpreadConstraints:
         {{ topology_spread_constraints | indent(width=8) }}
