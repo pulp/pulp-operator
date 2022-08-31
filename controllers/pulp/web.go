@@ -49,9 +49,11 @@ func (r *PulpReconciler) pulpWebController(ctx context.Context, pulp *repomanage
 		if err != nil {
 			log.Error(err, "Failed to create new Pulp Web ConfigMap", "ConfigMap.Namespace", newWebConfigMap.Namespace, "ConfigMap.Name", newWebConfigMap.Name)
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Web-Ready", "ErrorCreatingWebConfigmap", "Failed to create "+pulp.Name+"-web configmap resource: "+err.Error())
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new Web ConfigMap")
 			return ctrl.Result{}, err
 		}
 		// ConfigMap created successfully - return and requeue
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "Web ConfigMap created")
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get Pulp Web ConfigMap")
@@ -69,9 +71,11 @@ func (r *PulpReconciler) pulpWebController(ctx context.Context, pulp *repomanage
 		if err != nil {
 			log.Error(err, "Failed to create new Pulp Web Deployment", "Deployment.Namespace", newWebDeployment.Namespace, "Deployment.Name", newWebDeployment.Name)
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Web-Ready", "ErrorCreatingWebDeployment", "Failed to create "+pulp.Name+"-web deployment resource: "+err.Error())
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new Web Deployment")
 			return ctrl.Result{}, err
 		}
 		// Deployment created successfully - return and requeue
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "Web Deployment created")
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get Pulp Web Deployment")
@@ -82,12 +86,15 @@ func (r *PulpReconciler) pulpWebController(ctx context.Context, pulp *repomanage
 	if !equality.Semantic.DeepDerivative(newWebDeployment.Spec, webDeployment.Spec) {
 		log.Info("The Web Deployment has been modified! Reconciling ...")
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Web-Ready", "UpdatingWebDeployment", "Reconciling "+pulp.Name+"-web deployment resource")
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling Web Deployment")
 		err = r.Update(ctx, newWebDeployment)
 		if err != nil {
 			log.Error(err, "Error trying to update the Web Deployment object ... ")
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Web-Ready", "ErrorUpdatingWebDeployment", "Failed to reconcile "+pulp.Name+"-web deployment resource: "+err.Error())
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile Web Deployment")
 			return ctrl.Result{}, err
 		}
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Web Deployment reconciled")
 		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 	}
 
@@ -103,9 +110,11 @@ func (r *PulpReconciler) pulpWebController(ctx context.Context, pulp *repomanage
 		if err != nil {
 			log.Error(err, "Failed to create new Web Service", "Service.Namespace", newWebSvc.Namespace, "Service.Name", newWebSvc.Name)
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Web-Ready", "ErrorCreatingWebDService", "Failed to create "+pulp.Name+"-web-svc service resource: "+err.Error())
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new Web Service")
 			return ctrl.Result{}, err
 		}
 		// Service created successfully - return and requeue
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "Web Service created")
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get Web Service")
@@ -126,7 +135,6 @@ func (r *PulpReconciler) pulpWebController(ctx context.Context, pulp *repomanage
 	}
 	*/
 
-	//r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Web-Ready", "WebTasksFinished", "All Web tasks ran successfully")
 	return ctrl.Result{}, nil
 }
 

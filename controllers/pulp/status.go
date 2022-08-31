@@ -24,6 +24,7 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -44,6 +45,7 @@ func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alph
 			return ctrl.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
 		} else {
 			r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-API-Ready", "ApiTasksFinished", "All API tasks ran successfully")
+			r.recorder.Event(pulp, corev1.EventTypeNormal, "APIReady", "All API tasks ran successfully")
 		}
 	} else {
 		log.Error(err, "Failed to get Pulp API Deployment")
@@ -59,6 +61,7 @@ func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alph
 				return ctrl.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
 			} else {
 				r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Web-Ready", "WebTasksFinished", "All Web tasks ran successfully")
+				r.recorder.Event(pulp, corev1.EventTypeNormal, "WebReady", "All Web tasks ran successfully")
 			}
 		} else {
 			log.Error(err, "Failed to get Pulp Web Deployment")

@@ -56,9 +56,11 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 		if err != nil {
 			log.Error(err, "Failed to create new pulp-postgres-configuration secret secret", "Secret.Namespace", expected_secret.Namespace, "Secret.Name", expected_secret.Name)
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Database-Ready", "ErrorCreatingDatabasePostgresSecret", "Failed to create "+pulp.Name+"-postgres-configuration secret resource: "+err.Error())
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new postgres-configuration secret")
 			return ctrl.Result{}, err
 		}
 		// Secret created successfully - return and requeue
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "Postgres-configuration secret created")
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get pulp-postgres-configuration secret")
@@ -79,10 +81,11 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 		if err != nil {
 			log.Error(err, "Failed to create new Database StatefulSet", "StatefulSet.Namespace", expected_sts.Namespace, "StatefulSet.Name", expected_sts.Name)
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Database-Ready", "ErrorCreatingDatabaseSts", "Failed to create "+pulp.Name+"-database statefulset resource: "+err.Error())
-
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create database StatefulSet")
 			return ctrl.Result{}, err
 		}
 		// Deployment created successfully - return and requeue
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "Database StatefulSet created")
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get Database StatefulSet")
@@ -93,6 +96,7 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 	if !equality.Semantic.DeepDerivative(expected_sts.Spec, pgSts.Spec) {
 		log.Info("The Database StatefulSet has been modified! Reconciling ...")
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Database-Ready", "UpdatingDatabaseSts", "Reconciling "+pulp.Name+"-database statefulset resource")
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling database StatefulSet")
 		// Set Pulp instance as the owner and controller
 		// not sure if this is the best way to do this, but every time that
 		// a reconciliation occurred the object lost the owner reference
@@ -101,8 +105,10 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 		if err != nil {
 			log.Error(err, "Error trying to update the Database StatefulSet object ... ")
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Database-Ready", "ErrorUpdatingDatabaseSts", "Failed to reconcile "+pulp.Name+"-database statefulset resource")
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile database StatefulSet")
 			return ctrl.Result{}, err
 		}
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Database StatefulSet reconciled")
 		return ctrl.Result{Requeue: true, RequeueAfter: time.Minute}, nil
 	}
 
@@ -120,9 +126,11 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 		if err != nil {
 			log.Error(err, "Failed to create new Database Service", "Service.Namespace", expected_svc.Namespace, "Service.Name", expected_svc.Name)
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Database-Ready", "ErrorCreatingDatabaseService", "Failed to create "+pulp.Name+"-database-svc service resource: "+err.Error())
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create database service")
 			return ctrl.Result{}, err
 		}
 		// Service created successfully - return and requeue
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "Database service created")
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get Database Service")
@@ -133,17 +141,21 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 	if !equality.Semantic.DeepDerivative(expected_svc.Spec, dbSvc.Spec) {
 		log.Info("The Database service has been modified! Reconciling ...")
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Database-Ready", "UpdatingDatabaseService", "Reconciling "+pulp.Name+"-database-svc service resource")
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling database service")
 		ctrl.SetControllerReference(pulp, expected_svc, r.Scheme)
 		err = r.Update(ctx, expected_svc)
 		if err != nil {
 			log.Error(err, "Error trying to update the Database Service object ... ")
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Database-Ready", "ErrorUpdatingDatabaseService", "Failed to reconcile "+pulp.Name+"-database-svc service resource: "+err.Error())
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile database service")
 			return ctrl.Result{}, err
 		}
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Database service reconciled")
 		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 	}
 
 	r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Database-Ready", "DatabaseTasksFinished", "All Database tasks ran successfully")
+	r.recorder.Event(pulp, corev1.EventTypeNormal, "DatabaseReady", "All Database tasks ran successfully")
 	return ctrl.Result{}, nil
 }
 

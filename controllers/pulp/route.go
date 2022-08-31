@@ -129,6 +129,7 @@ func (r *PulpReconciler) pulpRouteController(ctx context.Context, pulp *repomana
 			if err != nil {
 				log.Error(err, "Failed to create new route", "Route.Namespace", routePwd.Namespace, "Route.Name", routePwd.Name)
 				r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Route-Ready", "ErrorCreatingRoute", "Failed to create "+pulp.Name+"-route: "+err.Error())
+				r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new route")
 				return ctrl.Result{}, err
 			}
 		} else if err != nil {
@@ -137,6 +138,7 @@ func (r *PulpReconciler) pulpRouteController(ctx context.Context, pulp *repomana
 		}
 	}
 	r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Route-Ready", "RouteTasksFinished", "All Route tasks ran successfully")
+	r.recorder.Event(pulp, corev1.EventTypeNormal, "RouteReady", "All Route tasks ran successfully")
 	return ctrl.Result{}, nil
 }
 

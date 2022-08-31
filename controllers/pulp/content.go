@@ -51,9 +51,11 @@ func (r *PulpReconciler) pulpContentController(ctx context.Context, pulp *repoma
 		if err != nil {
 			log.Error(err, "Failed to create new Pulp Content Deployment", "Deployment.Namespace", newCntDeployment.Namespace, "Deployment.Name", newCntDeployment.Name)
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Content-Ready", "ErrorCreatingContentDeployment", "Failed to create "+pulp.Name+"-content deployment resource: "+err.Error())
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new content deployment")
 			return ctrl.Result{}, err
 		}
 		// Deployment created successfully - return and requeue
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "Content deployment created")
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get Pulp Content Deployment")
@@ -64,12 +66,15 @@ func (r *PulpReconciler) pulpContentController(ctx context.Context, pulp *repoma
 	if !equality.Semantic.DeepDerivative(newCntDeployment.Spec, cntDeployment.Spec) {
 		log.Info("The Content Deployment has been modified! Reconciling ...")
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Content-Ready", "UpdatingContentDeployment", "Reconciling "+pulp.Name+"-content deployment resource")
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling content deployment")
 		err = r.Update(ctx, newCntDeployment)
 		if err != nil {
 			log.Error(err, "Error trying to update the Content Deployment object ... ")
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Content-Ready", "ErrorUpdatingContentDeployment", "Failed to reconcile "+pulp.Name+"-content deployment resource: "+err.Error())
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile content deployment")
 			return ctrl.Result{}, err
 		}
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Content deployment reconciled")
 		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 	}
 
@@ -85,9 +90,11 @@ func (r *PulpReconciler) pulpContentController(ctx context.Context, pulp *repoma
 		if err != nil {
 			log.Error(err, "Failed to create new Content Service", "Service.Namespace", newCntSvc.Namespace, "Service.Name", newCntSvc.Name)
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Content-Ready", "ErrorCreatingContentService", "Failed to create "+pulp.Name+"-content-svc service: "+err.Error())
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new content service")
 			return ctrl.Result{}, err
 		}
 		// Service created successfully - return and requeue
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "Content service created")
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get Content Service")
@@ -98,16 +105,20 @@ func (r *PulpReconciler) pulpContentController(ctx context.Context, pulp *repoma
 	if !equality.Semantic.DeepDerivative(newCntSvc.Spec, cntSvc.Spec) {
 		log.Info("The Content Service has been modified! Reconciling ...")
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Content-Ready", "UpdatingContentService", "Reconciling "+pulp.Name+"-content-svc service")
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling content service")
 		err = r.Update(ctx, newCntSvc)
 		if err != nil {
 			log.Error(err, "Error trying to update the Content Service object ... ")
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Content-Ready", "ErrorUpdatingContentService", "Failed to reconcile "+pulp.Name+"-content-svc service: "+err.Error())
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile content service")
 			return ctrl.Result{}, err
 		}
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Content service reconciled")
 		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 	}
 
 	r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Content-Ready", "ContentTasksFinished", "All Content tasks ran successfully")
+	r.recorder.Event(pulp, corev1.EventTypeNormal, "ContentReady", "All Content tasks ran successfully")
 	return ctrl.Result{}, nil
 }
 

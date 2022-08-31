@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/record"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -46,6 +47,7 @@ type PulpReconciler struct {
 	RESTClient rest.Interface
 	RESTConfig *rest.Config
 	Scheme     *runtime.Scheme
+	recorder   record.EventRecorder
 }
 
 //+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulps,verbs=get;list;watch;create;update;patch;delete
@@ -56,6 +58,7 @@ type PulpReconciler struct {
 //+kubebuilder:rbac:groups=route.openshift.io,resources=routes;routes/custom-host,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;
 //+kubebuilder:rbac:groups=core,resources=configmaps;secrets;services;persistentvolumeclaims,verbs=create;update;patch;delete;watch;get;list;
+//+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -205,6 +208,10 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *PulpReconciler) SetupWithManager(mgr ctrl.Manager) error {
+
+	// creates a new eventRecorder to be able to interact with events
+	r.recorder = mgr.GetEventRecorderFor("Pulp")
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&repomanagerv1alpha1.Pulp{}).
 		Owns(&appsv1.StatefulSet{}).
