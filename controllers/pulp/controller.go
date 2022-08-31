@@ -25,7 +25,9 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -64,8 +66,29 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		log.Info("Running on OpenShift cluster")
 	}
 
+	// Get redhat-operators-pull-secret
+	defaultSecret := &corev1.Secret{}
+	err := r.Get(ctx, types.NamespacedName{Name: "redhat-operators-pull-secret", Namespace: req.NamespacedName.Namespace}, defaultSecret)
+
+	// Create the secret in case it is not found
+	if err != nil && errors.IsNotFound(err) {
+		defaultSecret = &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "redhat-operators-pull-secret",
+				Namespace: req.NamespacedName.Namespace,
+			},
+			StringData: map[string]string{
+				"operator": "pulp",
+			},
+		}
+		r.Create(ctx, defaultSecret)
+	} else if err != nil {
+		log.Error(err, "Failed to get redhat-operators-pull-secret")
+		return ctrl.Result{}, err
+	}
+
 	pulp := &repomanagerv1alpha1.Pulp{}
-	err := r.Get(ctx, req.NamespacedName, pulp)
+	err = r.Get(ctx, req.NamespacedName, pulp)
 
 	if err != nil {
 		if errors.IsNotFound(err) {
