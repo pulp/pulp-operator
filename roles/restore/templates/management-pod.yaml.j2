@@ -14,7 +14,6 @@ metadata:
     app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
     owner: pulp-dev
 spec:
-  serviceAccountName: '{{ ansible_operator_meta.name }}'
   containers:
   - name: {{ ansible_operator_meta.name }}-backup-manager
     image: "{{ _postgres_image }}"
