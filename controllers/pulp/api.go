@@ -19,6 +19,7 @@ package pulp
 import (
 	"context"
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 	"time"
@@ -641,6 +642,12 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 	terminationGracePeriodSeconds := int64(30)
 	dnsPolicy := corev1.DNSPolicy("ClusterFirst")
 	schedulerName := corev1.DefaultSchedulerName
+	Image := os.Getenv("RELATED_IMAGE_PULP")
+	if len(m.Spec.Image) > 0 && len(m.Spec.ImageVersion) > 0 {
+		Image = m.Spec.Image + ":" + m.Spec.ImageVersion
+	} else if Image == "" {
+		Image = "quay.io/pulp/pulp:stable"
+	}
 
 	// deployment definition
 	dep := &appsv1.Deployment{
@@ -681,7 +688,7 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 					TopologySpreadConstraints: topologySpreadConstraint,
 					Containers: []corev1.Container{{
 						Name:            "api",
-						Image:           m.Spec.Image + ":" + m.Spec.ImageVersion,
+						Image:           Image,
 						ImagePullPolicy: corev1.PullPolicy(m.Spec.ImagePullPolicy),
 						Args:            []string{"pulp-api"},
 						Env:             envVars,

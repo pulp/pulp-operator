@@ -693,9 +693,10 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				Namespace: PulpNamespace,
 			},
 			Spec: repomanagerv1alpha1.PulpSpec{
-				DeploymentType: OperatorType,
-				CacheEnabled:   true,
-				ImageVersion:   "latest",
+				DeploymentType:  OperatorType,
+				CacheEnabled:    true,
+				ImageVersion:    "latest",
+				ImageWebVersion: "latest",
 				Api: repomanagerv1alpha1.Api{
 					Replicas: 1,
 				},
@@ -899,6 +900,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			waitPulpOperatorFinish(ctx, createdPulp)
 			createdPulp.Spec.Image = "quay.io/pulp/pulp2"
 			createdPulp.Spec.ImageVersion = "stable"
+			createdPulp.Spec.ImageWebVersion = "stable"
 			objectUpdate(ctx, createdPulp)
 
 			waitPulpOperatorFinish(ctx, createdPulp)
@@ -914,6 +916,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			// rollback the config to not impact other tests
 			createdPulp.Spec.Image = "quay.io/pulp/pulp"
 			createdPulp.Spec.ImageVersion = "latest"
+			createdPulp.Spec.ImageWebVersion = "latest"
 			objectUpdate(ctx, createdPulp)
 
 		})
@@ -965,6 +968,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			waitPulpOperatorFinish(ctx, createdPulp)
 			createdPulp.Spec.Image = "quay.io/pulp/pulp2"
 			createdPulp.Spec.ImageVersion = "stable"
+			createdPulp.Spec.ImageWebVersion = "stable"
 			// before trying to update an object we are doing another get to try to workaround
 			// the issue: "the object has been modified; please apply your changes to the latest version and try again"
 			objectUpdate(ctx, createdPulp)
@@ -981,6 +985,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			waitPulpOperatorFinish(ctx, createdPulp)
 			createdPulp.Spec.Image = "quay.io/pulp/pulp"
 			createdPulp.Spec.ImageVersion = "latest"
+			createdPulp.Spec.ImageWebVersion = "latest"
 			objectUpdate(ctx, createdPulp)
 		})
 	})
@@ -1028,6 +1033,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 
 			createdPulp.Spec.Image = "quay.io/pulp/pulp2"
 			createdPulp.Spec.ImageVersion = "stable"
+			createdPulp.Spec.ImageWebVersion = "stable"
 			objectUpdate(ctx, createdPulp)
 			waitPulpOperatorFinish(ctx, createdPulp)
 
@@ -1041,6 +1047,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			waitPulpOperatorFinish(ctx, createdPulp)
 			createdPulp.Spec.Image = "quay.io/pulp/pulp"
 			createdPulp.Spec.ImageVersion = "latest"
+			createdPulp.Spec.ImageWebVersion = "latest"
 			objectUpdate(ctx, createdPulp)
 		})
 	})

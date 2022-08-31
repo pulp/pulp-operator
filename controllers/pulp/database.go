@@ -18,6 +18,7 @@ package pulp
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -349,11 +350,11 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 		SuccessThreshold:    1,
 	}
 
-	postgresImage := ""
-	if m.Spec.Database.PostgresImage == "" {
-		postgresImage = "postgres:13"
-	} else {
+	postgresImage := os.Getenv("RELATED_IMAGE_PULP_POSTGRES")
+	if len(m.Spec.Database.PostgresImage) > 0 {
 		postgresImage = m.Spec.Database.PostgresImage
+	} else if postgresImage == "" {
+		postgresImage = "postgres:13"
 	}
 
 	containerPort := int32(0)

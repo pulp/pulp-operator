@@ -18,6 +18,7 @@ package pulp
 
 import (
 	"context"
+	"os"
 	"strings"
 	"time"
 
@@ -138,6 +139,12 @@ func (r *PulpReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *apps
 	ls := labelsForPulpWeb(m)
 	replicas := m.Spec.Web.Replicas
 	resources := m.Spec.Web.ResourceRequirements
+	ImageWeb := os.Getenv("RELATED_IMAGE_PULP_WEB")
+	if len(m.Spec.ImageWeb) > 0 && len(m.Spec.ImageWebVersion) > 0 {
+		ImageWeb = m.Spec.ImageWeb + ":" + m.Spec.ImageWebVersion
+	} else if ImageWeb == "" {
+		ImageWeb = "quay.io/pulp/pulp-web:stable"
+	}
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -163,7 +170,7 @@ func (r *PulpReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *apps
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image:     m.Spec.ImageWeb + ":" + m.Spec.ImageWebVersion,
+						Image:     ImageWeb,
 						Name:      "web",
 						Resources: resources,
 						Env: []corev1.EnvVar{

@@ -6,6 +6,7 @@ spec:
   deployment_type: pulp
   cache_enabled: true
   image_version: latest
+  image_web_version: latest
 #  affinity:
 #    nodeAffinity:
 #      requiredDuringSchedulingIgnoredDuringExecution:

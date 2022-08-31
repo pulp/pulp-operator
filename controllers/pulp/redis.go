@@ -2,6 +2,7 @@ package pulp
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -258,6 +259,12 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 		FailureThreshold:    5,
 		TimeoutSeconds:      5,
 	}
+	RedisImage := os.Getenv("RELATED_IMAGE_PULP_REDIS")
+	if len(m.Spec.RedisImage) > 0 {
+		RedisImage = m.Spec.RedisImage
+	} else if RedisImage == "" {
+		RedisImage = "redis:latest"
+	}
 
 	// deployment definition
 	return &appsv1.Deployment{
@@ -304,7 +311,7 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 					ServiceAccountName: "pulp-operator-controller-manager",
 					Containers: []corev1.Container{{
 						Name:            "redis",
-						Image:           m.Spec.RedisImage,
+						Image:           RedisImage,
 						ImagePullPolicy: corev1.PullPolicy("IfNotPresent"),
 						VolumeMounts:    volumeMounts,
 						Ports: []corev1.ContainerPort{{
