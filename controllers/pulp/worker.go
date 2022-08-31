@@ -49,9 +49,11 @@ func (r *PulpReconciler) pulpWorkerController(ctx context.Context, pulp *repoman
 		if err != nil {
 			log.Error(err, "Failed to create new Pulp Worker Deployment", "Deployment.Namespace", newWorkerDeployment.Namespace, "Deployment.Name", newWorkerDeployment.Name)
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Worker-Ready", "ErrorCreatingWorkerDeployment", "Failed to create "+pulp.Name+"-worker deployment resource: "+err.Error())
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new Worker Deployment")
 			return ctrl.Result{}, err
 		}
 		// Deployment created successfully - return and requeue
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "Worker Deployment created")
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get Pulp Worker Deployment")
@@ -62,16 +64,20 @@ func (r *PulpReconciler) pulpWorkerController(ctx context.Context, pulp *repoman
 	if !equality.Semantic.DeepDerivative(newWorkerDeployment.Spec, workerDeployment.Spec) {
 		log.Info("The Worker Deployment has been modified! Reconciling ...")
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Worker-Ready", "UpdatingWorkerDeployment", "Reconciling "+pulp.Name+"-worker deployment resource")
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling Worker Deployment")
 		err = r.Update(ctx, newWorkerDeployment)
 		if err != nil {
 			log.Error(err, "Error trying to update the Worker Deployment object ... ")
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Worker-Ready", "ErrorUpdatingWorkerDeployment", "Failed to reconcile "+pulp.Name+"-worker deployment resource: "+err.Error())
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile Worker Deployment")
 			return ctrl.Result{}, err
 		}
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Worker Deployment reconciled")
 		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 	}
 
 	r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Worker-Ready", "WorkerTasksFinished", "All Worker tasks ran successfully")
+	r.recorder.Event(pulp, corev1.EventTypeNormal, "WorkerReady", "All Worker tasks ran successfully")
 	return ctrl.Result{}, nil
 }
 

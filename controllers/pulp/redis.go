@@ -29,9 +29,11 @@ func (r *PulpReconciler) pulpCacheController(ctx context.Context, pulp *repomana
 		err = r.Create(ctx, pvc)
 		if err != nil {
 			log.Error(err, "Failed to create new Pulp Redis Data PVC", "PVC.Namespace", pvc.Namespace, "PVC.Name", pvc.Name)
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new Redis Data PVC")
 			return ctrl.Result{}, err
 		}
 		// PVC created successfully - return and requeue
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "Redis Data PVC created")
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get Pulp Redis Data PVC")
@@ -41,12 +43,15 @@ func (r *PulpReconciler) pulpCacheController(ctx context.Context, pulp *repomana
 	// Reconcile PVC
 	if !equality.Semantic.DeepDerivative(pvc.Spec, pvcFound.Spec) {
 		log.Info("The Redis PVC has been modified! Reconciling ...")
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling Redis PVC")
 		ctrl.SetControllerReference(pulp, pvc, r.Scheme)
 		err = r.Update(ctx, pvc)
 		if err != nil {
 			log.Error(err, "Error trying to update the Redis PVC object ... ")
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile Redis PVC")
 			return ctrl.Result{}, err
 		}
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Redis PVC reconciled")
 		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 	}
 
@@ -60,9 +65,11 @@ func (r *PulpReconciler) pulpCacheController(ctx context.Context, pulp *repomana
 		err = r.Create(ctx, svc)
 		if err != nil {
 			log.Error(err, "Failed to create new Redis Service", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new Redis Service")
 			return ctrl.Result{}, err
 		}
 		// Service created successfully - return and requeue
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "Redis Service created")
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get Redis Service")
@@ -73,11 +80,14 @@ func (r *PulpReconciler) pulpCacheController(ctx context.Context, pulp *repomana
 	if !equality.Semantic.DeepDerivative(svc.Spec, svcFound.Spec) {
 		log.Info("The Redis Service has been modified! Reconciling ...")
 		ctrl.SetControllerReference(pulp, svc, r.Scheme)
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling Redis Service")
 		err = r.Update(ctx, svc)
 		if err != nil {
 			log.Error(err, "Error trying to update the Redis Service object ... ")
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile Redis Service")
 			return ctrl.Result{}, err
 		}
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Redis Service reconciled")
 		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 	}
 
@@ -91,9 +101,11 @@ func (r *PulpReconciler) pulpCacheController(ctx context.Context, pulp *repomana
 		err = r.Create(ctx, dep)
 		if err != nil {
 			log.Error(err, "Failed to create new Pulp Redis Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new Redis Deployment")
 			return ctrl.Result{}, err
 		}
 		// Deployment created successfully - return and requeue
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "Redis Deployment created")
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get Pulp Redis Deployment")
@@ -104,14 +116,18 @@ func (r *PulpReconciler) pulpCacheController(ctx context.Context, pulp *repomana
 	if !equality.Semantic.DeepDerivative(dep.Spec, deploymentFound.Spec) {
 		log.Info("The Redis Deployment has been modified! Reconciling ...")
 		ctrl.SetControllerReference(pulp, dep, r.Scheme)
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling Redis Deployment")
 		err = r.Update(ctx, dep)
 		if err != nil {
 			log.Error(err, "Error trying to update the Redis Deployment object ... ")
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile Redis Deployment")
 			return ctrl.Result{}, err
 		}
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Redis Deployment reconciled")
 		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 	}
 
+	r.recorder.Event(pulp, corev1.EventTypeNormal, "RedisReady", "All Redis tasks ran successfully")
 	return ctrl.Result{}, nil
 
 }
