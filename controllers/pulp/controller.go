@@ -103,6 +103,12 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 
+	if strings.ToLower(pulp.Spec.IngressType) != "route" && pulp.Spec.ImageVersion != pulp.Spec.ImageWebVersion {
+		err := fmt.Errorf("image version and image web version should be equal ")
+		log.Error(err, "ImageVersion should be equal to ImageWebVersion")
+		return ctrl.Result{}, err
+	}
+
 	if len(pulp.Spec.ObjectStorageAzureSecret) > 0 && len(pulp.Spec.ObjectStorageS3Secret) > 0 {
 		err := fmt.Errorf("only one object storage is allowed")
 		log.Error(err, "Please choose between Azure and S3")

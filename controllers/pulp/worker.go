@@ -18,6 +18,7 @@ package pulp
 
 import (
 	"context"
+	"os"
 	"reflect"
 	"strconv"
 	"time"
@@ -313,6 +314,12 @@ func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *a
 	}
 
 	resources := m.Spec.Worker.ResourceRequirements
+	Image := os.Getenv("RELATED_IMAGE_PULP")
+	if len(m.Spec.Image) > 0 && len(m.Spec.ImageVersion) > 0 {
+		Image = m.Spec.Image + ":" + m.Spec.ImageVersion
+	} else if Image == "" {
+		Image = "quay.io/pulp/pulp:stable"
+	}
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -339,7 +346,7 @@ func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *a
 					TopologySpreadConstraints: topologySpreadConstraint,
 					Containers: []corev1.Container{{
 						Name:            "worker",
-						Image:           m.Spec.Image + ":" + m.Spec.ImageVersion,
+						Image:           Image,
 						ImagePullPolicy: corev1.PullPolicy(m.Spec.ImagePullPolicy),
 						Args:            []string{"pulp-worker"},
 						Env:             envVars,

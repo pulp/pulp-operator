@@ -47,6 +47,15 @@ spec:
         - --leader-elect
         image: controller:latest
         name: manager
+        env:
+          - name: RELATED_IMAGE_PULP
+            value: quay.io/pulp/pulp:stable
+          - name: RELATED_IMAGE_PULP_WEB
+            value: quay.io/pulp/pulp-web:stable
+          - name: RELATED_IMAGE_PULP_REDIS
+            value: redis:latest
+          - name: RELATED_IMAGE_PULP_POSTGRES
+            value: postgres:13
         securityContext:
           allowPrivilegeEscalation: false
         # TODO(user): uncomment for common cases that do not require escalating privileges
