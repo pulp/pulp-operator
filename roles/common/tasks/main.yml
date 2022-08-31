@@ -1,4 +1,6 @@
 ---
+- include_tasks: create_app_sa.yml
+
 - name: Fail execution if image_pull_secret or image_pull_secrets are defined but as NoneType ('image_pull_secret[s]:')
   fail:
     msg: "If image_pull_secret or image_pull_secrets will not be used, their declarations should be removed."
