@@ -30,20 +30,9 @@ nav:
   - Contributing: contributing.md
   - Containers: container.md
   - Custom Resources:
-      - Pulp:
-        - API: roles/pulp-api.md
-        - Common: roles/common.md
-        - Content: roles/pulp-content.md
-        - Routes: roles/pulp-routes.md
-        - Worker: roles/pulp-worker.md
-        - Web: roles/pulp-web.md
-        - Status: roles/pulp-status.md
-        - Postgres: roles/postgres.md
-        - Redis: roles/redis.md
-      - Pulp Backup:
-        - Backup: roles/backup.md
-      - Pulp Restore:
-        - Restore: roles/restore.md
+      - Pulp: pulp.md
+      - Pulp Backup: backup.md
+      - Pulp Restore: restore.md
   - Changelog: CHANGES.md
 markdown_extensions:
   - toc:
