@@ -26,7 +26,7 @@ If you want to evaluate Pulp quickly, try [Pulp in One Container](https://pulppr
 
 ## Pulp Operator
 
-An [Ansible Operator](https://www.ansible.com/blog/ansible-operator) for Pulp 3.
+An Operator for Pulp 3.
 
 Pulp Operator is under active development and not production ready yet. The goal is to provide a scalable and robust cluster for Pulp 3.
 
@@ -42,26 +42,12 @@ Note that Pulp operator works with three different types of service containers (
 ## Custom Resource Definitions
 Pulp Operator currently provides three different kinds of [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#custom-resources): Pulp, Pulp Backup and Pulp Restore.
 ### Pulp
-Manages the Pulp application and its deployments, services, etc. Through the following ansible roles:
-
-* [API](https://docs.pulpproject.org/pulp_operator/roles/pulp-api/)
-* [Content](https://docs.pulpproject.org/pulp_operator/roles/pulp-content/)
-* [Routes](https://docs.pulpproject.org/pulp_operator/roles/pulp-routes/)
-* [Worker](https://docs.pulpproject.org/pulp_operator/roles/pulp-worker/)
-* [Web](https://docs.pulpproject.org/pulp_operator/roles/pulp-web/)
-* [Status](https://docs.pulpproject.org/pulp_operator/roles/pulp-status/)
-* [Postgres](https://docs.pulpproject.org/pulp_operator/roles/postgres/)
-* [Redis](https://docs.pulpproject.org/pulp_operator/roles/redis/)
+Manages the Pulp application and its deployments, services, etc.
 
 ### Pulp Backup
-Manages pulp backup through the following ansible role:
-
-* [Backup](https://docs.pulpproject.org/pulp_operator/roles/backup/)
-
+Manages pulp backup
 ### Pulp Restore
-Manages the restoration of a pulp backup through the following ansible role:
-
-* [Restore](https://docs.pulpproject.org/pulp_operator/roles/restore/)
+Manages the restoration of a pulp backup
 ## Get Help
 
 Documentation: [https://docs.pulpproject.org/pulp_operator/](https://docs.pulpproject.org/pulp_operator/)

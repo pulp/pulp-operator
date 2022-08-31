@@ -84,18 +84,7 @@ with galaxy specific configuration.
 
 ## Pulp Operator
 
-[Ansible Operator](https://www.ansible.com/blog/ansible-operator) image, with the following ansible roles:
-
-* [Pulp API](/roles/pulp-api/)
-* [Pulp Content](/roles/pulp-content/)
-* [Pulp Routes](/roles/pulp-routes/)
-* [Pulp Worker](/roles/pulp-worker/)
-* [Pulp Web](/roles/pulp-web/)
-* [Pulp Status](/roles/pulp-status/)
-* [Backup](/roles/backup/)
-* [Restore](/roles/restore/)
-* [Postgres](/roles/postgres/)
-* [Redis](/roles/redis/)
+Operator image ...
 
 ### Tags
 
