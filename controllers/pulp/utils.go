@@ -1,7 +1,6 @@
 package pulp
 
 import (
-	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -14,61 +13,23 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
-	"time"
 
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	"github.com/pulp/pulp-operator/controllers"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/remotecommand"
 )
 
 // [TODO] refactor containerExec method so that it can be used by pulpBackup and pulpRestore resources
 // containerExec runs []command in the container
 func (r *PulpReconciler) containerExec(pod *corev1.Pod, command []string, container, namespace string) (string, error) {
-	execReq := r.RESTClient.
-		Post().
-		Namespace(namespace).
-		Resource("pods").
-		Name(pod.Name).
-		SubResource("exec").
-		VersionedParams(&corev1.PodExecOptions{
-			Container: container,
-			Command:   command,
-			Stdout:    true,
-			Stderr:    true,
-		}, runtime.NewParameterCodec(r.Scheme))
+	return controllers.ContainerExec(r.RESTClient, r.Scheme, r.RESTConfig, pod, command, container, namespace)
 
-	exec, err := remotecommand.NewSPDYExecutor(r.RESTConfig, "POST", execReq.URL())
-	if err != nil {
-		return "", err
-	}
-
-	stdout := new(bytes.Buffer)
-	stderr := new(bytes.Buffer)
-	err = exec.Stream(remotecommand.StreamOptions{
-		Stdout: stdout,
-		Stderr: stderr,
-		Tty:    false,
-	})
-	if err != nil {
-		return "", err
-	}
-
-	result := strings.TrimSpace(stdout.String()) + "\n" + strings.TrimSpace(stderr.String())
-	result = strings.TrimSpace(result)
-
-	// [TODO] remove this sleep and find a better way to make sure that it finished execution
-	// I think the exec.Stream command is not synchronous and sometimes when a task depends
-	// on the results of the previous one it is failing.
-	// But this is just a guess!!! We need to investigate it further.
-	time.Sleep(time.Second)
-	return result, nil
 }
 
 // Generate a random string with length pwdSize
