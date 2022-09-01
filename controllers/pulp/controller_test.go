@@ -1,4 +1,4 @@
-package pulp
+package pulp_test
 
 import (
 	"context"
