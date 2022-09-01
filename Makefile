@@ -110,6 +110,17 @@ vet: ## Run go vet against code.
 test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -v ./... -coverprofile cover.out
 
+.PHONY: testbin
+testbin:  ## Ensure envtest bins.
+# https://kubebuilder.io/reference/envtest.html
+ifneq ($(wildcard /usr/local/kubebuilder), )
+	@echo "/usr/local/kubebuilder already exists"
+else
+	curl -sSLo envtest-bins.tar.gz "https://go.kubebuilder.io/test-tools/$(ENVTEST_K8S_VERSION)/$(shell go env GOOS)/$(shell go env GOARCH)"
+	sudo mkdir -p /usr/local/kubebuilder
+	sudo tar -C /usr/local/kubebuilder --strip-components=1 -zvxf envtest-bins.tar.gz
+endif
+
 ##@ Build
 
 .PHONY: build
@@ -142,8 +153,8 @@ install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
-.PHONY: deploy
-local: kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+.PHONY: local
+local: kustomize ## Run controller in the K8s cluster specified in ~/.kube/config.
 	.ci/scripts/local.sh
 
 .PHONY: deploy
