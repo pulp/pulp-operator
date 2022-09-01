@@ -6,6 +6,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
@@ -137,7 +138,7 @@ func (r *PulpBackupReconciler) createBackupFile(ctx context.Context, secretType 
 	execCmd := []string{
 		"bash", "-c", "echo '" + string(secretSerialized) + "' > " + secretType.backupDir + "/" + secretType.backupFile,
 	}
-	_, err = r.containerExec(secretType.pod, execCmd, secretType.pulpBackup.Name+"-backup-manager", secretType.pod.Namespace)
+	_, err = controllers.ContainerExec(r, secretType.pod, execCmd, secretType.pulpBackup.Name+"-backup-manager", secretType.pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to backup "+secretType.secretName+" secret")
 		return err

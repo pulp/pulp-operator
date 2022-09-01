@@ -15,7 +15,6 @@ import (
 	"strings"
 
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
-	"github.com/pulp/pulp-operator/controllers"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -24,13 +23,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
-
-// [TODO] refactor containerExec method so that it can be used by pulpBackup and pulpRestore resources
-// containerExec runs []command in the container
-func (r *PulpReconciler) containerExec(pod *corev1.Pod, command []string, container, namespace string) (string, error) {
-	return controllers.ContainerExec(r.RESTClient, r.Scheme, r.RESTConfig, pod, command, container, namespace)
-
-}
 
 // Generate a random string with length pwdSize
 func createPwd(pwdSize int) string {

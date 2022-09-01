@@ -5,7 +5,6 @@ import (
 	"time"
 
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
-	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
@@ -14,11 +13,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
-
-// containerExec runs []command in the container
-func (r *PulpRestoreReconciler) containerExec(pod *corev1.Pod, command []string, container, namespace string) (string, error) {
-	return controllers.ContainerExec(r.RESTClient, r.Scheme, r.RESTConfig, pod, command, container, namespace)
-}
 
 // isFileStorage returns true if pulp is deployed with storage type = file
 // this is a workaround to identify if it will be necessary to mount /var/lib/pulp in the backup-manager pod
