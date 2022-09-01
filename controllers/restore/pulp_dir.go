@@ -4,6 +4,7 @@ import (
 	"context"
 
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -28,7 +29,7 @@ func (r *PulpRestoreReconciler) restorePulpDir(ctx context.Context, pulpRestore 
 	execCmd := []string{
 		"bash", "-c", "cp -fr " + backupDir + "/pulp/. /var/lib/pulp",
 	}
-	if _, err := r.containerExec(pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace); err != nil {
+	if _, err := controllers.ContainerExec(r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace); err != nil {
 		log.Error(err, "Failed to restore pulp dir")
 		return err
 	}

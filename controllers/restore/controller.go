@@ -122,7 +122,7 @@ func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	execCmd := []string{
 		"stat", backupDir,
 	}
-	_, err = r.containerExec(pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
+	_, err = controllers.ContainerExec(r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
 	if err != nil {
 		// requeue request when backupDir is not found
 		r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Failed to find "+backupDir+" dir!", "BackupDirNotFound")

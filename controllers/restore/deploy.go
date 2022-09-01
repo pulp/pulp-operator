@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,7 +27,7 @@ func (r *PulpRestoreReconciler) restorePulpCR(ctx context.Context, pulpRestore *
 		execCmd := []string{
 			"cat", backupDir + "/cr_object",
 		}
-		cmdOutput, err := r.containerExec(pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
+		cmdOutput, err := controllers.ContainerExec(r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
 		if err != nil {
 			log.Error(err, "Failed to get cr_object backup file!")
 			r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Failed to get cr_object backup file!", "FailedGet"+pulpRestore.Spec.DeploymentName+"CR")

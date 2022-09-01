@@ -33,6 +33,7 @@ import (
 
 	"github.com/go-logr/logr"
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	"github.com/pulp/pulp-operator/controllers"
 )
 
 func (r *PulpReconciler) pulpRouteController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
@@ -73,7 +74,7 @@ func (r *PulpReconciler) pulpRouteController(ctx context.Context, pulp *repomana
 	execCmd := []string{
 		"/usr/bin/route_paths.py", pulp.Name,
 	}
-	cmdOutput, err := r.containerExec(&pod, execCmd, "worker", pod.Namespace)
+	cmdOutput, err := controllers.ContainerExec(r, &pod, execCmd, "worker", pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to get routes from "+pod.Name)
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Route-Ready", "Failed to get routes!", "FailedGet"+pod.Name)

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
@@ -25,7 +26,7 @@ func (r *PulpBackupReconciler) backupPulpDir(ctx context.Context, pulpBackup *re
 		execCmd := []string{
 			"mkdir", "-p", backupDir + "/pulp",
 		}
-		_, err := r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
+		_, err := controllers.ContainerExec(r, pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
 		if err != nil {
 			log.Error(err, "Failed to create pulp backup dir")
 			return err
@@ -34,7 +35,7 @@ func (r *PulpBackupReconciler) backupPulpDir(ctx context.Context, pulpBackup *re
 		execCmd = []string{
 			"bash", "-c", "cp -fr /var/lib/pulp/. " + backupDir + "/pulp",
 		}
-		_, err = r.containerExec(pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
+		_, err = controllers.ContainerExec(r, pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
 		if err != nil {
 			log.Error(err, "Failed to backup pulp dir")
 			return err

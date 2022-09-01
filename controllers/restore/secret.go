@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -132,7 +133,7 @@ func (r *PulpRestoreReconciler) secret(ctx context.Context, resourceType, secret
 	execCmd := []string{
 		"test", "-f", backupDir + "/" + backupFile,
 	}
-	_, err := r.containerExec(pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
+	_, err := controllers.ContainerExec(r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
 
 	// if backupFile file is not found return the error
 	if err != nil {
@@ -144,7 +145,7 @@ func (r *PulpRestoreReconciler) secret(ctx context.Context, resourceType, secret
 		execCmd = []string{
 			"cat", backupDir + "/" + backupFile,
 		}
-		cmdOutput, err := r.containerExec(pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
+		cmdOutput, err := controllers.ContainerExec(r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
 		if err != nil {
 			log.Error(err, "Failed to get "+backupFile+"!")
 			r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Failed to get "+backupFile, "FailedGet"+resourceType+"Secret")

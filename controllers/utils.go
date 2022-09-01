@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"bytes"
+	"reflect"
 	"strings"
 	"time"
 
@@ -47,8 +48,23 @@ func IsOpenShift() (bool, error) {
 	return true, nil
 }
 
-func ContainerExec(client rest.Interface, scheme *runtime.Scheme, config *rest.Config, pod *corev1.Pod, command []string, container, namespace string) (string, error) {
-	execReq := client.
+// ContainerExec runs a command in the container
+func ContainerExec[T any](client T, pod *corev1.Pod, command []string, container, namespace string) (string, error) {
+
+	// get the concrete value of client ({PulpBackup,PulpBackupReconciler,PulpRestoreReconciler})
+	clientConcrete := reflect.ValueOf(client)
+
+	// here we are using the Indirect method to get the value where client is pointing to
+	// after that we are taking the RESTClient field from PulpBackup|PulpBackupReconciler|PulpRestoreReconciler and
+	// "transforming" it into an interface{} (through the Interface() method)
+	// and finally we are asserting that it is a *rest.RESTClient so that we can run the Post() method later
+	restClient := reflect.Indirect(clientConcrete).FieldByName("RESTClient").Elem().Interface().(*rest.RESTClient)
+
+	// we are basically doing the same as before, but this time asserting as runtime.Scheme and rest.Config
+	runtimeScheme := reflect.Indirect(clientConcrete).FieldByName("Scheme").Elem().Interface().(runtime.Scheme)
+	restConfig := reflect.Indirect(clientConcrete).FieldByName("RESTConfig").Elem().Interface().(rest.Config)
+
+	execReq := restClient.
 		Post().
 		Namespace(namespace).
 		Resource("pods").
@@ -59,9 +75,9 @@ func ContainerExec(client rest.Interface, scheme *runtime.Scheme, config *rest.C
 			Command:   command,
 			Stdout:    true,
 			Stderr:    true,
-		}, runtime.NewParameterCodec(scheme))
+		}, runtime.NewParameterCodec(&runtimeScheme))
 
-	exec, err := remotecommand.NewSPDYExecutor(config, "POST", execReq.URL())
+	exec, err := remotecommand.NewSPDYExecutor(&restConfig, "POST", execReq.URL())
 	if err != nil {
 		return "", err
 	}
