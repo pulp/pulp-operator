@@ -22,6 +22,7 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -34,6 +35,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/go-logr/logr"
+	configv1 "github.com/openshift/api/config/v1"
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 	"github.com/pulp/pulp-operator/controllers"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -774,13 +776,25 @@ func (r *PulpReconciler) pulpServerSecret(ctx context.Context, m *repomanagerv1a
 		dbSSLMode = m.Spec.Database.ExternalDB.PostgresSSLMode
 	}
 
+	// Handling user facing URLs
+	rootUrl := "http://" + m.Name + "-web-svc." + m.Namespace + ".svc.cluster.local:24880"
+	if strings.ToLower(m.Spec.IngressType) == "route" {
+		if len(m.Spec.RouteHost) == 0 {
+			ingress := &configv1.Ingress{}
+			r.Get(ctx, types.NamespacedName{Name: "cluster"}, ingress)
+			rootUrl = "https://" + m.Name + "." + ingress.Spec.Domain
+		} else {
+			rootUrl = "https://" + m.Spec.RouteHost
+		}
+	}
+
 	// default settings.py configuration
 	var pulp_settings = `CACHE_ENABLED = "True"
 DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
 GALAXY_COLLECTION_SIGNING_SERVICE = "ansible-default"
-ANSIBLE_API_HOSTNAME = "http://` + m.Name + `-web-svc.` + m.Namespace + `.svc.cluster.local:24880"
+ANSIBLE_API_HOSTNAME = "` + rootUrl + `"
 ANSIBLE_CERTS_DIR = "/etc/pulp/keys/"
-CONTENT_ORIGIN = "http://` + m.Name + `-web-svc.` + m.Namespace + `.svc.cluster.local:24880"
+CONTENT_ORIGIN = "` + rootUrl + `"
 DATABASES = {
 	'default': {
 		'HOST': '` + dbHost + `',
@@ -802,7 +816,7 @@ REDIS_HOST =  "` + m.Name + `-redis-svc.` + m.Namespace + `"
 REDIS_PORT =  "6379"
 REDIS_PASSWORD = ""
 TOKEN_AUTH_DISABLED = "False"
-TOKEN_SERVER = "http://` + m.Name + `-web-svc.` + m.Namespace + `.svc.cluster.local:24880/token/"
+TOKEN_SERVER = "http://` + m.Name + `-api-svc.` + m.Namespace + `.svc.cluster.local:24817/token/"
 TOKEN_SIGNATURE_ALGORITHM = "ES256"
 `
 
