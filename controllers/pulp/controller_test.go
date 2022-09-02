@@ -714,8 +714,6 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				},
 				FileStorageAccessMode: "ReadWriteOnce",
 				FileStorageSize:       "2Gi",
-				FileStorageClass:      "standard",
-				RedisStorageClass:     "standard",
 				IngressType:           "nodeport",
 				PulpSettings:          pulpSettings,
 			},
@@ -832,49 +830,6 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				Skip("Default storage class defined")
 			}
 
-			By("Checking if sts template is configured to use emptyDir volume")
-			var found bool
-			for _, volume := range createdSts.Spec.Template.Spec.Volumes {
-				if volume.Name == "postgres" && reflect.DeepEqual(volume.VolumeSource.EmptyDir, &corev1.EmptyDirVolumeSource{}) {
-					found = true
-					break
-				}
-			}
-			Expect(found).Should(BeTrue())
-		})
-	})
-
-	Context("When pulp is not configured with object storage nor pulp.Spec.FileStorageClass is defined and there is no default SC", func() {
-		It("Shoud configure the api pod template with an emptyDir volume", func() {
-			By("Checking if an object storage is not defined")
-			if len(createdPulp.Spec.ObjectStorageAzureSecret) != 0 || len(createdPulp.Spec.ObjectStorageS3Secret) != 0 {
-				Skip("Object storage defined")
-			}
-
-			By("Checking if fileSC is not defined")
-			if createdPulp.Spec.FileStorageClass != "" {
-				Skip("FileStorageClass defined")
-			}
-
-			By("Checking if there is no default SC")
-			if isDefaultSCDefined() {
-				Skip("Default storage class defined")
-			}
-
-			By("Checking if api deployment is configured to use emptyDir volume")
-			var foundTmp, foundAsset bool
-			apiDeployment := &appsv1.Deployment{}
-			objectGet(ctx, apiDeployment, PulpName+"-api")
-			for _, volume := range apiDeployment.Spec.Template.Spec.Volumes {
-				if volume.Name == "tmp-file-storage" && reflect.DeepEqual(volume.VolumeSource.EmptyDir, &corev1.EmptyDirVolumeSource{}) {
-					foundTmp = true
-				}
-				if volume.Name == "assets-file-storage" && reflect.DeepEqual(volume.VolumeSource.EmptyDir, &corev1.EmptyDirVolumeSource{}) {
-					foundAsset = true
-				}
-			}
-			Expect(foundTmp).Should(BeTrue())
-			Expect(foundAsset).Should(BeTrue())
 		})
 	})
 

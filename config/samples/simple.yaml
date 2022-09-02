@@ -30,9 +30,6 @@ spec:
 
   file_storage_access_mode: "ReadWriteOnce"
   file_storage_size: "2Gi"
-  file_storage_storage_class: "standard"
-
-  redis_storage_class: standard
 
   ingress_type: nodeport
 

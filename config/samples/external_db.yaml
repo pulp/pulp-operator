@@ -22,7 +22,6 @@ metadata:
   labels:
     app: external-db
 spec:
-  storageClassName: standard
   volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce

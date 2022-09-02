@@ -45,7 +45,6 @@ type PulpSpec struct {
 	FileStorageAccessMode string `json:"file_storage_access_mode,omitempty"`
 
 	// Storage class to use for the file persistentVolumeClaim
-	// +kubebuilder:default:="standard"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File","urn:alm:descriptor:io.kubernetes:StorageClass"}
 	FileStorageClass string `json:"file_storage_storage_class,omitempty"`
@@ -172,7 +171,6 @@ type PulpSpec struct {
 
 	// Storage class to use for the Redis PVC
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:default:="standard"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:StorageClass","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	RedisStorageClass string `json:"redis_storage_class,omitempty"`
 
@@ -446,7 +444,6 @@ type Database struct {
 
 	// Name of the StorageClass required by the claim.
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:default:="standard"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:StorageClass","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	PostgresStorageClass *string `json:"postgres_storage_class,omitempty"`
 }

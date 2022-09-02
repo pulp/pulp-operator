@@ -304,9 +304,6 @@ func (r *PulpReconciler) fileStoragePVC(m *repomanagerv1alpha1.Pulp) *corev1.Per
 		pvc.Spec.StorageClassName = &m.Spec.FileStorageClass
 	}
 
-	// Set Pulp instance as the owner and controller
-	ctrl.SetControllerReference(m, pvc, r.Scheme)
-
 	return pvc
 
 }

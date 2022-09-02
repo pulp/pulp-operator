@@ -292,9 +292,6 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 		postgresStorageSize = resource.MustParse(m.Spec.Database.PostgresStorageRequirements)
 	}
 
-	// issue #526
-	// if .Spec.Database.PostgresStorageClass == "" and there is no default SC defined
-	// we should mount an emptyDir volume in pod
 	pvcSpec := corev1.PersistentVolumeClaimSpec{}
 	pvcSpec = corev1.PersistentVolumeClaimSpec{
 		AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},

@@ -89,14 +89,12 @@ metadata:
             "deployment_type": "pulp",
             "file_storage_access_mode": "ReadWriteOnce",
             "file_storage_size": "2Gi",
-            "file_storage_storage_class": "standard",
             "image_version": "latest",
             "ingress_type": "nodeport",
             "is_k8s": true,
             "pulp_settings": {
               "api_root": "/pulp/"
             },
-            "redis_storage_class": "standard",
             "web": {
               "replicas": 1
             },
