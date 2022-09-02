@@ -693,8 +693,11 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				Namespace: PulpNamespace,
 			},
 			Spec: repomanagerv1alpha1.PulpSpec{
-				DeploymentType:  OperatorType,
-				CacheEnabled:    true,
+				DeploymentType: OperatorType,
+				Cache: repomanagerv1alpha1.Cache{
+					Enabled:           true,
+					RedisStorageClass: "standard",
+				},
 				ImageVersion:    "latest",
 				ImageWebVersion: "latest",
 				Api: repomanagerv1alpha1.Api{
@@ -715,7 +718,6 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				FileStorageAccessMode: "ReadWriteOnce",
 				FileStorageSize:       "2Gi",
 				FileStorageClass:      "standard",
-				RedisStorageClass:     "standard",
 				IngressType:           "nodeport",
 				PulpSettings:          pulpSettings,
 			},

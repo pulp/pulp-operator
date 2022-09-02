@@ -113,10 +113,15 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 
-	if len(pulp.Spec.ObjectStorageAzureSecret) > 0 && len(pulp.Spec.ObjectStorageS3Secret) > 0 {
-		err := fmt.Errorf("only one object storage is allowed")
-		log.Error(err, "Please choose between Azure and S3")
-		return ctrl.Result{}, err
+	// Checking if there is more than one storage type defined.
+	// Only a single type should be provided, if more the operator will not be able to
+	// determine which one should be used.
+	for _, resource := range []string{"Pulp", "Cache", "Database"} {
+		if foundMultiStorage, storageType := controllers.MultiStorageConfigured(pulp, resource); foundMultiStorage {
+			err := fmt.Errorf("found more than one storage type (%s) for %s", storageType, resource)
+			log.Error(err, "Please choose only one storage type or do not define any to use emptyDir")
+			return ctrl.Result{}, err
+		}
 	}
 
 	var pulpController reconcile.Result

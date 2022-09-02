@@ -44,7 +44,8 @@ import (
 func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// pulp-file-storage
-	if len(pulp.Spec.ObjectStorageAzureSecret) == 0 && len(pulp.Spec.ObjectStorageS3Secret) == 0 {
+	// the PVC will be created only if a StorageClassName is provided
+	if _, storageType := controllers.MultiStorageConfigured(pulp, "Pulp"); storageType[0] == controllers.SCNameType {
 		pvcFound := &corev1.PersistentVolumeClaim{}
 		err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-file-storage", Namespace: pulp.Namespace}, pvcFound)
 		expected_pvc := r.fileStoragePVC(pulp)
@@ -297,11 +298,8 @@ func (r *PulpReconciler) fileStoragePVC(m *repomanagerv1alpha1.Pulp) *corev1.Per
 			AccessModes: []corev1.PersistentVolumeAccessMode{
 				corev1.PersistentVolumeAccessMode(m.Spec.FileStorageAccessMode),
 			},
+			StorageClassName: &m.Spec.FileStorageClass,
 		},
-	}
-
-	if len(m.Spec.FileStorageClass) > 0 {
-		pvc.Spec.StorageClassName = &m.Spec.FileStorageClass
 	}
 
 	// Set Pulp instance as the owner and controller
@@ -370,10 +368,10 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		{Name: "PULP_API_WORKERS", Value: strconv.Itoa(m.Spec.Api.GunicornWorkers)},
 	}
 
-	if m.Spec.CacheEnabled {
+	if m.Spec.Cache.Enabled {
 		redisEnvVars := []corev1.EnvVar{
 			{Name: "REDIS_SERVICE_HOST", Value: m.Name + "-redis-svc." + m.Namespace},
-			{Name: "REDIS_SERVICE_PORT", Value: strconv.Itoa(m.Spec.RedisPort)},
+			{Name: "REDIS_SERVICE_PORT", Value: strconv.Itoa(m.Spec.Cache.RedisPort)},
 		}
 		envVars = append(envVars, redisEnvVars...)
 	}
@@ -442,10 +440,10 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		},
 	}
 
-	// issue #526
-	// if .Spec.FileStorageClass == "" and there is no default SC defined
-	// we should mount an emptyDir volume in pod
-	if len(m.Spec.ObjectStorageAzureSecret) == 0 && len(m.Spec.ObjectStorageS3Secret) == 0 {
+	_, storageType := controllers.MultiStorageConfigured(m, "Pulp")
+
+	// if SC defined, we should use the PVC provisioned by the operator
+	if storageType[0] == controllers.SCNameType {
 		fileStorage := corev1.Volume{
 			Name: "file-storage",
 			VolumeSource: corev1.VolumeSource{
@@ -455,7 +453,21 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 			},
 		}
 		volumes = append(volumes, fileStorage)
-	} else {
+
+		// if .spec.Api.PVC defined we should use the PVC provisioned by user
+	} else if storageType[0] == controllers.PVCType {
+		fileStorage := corev1.Volume{
+			Name: "file-storage",
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: m.Spec.PVC,
+				},
+			},
+		}
+		volumes = append(volumes, fileStorage)
+
+		// if there is no SC nor PVC nor object storage defined we will mount an emptyDir
+	} else if storageType[0] == controllers.EmptyDirType {
 		emptyDir := []corev1.Volume{
 			{
 				Name: "tmp-file-storage",
@@ -555,14 +567,17 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		},
 	}
 
-	if len(m.Spec.ObjectStorageAzureSecret) == 0 && len(m.Spec.ObjectStorageS3Secret) == 0 {
+	// we will mount file-storage if a storageclass or a pvc was provided
+	if storageType[0] == controllers.SCNameType || storageType[0] == controllers.PVCType {
 		fileStorageMount := corev1.VolumeMount{
 			Name:      "file-storage",
 			ReadOnly:  false,
 			MountPath: "/var/lib/pulp",
 		}
 		volumeMounts = append(volumeMounts, fileStorageMount)
-	} else {
+
+		// if no file-storage nor object storage were provided we will mount the emptyDir
+	} else if storageType[0] == controllers.EmptyDirType {
 		emptyDir := []corev1.VolumeMount{
 			{
 				Name:      "tmp-file-storage",
@@ -754,6 +769,7 @@ func labelsForPulpApi(m *repomanagerv1alpha1.Pulp) map[string]string {
 func (r *PulpReconciler) pulpServerSecret(ctx context.Context, m *repomanagerv1alpha1.Pulp, log logr.Logger) *corev1.Secret {
 
 	var dbHost, dbPort, dbUser, dbPass, dbName, dbSSLMode string
+	_, storageType := controllers.MultiStorageConfigured(m, "Pulp")
 
 	// if there is no external database configuration get the databaseconfig from pulp-postgres-configuration secret
 	if reflect.DeepEqual(m.Spec.Database.ExternalDB, repomanagerv1alpha1.ExternalDB{}) {
@@ -824,7 +840,9 @@ TOKEN_SIGNATURE_ALGORITHM = "ES256"
 
 	pulp_settings = pulp_settings + fmt.Sprintln("API_ROOT = \"/pulp/\"")
 
-	if len(m.Spec.ObjectStorageAzureSecret) > 0 {
+	// if an Azure Blob is defined in Pulp CR we should add the
+	// credentials from azure secret into settings.py
+	if storageType[0] == controllers.AzureObjType {
 		log.Info("Retrieving Azure data from " + m.Spec.ObjectStorageAzureSecret)
 		storageData, err := r.retrieveSecretData(ctx, m.Spec.ObjectStorageAzureSecret, m.Namespace, true, "azure-account-name", "azure-account-key", "azure-container", "azure-container-path", "azure-connection-string")
 		if err != nil {
@@ -841,7 +859,9 @@ DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
 `
 	}
 
-	if len(m.Spec.ObjectStorageS3Secret) > 0 {
+	// if a S3 is defined in Pulp CR we should add the
+	// credentials from aws secret into settings.py
+	if storageType[0] == controllers.S3ObjType {
 		log.Info("Retrieving S3 data from " + m.Spec.ObjectStorageS3Secret)
 		storageData, err := r.retrieveSecretData(ctx, m.Spec.ObjectStorageS3Secret, m.Namespace, true, "s3-access-key-id", "s3-secret-access-key", "s3-bucket-name", "s3-region")
 		if err != nil {

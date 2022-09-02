@@ -36,6 +36,7 @@ import (
 
 	"github.com/go-logr/logr"
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	"github.com/pulp/pulp-operator/controllers"
 )
 
 func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
@@ -292,28 +293,52 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 		postgresStorageSize = resource.MustParse(m.Spec.Database.PostgresStorageRequirements)
 	}
 
-	// issue #526
-	// if .Spec.Database.PostgresStorageClass == "" and there is no default SC defined
-	// we should mount an emptyDir volume in pod
-	pvcSpec := corev1.PersistentVolumeClaimSpec{}
-	pvcSpec = corev1.PersistentVolumeClaimSpec{
-		AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-		Resources: corev1.ResourceRequirements{
-			Requests: corev1.ResourceList{
-				corev1.ResourceName(corev1.ResourceStorage): postgresStorageSize,
-			},
-		},
-	}
-	if m.Spec.Database.PostgresStorageClass != nil {
-		pvcSpec.StorageClassName = m.Spec.Database.PostgresStorageClass
-	}
+	///pvcSpec := corev1.PersistentVolumeClaimSpec{}
+	volumeClaimTemplate := []corev1.PersistentVolumeClaim{}
+	volumes := []corev1.Volume{}
+	_, storageType := controllers.MultiStorageConfigured(m, "Database")
 
-	volumeClaimTemplate := []corev1.PersistentVolumeClaim{{
-		ObjectMeta: metav1.ObjectMeta{
+	// if SC defined, we should use the PVC claimed by STS
+	if storageType[0] == controllers.SCNameType {
+		pvc := corev1.PersistentVolumeClaim{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "postgres",
+			},
+			Spec: corev1.PersistentVolumeClaimSpec{
+				AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceName(corev1.ResourceStorage): postgresStorageSize,
+					},
+				},
+				StorageClassName: m.Spec.Database.PostgresStorageClass,
+			},
+		}
+		volumeClaimTemplate = append(volumeClaimTemplate, pvc)
+
+		// if .spec.Database.PVC defined we should use the PVC provisioned by user
+	} else if storageType[0] == controllers.PVCType {
+		volume := corev1.Volume{
 			Name: "postgres",
-		},
-		Spec: pvcSpec,
-	},
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: m.Spec.Database.PVC,
+				},
+			},
+		}
+		volumes = append(volumes, volume)
+
+		// if there is no SC nor PVC nor object storage defined we will mount an emptyDir
+	} else if storageType[0] == controllers.EmptyDirType {
+		emptyDir := []corev1.Volume{
+			{
+				Name: "postgres",
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{},
+				},
+			},
+		}
+		volumes = append(volumes, emptyDir...)
 	}
 
 	volumeMounts := []corev1.VolumeMount{
@@ -417,6 +442,7 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 						VolumeMounts:   volumeMounts,
 						Resources:      resources,
 					}},
+					Volumes: volumes,
 				},
 			},
 			VolumeClaimTemplates: volumeClaimTemplate,

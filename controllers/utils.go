@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,6 +17,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+)
+
+const (
+	AzureObjType = "azure blob"
+	S3ObjType    = "s3"
+	SCNameType   = "StorageClassName"
+	PVCType      = "PVC"
+	EmptyDirType = "emptyDir"
 )
 
 // ignoreUpdateCRStatusPredicate filters update events on pulpbackup CR status
@@ -46,6 +56,69 @@ func IsOpenShift() (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+// multiStorageConfigured returns true if Pulp CR is configured with more than one "storage type"
+// for example, if ObjectStorageAzureSecret and FileStorageClass are defined we can't determine
+// which one the operator should use.
+func MultiStorageConfigured(pulp *repomanagerv1alpha1.Pulp, resource string) (bool, []string) {
+	var names []string
+
+	switch resource {
+	case "Pulp":
+		if len(pulp.Spec.ObjectStorageAzureSecret) > 0 {
+			names = append(names, AzureObjType)
+		}
+
+		if len(pulp.Spec.ObjectStorageS3Secret) > 0 {
+			names = append(names, S3ObjType)
+		}
+
+		if len(pulp.Spec.FileStorageClass) > 0 {
+			names = append(names, SCNameType)
+		}
+
+		if len(pulp.Spec.PVC) > 0 {
+			names = append(names, PVCType)
+		}
+
+		if len(names) > 1 {
+			return true, names
+		} else if len(names) == 0 {
+			return false, []string{EmptyDirType}
+		}
+
+	case "Cache":
+		if len(pulp.Spec.Cache.RedisStorageClass) > 0 {
+			names = append(names, SCNameType)
+		}
+
+		if len(pulp.Spec.Cache.PVC) > 0 {
+			names = append(names, PVCType)
+		}
+
+		if len(names) > 1 {
+			return true, names
+		} else if len(names) == 0 {
+			return false, []string{EmptyDirType}
+		}
+
+	case "Database":
+		if len(pulp.Spec.Database.PVC) > 0 {
+			names = append(names, PVCType)
+		}
+		if pulp.Spec.Database.PostgresStorageClass != nil {
+			names = append(names, SCNameType)
+		}
+
+		if len(names) > 1 {
+			return true, names
+		} else if len(names) == 0 {
+			return false, []string{EmptyDirType}
+		}
+	}
+
+	return false, names
 }
 
 // ContainerExec runs a command in the container
