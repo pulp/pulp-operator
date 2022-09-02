@@ -4,7 +4,6 @@ metadata:
   name: example-pulp
 spec:
   deployment_type: pulp
-  cache_enabled: true
   image_version: latest
   image_web_version: latest
 #  affinity:
@@ -26,13 +25,17 @@ spec:
     replicas: 1
 
   database:
+    postgres_storage_class: standard
 #    postgres_storage_requirements: "5Gi"
 
   file_storage_access_mode: "ReadWriteOnce"
   file_storage_size: "2Gi"
-  file_storage_storage_class: "standard"
+  file_storage_storage_class: standard
 
-  redis_storage_class: standard
+  # Redis configs
+  cache:
+    enabled: true
+    redis_storage_class: standard
 
   ingress_type: nodeport
 

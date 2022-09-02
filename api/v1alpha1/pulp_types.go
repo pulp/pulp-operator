@@ -45,7 +45,6 @@ type PulpSpec struct {
 	FileStorageAccessMode string `json:"file_storage_access_mode,omitempty"`
 
 	// Storage class to use for the file persistentVolumeClaim
-	// +kubebuilder:default:="standard"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File","urn:alm:descriptor:io.kubernetes:StorageClass"}
 	FileStorageClass string `json:"file_storage_storage_class,omitempty"`
@@ -61,6 +60,13 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="S3 secret"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:S3"}
 	ObjectStorageS3Secret string `json:"object_storage_s3_secret,omitempty"`
+
+	// PersistenVolumeClaim name that will be used by Pulp pods
+	// If defined, the PVC must be provisioned by the user and the operator will only
+	// configure the deployment to use it
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	PVC string `json:"pvc,omitempty"`
 
 	// Secret where the Fernet symmetric encryption key is stored.
 	// +kubebuilder:validation:Optional
@@ -159,32 +165,9 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	Web Web `json:"web,omitempty"`
 
-	// +kubebuilder:default:=true
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:booleanSwitch"}
-	CacheEnabled bool `json:"cache_enabled,omitempty"`
-
-	// The image name for the redis image.
-	// +kubebuilder:default:="redis:latest"
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	RedisImage string `json:"redis_image,omitempty"`
-
-	// Storage class to use for the Redis PVC
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:default:="standard"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:StorageClass","urn:alm:descriptor:com.tectonic.ui:advanced"}
-	RedisStorageClass string `json:"redis_storage_class,omitempty"`
-
-	// +kubebuilder:default:=6379
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number","urn:alm:descriptor:com.tectonic.ui:advanced"}
-	RedisPort int `json:"redis_port,omitempty"`
-
-	// Resource requirements for the Redis container
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
-	RedisResourceRequirements corev1.ResourceRequirements `json:"redis_resource_requirements,omitempty"`
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	Cache Cache `json:"cache,omitempty"`
 
 	// The pulp settings.
 	// +kubebuilder:pruning:PreserveUnknownFields
@@ -221,6 +204,7 @@ type Affinity struct {
 }
 
 type Api struct {
+
 	// Size is the size of number of pulp-api replicas.
 	// +kubebuilder:default:=1
 	// +kubebuilder:validation:Minimum:=0
@@ -261,7 +245,7 @@ type Api struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	GunicornWorkers int `json:"gunicorn_workers,omitempty"`
 
-	// Resource requirements for the pulp content container.
+	// Resource requirements for the pulp api container.
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
@@ -446,9 +430,51 @@ type Database struct {
 
 	// Name of the StorageClass required by the claim.
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:default:="standard"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:StorageClass","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	PostgresStorageClass *string `json:"postgres_storage_class,omitempty"`
+
+	// PersistenVolumeClaim name that will be used by database pods
+	// If defined, the PVC must be provisioned by the user and the operator will only
+	// configure the deployment to use it
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	PVC string `json:"pvc,omitempty"`
+}
+
+type Cache struct {
+
+	// +kubebuilder:default:=true
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:booleanSwitch"}
+	Enabled bool `json:"enabled,omitempty"`
+
+	// The image name for the redis image.
+	// +kubebuilder:default:="redis:latest"
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	RedisImage string `json:"redis_image,omitempty"`
+
+	// Storage class to use for the Redis PVC
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:StorageClass","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	RedisStorageClass string `json:"redis_storage_class,omitempty"`
+
+	// +kubebuilder:default:=6379
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	RedisPort int `json:"redis_port,omitempty"`
+
+	// Resource requirements for the Redis container
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	RedisResourceRequirements corev1.ResourceRequirements `json:"redis_resource_requirements,omitempty"`
+
+	// PersistenVolumeClaim name that will be used by Redis pods
+	// If defined, the PVC must be provisioned by the user and the operator will only
+	// configure the deployment to use it
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	PVC string `json:"pvc,omitempty"`
 }
 
 // PulpStatus defines the observed state of Pulp

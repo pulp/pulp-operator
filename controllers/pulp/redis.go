@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-logr/logr"
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	"github.com/pulp/pulp-operator/controllers"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -21,44 +22,47 @@ import (
 func (r *PulpReconciler) pulpCacheController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// pulp-redis-data PVC
-	pvcFound := &corev1.PersistentVolumeClaim{}
-	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-redis-data", Namespace: pulp.Namespace}, pvcFound)
-	pvc := redisDataPVC(pulp)
-	if err != nil && errors.IsNotFound(err) {
-		ctrl.SetControllerReference(pulp, pvc, r.Scheme)
-		log.Info("Creating a new Pulp Redis Data PVC", "PVC.Namespace", pvc.Namespace, "PVC.Name", pvc.Name)
-		err = r.Create(ctx, pvc)
-		if err != nil {
-			log.Error(err, "Failed to create new Pulp Redis Data PVC", "PVC.Namespace", pvc.Namespace, "PVC.Name", pvc.Name)
-			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new Redis Data PVC")
+	// the PVC will be created only if a StorageClassName is provided
+	if _, storageType := controllers.MultiStorageConfigured(pulp, "Cache"); storageType[0] == controllers.SCNameType {
+		pvcFound := &corev1.PersistentVolumeClaim{}
+		err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-redis-data", Namespace: pulp.Namespace}, pvcFound)
+		pvc := redisDataPVC(pulp)
+		if err != nil && errors.IsNotFound(err) {
+			ctrl.SetControllerReference(pulp, pvc, r.Scheme)
+			log.Info("Creating a new Pulp Redis Data PVC", "PVC.Namespace", pvc.Namespace, "PVC.Name", pvc.Name)
+			err = r.Create(ctx, pvc)
+			if err != nil {
+				log.Error(err, "Failed to create new Pulp Redis Data PVC", "PVC.Namespace", pvc.Namespace, "PVC.Name", pvc.Name)
+				r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new Redis Data PVC")
+				return ctrl.Result{}, err
+			}
+			// PVC created successfully - return and requeue
+			r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "Redis Data PVC created")
+			return ctrl.Result{Requeue: true}, nil
+		} else if err != nil {
+			log.Error(err, "Failed to get Pulp Redis Data PVC")
 			return ctrl.Result{}, err
 		}
-		// PVC created successfully - return and requeue
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "Redis Data PVC created")
-		return ctrl.Result{Requeue: true}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get Pulp Redis Data PVC")
-		return ctrl.Result{}, err
-	}
 
-	// Reconcile PVC
-	if !equality.Semantic.DeepDerivative(pvc.Spec, pvcFound.Spec) {
-		log.Info("The Redis PVC has been modified! Reconciling ...")
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling Redis PVC")
-		ctrl.SetControllerReference(pulp, pvc, r.Scheme)
-		err = r.Update(ctx, pvc)
-		if err != nil {
-			log.Error(err, "Error trying to update the Redis PVC object ... ")
-			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile Redis PVC")
-			return ctrl.Result{}, err
+		// Reconcile PVC
+		if !equality.Semantic.DeepDerivative(pvc.Spec, pvcFound.Spec) {
+			log.Info("The Redis PVC has been modified! Reconciling ...")
+			r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling Redis PVC")
+			ctrl.SetControllerReference(pulp, pvc, r.Scheme)
+			err = r.Update(ctx, pvc)
+			if err != nil {
+				log.Error(err, "Error trying to update the Redis PVC object ... ")
+				r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile Redis PVC")
+				return ctrl.Result{}, err
+			}
+			r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Redis PVC reconciled")
+			return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 		}
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Redis PVC reconciled")
-		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 	}
 
 	// redis-svc Service
 	svcFound := &corev1.Service{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-redis-svc", Namespace: pulp.Namespace}, svcFound)
+	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-redis-svc", Namespace: pulp.Namespace}, svcFound)
 	svc := redisSvc(pulp)
 	if err != nil && errors.IsNotFound(err) {
 		ctrl.SetControllerReference(pulp, svc, r.Scheme)
@@ -157,22 +161,14 @@ func redisDataPVC(m *repomanagerv1alpha1.Pulp) *corev1.PersistentVolumeClaim {
 			AccessModes: []corev1.PersistentVolumeAccessMode{
 				corev1.PersistentVolumeAccessMode("ReadWriteOnce"),
 			},
+			StorageClassName: &m.Spec.Cache.RedisStorageClass,
 		},
-	}
-	if len(m.Spec.RedisStorageClass) > 0 {
-		pvc.Spec.StorageClassName = &m.Spec.RedisStorageClass
 	}
 	return pvc
 }
 
 // redis-svc Service
 func redisSvc(m *repomanagerv1alpha1.Pulp) *corev1.Service {
-	/*
-		serviceInternalTrafficPolicyCluster := corev1.ServiceInternalTrafficPolicyType("Cluster")
-		ipFamilyPolicyType := corev1.IPFamilyPolicyType("SingleStack")
-		serviceAffinity := corev1.ServiceAffinity("None")
-		serviceType := corev1.ServiceType("ClusterIP")
-	*/
 	servicePortProto := corev1.Protocol("TCP")
 	targetPort := intstr.IntOrString{IntVal: 6379}
 
@@ -206,9 +202,7 @@ func redisSvc(m *repomanagerv1alpha1.Pulp) *corev1.Service {
 	}
 }
 
-// redis Deployment
-
-// deploymentForPulpApi returns a pulp-api Deployment object
+// redisDeployment returns a Redis Deployment object
 func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 
 	replicas := int32(1)
@@ -218,17 +212,35 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 		affinity.NodeAffinity = m.Spec.Api.Affinity.NodeAffinity
 	}
 
+	_, storageType := controllers.MultiStorageConfigured(m, "Cache")
+	volumeSource := corev1.VolumeSource{}
+	// if SC defined, we should use the PVC provisioned by the operator
+	if storageType[0] == controllers.SCNameType {
+		volumeSource = corev1.VolumeSource{
+			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+				ClaimName: m.Name + "-redis-data",
+			},
+		}
+
+		// if .spec.Cache.PVC defined we should use the PVC provisioned by user
+	} else if storageType[0] == controllers.PVCType {
+		volumeSource = corev1.VolumeSource{
+			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+				ClaimName: m.Spec.Cache.PVC,
+			},
+		}
+
+		// if there is no SC nor PVC object storage defined we will mount an emptyDir
+	} else if storageType[0] == controllers.EmptyDirType {
+		volumeSource = corev1.VolumeSource{
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
+		}
+	}
+
 	volumes := []corev1.Volume{
 		{
-			Name: m.Name + "-redis-data",
-			/*VolumeSource: corev1.VolumeSource{
-				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: m.Name + "-redis-data",
-				},
-			},*/
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-			},
+			Name:         m.Name + "-redis-data",
+			VolumeSource: volumeSource,
 		},
 	}
 
@@ -276,8 +288,8 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 		TimeoutSeconds:      5,
 	}
 	RedisImage := os.Getenv("RELATED_IMAGE_PULP_REDIS")
-	if len(m.Spec.RedisImage) > 0 {
-		RedisImage = m.Spec.RedisImage
+	if len(m.Spec.Cache.RedisImage) > 0 {
+		RedisImage = m.Spec.Cache.RedisImage
 	} else if RedisImage == "" {
 		RedisImage = "redis:latest"
 	}
@@ -336,7 +348,7 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 						}},
 						LivenessProbe:  livenessProbe,
 						ReadinessProbe: readinessProbe,
-						Resources:      m.Spec.RedisResourceRequirements,
+						Resources:      m.Spec.Cache.RedisResourceRequirements,
 					}},
 					Volumes: volumes,
 				},

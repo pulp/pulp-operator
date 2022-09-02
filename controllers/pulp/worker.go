@@ -195,7 +195,10 @@ func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *a
 		volumes = append(volumes, signingSecretVolume...)
 	}
 
-	if len(m.Spec.ObjectStorageAzureSecret) == 0 && len(m.Spec.ObjectStorageS3Secret) == 0 {
+	_, storageType := controllers.MultiStorageConfigured(m, "Pulp")
+
+	// if SC defined, we should use the PVC provisioned by the operator
+	if storageType[0] == controllers.SCNameType {
 		fileStorage := corev1.Volume{
 			Name: "file-storage",
 			VolumeSource: corev1.VolumeSource{
@@ -205,7 +208,21 @@ func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *a
 			},
 		}
 		volumes = append(volumes, fileStorage)
-	} else {
+
+		// if .spec.Api.PVC defined we should use the PVC provisioned by user
+	} else if storageType[0] == controllers.PVCType {
+		fileStorage := corev1.Volume{
+			Name: "file-storage",
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: m.Spec.PVC,
+				},
+			},
+		}
+		volumes = append(volumes, fileStorage)
+
+		// if there is no SC nor PVC nor object storage defined we will mount an emptyDir
+	} else if storageType[0] == controllers.EmptyDirType {
 		emptyDir := []corev1.Volume{
 			{
 				Name: "tmp-file-storage",
@@ -242,10 +259,10 @@ func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *a
 		{Name: "POSTGRES_SERVICE_PORT", Value: dbPort},
 	}
 
-	if m.Spec.CacheEnabled {
+	if m.Spec.Cache.Enabled {
 		redisEnvVars := []corev1.EnvVar{
 			{Name: "REDIS_SERVICE_HOST", Value: m.Name + "-redis-svc"},
-			{Name: "REDIS_SERVICE_PORT", Value: strconv.Itoa(m.Spec.RedisPort)},
+			{Name: "REDIS_SERVICE_PORT", Value: strconv.Itoa(m.Spec.Cache.RedisPort)},
 		}
 		envVars = append(envVars, redisEnvVars...)
 	}
@@ -302,14 +319,17 @@ func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *a
 		volumeMounts = append(volumeMounts, signingSecretMount...)
 	}
 
-	if len(m.Spec.ObjectStorageAzureSecret) == 0 && len(m.Spec.ObjectStorageS3Secret) == 0 {
+	// we will mount file-storage if a storageclass or a pvc was provided
+	if storageType[0] == controllers.SCNameType || storageType[0] == controllers.PVCType {
 		fileStorageMount := corev1.VolumeMount{
 			Name:      "file-storage",
 			ReadOnly:  false,
 			MountPath: "/var/lib/pulp",
 		}
 		volumeMounts = append(volumeMounts, fileStorageMount)
-	} else {
+
+		// if no file-storage nor object storage were provided we will mount the emptyDir
+	} else if storageType[0] == controllers.EmptyDirType {
 		emptyDir := []corev1.VolumeMount{
 			{
 				Name:      "tmp-file-storage",
