@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"os"
+	"strconv"
 	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -79,8 +80,13 @@ func main() {
 	}
 	logfmtEncoder := zaplogfmt.NewEncoder(configLog)
 
+	DevMode, err := strconv.ParseBool(os.Getenv("DEV_MODE"))
+	if err != nil {
+		DevMode = false
+	}
+
 	// Construct a new logr.logger.
-	ctrl.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(os.Stdout), zap.Encoder(logfmtEncoder)))
+	ctrl.SetLogger(zap.New(zap.UseDevMode(DevMode), zap.WriteTo(os.Stdout), zap.Encoder(logfmtEncoder)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,

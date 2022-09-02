@@ -14,6 +14,7 @@ ExecStart=pulp
 Restart=always
 User=root
 Environment="KUBECONFIG=$HOME/.kube/config"
+Environment="DEV_MODE=true"
 [Install]
 WantedBy=multi-user.target
 EOF
