@@ -846,8 +846,8 @@ DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
 			log.Error(err, "Secret Not Found!", "Secret.Namespace", m.Namespace, "Secret.Name", m.Spec.ObjectStorageS3Secret)
 		}
 
-		optionalKey, err := r.retrieveSecretData(ctx, m.Spec.ObjectStorageS3Secret, m.Namespace, false, "s3-endpoint")
-		if err == nil {
+		optionalKey, _ := r.retrieveSecretData(ctx, m.Spec.ObjectStorageS3Secret, m.Namespace, false, "s3-endpoint")
+		if len(optionalKey["s3-endpoint"]) > 0 {
 			pulp_settings = pulp_settings + fmt.Sprintf("AWS_S3_ENDPOINT_URL = \"%v\"\n", optionalKey["s3-endpoint"])
 		}
 
