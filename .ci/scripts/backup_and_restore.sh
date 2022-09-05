@@ -18,7 +18,7 @@ elif [[ "$CI_TEST" == "galaxy" && "$CI_TEST_STORAGE" == "s3" ]]; then
 fi
 
 echo ::group::PRE_BACKUP_LOGS
-journalctl --unit=pulp-operator -n 10000 --no-pager
+journalctl --unit=pulp-operator -n 10000 --no-pager --output=cat
 kubectl logs -l app.kubernetes.io/name=pulp-operator -c manager --tail=10000
 echo ::endgroup::
 
@@ -26,7 +26,7 @@ kubectl apply -f config/samples/$BACKUP_RESOURCE
 time kubectl wait --for condition=BackupComplete --timeout=800s -f config/samples/$BACKUP_RESOURCE
 
 echo ::group::AFTER_BACKUP_LOGS
-journalctl --unit=pulp-operator -n 10000 --no-pager
+journalctl --unit=pulp-operator -n 10000 --no-pager --output=cat
 kubectl logs -l app.kubernetes.io/name=pulp-operator -c manager --tail=10000
 echo ::endgroup::
 
@@ -38,7 +38,7 @@ kubectl apply -f config/samples/$RESTORE_RESOURCE
 time kubectl wait --for condition=RestoreComplete --timeout=800s -f config/samples/$RESTORE_RESOURCE
 
 echo ::group::AFTER_RESTORE_LOGS
-journalctl --unit=pulp-operator -n 10000 --no-pager
+journalctl --unit=pulp-operator -n 10000 --no-pager --output=cat
 kubectl logs -l app.kubernetes.io/name=pulp-operator -c manager --tail=10000
 echo ::endgroup::
 
