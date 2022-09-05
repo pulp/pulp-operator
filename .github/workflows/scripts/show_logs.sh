@@ -13,16 +13,6 @@ kubectl get pods -o wide
 kubectl get pods -o go-template='{{range .items}} {{.metadata.name}} {{range .status.containerStatuses}} {{.lastState.terminated.exitCode}} {{end}}{{"\n"}} {{end}}'
 kubectl get deployments
 
-if [[ "$KUBE" == "minikube" ]]; then
-  echo ::group::METRICS
-  kubectl top pods || true
-  kubectl describe node minikube || true
-  echo ::endgroup::
-  echo ::group::MINIKUBE_LOGS
-  minikube logs -n 10000
-  echo ::endgroup::
-fi
-
 echo ::group::EVENTS
 kubectl get events --sort-by='.metadata.creationTimestamp'
 echo ::endgroup::
@@ -32,7 +22,7 @@ kubectl get pulp,pvc,configmap,serviceaccount,secret,networkpolicy,ingress,servi
 echo ::endgroup::
 
 echo ::group::OPERATOR_LOGS
-journalctl --unit=pulp-operator -n 10000 --no-pager
+journalctl --unit=pulp-operator -n 10000 --no-pager --output=cat
 kubectl logs -l app.kubernetes.io/component=operator -c manager --tail=10000
 echo ::endgroup::
 
@@ -55,6 +45,16 @@ echo ::endgroup::
 echo ::group::POSTGRES
 kubectl logs -l app.kubernetes.io/component=database --tail=10000
 echo ::endgroup::
+
+if [[ "$KUBE" == "minikube" ]]; then
+  echo ::group::METRICS
+  kubectl top pods || true
+  kubectl describe node minikube || true
+  echo ::endgroup::
+  echo ::group::MINIKUBE_LOGS
+  minikube logs -n 10000
+  echo ::endgroup::
+fi
 
 echo "Status endpoint"
 http --follow --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/ || true

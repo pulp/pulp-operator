@@ -44,7 +44,6 @@ import (
 	pulp "github.com/pulp/pulp-operator/controllers/pulp"
 	pulp_restore "github.com/pulp/pulp-operator/controllers/restore"
 
-	zaplogfmt "github.com/sykesm/zap-logfmt"
 	uzap "go.uber.org/zap"
 	//+kubebuilder:scaffold:imports
 )
@@ -78,7 +77,8 @@ func main() {
 	configLog.EncodeTime = func(ts time.Time, encoder zapcore.PrimitiveArrayEncoder) {
 		encoder.AppendString(ts.UTC().Format(time.RFC3339))
 	}
-	logfmtEncoder := zaplogfmt.NewEncoder(configLog)
+	configLog.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	logfmtEncoder := zapcore.NewConsoleEncoder(configLog)
 
 	DevMode, err := strconv.ParseBool(os.Getenv("DEV_MODE"))
 	if err != nil {
