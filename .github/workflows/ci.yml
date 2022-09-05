@@ -117,6 +117,9 @@ jobs:
       - name: Check and wait pulp-operator deploy
         run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
         shell: bash
+      - name: KubeLinter
+        if: github.event_name == 'pull_request'
+        run: .ci/scripts/kubelinter.sh
       - name: Test all components
         run: |
           git clone --depth=1 https://github.com/pulp/pulp_ansible.git
@@ -209,6 +212,9 @@ jobs:
       - name: Check and wait pulp-operator deploy
         run: kubectl wait --for condition=Galaxy-Operator-Finished-Execution pulp/galaxy-example --timeout=600s
         shell: bash
+      - name: KubeLinter
+        if: github.event_name == 'pull_request'
+        run: .ci/scripts/kubelinter.sh
       - name: Test
         run: .ci/scripts/galaxy_ng-tests.sh -m
         shell: bash
