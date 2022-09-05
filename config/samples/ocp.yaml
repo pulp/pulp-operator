@@ -1,0 +1,24 @@
+apiVersion: repo-manager.pulpproject.org/v1alpha1
+kind: Pulp
+metadata:
+  name: example-pulp
+spec:
+  deployment_type: pulp
+  cache_enabled: true
+  image_version: latest
+  image_web_version: latest
+  api:
+    replicas: 1
+  content:
+    replicas: 1
+  worker:
+    replicas: 1
+  # database:
+  #   postgres_storage_class: kubevirt-hostpath-provisioner
+
+  file_storage_access_mode: "ReadWriteOnce"
+  file_storage_size: "2Gi"
+  # file_storage_storage_class: kubevirt-hostpath-provisioner
+  # redis_storage_class: kubevirt-hostpath-provisioner
+
+  ingress_type: route

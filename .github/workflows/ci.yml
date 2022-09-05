@@ -76,20 +76,21 @@ jobs:
         run: |
           echo ::group::HTTPIE
           sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
+          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie avahi-daemon libnss-mdns
           echo ::endgroup::
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
         shell: bash
-      - name: Start minikube
-        run: |
-          minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
-          minikube addons enable metrics-server
-        # now you can run kubectl to see the pods in the cluster
+      - name: Setup Microshift
+        uses: container-tools/microshift-action@v0.2.1
+        with:
+          version: "4.8.0"
       - name: Try the cluster !
-        run: kubectl get pods -A
-      - name: Setup a minikube docker env
-        run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
+        run: |
+          sudo ufw disable
+          sudo service docker restart
+          kubectl config use-context microshift
+          kubectl get pods -A
       - name: Uninstalling GHA kustomize
         run: |
           # hack for uninstalling kustomize from GHA
@@ -102,17 +103,14 @@ jobs:
         run: |
           make test
         shell: bash
-      - name: Prepare Object Storage
-        run: |
-          .ci/scripts/prepare-object-storage.sh
-        shell: bash
       - name: Deploy pulp-operator to K8s
         run: |
           make local
           kubectl get namespace
           kubectl config set-context --current --namespace=pulp-operator-system
           kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
-          kubectl apply -f config/samples/simple.yaml
+          kubectl apply -f config/samples/ocp.yaml
+          journalctl --unit=pulp-operator -n 10000 --no-pager
         shell: bash
       - name: Check and wait pulp-operator deploy
         run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
@@ -128,146 +126,3 @@ jobs:
       - name: Logs
         if: always()
         run: .github/workflows/scripts/show_logs.sh
-  galaxy:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - STORAGE: filesystem
-          - STORAGE: azure
-          - STORAGE: s3
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          # by default, it uses a depth of 1
-          # this fetches all history so that we can read each commit
-          fetch-depth: 0
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v1
-        with:
-          python-version: '3.8'
-      - name: Setup Go environment
-        uses: actions/setup-go@v3.2.0
-        with:
-          go-version: '1.18.3'
-          cache: true
-      - name: Install httpie
-        run: |
-          echo ::group::HTTPIE
-          sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
-          echo ::endgroup::
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo "CI_TEST=true" >> $GITHUB_ENV
-          echo "CI_TEST_STORAGE=${{ matrix.STORAGE }}" >> $GITHUB_ENV
-          echo "API_ROOT=/api/galaxy/pulp/" >> $GITHUB_ENV
-        shell: bash
-      - name: Start minikube
-        run: |
-          minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
-          minikube addons enable metrics-server
-        # now you can run kubectl to see the pods in the cluster
-      - name: Try the cluster !
-        run: kubectl get pods -A
-      - name: Setup a minikube docker env
-        run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
-      - name: Uninstalling GHA kustomize
-        run: |
-          # hack for uninstalling kustomize from GHA
-          mv /usr/local/bin/kustomize /usr/local/bin/ghakustomize
-          make kustomize
-          mv ./bin/kustomize /usr/local/bin/kustomize
-          kustomize version
-        shell: bash
-      - name: Check code format and generate manifests
-        run: |
-          make test
-        shell: bash
-      - name: Prepare Object Storage
-        run: |
-          .ci/scripts/prepare-object-storage.sh
-        shell: bash
-      - name: Deploy pulp-operator to K8s
-        run: |
-          make local
-          kubectl get namespace
-          kubectl config set-context --current --namespace=pulp-operator-system
-          kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
-          kubectl apply -f .ci/assets/kubernetes/galaxy_sign.secret.yaml
-          kubectl apply -f .ci/assets/kubernetes/signing_scripts.configmap.yaml
-          if [[ "$CI_TEST_STORAGE" == "azure" ]]; then
-            kubectl apply -f .ci/assets/kubernetes/pulp-object-storage.azure.secret.yaml
-            kubectl apply -f config/samples/galaxy.azure.ci.yaml
-          elif [[ "$CI_TEST_STORAGE" == "s3" ]]; then
-            kubectl apply -f .ci/assets/kubernetes/pulp-object-storage.aws.secret.yaml
-            kubectl apply -f config/samples/galaxy.s3.ci.yaml
-          elif [[ "$CI_TEST_STORAGE" == "filesystem" ]]; then
-            kubectl apply -f config/samples/galaxy.yaml
-          fi
-        shell: bash
-      - name: Check and wait pulp-operator deploy
-        run: kubectl wait --for condition=Galaxy-Operator-Finished-Execution pulp/galaxy-example --timeout=600s
-        shell: bash
-      - name: Test
-        run: .ci/scripts/galaxy_ng-tests.sh -m
-        shell: bash
-      - name: Backup & Restore
-        run: CI_TEST=galaxy .ci/scripts/backup_and_restore.sh -m
-        shell: bash
-        env:
-          PY_COLORS: '1'
-      - name: Logs
-        if: always()
-        run: .github/workflows/scripts/show_logs.sh
-  deploy:
-    runs-on: ubuntu-latest
-    needs: [components, galaxy]
-    if: github.event_name != 'pull_request'
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          # by default, it uses a depth of 1
-          # this fetches all history so that we can read each commit
-          fetch-depth: 0
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v1
-        with:
-          python-version: '3.8'
-      - name: Setup Go environment
-        uses: actions/setup-go@v3.2.0
-        with:
-          go-version: '1.18.3'
-          cache: true
-      - name: Install httpie
-        run: |
-          echo ::group::HTTPIE
-          sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
-          echo ::endgroup::
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo "CI_TEST=true" >> $GITHUB_ENV
-        shell: bash
-      - name: Uninstalling GHA kustomize
-        run: |
-          # hack for uninstalling kustomize from GHA
-          mv /usr/local/bin/kustomize /usr/local/bin/ghakustomize
-          make kustomize
-          mv ./bin/kustomize /usr/local/bin/kustomize
-          kustomize version
-        shell: bash
-      - name: Build images
-        run: |
-          sudo wget https://github.com/operator-framework/operator-sdk/releases/download/v1.23.0/operator-sdk_linux_amd64 -O /usr/local/bin/operator-sdk
-          sudo chmod +x /usr/local/bin/operator-sdk
-          make manifests bundle docker-build bundle-build catalog-build
-        shell: bash
-      - name: Quay login
-        env:
-          QUAY_BOT_PASSWORD: ${{ secrets.QUAY_BOT_PASSWORD }}
-          QUAY_BOT_USERNAME: pulp+github
-        run: echo "$QUAY_BOT_PASSWORD" | docker login -u "$QUAY_BOT_USERNAME" --password-stdin quay.io
-      - name: Push images
-        run: |
-          make docker-push bundle-push catalog-push
-        shell: bash

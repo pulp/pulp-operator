@@ -142,7 +142,8 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 		log.Info("The Database service has been modified! Reconciling ...")
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Database-Ready", "UpdatingDatabaseService", "Reconciling "+pulp.Name+"-database-svc service resource")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling database service")
-		ctrl.SetControllerReference(pulp, expected_svc, r.Scheme)
+		// ctrl.SetControllerReference(pulp, expected_svc, r.Scheme)
+		log.Info("Database Service Spec", "Service", expected_svc.Spec)
 		err = r.Update(ctx, expected_svc)
 		if err != nil {
 			log.Error(err, "Error trying to update the Database Service object ... ")
