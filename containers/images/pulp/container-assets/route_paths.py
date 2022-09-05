@@ -54,7 +54,14 @@ for plugin_conf in nginx_configs:
         }
         if rewrite:
             new_path["rewrite"] = rewrite
+            router.append({
+                "name":f"{name}-{app}{path.rstrip('/').replace('/', '-').replace('_', '-')}",
+                "path": path.rstrip("/"),
+                "targetPort": target_port,
+                "serviceName": svc_name,
+                "rewrite": rewrite,
+            })
 
-        router.append( new_path )
+        router.append(new_path)
 
 print(json.dumps(router, indent=4))
