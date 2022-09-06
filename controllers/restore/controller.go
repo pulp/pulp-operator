@@ -137,6 +137,12 @@ func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
+	// Restoring pulp CR
+	if err := r.restorePulpCR(ctx, pulpRestore, backupDir, pod); err != nil {
+		// requeue request when there is an error with a pulp CR restore
+		return ctrl.Result{}, err
+	}
+
 	// Restoring database
 	if err := r.restoreDatabaseData(ctx, pulpRestore, backupDir, pod); err != nil {
 		// requeue request when there is an error with a database restore
@@ -149,9 +155,9 @@ func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
-	// Restoring pulp CR
-	if err := r.restorePulpCR(ctx, pulpRestore, backupDir, pod); err != nil {
-		// requeue request when there is an error with a pulp CR restore
+	// Scale pulpcore deployments
+	if err := r.scaleDeployments(ctx, pulpRestore); err != nil {
+		// requeue request when there is an error with pulpcore scale
 		return ctrl.Result{}, err
 	}
 
