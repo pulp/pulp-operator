@@ -85,8 +85,15 @@ func main() {
 		DevMode = false
 	}
 
+	loggerOpts := &zap.Options{
+		Development: DevMode,
+		ZapOpts:     []uzap.Option{uzap.AddCaller()},
+		Encoder:     logfmtEncoder,
+		DestWriter:  os.Stdout,
+	}
+
 	// Construct a new logr.logger.
-	ctrl.SetLogger(zap.New(zap.UseDevMode(DevMode), zap.WriteTo(os.Stdout), zap.Encoder(logfmtEncoder)))
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(loggerOpts)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
@@ -125,6 +132,7 @@ func main() {
 
 	if err = (&pulp.PulpReconciler{
 		Client:     mgr.GetClient(),
+		RawLogger:  mgr.GetLogger(),
 		RESTClient: restClient,
 		RESTConfig: mgr.GetConfig(),
 		Scheme:     mgr.GetScheme(),
@@ -134,6 +142,7 @@ func main() {
 	}
 	if err = (&pulp_backup.PulpBackupReconciler{
 		Client:     mgr.GetClient(),
+		RawLogger:  mgr.GetLogger(),
 		RESTClient: restClient,
 		RESTConfig: mgr.GetConfig(),
 		Scheme:     mgr.GetScheme(),
@@ -143,6 +152,7 @@ func main() {
 	}
 	if err = (&pulp_restore.PulpRestoreReconciler{
 		Client:     mgr.GetClient(),
+		RawLogger:  mgr.GetLogger(),
 		RESTClient: restClient,
 		RESTConfig: mgr.GetConfig(),
 		Scheme:     mgr.GetScheme(),

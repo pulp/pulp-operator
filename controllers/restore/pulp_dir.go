@@ -6,7 +6,6 @@ import (
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
-	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // backupPulpDir copies the content of /var/lib/pulp into the backup PVC
@@ -18,7 +17,7 @@ func (r *PulpRestoreReconciler) restorePulpDir(ctx context.Context, pulpRestore 
 		return nil
 	}
 
-	log := ctrllog.FromContext(ctx)
+	log := r.RawLogger
 
 	// redeploy manager pod to remount the file-storage pvc which
 	// has been reprovisioned after restoring pulp CR

@@ -20,6 +20,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/go-logr/logr"
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
@@ -33,12 +34,12 @@ import (
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // PulpBackupReconciler reconciles a PulpBackup object
 type PulpBackupReconciler struct {
 	client.Client
+	RawLogger  logr.Logger
 	RESTClient rest.Interface
 	RESTConfig *rest.Config
 	Scheme     *runtime.Scheme
@@ -54,7 +55,7 @@ type PulpBackupReconciler struct {
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := ctrllog.FromContext(ctx)
+	log := r.RawLogger
 	backupDir := "/backup"
 
 	pulpBackup := &repomanagerv1alpha1.PulpBackup{}
@@ -144,7 +145,7 @@ func (r *PulpBackupReconciler) waitPodReady(ctx context.Context, namespace, podN
 
 // createBackupPod provisions the backup-manager pod where the backup steps will run
 func (r *PulpBackupReconciler) createBackupPod(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string) (*corev1.Pod, error) {
-	log := ctrllog.FromContext(ctx)
+	log := r.RawLogger
 
 	// we are considering that pulp CR instance is running in the same namespace as pulpbackup and
 	// that there is only a single instance of pulp CR available
@@ -279,7 +280,7 @@ func (r *PulpBackupReconciler) cleanup(ctx context.Context, pulpBackup *repomana
 
 // createBackupPVC provisions the pulp-backup-claim PVC that will store the backup
 func (r *PulpBackupReconciler) createBackupPVC(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup) error {
-	log := ctrllog.FromContext(ctx)
+	log := r.RawLogger
 
 	var storageClassName string
 	if pulpBackup.Spec.BackupSC != "" {
