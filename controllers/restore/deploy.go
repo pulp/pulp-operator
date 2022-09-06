@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // restorePulpCR recreates the pulp CR with the content from backup
@@ -21,7 +20,7 @@ func (r *PulpRestoreReconciler) restorePulpCR(ctx context.Context, pulpRestore *
 	// in situations like during a pulpRestore reconcile loop (because of an error, for example) pulp instance could have been previously created
 	// this will avoid an infinite reconciliation loop trying to recreate a resource that already exists
 	if err := r.Get(ctx, types.NamespacedName{Name: pulpRestore.Spec.DeploymentName, Namespace: pulpRestore.Namespace}, pulp); err != nil && errors.IsNotFound(err) {
-		log := ctrllog.FromContext(ctx)
+		log := r.RawLogger
 		log.Info("Restoring " + pulpRestore.Spec.DeploymentName + " CR ...")
 		r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Restoring "+pulpRestore.Spec.DeploymentName+" CR", "Restoring"+pulpRestore.Spec.DeploymentName+"CR")
 		execCmd := []string{

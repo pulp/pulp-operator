@@ -8,12 +8,11 @@ import (
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // ssoConfig sets the configurations needed to authenticate pulp through keycloak
 func (r *PulpReconciler) ssoConfig(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, pulpSettings *string) error {
-	log := ctrllog.FromContext(ctx)
+	log := r.RawLogger
 
 	// Check for specified sso configuration secret
 	secret := &corev1.Secret{}

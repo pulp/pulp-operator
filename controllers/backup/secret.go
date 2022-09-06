@@ -9,7 +9,6 @@ import (
 	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // secretType contains all the information needed to make the backup of the secret
@@ -36,7 +35,7 @@ type secretType struct {
 
 // backupSecrets makes a copy of the Secrets used by Pulp components
 func (r *PulpBackupReconciler) backupSecret(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string, pod *corev1.Pod) error {
-	log := ctrllog.FromContext(ctx)
+	log := r.RawLogger
 
 	// we are considering that pulp CR instance is running in the same namespace as pulpbackup and
 	// that there is only a single instance of pulp CR available
@@ -117,7 +116,7 @@ func (r *PulpBackupReconciler) backupSecret(ctx context.Context, pulpBackup *rep
 
 // createBackupFile stores the content of the secrets in a file located in a backup PV
 func (r *PulpBackupReconciler) createBackupFile(ctx context.Context, secretType secretType) error {
-	log := ctrllog.FromContext(ctx)
+	log := r.RawLogger
 
 	secret := &corev1.Secret{}
 	err := r.Get(ctx, types.NamespacedName{Name: secretType.secretName, Namespace: secretType.pulpBackup.Namespace}, secret)

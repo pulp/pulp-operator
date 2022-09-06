@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/yaml"
-	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type adminPassword struct {
@@ -127,7 +126,7 @@ func (r *PulpRestoreReconciler) restoreSecret(ctx context.Context, pulpRestore *
 // it returns false and the error if the file is not found
 func (r *PulpRestoreReconciler) secret(ctx context.Context, resourceType, secretNameKey, backupDir, backupFile string, pod *corev1.Pod, pulpRestore *repomanagerv1alpha1.PulpRestore) (bool, error) {
 
-	log := ctrllog.FromContext(ctx)
+	log := r.RawLogger
 
 	secretNameData := ""
 	execCmd := []string{

@@ -26,6 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/go-logr/logr"
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 	"github.com/pulp/pulp-operator/controllers"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,6 +35,7 @@ import (
 // PulpRestoreReconciler reconciles a PulpRestore object
 type PulpRestoreReconciler struct {
 	client.Client
+	RawLogger  logr.Logger
 	RESTClient rest.Interface
 	RESTConfig *rest.Config
 	Scheme     *runtime.Scheme

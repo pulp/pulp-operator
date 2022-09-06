@@ -33,10 +33,10 @@ import (
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"github.com/go-logr/logr"
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 	"github.com/pulp/pulp-operator/controllers"
 )
@@ -44,6 +44,7 @@ import (
 // PulpReconciler reconciles a Pulp object
 type PulpReconciler struct {
 	client.Client
+	RawLogger  logr.Logger
 	RESTClient rest.Interface
 	RESTConfig *rest.Config
 	Scheme     *runtime.Scheme
@@ -63,7 +64,7 @@ type PulpReconciler struct {
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := ctrllog.FromContext(ctx)
+	log := r.RawLogger
 	IsOpenShift, _ := controllers.IsOpenShift()
 	if IsOpenShift {
 		log.Info("Running on OpenShift cluster")

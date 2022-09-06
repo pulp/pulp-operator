@@ -7,12 +7,11 @@ import (
 	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // backupPulpDir copies the content of /var/lib/pulp into the backup PVC
 func (r *PulpBackupReconciler) backupPulpDir(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string, pod *corev1.Pod) error {
-	log := ctrllog.FromContext(ctx)
+	log := r.RawLogger
 
 	pulp := &repomanagerv1alpha1.Pulp{}
 	err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.DeploymentName, Namespace: pulpBackup.Namespace}, pulp)
