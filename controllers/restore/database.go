@@ -38,12 +38,9 @@ func (r *PulpRestoreReconciler) restoreDatabaseData(ctx context.Context, pulpRes
 
 	// run pg_restore
 	execCmd := []string{
-		"bash", "-c", "cat" + backupDir + "/" + backupFile + "| PGPASSWORD=" + string(pgConfig.Data["password"]),
-		"psql -U " + string(pgConfig.Data["username"]),
-		"-h " + string(pgConfig.Data["host"]),
-		"-U " + string(pgConfig.Data["username"]),
-		"-d " + string(pgConfig.Data["database"]),
-		"-p " + string(pgConfig.Data["port"]),
+		"pg_restore", "-d",
+		"postgresql://" + string(pgConfig.Data["username"]) + ":" + string(pgConfig.Data["password"]) + "@" + string(pgConfig.Data["host"]) + ":" + string(pgConfig.Data["port"]) + "/" + string(pgConfig.Data["database"]),
+		backupDir + "/" + backupFile,
 	}
 
 	log.Info("Running db restore ...")
