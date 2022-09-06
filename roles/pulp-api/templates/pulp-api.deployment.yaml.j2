@@ -130,8 +130,10 @@ spec:
 {% if signing_secret is defined %}
             - name: PULP_SIGNING_KEY_FINGERPRINT
               value: "{{ signing_key_fingerprint }}"
-            - name: SIGNING_SERVICE
+            - name: COLLECTION_SIGNING_SERVICE
               value: "{{ pulp_combined_settings.galaxy_collection_signing_service }}"
+            - name: CONTAINER_SIGNING_SERVICE
+              value: "{{ pulp_combined_settings.galaxy_container_signing_service }}"
 {% endif %}
           ports:
             - protocol: TCP

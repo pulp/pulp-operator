@@ -10,6 +10,7 @@
       cache_enabled: true
       db_encryption_key: "/etc/pulp/keys/database_fields.symmetric.key"
       galaxy_collection_signing_service: ansible-default
+      galaxy_container_signing_service: container-default
       ansible_certs_dir: "/etc/pulp/keys/"
       databases:
         default:
