@@ -385,7 +385,8 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 
 		signingKeyEnvVars := []corev1.EnvVar{
 			{Name: "PULP_SIGNING_KEY_FINGERPRINT", Value: signingKeyFingerprint},
-			{Name: "SIGNING_SERVICE", Value: "ansible-default"},
+			{Name: "COLLECTION_SIGNING_SERVICE", Value: getPulpSetting(m, "galaxy_collection_signing_service")},
+			{Name: "CONTAINER_SIGNING_SERVICE", Value: getPulpSetting(m, "galaxy_container_signing_service")},
 		}
 		envVars = append(envVars, signingKeyEnvVars...)
 	}
@@ -792,6 +793,7 @@ func (r *PulpReconciler) pulpServerSecret(ctx context.Context, m *repomanagerv1a
 	var pulp_settings = `CACHE_ENABLED = "True"
 DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
 GALAXY_COLLECTION_SIGNING_SERVICE = "ansible-default"
+GALAXY_CONTAINER_SIGNING_SERVICE = "container-default"
 ANSIBLE_API_HOSTNAME = "` + rootUrl + `"
 ANSIBLE_CERTS_DIR = "/etc/pulp/keys/"
 CONTENT_ORIGIN = "` + rootUrl + `"
