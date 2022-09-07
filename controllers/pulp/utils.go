@@ -95,6 +95,10 @@ func getPulpSetting(pulp *repomanagerv1alpha1.Pulp, key string) string {
 			return "/pulp/"
 		case "content_path_prefix":
 			return "/pulp/content/"
+		case "galaxy_collection_signing_service":
+			return "ansible-default"
+		case "galaxy_container_signing_service":
+			return "container-default"
 		}
 	}
 	switch v.(type) {
