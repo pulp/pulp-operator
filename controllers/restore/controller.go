@@ -24,7 +24,6 @@ import (
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/go-logr/logr"
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
@@ -49,7 +48,7 @@ type PulpRestoreReconciler struct {
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
+	log := r.RawLogger
 	backupDir := "/backup"
 
 	pulpRestore := &repomanagerv1alpha1.PulpRestore{}
@@ -138,7 +137,8 @@ func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	// Restoring pulp CR
-	if err := r.restorePulpCR(ctx, pulpRestore, backupDir, pod); err != nil {
+	podReplicas, err := r.restorePulpCR(ctx, pulpRestore, backupDir, pod)
+	if err != nil {
 		// requeue request when there is an error with a pulp CR restore
 		return ctrl.Result{}, err
 	}
@@ -156,7 +156,7 @@ func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	// Scale pulpcore deployments
-	if err := r.scaleDeployments(ctx, pulpRestore); err != nil {
+	if err := r.scaleDeployments(ctx, pulpRestore, podReplicas); err != nil {
 		// requeue request when there is an error with pulpcore scale
 		return ctrl.Result{}, err
 	}

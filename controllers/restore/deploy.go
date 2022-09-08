@@ -14,9 +14,14 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+type PodReplicas struct {
+	Api, Content, Worker, Web int32
+}
+
 // restorePulpCR recreates the pulp CR with the content from backup
-func (r *PulpRestoreReconciler) restorePulpCR(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupDir string, pod *corev1.Pod) error {
+func (r *PulpRestoreReconciler) restorePulpCR(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupDir string, pod *corev1.Pod) (PodReplicas, error) {
 	pulp := &repomanagerv1alpha1.Pulp{}
+	podReplicas := PodReplicas{}
 
 	// we'll recreate pulp instance only if it was not found
 	// in situations like during a pulpRestore reconcile loop (because of an error, for example) pulp instance could have been previously created
@@ -32,7 +37,7 @@ func (r *PulpRestoreReconciler) restorePulpCR(ctx context.Context, pulpRestore *
 		if err != nil {
 			log.Error(err, "Failed to get cr_object backup file!")
 			r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Failed to get cr_object backup file!", "FailedGet"+pulpRestore.Spec.DeploymentName+"CR")
-			return err
+			return PodReplicas{}, err
 		}
 
 		pulp := repomanagerv1alpha1.Pulp{
@@ -43,6 +48,15 @@ func (r *PulpRestoreReconciler) restorePulpCR(ctx context.Context, pulpRestore *
 		}
 
 		json.Unmarshal([]byte(cmdOutput), &pulp.Spec)
+
+		// store the number of replicas so we can rescale with the same amount later
+		podReplicas = PodReplicas{
+			Api:     pulp.Spec.Api.Replicas,
+			Content: pulp.Spec.Content.Replicas,
+			Worker:  pulp.Spec.Web.Replicas,
+			Web:     pulp.Spec.Web.Replicas,
+		}
+
 		pulp.Spec.Api.Replicas = 0
 		pulp.Spec.Content.Replicas = 0
 		pulp.Spec.Worker.Replicas = 0
@@ -50,18 +64,18 @@ func (r *PulpRestoreReconciler) restorePulpCR(ctx context.Context, pulpRestore *
 		if err = r.Create(ctx, &pulp); err != nil {
 			log.Error(err, "Error trying to restore "+pulpRestore.Spec.DeploymentName+" CR!")
 			r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Failed to restore cr_object!", "FailedRestore"+pulpRestore.Spec.DeploymentName+"CR")
-			return err
+			return PodReplicas{}, err
 		}
 
 		log.Info(pulpRestore.Spec.DeploymentName + " CR restored!")
 	}
 
-	return nil
+	return podReplicas, nil
 }
 
 // scaleDeployments will update pulp CR with 1 replica for each core component
-func (r *PulpRestoreReconciler) scaleDeployments(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore) error {
-	log := ctrllog.FromContext(ctx)
+func (r *PulpRestoreReconciler) scaleDeployments(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, podReplicas PodReplicas) error {
+	log := r.RawLogger
 	pulp := &repomanagerv1alpha1.Pulp{}
 
 	if err := r.Get(ctx, types.NamespacedName{Name: pulpRestore.Spec.DeploymentName, Namespace: pulpRestore.Namespace}, pulp); err != nil && errors.IsNotFound(err) {
@@ -70,10 +84,17 @@ func (r *PulpRestoreReconciler) scaleDeployments(ctx context.Context, pulpRestor
 		return err
 	}
 
-	pulp.Spec.Api.Replicas = 1
-	pulp.Spec.Content.Replicas = 1
-	pulp.Spec.Worker.Replicas = 1
-	pulp.Spec.Web.Replicas = 1
+	/* Not sure if this is a good idea to promptly restore with the same number of replicas from backup.
+	   After a restore procedure it is common to manually double-check the integrity of the data and the health
+	   of the components. With fewer replicas it is easier to troubleshoot and identify possible reprovision issues.
+	   Another common scenario of the restore procedure is a DR. Some DR environments have less resources
+	   (because of cost, for example) than prod and starting with a single replica and letting users scale them
+	   manually also seems to be a good idea. */
+	pulp.Spec.Api.Replicas = podReplicas.Api
+	pulp.Spec.Content.Replicas = podReplicas.Content
+	pulp.Spec.Worker.Replicas = podReplicas.Worker
+	pulp.Spec.Web.Replicas = podReplicas.Web
+
 	if err := r.Update(ctx, pulp); err != nil {
 		log.Error(err, "Failed to scale up deployment replicas!")
 		return err

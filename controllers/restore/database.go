@@ -9,12 +9,11 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // restoreDatabaseData scales down the pods and runs a pg_restore
 func (r *PulpRestoreReconciler) restoreDatabaseData(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupDir string, pod *corev1.Pod) error {
-	log := log.FromContext(ctx)
+	log := r.RawLogger
 	backupFile := "pulp.db"
 
 	//[TODO] fix this

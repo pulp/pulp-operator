@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // isFileStorage returns true if pulp is deployed with storage type = file
@@ -81,7 +80,7 @@ func (r *PulpRestoreReconciler) cleanup(ctx context.Context, pulpRestore *repoma
 // [TODO] refactor createBackupPod so that it can be used by pulpRestore and pulpBackup controllers
 // createBackupPod provisions the backup-manager pod where the restore steps will run
 func (r *PulpRestoreReconciler) createRestorePod(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupPVCName, backupDir string) (*corev1.Pod, error) {
-	log := log.FromContext(ctx)
+	log := r.RawLogger
 
 	labels := map[string]string{
 		"app.kubernetes.io/name":       pulpRestore.Spec.DeploymentType + "-backup-storage",
