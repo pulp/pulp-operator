@@ -65,7 +65,7 @@ type PulpSpec struct {
 	// If defined, the PVC must be provisioned by the user and the operator will only
 	// configure the deployment to use it
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	PVC string `json:"pvc,omitempty"`
 
 	// Secret where the Fernet symmetric encryption key is stored.
@@ -437,7 +437,7 @@ type Database struct {
 	// If defined, the PVC must be provisioned by the user and the operator will only
 	// configure the deployment to use it
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	PVC string `json:"pvc,omitempty"`
 }
 
@@ -473,7 +473,7 @@ type Cache struct {
 	// If defined, the PVC must be provisioned by the user and the operator will only
 	// configure the deployment to use it
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	PVC string `json:"pvc,omitempty"`
 }
 
