@@ -14,15 +14,15 @@ Make sure you reference and link to the issue.
 Testing
 -------
 
-The tests can be run ...
-
-**Requirements:**
-Install Docker, and add yourself to the group that is authorized to
-administer containers, and log out and back in to make the permissions change
-take effect. The authorized group is typically the "docker" group:
-
+The tests can be run with the following command:
 ```bash
-gpasswd --add "$(whoami)" docker
+make test
+```
+
+If you want to run the tests inside your editor/IDE, you may need download the required binaries,
+you can do it by running:
+```bash
+make testbin
 ```
 
 Docs Testing
@@ -30,7 +30,7 @@ Docs Testing
 
 Cross-platform:
 ```
-pip install mkdocs pymdown-extensions mkdocs-material mike mkdocs-git-revision-date-plugin
+pip install -r docs/doc_requirements.txt
 ```
 
 Then:
@@ -44,4 +44,35 @@ the browser will automatically show the new content.
 Debugging
 ---------
 
-Debugging ...
+1. Ensure you have a cluster
+  ```bash
+  minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
+  ```
+2. Build and apply the manifests
+  ```bash
+  make local
+  ```
+3. Apply your custom resource
+  ```bash
+  kubectl apply -f config/samples/simple.yaml
+  ```
+
+The following steps are biased towards [vscode](https://code.visualstudio.com/):
+
+1. Make sure you have the [Go extension](https://marketplace.visualstudio.com/items?itemName=golang.Go) installed
+2. Make sure you have a `.vscode/launch.json` file with at least this config:
+  ```json
+    {
+        "version": "0.2.0",
+        "configurations": [
+            {
+            "name": "Launch Operator",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}"
+            }
+        ]
+    }
+  ```
+  You can learn more about debugging settings [here](https://github.com/golang/vscode-go/wiki/debugging)

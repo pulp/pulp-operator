@@ -84,7 +84,7 @@ with galaxy specific configuration.
 
 ## Pulp Operator
 
-Operator image ...
+An image with the pulp operator binary.
 
 ### Tags
 
