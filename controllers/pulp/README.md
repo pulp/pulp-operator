@@ -7,6 +7,7 @@
 
 * [Affinity](#affinity)
 * [Api](#api)
+* [Cache](#cache)
 * [Content](#content)
 * [Database](#database)
 * [ExternalDB](#externaldb)
@@ -39,7 +40,22 @@
 | topology_spread_constraints | Topology rule(s) for the pods. | []corev1.TopologySpreadConstraint | false |
 | gunicorn_timeout | The timeout for the gunicorn process. | int | false |
 | gunicorn_workers | The number of gunicorn workers to use for the api. | int | false |
-| resource_requirements | Resource requirements for the pulp content container. | corev1.ResourceRequirements | false |
+| resource_requirements | Resource requirements for the pulp api container. | corev1.ResourceRequirements | false |
+
+[Back to Custom Resources](#custom-resources)
+
+#### Cache
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| enabled |  | bool | false |
+| redis_image | The image name for the redis image. | string | false |
+| redis_storage_class | Storage class to use for the Redis PVC | string | false |
+| redis_port |  | int | false |
+| redis_resource_requirements | Resource requirements for the Redis container | corev1.ResourceRequirements | false |
+| pvc | PersistenVolumeClaim name that will be used by Redis pods If defined, the PVC must be provisioned by the user and the operator will only configure the deployment to use it | string | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -80,6 +96,7 @@
 | tolerations | Node tolerations for the database pod. | []corev1.Toleration | false |
 | postgres_storage_requirements | Temporarily modifying it as a string to avoid an issue with backup and json.Unmarshal when set as resource.Quantity and no value passed on pulp CR, during backup steps json.Unmarshal is settings it with \"0\" | string | false |
 | postgres_storage_class | Name of the StorageClass required by the claim. | *string | false |
+| pvc | PersistenVolumeClaim name that will be used by database pods If defined, the PVC must be provisioned by the user and the operator will only configure the deployment to use it | string | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -134,6 +151,7 @@ PulpSpec defines the desired state of Pulp
 | file_storage_storage_class | Storage class to use for the file persistentVolumeClaim | string | false |
 | object_storage_azure_secret | The secret for Azure compliant object storage configuration. | string | false |
 | object_storage_s3_secret | The secret for S3 compliant object storage configuration. | string | false |
+| pvc | PersistenVolumeClaim name that will be used by Pulp pods If defined, the PVC must be provisioned by the user and the operator will only configure the deployment to use it | string | false |
 | db_fields_encryption_secret | Secret where the Fernet symmetric encryption key is stored. | string | false |
 | signing_secret | Secret where the signing certificates are stored. | string | false |
 | signing_scripts_configmap | ConfigMap where the signing scripts are stored. | string | false |
@@ -153,11 +171,7 @@ PulpSpec defines the desired state of Pulp
 | content |  | [Content](#content) | false |
 | worker |  | [Worker](#worker) | false |
 | web |  | [Web](#web) | false |
-| cache_enabled |  | bool | false |
-| redis_image | The image name for the redis image. | string | false |
-| redis_storage_class | Storage class to use for the Redis PVC | string | false |
-| redis_port |  | int | false |
-| redis_resource_requirements | Resource requirements for the Redis container | corev1.ResourceRequirements | false |
+| cache |  | [Cache](#cache) | false |
 | pulp_settings | The pulp settings. | runtime.RawExtension | false |
 | image_web | The image name (repo name) for the pulp webserver image. | string | false |
 | image_web_version | The image version for the pulp webserver image. | string | false |

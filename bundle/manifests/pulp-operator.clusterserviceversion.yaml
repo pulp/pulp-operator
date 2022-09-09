@@ -62,21 +62,26 @@ metadata:
             "api": {
               "replicas": 1
             },
-            "cache_enabled": true,
+            "cache": {
+              "enabled": true,
+              "redis_storage_class": "standard"
+            },
             "content": {
               "replicas": 1
             },
-            "database": null,
+            "database": {
+              "postgres_storage_class": "standard"
+            },
             "deployment_type": "pulp",
             "file_storage_access_mode": "ReadWriteOnce",
             "file_storage_size": "2Gi",
             "file_storage_storage_class": "standard",
             "image_version": "latest",
+            "image_web_version": "latest",
             "ingress_type": "nodeport",
             "pulp_settings": {
               "api_root": "/pulp/"
             },
-            "redis_storage_class": "standard",
             "web": {
               "replicas": 1
             },
@@ -109,9 +114,13 @@ metadata:
                 }
               }
             },
+            "database": {
+              "postgres_storage_class": "standard"
+            },
             "deployment_type": "galaxy",
             "file_storage_access_mode": "ReadWriteMany",
             "file_storage_size": "10Gi",
+            "file_storage_storage_class": "standard",
             "image": "quay.io/pulp/galaxy",
             "image_version": "latest",
             "image_web": "quay.io/pulp/galaxy-web",
@@ -351,7 +360,7 @@ spec:
         path: api.replicas
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:podCount
-      - description: Resource requirements for the pulp content container.
+      - description: Resource requirements for the pulp api container.
         displayName: Resource Requirements
         path: api.resource_requirements
         x-descriptors:
@@ -367,10 +376,44 @@ spec:
         path: api.topology_spread_constraints
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Cache Enabled
-        path: cache_enabled
+      - displayName: Cache
+        path: cache
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Enabled
+        path: cache.enabled
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+      - description: PersistenVolumeClaim name that will be used by Redis pods If
+          defined, the PVC must be provisioned by the user and the operator will only
+          configure the deployment to use it
+        displayName: PVC
+        path: cache.pvc
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: The image name for the redis image.
+        displayName: Redis Image
+        path: cache.redis_image
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Redis Port
+        path: cache.redis_port
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Resource requirements for the Redis container
+        displayName: Redis Resource Requirements
+        path: cache.redis_resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Storage class to use for the Redis PVC
+        displayName: Redis Storage Class
+        path: cache.redis_storage_class
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:StorageClass
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Container Auth Private Key
         path: container_auth_private_key_name
         x-descriptors:
@@ -481,6 +524,14 @@ spec:
         path: database.postgres_storage_requirements
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: PersistenVolumeClaim name that will be used by database pods
+          If defined, the PVC must be provisioned by the user and the operator will
+          only configure the deployment to use it
+        displayName: PVC
+        path: database.pvc
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Node tolerations for the database pod.
         displayName: Tolerations
         path: database.tolerations
@@ -577,27 +628,13 @@ spec:
         path: pulp_settings
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: The image name for the redis image.
-        displayName: Redis Image
-        path: redis_image
+      - description: PersistenVolumeClaim name that will be used by Pulp pods If defined,
+          the PVC must be provisioned by the user and the operator will only configure
+          the deployment to use it
+        displayName: PVC
+        path: pvc
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Redis Port
-        path: redis_port
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:number
-        - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Resource requirements for the Redis container
-        displayName: Redis Resource Requirements
-        path: redis_resource_requirements
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
-        - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Storage class to use for the Redis PVC
-        displayName: Redis Storage Class
-        path: redis_storage_class
-        x-descriptors:
-        - urn:alm:descriptor:io.kubernetes:StorageClass
+        - urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Route DNS host
         displayName: Route Host
@@ -749,6 +786,13 @@ spec:
     spec:
       clusterPermissions:
       - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
         - apiGroups:
           - apps
           - networking.k8s.io
