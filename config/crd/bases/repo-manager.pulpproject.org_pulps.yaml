@@ -1275,6 +1275,11 @@ spec:
                 - Always
                 - Never
                 type: string
+              image_pull_secrets:
+                description: Image pull secrets for container images
+                items:
+                  type: string
+                type: array
               image_version:
                 default: stable
                 description: The image version for the pulp image.

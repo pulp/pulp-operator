@@ -583,6 +583,11 @@ spec:
         path: image_pull_policy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: Image pull secrets for container images
+        displayName: Image Pull Secrets
+        path: image_pull_secrets
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: The image version for the pulp image.
         displayName: Image Version
         path: image_version
@@ -858,6 +863,20 @@ spec:
           - pods/exec
           verbs:
           - create
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - rolebindings
+          - roles
+          - serviceaccounts
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
         - apiGroups:
           - repo-manager.pulpproject.org
           resources:

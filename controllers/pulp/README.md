@@ -176,6 +176,7 @@ PulpSpec defines the desired state of Pulp
 | image_web | The image name (repo name) for the pulp webserver image. | string | false |
 | image_web_version | The image version for the pulp webserver image. | string | false |
 | admin_password_secret | Secret where the administrator password can be found | string | false |
+| image_pull_secrets | Image pull secrets for container images | []string | false |
 | sso_secret | Secret where Single Sign-on configuration can be found | string | false |
 
 [Back to Custom Resources](#custom-resources)

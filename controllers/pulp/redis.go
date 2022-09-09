@@ -348,7 +348,7 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 					Affinity:           affinity,
 					NodeSelector:       nodeSelector,
 					Tolerations:        toleration,
-					ServiceAccountName: "pulp-operator-controller-manager",
+					ServiceAccountName: m.Name,
 					Containers: []corev1.Container{{
 						Name:            "redis",
 						Image:           RedisImage,

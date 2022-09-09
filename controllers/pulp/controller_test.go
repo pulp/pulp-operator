@@ -497,7 +497,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				},
 				Spec: corev1.PodSpec{
 					Affinity:           &corev1.Affinity{},
-					ServiceAccountName: "pulp-operator-controller-manager",
+					ServiceAccountName: PulpName,
 					Containers: []corev1.Container{{
 						Image: "postgres:13",
 						Name:  "postgres",
@@ -550,7 +550,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				},
 				Spec: corev1.PodSpec{
 					Affinity:           &corev1.Affinity{},
-					ServiceAccountName: "pulp-operator-controller-manager",
+					ServiceAccountName: PulpName,
 					Volumes:            volumesApi,
 					Containers: []corev1.Container{{
 						Name:  "api",
@@ -601,7 +601,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 					NodeSelector:              map[string]string{},
 					Tolerations:               []corev1.Toleration{},
 					Volumes:                   volumesContent,
-					ServiceAccountName:        "pulp-operator-controller-manager",
+					ServiceAccountName:        PulpName,
 					TopologySpreadConstraints: []corev1.TopologySpreadConstraint{},
 					Containers: []corev1.Container{{
 						Name:            "content",
@@ -652,7 +652,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 					NodeSelector:              map[string]string{},
 					Tolerations:               []corev1.Toleration{},
 					Volumes:                   volumesWorker,
-					ServiceAccountName:        "pulp-operator-controller-manager",
+					ServiceAccountName:        PulpName,
 					TopologySpreadConstraints: []corev1.TopologySpreadConstraint{},
 					Containers: []corev1.Container{{
 						Name:            "worker",

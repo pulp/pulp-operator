@@ -78,6 +78,20 @@ rules:
   verbs:
   - create
 - apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - rolebindings
+  - roles
+  - serviceaccounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - repo-manager.pulpproject.org
   resources:
   - pulp

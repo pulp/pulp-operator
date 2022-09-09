@@ -427,7 +427,7 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 					Affinity:           affinity,
 					NodeSelector:       nodeSelector,
 					Tolerations:        toleration,
-					ServiceAccountName: "pulp-operator-controller-manager",
+					ServiceAccountName: m.Name,
 					Containers: []corev1.Container{{
 						Image: postgresImage,
 						Name:  "postgres",
