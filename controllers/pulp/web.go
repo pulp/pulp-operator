@@ -177,7 +177,7 @@ func (r *PulpReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *apps
 					Labels: ls,
 				},
 				Spec: corev1.PodSpec{
-					ServiceAccountName: "pulp-operator-controller-manager",
+					ServiceAccountName: m.Name,
 					Containers: []corev1.Container{{
 						Image:     ImageWeb,
 						Name:      "web",

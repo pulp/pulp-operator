@@ -149,7 +149,6 @@ func (r *PulpRestoreReconciler) createRestorePod(ctx context.Context, pulpRestor
 			Labels:    labels,
 		},
 		Spec: corev1.PodSpec{
-			ServiceAccountName: "pulp-operator-controller-manager",
 			Containers: []corev1.Container{{
 				Name:            pulpRestore.Name + "-backup-manager",
 				Image:           postgresImage,

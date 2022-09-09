@@ -715,7 +715,7 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 					NodeSelector:              nodeSelector,
 					Tolerations:               toleration,
 					Volumes:                   volumes,
-					ServiceAccountName:        "pulp-operator-controller-manager",
+					ServiceAccountName:        m.Name,
 					TopologySpreadConstraints: topologySpreadConstraint,
 					Containers: []corev1.Container{{
 						Name:            "api",
