@@ -66,9 +66,10 @@ type PulpReconciler struct {
 // move the current state of the cluster closer to the desired state.
 func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.RawLogger
+
 	IsOpenShift, _ := controllers.IsOpenShift()
 	if IsOpenShift {
-		log.Info("Running on OpenShift cluster")
+		log.V(1).Info("Running on OpenShift cluster")
 	}
 
 	// Get redhat-operators-pull-secret
@@ -117,7 +118,7 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	// Checking if there is more than one storage type defined.
 	// Only a single type should be provided, if more the operator will not be able to
 	// determine which one should be used.
-	for _, resource := range []string{"Pulp", "Cache", "Database"} {
+	for _, resource := range []string{controllers.PulpResource, controllers.CacheResource, controllers.DatabaseResource} {
 		if foundMultiStorage, storageType := controllers.MultiStorageConfigured(pulp, resource); foundMultiStorage {
 			err := fmt.Errorf("found more than one storage type (%s) for %s", storageType, resource)
 			log.Error(err, "Please choose only one storage type or do not define any to use emptyDir")
@@ -139,7 +140,7 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 	// Do not provision postgres resources if using external DB
 	if reflect.DeepEqual(pulp.Spec.Database.ExternalDB, repomanagerv1alpha1.ExternalDB{}) {
-		log.Info("Running database tasks")
+		log.V(1).Info("Running database tasks")
 		pulpController, err = r.databaseController(ctx, pulp, log)
 		if err != nil {
 			return pulpController, err
@@ -150,7 +151,7 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		}
 	}
 
-	log.Info("Running cache tasks")
+	log.V(1).Info("Running cache tasks")
 	pulpController, err = r.pulpCacheController(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
@@ -160,7 +161,7 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return pulpController, nil
 	}
 
-	log.Info("Running API tasks")
+	log.V(1).Info("Running API tasks")
 	pulpController, err = r.pulpApiController(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
@@ -170,7 +171,7 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return pulpController, nil
 	}
 
-	log.Info("Running content tasks")
+	log.V(1).Info("Running content tasks")
 	pulpController, err = r.pulpContentController(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
@@ -180,7 +181,7 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return pulpController, nil
 	}
 
-	log.Info("Running worker tasks")
+	log.V(1).Info("Running worker tasks")
 	pulpController, err = r.pulpWorkerController(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
@@ -191,7 +192,7 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	}
 
 	if strings.ToLower(pulp.Spec.IngressType) == "route" {
-		log.Info("Running route tasks")
+		log.V(1).Info("Running route tasks")
 		pulpController, err = r.pulpRouteController(ctx, pulp, log)
 		if err != nil {
 			return pulpController, err
@@ -201,7 +202,7 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 			return pulpController, nil
 		}
 	} else {
-		log.Info("Running web tasks")
+		log.V(1).Info("Running web tasks")
 		pulpController, err = r.pulpWebController(ctx, pulp, log)
 		if err != nil {
 			return pulpController, err
@@ -212,7 +213,7 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		}
 	}
 
-	log.Info("Running status tasks")
+	log.V(1).Info("Running status tasks")
 	pulpController, err = r.pulpStatus(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
@@ -220,6 +221,9 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return pulpController, nil
 	}
 
+	// If we get into here it means that there is no reconciliation
+	// nor controller tasks pending
+	log.Info("Operator tasks synced")
 	return pulpController, nil
 }
 

@@ -1168,7 +1168,7 @@ func waitPulpOperatorFinish(ctx context.Context, createdPulp *repomanagerv1alpha
 			// [TODO] For some reason, even after the controller considering that the execution was finished,
 			// during a small period some resources were still in update process. I need to investigate
 			// this further.
-			time.Sleep(time.Millisecond * 300)
+			time.Sleep(time.Millisecond * 500)
 			break
 		}
 		time.Sleep(time.Second)

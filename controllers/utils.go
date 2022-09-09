@@ -8,6 +8,8 @@ import (
 
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,6 +27,10 @@ const (
 	SCNameType   = "StorageClassName"
 	PVCType      = "PVC"
 	EmptyDirType = "emptyDir"
+
+	PulpResource     = "Pulp"
+	CacheResource    = "Cache"
+	DatabaseResource = "Database"
 )
 
 // ignoreUpdateCRStatusPredicate filters update events on pulpbackup CR status
@@ -65,7 +71,7 @@ func MultiStorageConfigured(pulp *repomanagerv1alpha1.Pulp, resource string) (bo
 	var names []string
 
 	switch resource {
-	case "Pulp":
+	case PulpResource:
 		if len(pulp.Spec.ObjectStorageAzureSecret) > 0 {
 			names = append(names, AzureObjType)
 		}
@@ -88,7 +94,7 @@ func MultiStorageConfigured(pulp *repomanagerv1alpha1.Pulp, resource string) (bo
 			return false, []string{EmptyDirType}
 		}
 
-	case "Cache":
+	case CacheResource:
 		if len(pulp.Spec.Cache.RedisStorageClass) > 0 {
 			names = append(names, SCNameType)
 		}
@@ -103,7 +109,7 @@ func MultiStorageConfigured(pulp *repomanagerv1alpha1.Pulp, resource string) (bo
 			return false, []string{EmptyDirType}
 		}
 
-	case "Database":
+	case DatabaseResource:
 		if len(pulp.Spec.Database.PVC) > 0 {
 			names = append(names, PVCType)
 		}
@@ -175,4 +181,50 @@ func ContainerExec[T any](client T, pod *corev1.Pod, command []string, container
 	// But this is just a guess!!! We need to investigate it further.
 	time.Sleep(time.Second)
 	return result, nil
+}
+
+// customZapLogger should be used only for warn messages
+// it is a kludge to bypass the "limitation" of logr not having warn level
+func CustomZapLogger() *zap.Logger {
+	econdeTime := func(ts time.Time, encoder zapcore.PrimitiveArrayEncoder) {
+		encoder.AppendString(ts.UTC().Format(time.RFC3339))
+	}
+	cfg := zap.Config{
+		Level:            zap.NewAtomicLevelAt(zap.WarnLevel),
+		Development:      false,
+		OutputPaths:      []string{"stdout"},
+		Encoding:         "console",
+		ErrorOutputPaths: []string{"stderr"},
+		DisableCaller:    false,
+		EncoderConfig: zapcore.EncoderConfig{
+			MessageKey:     "msg",
+			LevelKey:       "level",
+			TimeKey:        "time",
+			NameKey:        "logger",
+			CallerKey:      "file",
+			StacktraceKey:  "stacktrace",
+			LineEnding:     zapcore.DefaultLineEnding,
+			EncodeLevel:    zapcore.CapitalColorLevelEncoder,
+			EncodeTime:     econdeTime,
+			EncodeDuration: zapcore.SecondsDurationEncoder,
+			EncodeCaller:   zapcore.ShortCallerEncoder,
+			EncodeName:     zapcore.FullNameEncoder,
+		},
+	}
+
+	logger, _ := cfg.Build()
+	defer logger.Sync()
+
+	return logger
+}
+
+// CheckEmptyDir creates a log warn message in case no persistent storage is provided
+// for the given resource
+func CheckEmptyDir(pulp *repomanagerv1alpha1.Pulp, resource string) {
+	_, storageType := MultiStorageConfigured(pulp, resource)
+	if storageType[0] == EmptyDirType {
+		logger := CustomZapLogger()
+		logger.Warn("No StorageClass or PVC defined for " + strings.ToUpper(resource) + " pods!")
+		logger.Warn("CONFIGURING " + strings.ToUpper(resource) + " POD VOLUME AS EMPTYDIR. THIS SHOULD NOT BE USED IN PRODUCTION CLUSTERS.")
+	}
 }
