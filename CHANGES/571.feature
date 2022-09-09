@@ -1,0 +1,1 @@
+Added configuration to change the operator log level.

@@ -70,7 +70,8 @@ The following steps are biased towards [vscode](https://code.visualstudio.com/):
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}"
+            "program": "${workspaceFolder}",
+            "args": [ "--zap-log-level=debug", "--zap-stacktrace-level=error" ]
             }
         ]
     }

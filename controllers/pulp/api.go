@@ -199,6 +199,7 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 		// Define a new deployment
 		log.Info("Creating a new Pulp API Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "CreatingApiDeployment", "Creating "+pulp.Name+"-api deployment")
+		controllers.CheckEmptyDir(pulp, controllers.PulpResource)
 		err = r.Create(ctx, dep)
 		if err != nil {
 			log.Error(err, "Failed to create new Pulp API Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
@@ -311,7 +312,6 @@ func (r *PulpReconciler) fileStoragePVC(m *repomanagerv1alpha1.Pulp) *corev1.Per
 
 // deploymentForPulpApi returns a pulp-api Deployment object
 func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
-
 	replicas := m.Spec.Api.Replicas
 	ls := labelsForPulpApi(m)
 

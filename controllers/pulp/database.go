@@ -76,6 +76,7 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new Database StatefulSet", "StatefulSet.Namespace", pgSts.Namespace, "StatefulSet.Name", pgSts.Name)
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Database-Ready", "CreatingDatabaseSts", "Creating "+pulp.Name+"-database statefulset resource")
+		controllers.CheckEmptyDir(pulp, controllers.DatabaseResource)
 		// Set Pulp instance as the owner and controller
 		ctrl.SetControllerReference(pulp, expected_sts, r.Scheme)
 		err = r.Create(ctx, expected_sts)
@@ -162,6 +163,7 @@ func (r *PulpReconciler) databaseController(ctx context.Context, pulp *repomanag
 
 // statefulSetForDatabase returns a postgresql Deployment object
 func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
+
 	ls := labelsForDatabase(m)
 	//replicas := m.Spec.Database.Replicas
 	replicas := int32(1)

@@ -80,17 +80,19 @@ func main() {
 	configLog.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	logfmtEncoder := zapcore.NewConsoleEncoder(configLog)
 
-	DevMode, err := strconv.ParseBool(os.Getenv("DEV_MODE"))
+	devMode, err := strconv.ParseBool(os.Getenv("DEV_MODE"))
 	if err != nil {
-		DevMode = false
+		devMode = false
 	}
 
 	loggerOpts := &zap.Options{
-		Development: DevMode,
+		Development: devMode,
 		ZapOpts:     []uzap.Option{uzap.AddCaller()},
 		Encoder:     logfmtEncoder,
 		DestWriter:  os.Stdout,
 	}
+	loggerOpts.BindFlags(flag.CommandLine)
+	flag.Parse()
 
 	// Construct a new logr.logger.
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(loggerOpts)))
