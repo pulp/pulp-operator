@@ -212,6 +212,16 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 		affinity.NodeAffinity = m.Spec.Api.Affinity.NodeAffinity
 	}
 
+	nodeSelector := map[string]string{}
+	if m.Spec.Api.NodeSelector != nil {
+		nodeSelector = m.Spec.Api.NodeSelector
+	}
+
+	toleration := []corev1.Toleration{}
+	if m.Spec.Api.Tolerations != nil {
+		toleration = m.Spec.Api.Tolerations
+	}
+
 	_, storageType := controllers.MultiStorageConfigured(m, "Cache")
 	volumeSource := corev1.VolumeSource{}
 	// if SC defined, we should use the PVC provisioned by the operator
@@ -336,6 +346,8 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 				},
 				Spec: corev1.PodSpec{
 					Affinity:           affinity,
+					NodeSelector:       nodeSelector,
+					Tolerations:        toleration,
 					ServiceAccountName: "pulp-operator-controller-manager",
 					Containers: []corev1.Container{{
 						Name:            "redis",

@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.9.0
+    controller-gen.kubebuilder.io/version: v0.9.2
   creationTimestamp: null
   name: pulps.repo-manager.pulpproject.org
 spec:
@@ -145,6 +145,7 @@ spec:
                                         type: object
                                       type: array
                                   type: object
+                                  x-kubernetes-map-type: atomic
                                 weight:
                                   description: Weight associated with matching the
                                     corresponding nodeSelectorTerm, in the range 1-100.
@@ -250,10 +251,12 @@ spec:
                                         type: object
                                       type: array
                                   type: object
+                                  x-kubernetes-map-type: atomic
                                 type: array
                             required:
                             - nodeSelectorTerms
                             type: object
+                            x-kubernetes-map-type: atomic
                         type: object
                     type: object
                   gunicorn_timeout:
@@ -277,7 +280,7 @@ spec:
                     nullable: true
                     type: integer
                   resource_requirements:
-                    description: Resource requirements for the pulp content container.
+                    description: Resource requirements for the pulp api container.
                     properties:
                       limits:
                         additionalProperties:
@@ -396,6 +399,7 @@ spec:
                                 contains only "value". The requirements are ANDed.
                               type: object
                           type: object
+                          x-kubernetes-map-type: atomic
                         matchLabelKeys:
                           description: MatchLabelKeys is a set of pod label keys to
                             select the pods over which spreading will be calculated.
@@ -517,9 +521,53 @@ spec:
                       type: object
                     type: array
                 type: object
-              cache_enabled:
-                default: true
-                type: boolean
+              cache:
+                properties:
+                  enabled:
+                    default: true
+                    type: boolean
+                  pvc:
+                    description: PersistenVolumeClaim name that will be used by Redis
+                      pods If defined, the PVC must be provisioned by the user and
+                      the operator will only configure the deployment to use it
+                    type: string
+                  redis_image:
+                    default: redis:latest
+                    description: The image name for the redis image.
+                    type: string
+                  redis_port:
+                    default: 6379
+                    type: integer
+                  redis_resource_requirements:
+                    description: Resource requirements for the Redis container
+                    properties:
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Limits describes the maximum amount of compute
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Requests describes the minimum amount of compute
+                          resources required. If Requests is omitted for a container,
+                          it defaults to Limits if that is explicitly specified, otherwise
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                    type: object
+                  redis_storage_class:
+                    description: Storage class to use for the Redis PVC
+                    type: string
+                type: object
               container_auth_private_key_name:
                 default: container_auth_private_key.pem
                 type: string
@@ -637,6 +685,7 @@ spec:
                                         type: object
                                       type: array
                                   type: object
+                                  x-kubernetes-map-type: atomic
                                 weight:
                                   description: Weight associated with matching the
                                     corresponding nodeSelectorTerm, in the range 1-100.
@@ -742,10 +791,12 @@ spec:
                                         type: object
                                       type: array
                                   type: object
+                                  x-kubernetes-map-type: atomic
                                 type: array
                             required:
                             - nodeSelectorTerms
                             type: object
+                            x-kubernetes-map-type: atomic
                         type: object
                     type: object
                   gunicorn_timeout:
@@ -944,6 +995,7 @@ spec:
                                         type: object
                                       type: array
                                   type: object
+                                  x-kubernetes-map-type: atomic
                                 weight:
                                   description: Weight associated with matching the
                                     corresponding nodeSelectorTerm, in the range 1-100.
@@ -1049,10 +1101,12 @@ spec:
                                         type: object
                                       type: array
                                   type: object
+                                  x-kubernetes-map-type: atomic
                                 type: array
                             required:
                             - nodeSelectorTerms
                             type: object
+                            x-kubernetes-map-type: atomic
                         type: object
                     type: object
                   external_db:
@@ -1127,7 +1181,6 @@ spec:
                     default: prefer
                     type: string
                   postgres_storage_class:
-                    default: standard
                     description: Name of the StorageClass required by the claim.
                     type: string
                   postgres_storage_requirements:
@@ -1135,6 +1188,11 @@ spec:
                       issue with backup and json.Unmarshal when set as resource.Quantity
                       and no value passed on pulp CR, during backup steps json.Unmarshal
                       is settings it with "0"
+                    type: string
+                  pvc:
+                    description: PersistenVolumeClaim name that will be used by database
+                      pods If defined, the PVC must be provisioned by the user and
+                      the operator will only configure the deployment to use it
                     type: string
                   tolerations:
                     description: Node tolerations for the database pod.
@@ -1198,7 +1256,6 @@ spec:
                 description: The size of the file storage; for example 100Gi.
                 type: string
               file_storage_storage_class:
-                default: standard
                 description: Storage class to use for the file persistentVolumeClaim
                 type: string
               haproxy_timeout:
@@ -1256,42 +1313,10 @@ spec:
                 description: The pulp settings.
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
-              redis_image:
-                default: redis:latest
-                description: The image name for the redis image.
-                type: string
-              redis_port:
-                default: 6379
-                type: integer
-              redis_resource_requirements:
-                description: Resource requirements for the Redis container
-                properties:
-                  limits:
-                    additionalProperties:
-                      anyOf:
-                      - type: integer
-                      - type: string
-                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                      x-kubernetes-int-or-string: true
-                    description: 'Limits describes the maximum amount of compute resources
-                      allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
-                    type: object
-                  requests:
-                    additionalProperties:
-                      anyOf:
-                      - type: integer
-                      - type: string
-                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                      x-kubernetes-int-or-string: true
-                    description: 'Requests describes the minimum amount of compute
-                      resources required. If Requests is omitted for a container,
-                      it defaults to Limits if that is explicitly specified, otherwise
-                      to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
-                    type: object
-                type: object
-              redis_storage_class:
-                default: standard
-                description: Storage class to use for the Redis PVC
+              pvc:
+                description: PersistenVolumeClaim name that will be used by Pulp pods
+                  If defined, the PVC must be provisioned by the user and the operator
+                  will only configure the deployment to use it
                 type: string
               route_host:
                 description: Route DNS host
@@ -1460,6 +1485,7 @@ spec:
                                         type: object
                                       type: array
                                   type: object
+                                  x-kubernetes-map-type: atomic
                                 weight:
                                   description: Weight associated with matching the
                                     corresponding nodeSelectorTerm, in the range 1-100.
@@ -1565,10 +1591,12 @@ spec:
                                         type: object
                                       type: array
                                   type: object
+                                  x-kubernetes-map-type: atomic
                                 type: array
                             required:
                             - nodeSelectorTerms
                             type: object
+                            x-kubernetes-map-type: atomic
                         type: object
                     type: object
                   node_selector:
@@ -1703,6 +1731,7 @@ spec:
                                 contains only "value". The requirements are ANDed.
                               type: object
                           type: object
+                          x-kubernetes-map-type: atomic
                         matchLabelKeys:
                           description: MatchLabelKeys is a set of pod label keys to
                             select the pods over which spreading will be calculated.
