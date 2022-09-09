@@ -53,7 +53,7 @@ func (r *PulpRestoreReconciler) restorePulpCR(ctx context.Context, pulpRestore *
 		podReplicas = PodReplicas{
 			Api:     pulp.Spec.Api.Replicas,
 			Content: pulp.Spec.Content.Replicas,
-			Worker:  pulp.Spec.Web.Replicas,
+			Worker:  pulp.Spec.Worker.Replicas,
 			Web:     pulp.Spec.Web.Replicas,
 		}
 
