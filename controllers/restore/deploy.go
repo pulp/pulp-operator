@@ -73,7 +73,9 @@ func (r *PulpRestoreReconciler) restorePulpCR(ctx context.Context, pulpRestore *
 	return podReplicas, nil
 }
 
-// scaleDeployments will update pulp CR with 1 replica for each core component
+// scaleDeployments will rescale the deployments with:
+// - if KeepBackupReplicasCount = true  - it will keep the same amount of replicas from backup
+// - if KeepBackupReplicasCount = false - it will deploy 1 replica for each component
 func (r *PulpRestoreReconciler) scaleDeployments(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, podReplicas PodReplicas) error {
 	log := r.RawLogger
 	pulp := &repomanagerv1alpha1.Pulp{}
@@ -84,16 +86,19 @@ func (r *PulpRestoreReconciler) scaleDeployments(ctx context.Context, pulpRestor
 		return err
 	}
 
-	/* Not sure if this is a good idea to promptly restore with the same number of replicas from backup.
-	   After a restore procedure it is common to manually double-check the integrity of the data and the health
-	   of the components. With fewer replicas it is easier to troubleshoot and identify possible reprovision issues.
-	   Another common scenario of the restore procedure is a DR. Some DR environments have less resources
-	   (because of cost, for example) than prod and starting with a single replica and letting users scale them
-	   manually also seems to be a good idea. */
-	pulp.Spec.Api.Replicas = podReplicas.Api
-	pulp.Spec.Content.Replicas = podReplicas.Content
-	pulp.Spec.Worker.Replicas = podReplicas.Worker
-	pulp.Spec.Web.Replicas = podReplicas.Web
+	if pulpRestore.Spec.KeepBackupReplicasCount {
+		pulp.Spec.Api.Replicas = podReplicas.Api
+		pulp.Spec.Content.Replicas = podReplicas.Content
+		pulp.Spec.Worker.Replicas = podReplicas.Worker
+		pulp.Spec.Web.Replicas = podReplicas.Web
+	} else {
+		pulp.Spec.Api.Replicas = 1
+		pulp.Spec.Content.Replicas = 1
+		pulp.Spec.Worker.Replicas = 1
+		if pulp.Spec.IngressType != "route" && pulp.Spec.IngressType != "Route" {
+			pulp.Spec.Web.Replicas = 1
+		}
+	}
 
 	if err := r.Update(ctx, pulp); err != nil {
 		log.Error(err, "Failed to scale up deployment replicas!")
