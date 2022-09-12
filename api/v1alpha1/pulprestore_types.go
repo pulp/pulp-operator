@@ -69,6 +69,13 @@ type PulpRestoreSpec struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	PostgresLabelSelector string `json:"postgres_label_selector"`
+
+	// KeepBackupReplicasCount allows to define if the restore controller should restore the components with the
+	// same number of replicas from backup or restore only a single replica each.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=false
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	KeepBackupReplicasCount bool `json:"keep_replicas"`
 }
 
 // PulpRestoreStatus defines the observed state of PulpRestore
