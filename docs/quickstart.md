@@ -111,7 +111,7 @@ Next, review `config/samples/pulpproject_v1beta1_pulp_cr.default.yaml`. If the v
 Finally, use `kubectl` to create the pulp instance in your cluster:
 
 ```
-$ kubectl apply -f config/samples/config/samples/pulpproject_v1beta1_pulp_cr.yaml
+$ kubectl apply -f config/samples/pulpproject_v1beta1_pulp_cr.default.yaml
 pulp.pulp.pulpproject.org/example-pulp created
 ```
 
