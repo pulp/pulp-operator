@@ -1,0 +1,1 @@
+Fixed an issue with backup controller failing when there was no signing secret.
