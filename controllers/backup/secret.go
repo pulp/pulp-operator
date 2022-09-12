@@ -71,11 +71,13 @@ func (r *PulpBackupReconciler) backupSecret(ctx context.Context, pulpBackup *rep
 	log.Info("Fields encryption secret backup finished")
 
 	// SIGNING SECRET
-	err = r.createBackupFile(ctx, secretType{"signing_secret", pulpBackup, backupDir, "signing_secret.yaml", pulp.Spec.SigningSecret, pod})
-	if err != nil {
-		return err
+	if len(pulp.Spec.SigningSecret) > 0 {
+		err = r.createBackupFile(ctx, secretType{"signing_secret", pulpBackup, backupDir, "signing_secret.yaml", pulp.Spec.SigningSecret, pod})
+		if err != nil {
+			return err
+		}
+		log.Info("Signing secret backup finished")
 	}
-	log.Info("Signing secret backup finished")
 
 	// CONTAINER TOKEN SECRET
 	err = r.createBackupFile(ctx, secretType{"container_token_secret", pulpBackup, backupDir, "db_fields_encryption_secret.yaml", pulpBackup.Spec.DeploymentName + "-container-auth", pod})
