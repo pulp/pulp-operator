@@ -353,40 +353,46 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 
 	resources := m.Spec.Database.ResourceRequirements
 
-	livenessProbe := &corev1.Probe{
-		ProbeHandler: corev1.ProbeHandler{
-			Exec: &corev1.ExecAction{
-				Command: []string{
-					"/bin/sh",
-					"-i",
-					"-c",
-					"pg_isready -U " + m.Spec.DeploymentType + " -h 127.0.0.1 -p 5432",
+	livenessProbe := m.Spec.Database.LivenessProbe
+	if livenessProbe == nil {
+		livenessProbe = &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				Exec: &corev1.ExecAction{
+					Command: []string{
+						"/bin/sh",
+						"-i",
+						"-c",
+						"pg_isready -U " + m.Spec.DeploymentType + " -h 127.0.0.1 -p 5432",
+					},
 				},
 			},
-		},
-		InitialDelaySeconds: 30,
-		PeriodSeconds:       10,
-		TimeoutSeconds:      5,
-		FailureThreshold:    6,
-		SuccessThreshold:    1,
+			InitialDelaySeconds: 30,
+			PeriodSeconds:       10,
+			TimeoutSeconds:      5,
+			FailureThreshold:    6,
+			SuccessThreshold:    1,
+		}
 	}
 
-	readinessProbe := &corev1.Probe{
-		ProbeHandler: corev1.ProbeHandler{
-			Exec: &corev1.ExecAction{
-				Command: []string{
-					"/bin/sh",
-					"-i",
-					"-c",
-					"pg_isready -U " + m.Spec.DeploymentType + " -h 127.0.0.1 -p 5432",
+	readinessProbe := m.Spec.Database.ReadinessProbe
+	if readinessProbe == nil {
+		readinessProbe = &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				Exec: &corev1.ExecAction{
+					Command: []string{
+						"/bin/sh",
+						"-i",
+						"-c",
+						"pg_isready -U " + m.Spec.DeploymentType + " -h 127.0.0.1 -p 5432",
+					},
 				},
 			},
-		},
-		InitialDelaySeconds: 5,
-		PeriodSeconds:       10,
-		TimeoutSeconds:      5,
-		FailureThreshold:    6,
-		SuccessThreshold:    1,
+			InitialDelaySeconds: 5,
+			PeriodSeconds:       10,
+			TimeoutSeconds:      5,
+			FailureThreshold:    6,
+			SuccessThreshold:    1,
+		}
 	}
 
 	postgresImage := os.Getenv("RELATED_IMAGE_PULP_POSTGRES")

@@ -41,6 +41,8 @@
 | gunicorn_timeout | The timeout for the gunicorn process. | int | false |
 | gunicorn_workers | The number of gunicorn workers to use for the api. | int | false |
 | resource_requirements | Resource requirements for the pulp api container. | corev1.ResourceRequirements | false |
+| readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |
+| livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -56,6 +58,8 @@
 | redis_port |  | int | false |
 | redis_resource_requirements | Resource requirements for the Redis container | corev1.ResourceRequirements | false |
 | pvc | PersistenVolumeClaim name that will be used by Redis pods If defined, the PVC must be provisioned by the user and the operator will only configure the deployment to use it | string | false |
+| readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |
+| livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -72,6 +76,8 @@
 | tolerations | Node tolerations for the Pulp pods. | []corev1.Toleration | false |
 | gunicorn_timeout | The timeout for the gunicorn process. | int | false |
 | gunicorn_workers | The number of gunicorn workers to use for the api. | int | false |
+| readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |
+| livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -97,6 +103,8 @@
 | postgres_storage_requirements | Temporarily modifying it as a string to avoid an issue with backup and json.Unmarshal when set as resource.Quantity and no value passed on pulp CR, during backup steps json.Unmarshal is settings it with \"0\" | string | false |
 | postgres_storage_class | Name of the StorageClass required by the claim. | *string | false |
 | pvc | PersistenVolumeClaim name that will be used by database pods If defined, the PVC must be provisioned by the user and the operator will only configure the deployment to use it | string | false |
+| readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |
+| livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -199,6 +207,8 @@ PulpStatus defines the observed state of Pulp
 | ----- | ----------- | ------ | -------- |
 | replicas | Size is the size of number of pulp-web replicas | int32 | true |
 | resource_requirements | Resource requirements for the pulp-web container | corev1.ResourceRequirements | false |
+| readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |
+| livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -214,5 +224,7 @@ PulpStatus defines the observed state of Pulp
 | node_selector | NodeSelector for the Pulp pods. | map[string]string | false |
 | tolerations | Node tolerations for the Pulp pods. | []corev1.Toleration | false |
 | topology_spread_constraints | Topology rule(s) for the pods. | []corev1.TopologySpreadConstraint | false |
+| readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |
+| livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
 
 [Back to Custom Resources](#custom-resources)

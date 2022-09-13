@@ -382,6 +382,27 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 	} else if Image == "" {
 		Image = "quay.io/pulp/pulp:stable"
 	}
+
+	readinessProbe := m.Spec.Content.ReadinessProbe
+	if readinessProbe == nil {
+		readinessProbe = &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				Exec: &corev1.ExecAction{
+					Command: []string{
+						"/usr/bin/readyz.py",
+						getPulpSetting(m, "content_path_prefix"),
+					},
+				},
+			},
+			FailureThreshold:    10,
+			InitialDelaySeconds: 60,
+			PeriodSeconds:       10,
+			SuccessThreshold:    1,
+			TimeoutSeconds:      10,
+		}
+	}
+	livenessProbe := m.Spec.Content.LivenessProbe
+
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-content",
@@ -416,9 +437,9 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 							ContainerPort: 24816,
 							Protocol:      "TCP",
 						}},
-						// LivenessProbe:  livenessProbe,
-						// ReadinessProbe: readinessProbe,
-						VolumeMounts: volumeMounts,
+						LivenessProbe:  livenessProbe,
+						ReadinessProbe: readinessProbe,
+						VolumeMounts:   volumeMounts,
 					}},
 				},
 			},
