@@ -184,21 +184,36 @@ func (r *PulpBackupReconciler) createBackupPod(ctx context.Context, pulpBackup *
 		},
 	}}
 
-	if len(pulp.Spec.ObjectStorageAzureSecret) == 0 && len(pulp.Spec.ObjectStorageS3Secret) == 0 {
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      "file-storage",
-			ReadOnly:  false,
-			MountPath: "/var/lib/pulp",
-		})
+	// fileStorageMount will be added to the list of mounts if there is a
+	// SC or PVC defined for Pulp
+	fileStorageMount := corev1.VolumeMount{
+		Name:      "file-storage",
+		ReadOnly:  false,
+		MountPath: "/var/lib/pulp",
+	}
 
-		volumes = append(volumes, corev1.Volume{
-			Name: "file-storage",
-			VolumeSource: corev1.VolumeSource{
-				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: pulp.Name + "-file-storage",
-				},
-			},
-		})
+	// fileStorageVolume will be added to the list of volumes if there is a
+	// SC or PVC defined for Pulp
+	fileStorageVolume := corev1.Volume{
+		Name: "file-storage",
+		VolumeSource: corev1.VolumeSource{
+			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{},
+		},
+	}
+
+	_, storageType := controllers.MultiStorageConfigured(pulp, "Pulp")
+
+	// if SC defined, we should mount the PVC provisioned by the operator
+	if storageType[0] == controllers.SCNameType {
+		volumeMounts = append(volumeMounts, fileStorageMount)
+		fileStorageVolume.VolumeSource.PersistentVolumeClaim.ClaimName = pulp.Name + "-file-storage"
+		volumes = append(volumes, fileStorageVolume)
+
+		// if .spec.Api.PVC defined we should mount the PVC provisioned by user
+	} else if storageType[0] == controllers.PVCType {
+		volumeMounts = append(volumeMounts, fileStorageMount)
+		fileStorageVolume.VolumeSource.PersistentVolumeClaim.ClaimName = pulp.Spec.PVC
+		volumes = append(volumes, fileStorageVolume)
 	}
 
 	// running a dumb command on bkp mount point just to make sure that
