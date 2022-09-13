@@ -36,6 +36,7 @@ nav:
   - Configuring:
       - Storage: storage.md
       - LogLevel: logLevel.md
+      - Custom CA: customCA.md
   - Changelog: CHANGES.md
 markdown_extensions:
   - toc:

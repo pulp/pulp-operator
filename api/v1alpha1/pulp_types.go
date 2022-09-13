@@ -201,6 +201,12 @@ type PulpSpec struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	SSOSecret string `json:"sso_secret,omitempty"`
+
+	// Define if the operator should or should not mount the custom CA certificates added to the cluster via cluster-wide proxy config
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=false
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	TrustedCa bool `json:"mount_trusted_ca,omitempty"`
 }
 
 type Affinity struct {

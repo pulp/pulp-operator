@@ -186,6 +186,7 @@ PulpSpec defines the desired state of Pulp
 | admin_password_secret | Secret where the administrator password can be found | string | false |
 | image_pull_secrets | Image pull secrets for container images | []string | false |
 | sso_secret | Secret where Single Sign-on configuration can be found | string | false |
+| mount_trusted_ca | Define if the operator should or should not mount the custom CA certificates added to the cluster via cluster-wide proxy config | bool | false |
 
 [Back to Custom Resources](#custom-resources)
 

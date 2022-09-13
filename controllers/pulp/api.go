@@ -633,6 +633,11 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		volumeMounts = append(volumeMounts, containerTokenSecretMount...)
 	}
 
+	// mountCASpec adds the trusted-ca bundle into []volume and []volumeMount if pulp.Spec.TrustedCA is true
+	if IsOpenShift {
+		volumes, volumeMounts = mountCASpec(m, volumes, volumeMounts)
+	}
+
 	resources := m.Spec.Api.ResourceRequirements
 
 	readinessProbe := m.Spec.Api.ReadinessProbe
