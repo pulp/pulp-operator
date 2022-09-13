@@ -47,6 +47,7 @@ PulpRestoreSpec defines the desired state of PulpRestore
 | backup_dir | Backup directory name, set as a status found on the backup object (backupDirectory) | string | true |
 | storage_type | Configuration for the storage type utilized in the backup | string | true |
 | postgres_label_selector | Label selector used to identify postgres pod for executing migration | string | true |
+| keep_replicas | KeepBackupReplicasCount allows to define if the restore controller should restore the components with the same number of replicas from backup or restore only a single replica each. | bool | true |
 
 [Back to Custom Resources](#custom-resources)
 

@@ -128,6 +128,18 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 	var pulpController reconcile.Result
 
+	// Create an empty ConfigMap in which CNO will inject custom CAs
+	if IsOpenShift && pulp.Spec.TrustedCa {
+		pulpController, err = r.createEmptyConfigMap(ctx, pulp, log)
+		if err != nil {
+			return pulpController, err
+		} else if pulpController.Requeue {
+			return pulpController, nil
+		} else if pulpController.RequeueAfter > 0 {
+			return pulpController, nil
+		}
+	}
+
 	// Create ServiceAccount
 	pulpController, err = r.CreateServiceAccount(ctx, pulp)
 	if err != nil {

@@ -376,6 +376,11 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 		volumeMounts = append(volumeMounts, emptyDir...)
 	}
 
+	// mountCASpec adds the trusted-ca bundle into []volume and []volumeMount if pulp.Spec.TrustedCA is true
+	if IsOpenShift {
+		volumes, volumeMounts = mountCASpec(m, volumes, volumeMounts)
+	}
+
 	Image := os.Getenv("RELATED_IMAGE_PULP")
 	if len(m.Spec.Image) > 0 && len(m.Spec.ImageVersion) > 0 {
 		Image = m.Spec.Image + ":" + m.Spec.ImageVersion
