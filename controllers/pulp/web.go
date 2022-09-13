@@ -154,6 +154,9 @@ func (r *PulpReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *apps
 		ImageWeb = "quay.io/pulp/pulp-web:stable"
 	}
 
+	readinessProbe := m.Spec.Web.ReadinessProbe
+	livenessProbe := m.Spec.Web.LivenessProbe
+
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-web",
@@ -196,6 +199,8 @@ func (r *PulpReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *apps
 							ContainerPort: 8080,
 							Protocol:      "TCP",
 						}},
+						LivenessProbe:  livenessProbe,
+						ReadinessProbe: readinessProbe,
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      m.Name + "-nginx-conf",

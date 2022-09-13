@@ -262,41 +262,48 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 		},
 	}
 
-	readinessProbe := &corev1.Probe{
-		ProbeHandler: corev1.ProbeHandler{
-			Exec: &corev1.ExecAction{
-				Command: []string{
-					"/bin/sh",
-					"-i",
-					"-c",
-					"redis-cli -h 127.0.0.1 -p 6379",
+	readinessProbe := m.Spec.Cache.ReadinessProbe
+	if readinessProbe == nil {
+		readinessProbe = &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				Exec: &corev1.ExecAction{
+					Command: []string{
+						"/bin/sh",
+						"-i",
+						"-c",
+						"redis-cli -h 127.0.0.1 -p 6379",
+					},
 				},
 			},
-		},
-		InitialDelaySeconds: 5,
-		PeriodSeconds:       5,
-		TimeoutSeconds:      5,
-		FailureThreshold:    5,
-		SuccessThreshold:    1,
+			InitialDelaySeconds: 5,
+			PeriodSeconds:       5,
+			TimeoutSeconds:      5,
+			FailureThreshold:    5,
+			SuccessThreshold:    1,
+		}
 	}
 
-	livenessProbe := &corev1.Probe{
-		ProbeHandler: corev1.ProbeHandler{
-			Exec: &corev1.ExecAction{
-				Command: []string{
-					"/bin/sh",
-					"-i",
-					"-c",
-					"redis-cli -h 127.0.0.1 -p 6379",
+	livenessProbe := m.Spec.Cache.LivenessProbe
+	if livenessProbe == nil {
+		livenessProbe = &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				Exec: &corev1.ExecAction{
+					Command: []string{
+						"/bin/sh",
+						"-i",
+						"-c",
+						"redis-cli -h 127.0.0.1 -p 6379",
+					},
 				},
 			},
-		},
-		InitialDelaySeconds: 5,
-		PeriodSeconds:       5,
-		SuccessThreshold:    1,
-		FailureThreshold:    5,
-		TimeoutSeconds:      5,
+			InitialDelaySeconds: 5,
+			PeriodSeconds:       5,
+			SuccessThreshold:    1,
+			FailureThreshold:    5,
+			TimeoutSeconds:      5,
+		}
 	}
+
 	RedisImage := os.Getenv("RELATED_IMAGE_PULP_REDIS")
 	if len(m.Spec.Cache.RedisImage) > 0 {
 		RedisImage = m.Spec.Cache.RedisImage

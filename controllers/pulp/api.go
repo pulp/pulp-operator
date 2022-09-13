@@ -635,37 +635,43 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 
 	resources := m.Spec.Api.ResourceRequirements
 
-	readinessProbe := &corev1.Probe{
-		ProbeHandler: corev1.ProbeHandler{
-			Exec: &corev1.ExecAction{
-				Command: []string{
-					"/usr/bin/readyz.py",
-					getPulpSetting(m, "api_root") + "api/v3/status/",
+	readinessProbe := m.Spec.Api.ReadinessProbe
+	if readinessProbe == nil {
+		readinessProbe = &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				Exec: &corev1.ExecAction{
+					Command: []string{
+						"/usr/bin/readyz.py",
+						getPulpSetting(m, "api_root") + "api/v3/status/",
+					},
 				},
 			},
-		},
-		FailureThreshold:    10,
-		InitialDelaySeconds: 60,
-		PeriodSeconds:       10,
-		SuccessThreshold:    1,
-		TimeoutSeconds:      10,
+			FailureThreshold:    10,
+			InitialDelaySeconds: 60,
+			PeriodSeconds:       10,
+			SuccessThreshold:    1,
+			TimeoutSeconds:      10,
+		}
 	}
 
-	livenessProbe := &corev1.Probe{
-		FailureThreshold: 5,
-		ProbeHandler: corev1.ProbeHandler{
-			HTTPGet: &corev1.HTTPGetAction{
-				Path: getPulpSetting(m, "api_root") + "api/v3/status/",
-				Port: intstr.IntOrString{
-					IntVal: 24817,
+	livenessProbe := m.Spec.Api.LivenessProbe
+	if livenessProbe == nil {
+		livenessProbe = &corev1.Probe{
+			FailureThreshold: 5,
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: getPulpSetting(m, "api_root") + "api/v3/status/",
+					Port: intstr.IntOrString{
+						IntVal: 24817,
+					},
+					Scheme: corev1.URIScheme("HTTP"),
 				},
-				Scheme: corev1.URIScheme("HTTP"),
 			},
-		},
-		InitialDelaySeconds: 120,
-		PeriodSeconds:       20,
-		SuccessThreshold:    1,
-		TimeoutSeconds:      10,
+			InitialDelaySeconds: 120,
+			PeriodSeconds:       20,
+			SuccessThreshold:    1,
+			TimeoutSeconds:      10,
+		}
 	}
 
 	// the following variables are defined to avoid issues with reconciliation
@@ -727,7 +733,6 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 							ContainerPort: 24817,
 							Protocol:      "TCP",
 						}},
-
 						LivenessProbe:  livenessProbe,
 						ReadinessProbe: readinessProbe,
 						Resources:      resources,

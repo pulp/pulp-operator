@@ -347,6 +347,9 @@ func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *a
 		Image = "quay.io/pulp/pulp:stable"
 	}
 
+	readinessProbe := m.Spec.Worker.ReadinessProbe
+	livenessProbe := m.Spec.Worker.LivenessProbe
+
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-worker",
@@ -376,10 +379,10 @@ func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *a
 						ImagePullPolicy: corev1.PullPolicy(m.Spec.ImagePullPolicy),
 						Args:            []string{"pulp-worker"},
 						Env:             envVars,
-						// LivenessProbe:  livenessProbe,
-						// ReadinessProbe: readinessProbe,
-						VolumeMounts: volumeMounts,
-						Resources:    resources,
+						LivenessProbe:   livenessProbe,
+						ReadinessProbe:  readinessProbe,
+						VolumeMounts:    volumeMounts,
+						Resources:       resources,
 					}},
 				},
 			},

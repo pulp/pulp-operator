@@ -254,6 +254,18 @@ type Api struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
+
+	// Periodic probe of container service readiness.
+	// Container will be removed from service endpoints if the probe fails.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Probe","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	ReadinessProbe *corev1.Probe `json:"readinessProbe,omitempty"`
+
+	// Periodic probe of container liveness.
+	// Container will be restarted if the probe fails.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Probe","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	LivenessProbe *corev1.Probe `json:"livenessProbe,omitempty"`
 }
 
 type Content struct {
@@ -295,6 +307,18 @@ type Content struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	GunicornWorkers int `json:"gunicorn_workers,omitempty"`
+
+	// Periodic probe of container service readiness.
+	// Container will be removed from service endpoints if the probe fails.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Probe","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	ReadinessProbe *corev1.Probe `json:"readinessProbe,omitempty"`
+
+	// Periodic probe of container liveness.
+	// Container will be restarted if the probe fails.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Probe","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	LivenessProbe *corev1.Probe `json:"livenessProbe,omitempty"`
 }
 
 type Worker struct {
@@ -329,6 +353,18 @@ type Worker struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	TopologySpreadConstraints []corev1.TopologySpreadConstraint `json:"topology_spread_constraints,omitempty"`
+
+	// Periodic probe of container service readiness.
+	// Container will be removed from service endpoints if the probe fails.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Probe","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	ReadinessProbe *corev1.Probe `json:"readinessProbe,omitempty"`
+
+	// Periodic probe of container liveness.
+	// Container will be restarted if the probe fails.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Probe","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	LivenessProbe *corev1.Probe `json:"livenessProbe,omitempty"`
 }
 
 type Web struct {
@@ -343,6 +379,18 @@ type Web struct {
 	// Resource requirements for the pulp-web container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
+
+	// Periodic probe of container service readiness.
+	// Container will be removed from service endpoints if the probe fails.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Probe","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	ReadinessProbe *corev1.Probe `json:"readinessProbe,omitempty"`
+
+	// Periodic probe of container liveness.
+	// Container will be restarted if the probe fails.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Probe","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	LivenessProbe *corev1.Probe `json:"livenessProbe,omitempty"`
 }
 
 type ExternalDB struct {
@@ -444,6 +492,18 @@ type Database struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	PVC string `json:"pvc,omitempty"`
+
+	// Periodic probe of container service readiness.
+	// Container will be removed from service endpoints if the probe fails.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Probe","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	ReadinessProbe *corev1.Probe `json:"readinessProbe,omitempty"`
+
+	// Periodic probe of container liveness.
+	// Container will be restarted if the probe fails.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Probe","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	LivenessProbe *corev1.Probe `json:"livenessProbe,omitempty"`
 }
 
 type Cache struct {
@@ -480,6 +540,18 @@ type Cache struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	PVC string `json:"pvc,omitempty"`
+
+	// Periodic probe of container service readiness.
+	// Container will be removed from service endpoints if the probe fails.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Probe","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	ReadinessProbe *corev1.Probe `json:"readinessProbe,omitempty"`
+
+	// Periodic probe of container liveness.
+	// Container will be restarted if the probe fails.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Probe","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	LivenessProbe *corev1.Probe `json:"livenessProbe,omitempty"`
 }
 
 // PulpStatus defines the observed state of Pulp
