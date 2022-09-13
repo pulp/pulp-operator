@@ -15,6 +15,7 @@ env:
   free_to_take: Free to take
   in_progress: In Progress
   needs_review: Needs review
+  done: Done
 
 jobs:
   # only prio-list labeled items should be added to the board
@@ -23,10 +24,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Add issue to Free-to-take list
-        uses: leonsteinhaeuser/project-beta-automations@v1.3.0
+        uses: leonsteinhaeuser/project-beta-automations@v2.0.0
         with:
           gh_token: ${{ secrets.RELEASE_TOKEN }}
-          user: pulpbot
+          organization: pulp
           project_id: 8
           resource_node_id: ${{ github.event.issue.node_id }}
           operation_mode: status
@@ -37,10 +38,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Move an issue to the In Progress column
-        uses: leonsteinhaeuser/project-beta-automations@v1.3.0
+        uses: leonsteinhaeuser/project-beta-automations@v2.0.0
         with:
           gh_token: ${{ secrets.RELEASE_TOKEN }}
-          user: pulpbot
+          organization: pulp
           project_id: 8
           resource_node_id: ${{ github.event.issue.node_id }}
           operation_mode: status
@@ -72,10 +73,10 @@ jobs:
         issues: ${{ fromJSON(needs.find-linked-issues.outputs.linked-issues) }}
     steps:
       - name: Move to Needs Review
-        uses: leonsteinhaeuser/project-beta-automations@v1.3.0
+        uses: leonsteinhaeuser/project-beta-automations@v2.0.0
         with:
           gh_token: ${{ secrets.RELEASE_TOKEN }}
-          user: pulpbot
+          organization: pulp
           project_id: 8
           resource_node_id: ${{ matrix.issues.issue.node_id }}
           operation_mode: status
@@ -86,10 +87,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Move an issue to the Done column
-        uses: leonsteinhaeuser/project-beta-automations@v1.3.0
+        uses: leonsteinhaeuser/project-beta-automations@v2.0.0
         with:
           gh_token: ${{ secrets.RELEASE_TOKEN }}
-          user: pulpbot
+          organization: pulp
           project_id: 8
           resource_node_id: ${{ github.event.issue.node_id }}
           operation_mode: status
