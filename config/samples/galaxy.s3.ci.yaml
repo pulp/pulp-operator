@@ -20,7 +20,12 @@ spec:
   file_storage_size: "10Gi"
   pulp_settings:
     api_root: "/api/galaxy/pulp/"
+    allowed_export_paths:
+      - /tmp
+    allowed_import_paths:
+      - /tmp
     aws_s3_endpoint_url: http://pulp_minio:9000
+    telemetry: false
   api:
     replicas: 1
   content:

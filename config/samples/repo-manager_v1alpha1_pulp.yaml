@@ -10,6 +10,10 @@ spec:
   ingress_type: Route
   pulp_settings:
     api_root: "/pulp/"
+    allowed_export_paths:
+      - /tmp
+    allowed_import_paths:
+      - /tmp
   redis_storage_class: standard
   storage_type: File
   api:
