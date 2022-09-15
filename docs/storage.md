@@ -2,7 +2,7 @@
 
 Before installing Pulp, for production clusters, it is necessary to configure how Pulp should persist the data.
 
-Pulp uses `django-storages` to support multiple types of storage backends. The current version of operator supports the following types of storage installation:
+[Pulp uses django-storages](https://docs.pulpproject.org/pulpcore/installation/storage.html) to support multiple types of storage backends. The current version of operator supports the following types of storage installation:
 
 * [Storage Class](#configuring-pulp-operator-storage-to-use-a-storage-class)
 * [Persistent Volume Claim](#configuring-pulp-operator-storage-to-use-a-persistent-volume-claim)
@@ -67,6 +67,93 @@ Pulp operator will automatically configure Pulp `settings.py` with the provided 
 
 !!! info
     Only one type of Object Storage should be provided. Trying to declare both will fail operator execution.
+
+### Configuring Azure Blob
+
+#### Prerequisites
+* To configure Pulp with Azure Blob as a storage backend, the first thing to do is create an [Azure Storage Blob Container](https://docs.microsoft.com/en-us/azure/storage/blobs/quickstart-storage-explorer) to store the objects.
+* After configuring a `Blob Container`, take a note of the [Azure storage account](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-get-info?toc=%2Fazure%2Fstorage%2Fblobs%2Ftoc.json&tabs=portal)
+
+After performing all the prerequisites, create a `Secret` with them:
+```
+$ PULP_NAMESPACE='my-pulp-namespace'
+$ AZURE_ACCOUNT_NAME='my-azure-account-name'
+$ AZURE_ACCOUNT_KEY='my-azure-account-key'
+$ AZURE_CONTAINER='pulp-test'
+$ AZURE_CONTAINER_PATH='pulp3'
+$ AZURE_CONNECTION_STRING='my-azure-connection-string'
+
+$ kubectl -n $PULP_NAMESPACE apply -f- <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: 'test-azure'
+stringData:
+  azure-account-name: $AZURE_ACCOUNT_NAME
+  azure-account-key: $AZURE_ACCOUNT_KEY
+  azure-container: $AZURE_CONTAINER
+  azure-container-path: $AZURE_CONTAINER_PATH
+  azure-connection-string: $AZURE_CONNECTION_STRING
+EOF
+```
+
+!!! note
+    `azure-connection-string` is an **optional** field that can be used to keep compatibility with other Azure Storage compliant systems, like [Azurite](https://github.com/Azure/Azurite).
+
+Now configure `Pulp CR` with the secret created:
+```
+$ kubectl -n $PULP_NAMESPACE edit pulp
+...
+spec:
+  object_storage_azure_secret: test-azure
+...
+```
+
+and restart the API pods to get the new configuration.
+```
+$ kubectl -n $PULP_NAMESPACE delete pod -l app.kubernetes.io/component=api
+```
+
+### Configure AWS S3
+
+#### Prerequisites
+* To configure Pulp with AWS S3 as a storage backend, the first thing to do is create a [S3 Bucket](https://docs.aws.amazon.com/AmazonS3/latest/userguide/creating-bucket.html) to store the objects.
+* After configuring a `S3 Bucket` take a note of the [AWS credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html)
+
+After performing all the prerequisites, create a `Secret` with them:
+```
+$ PULP_NAMESPACE='my-pulp-namespace'
+$ S3_ACCESS_KEY_ID='my-aws-access-key-id'
+$ S3_SECRET_ACCESS_KEY='my-aws-secret-access-key'
+$ S3_BUCKET_NAME='pulp3'
+$ S3_REGION='us-east-1'
+
+$ kubectl -n $PULP_NAMESPACE apply -f- <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: 'test-s3'
+stringData:
+  s3-access-key-id: $S3_ACCESS_KEY_ID
+  s3-secret-access-key: $S3_SECRET_ACCESS_KEY
+  s3-bucket-name: $S3_BUCKET_NAME
+  s3-region: $S3_REGION
+EOF
+```
+
+Now configure `Pulp CR` with the secret created:
+```
+$ kubectl -n $PULP_NAMESPACE edit pulp
+...
+spec:
+  object_storage_s3_secret: test-s3
+...
+```
+
+and restart the API pods to get the new configuration.
+```
+$ kubectl -n $PULP_NAMESPACE delete pod -l app.kubernetes.io/component=api
+```
 
 
 ## Configuring Pulp Operator in non-production clusters
