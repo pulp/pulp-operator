@@ -155,6 +155,25 @@ func (r *PulpReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *apps
 	}
 
 	readinessProbe := m.Spec.Web.ReadinessProbe
+	if readinessProbe == nil {
+		readinessProbe = &corev1.Probe{
+			FailureThreshold: 5,
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: getPulpSetting(m, "api_root") + "api/v3/status/",
+					Port: intstr.IntOrString{
+						IntVal: 8080,
+					},
+					Scheme: corev1.URIScheme("HTTP"),
+				},
+			},
+			InitialDelaySeconds: 150,
+			PeriodSeconds:       20,
+			SuccessThreshold:    1,
+			TimeoutSeconds:      10,
+		}
+	}
+
 	livenessProbe := m.Spec.Web.LivenessProbe
 
 	nodeSelector := map[string]string{}
