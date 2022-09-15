@@ -21,6 +21,11 @@ spec:
   file_storage_storage_class: standard
   pulp_settings:
     api_root: "/api/galaxy/pulp/"
+    allowed_export_paths:
+      - /tmp
+    allowed_import_paths:
+      - /tmp
+    telemetry: false
   database:
     postgres_storage_class: standard
   api:

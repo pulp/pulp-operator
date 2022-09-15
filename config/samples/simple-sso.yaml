@@ -41,6 +41,10 @@ spec:
 
   pulp_settings:
     api_root: "/pulp/"
+    allowed_export_paths:
+      - /tmp
+    allowed_import_paths:
+      - /tmp
     # cache_enabled: true
     # db_encryption_key: "/etc/pulp/keys/database_fields.symmetric.key"
     # galaxy_collection_signing_service: ansible-default
