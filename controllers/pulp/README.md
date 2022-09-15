@@ -60,6 +60,7 @@
 | pvc | PersistenVolumeClaim name that will be used by Redis pods If defined, the PVC must be provisioned by the user and the operator will only configure the deployment to use it | string | false |
 | readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |
 | livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
+| node_selector | NodeSelector for the Pulp pods. | map[string]string | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -166,6 +167,7 @@ PulpSpec defines the desired state of Pulp
 | storage_type | Configuration for the storage type utilized in the backup | string | false |
 | ingress_type | The ingress type to use to reach the deployed instance | string | false |
 | route_host | Route DNS host | string | false |
+| route_labels | RouteLabels will append custom label(s) into routes (used by router shard routeSelector). | map[string]string | false |
 | nodeport_port | Provide requested port value | int32 | false |
 | haproxy_timeout | The timeout for HAProxy. | string | false |
 | container_token_secret | Secret where the container token certificates are stored. | string | false |
@@ -210,6 +212,7 @@ PulpStatus defines the observed state of Pulp
 | resource_requirements | Resource requirements for the pulp-web container | corev1.ResourceRequirements | false |
 | readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |
 | livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
+| node_selector | NodeSelector for the Web pods. | map[string]string | false |
 
 [Back to Custom Resources](#custom-resources)
 

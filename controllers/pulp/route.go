@@ -152,11 +152,14 @@ func pulpRouteObject(m *repomanagerv1alpha1.Pulp, p *RoutePlugin, routeHost stri
 	if len(p.Rewrite) > 0 {
 		annotation["haproxy.router.openshift.io/rewrite-target"] = p.Rewrite
 	}
+
+	labels := m.Spec.RouteLabels
 	return &routev1.Route{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        p.Name,
 			Namespace:   m.Namespace,
 			Annotations: annotation,
+			Labels:      labels,
 		},
 		Spec: routev1.RouteSpec{
 			Host: routeHost,
