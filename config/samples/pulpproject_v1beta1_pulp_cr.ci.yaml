@@ -14,6 +14,12 @@ spec:
   # We have a little over 10GB free on GHA VMs/instances
   file_storage_size: "10Gi"
   container_token_secret: "container-auth"
+  pulp_settings:
+    allowed_export_paths:
+      - /tmp
+    allowed_import_paths:
+      - /tmp
+    telemetry: false
   content:
     replicas: 1
     resource_requirements:

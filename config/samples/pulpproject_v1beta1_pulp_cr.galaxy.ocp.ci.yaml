@@ -17,6 +17,11 @@ spec:
   file_storage_size: "10Gi"
   pulp_settings:
     api_root: "/api/galaxy/pulp/"
+    allowed_export_paths:
+      - /tmp
+    allowed_import_paths:
+      - /tmp
+    telemetry: false
   content:
     replicas: 1
     resource_requirements:
