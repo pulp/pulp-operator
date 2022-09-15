@@ -34,9 +34,11 @@ nav:
       - Pulp Backup: backup.md
       - Pulp Restore: restore.md
   - Configuring:
+      - Pod Placement: podPlacement.md
       - Storage: storage.md
       - LogLevel: logLevel.md
       - Custom CA: customCA.md
+      - Routes: routes.md
   - Changelog: CHANGES.md
 markdown_extensions:
   - toc:

@@ -213,8 +213,8 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 	}
 
 	nodeSelector := map[string]string{}
-	if m.Spec.Api.NodeSelector != nil {
-		nodeSelector = m.Spec.Api.NodeSelector
+	if m.Spec.Cache.NodeSelector != nil {
+		nodeSelector = m.Spec.Cache.NodeSelector
 	}
 
 	toleration := []corev1.Toleration{}

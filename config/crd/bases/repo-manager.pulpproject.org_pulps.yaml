@@ -974,6 +974,11 @@ spec:
                         format: int32
                         type: integer
                     type: object
+                  node_selector:
+                    additionalProperties:
+                      type: string
+                    description: NodeSelector for the Pulp pods.
+                    type: object
                   pvc:
                     description: PersistenVolumeClaim name that will be used by Redis
                       pods If defined, the PVC must be provisioned by the user and
@@ -2525,6 +2530,12 @@ spec:
               route_host:
                 description: Route DNS host
                 type: string
+              route_labels:
+                additionalProperties:
+                  type: string
+                description: RouteLabels will append custom label(s) into routes (used
+                  by router shard routeSelector).
+                type: object
               signing_scripts_configmap:
                 description: ConfigMap where the signing scripts are stored.
                 type: string
@@ -2695,6 +2706,11 @@ spec:
                           https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes'
                         format: int32
                         type: integer
+                    type: object
+                  node_selector:
+                    additionalProperties:
+                      type: string
+                    description: NodeSelector for the Web pods.
                     type: object
                   readinessProbe:
                     description: Periodic probe of container service readiness. Container

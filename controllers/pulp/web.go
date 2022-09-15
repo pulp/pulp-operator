@@ -157,6 +157,11 @@ func (r *PulpReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *apps
 	readinessProbe := m.Spec.Web.ReadinessProbe
 	livenessProbe := m.Spec.Web.LivenessProbe
 
+	nodeSelector := map[string]string{}
+	if m.Spec.Web.NodeSelector != nil {
+		nodeSelector = m.Spec.Web.NodeSelector
+	}
+
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-web",
@@ -180,6 +185,7 @@ func (r *PulpReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *apps
 					Labels: ls,
 				},
 				Spec: corev1.PodSpec{
+					NodeSelector:       nodeSelector,
 					ServiceAccountName: m.Name,
 					Containers: []corev1.Container{{
 						Image:     ImageWeb,
