@@ -2,10 +2,6 @@
 
 /usr/bin/wait_on_postgres.py
 
-# Generating /var/lib/pulp/static at runtime rather than at container build time
-# facilitates all of /var/lib/pulp being a separate volume.
-/usr/local/bin/pulpcore-manager collectstatic --noinput
-
 # Get list of installed plugins via pip
 # Assumes they are all named like "pulp-file" -> "file", with no 2nd dash.
 # (Was previously needed when we ran `pulpcore-manager makemigrations`)
