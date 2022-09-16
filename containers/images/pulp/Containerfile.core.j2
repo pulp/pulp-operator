@@ -69,7 +69,8 @@ RUN pip install  \
 	"azure-storage-blob<12.10.0" \
 	"requests[use_chardet_on_py3]"
 
-RUN mkdir -p /etc/pulp \
+RUN mkdir -p /etc/pulp/certs \
+			 /var/lib/operator/static \
 			 /var/lib/pulp/media \
 			 /var/lib/pulp/assets \
 			 /var/lib/pulp/tmp
@@ -101,6 +102,10 @@ RUN pip install {{ plugin }}
 {% endif %}
 {% endfor %}
 {% endif %}
+
+RUN PULP_STATIC_ROOT=/var/lib/operator/static/ PULP_CONTENT_ORIGIN=localhost \
+	/usr/local/bin/pulpcore-manager collectstatic --clear --noinput --link && \
+	chown -R 1000 /var/lib/operator/static/
 
 COPY pulp-operator/containers/images/pulp/container-assets/readyz.py /usr/bin/readyz.py
 COPY pulp-operator/containers/images/pulp/container-assets/route_paths.py /usr/bin/route_paths.py
