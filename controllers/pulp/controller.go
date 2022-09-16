@@ -24,6 +24,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	policy "k8s.io/api/policy/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -61,6 +62,7 @@ type PulpReconciler struct {
 //+kubebuilder:rbac:groups=core;rbac.authorization.k8s.io,resources=roles;rolebindings;serviceaccounts,verbs=create;update;patch;delete;watch;get;list;
 //+kubebuilder:rbac:groups=core,resources=configmaps;secrets;services;persistentvolumeclaims,verbs=create;update;patch;delete;watch;get;list;
 //+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
+//+kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=get;list;create;delete;patch;update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -225,6 +227,16 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		}
 	}
 
+	log.V(1).Info("Running PDB tasks")
+	pulpController, err = r.pdbController(ctx, pulp, log)
+	if err != nil {
+		return pulpController, err
+	} else if pulpController.Requeue {
+		return pulpController, nil
+	} else if pulpController.RequeueAfter > 0 {
+		return pulpController, nil
+	}
+
 	log.V(1).Info("Running status tasks")
 	pulpController, err = r.pulpStatus(ctx, pulp, log)
 	if err != nil {
@@ -252,5 +264,6 @@ func (r *PulpReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.Service{}).
 		Owns(&corev1.Secret{}).
 		Owns(&corev1.ConfigMap{}).
+		Owns(&policy.PodDisruptionBudget{}).
 		Complete(r)
 }
