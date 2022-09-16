@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	policy "k8s.io/api/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -277,6 +278,11 @@ type Api struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Probe","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	LivenessProbe *corev1.Probe `json:"livenessProbe,omitempty"`
+
+	// PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods
+	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	PDB *policy.PodDisruptionBudgetSpec `json:"pdb,omitempty"`
 }
 
 type Content struct {
@@ -330,6 +336,11 @@ type Content struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Probe","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	LivenessProbe *corev1.Probe `json:"livenessProbe,omitempty"`
+
+	// PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods
+	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	PDB *policy.PodDisruptionBudgetSpec `json:"pdb,omitempty"`
 }
 
 type Worker struct {
@@ -376,6 +387,11 @@ type Worker struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Probe","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	LivenessProbe *corev1.Probe `json:"livenessProbe,omitempty"`
+
+	// PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods
+	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	PDB *policy.PodDisruptionBudgetSpec `json:"pdb,omitempty"`
 }
 
 type Web struct {
@@ -407,6 +423,11 @@ type Web struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	NodeSelector map[string]string `json:"node_selector,omitempty"`
+
+	// PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods
+	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	PDB *policy.PodDisruptionBudgetSpec `json:"pdb,omitempty"`
 }
 
 type ExternalDB struct {
