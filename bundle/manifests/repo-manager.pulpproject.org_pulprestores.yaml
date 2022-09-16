@@ -64,6 +64,12 @@ spec:
                 - galaxy
                 - pulp
                 type: string
+              keep_replicas:
+                default: false
+                description: KeepBackupReplicasCount allows to define if the restore
+                  controller should restore the components with the same number of
+                  replicas from backup or restore only a single replica each.
+                type: boolean
               postgres_label_selector:
                 description: Label selector used to identify postgres pod for executing
                   migration
