@@ -1,21 +1,20 @@
 #!/bin/bash
 
-database_migrated=false
-
 echo "Checking for database migrations"
-while [ $database_migrated = false ]; do
+while true; do
   /usr/local/bin/pulpcore-manager showmigrations | grep '\[ \]'
-  if [ $? -eq 1 ]; then
+  exit_code=$?
+  if [ $exit_code -eq 1 ]; then
+    # grep returning 1 means that the searched-for string was not found.
     echo "Database migrated!"
-    database_migrated=true
+    exit 0
+  elif [ $exit_code -eq 0 ]; then
+    # grep returning 0 means that the searched-for string was found.
+    echo "Database migration in progress. Waiting..."
   else
-    sleep 5
+    # grep returning 2 or more means "error", and is probably because pulpcore-manager errored,
+    # which is probably because the database is not "up enough" to continue yet.
+    echo "Waiting for migration, last exit code $exit_code"
   fi
+  sleep 5
 done
-
-if [ $database_migrated = false ]; then
-  echo "Database not migrated in time, exiting"
-  exit 1
-else
-  exit 0
-fi
