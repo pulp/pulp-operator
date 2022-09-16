@@ -33,6 +33,12 @@ metadata:
             "file_storage_storage_class": "standard",
             "ingress_type": "Route",
             "pulp_settings": {
+              "allowed_export_paths": [
+                "/tmp"
+              ],
+              "allowed_import_paths": [
+                "/tmp"
+              ],
               "api_root": "/pulp/"
             },
             "redis_storage_class": "standard",
@@ -80,7 +86,14 @@ metadata:
             "image_web_version": "latest",
             "ingress_type": "nodeport",
             "pulp_settings": {
-              "api_root": "/pulp/"
+              "allowed_export_paths": [
+                "/tmp"
+              ],
+              "allowed_import_paths": [
+                "/tmp"
+              ],
+              "api_root": "/pulp/",
+              "telemetry": false
             },
             "web": {
               "replicas": 1
@@ -127,7 +140,14 @@ metadata:
             "image_web_version": "latest",
             "ingress_type": "nodeport",
             "pulp_settings": {
-              "api_root": "/api/galaxy/pulp/"
+              "allowed_export_paths": [
+                "/tmp"
+              ],
+              "allowed_import_paths": [
+                "/tmp"
+              ],
+              "api_root": "/api/galaxy/pulp/",
+              "telemetry": false
             },
             "signing_scripts_configmap": "signing-scripts",
             "signing_secret": "signing-galaxy",
@@ -306,6 +326,11 @@ spec:
         path: deployment_name
       - displayName: Deployment Type
         path: deployment_type
+      - description: KeepBackupReplicasCount allows to define if the restore controller
+          should restore the components with the same number of replicas from backup
+          or restore only a single replica each.
+        displayName: Keep Backup Replicas Count
+        path: keep_replicas
       - description: Label selector used to identify postgres pod for executing migration
         displayName: Postgres Label Selector
         path: postgres_label_selector
@@ -350,10 +375,24 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:number
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Periodic probe of container liveness. Container will be restarted
+          if the probe fails.
+        displayName: Liveness Probe
+        path: api.livenessProbe
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Probe
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: NodeSelector for the Pulp pods.
         displayName: Node Selector
         path: api.node_selector
         x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Periodic probe of container service readiness. Container will
+          be removed from service endpoints if the probe fails.
+        displayName: Readiness Probe
+        path: api.readinessProbe
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Probe
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Size is the size of number of pulp-api replicas.
         displayName: Replicas
@@ -384,6 +423,18 @@ spec:
         path: cache.enabled
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+      - description: Periodic probe of container liveness. Container will be restarted
+          if the probe fails.
+        displayName: Liveness Probe
+        path: cache.livenessProbe
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Probe
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: NodeSelector for the Pulp pods.
+        displayName: Node Selector
+        path: cache.node_selector
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: PersistenVolumeClaim name that will be used by Redis pods If
           defined, the PVC must be provisioned by the user and the operator will only
           configure the deployment to use it
@@ -391,6 +442,13 @@ spec:
         path: cache.pvc
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Periodic probe of container service readiness. Container will
+          be removed from service endpoints if the probe fails.
+        displayName: Readiness Probe
+        path: cache.readinessProbe
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Probe
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: The image name for the redis image.
         displayName: Redis Image
@@ -447,10 +505,24 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:number
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Periodic probe of container liveness. Container will be restarted
+          if the probe fails.
+        displayName: Liveness Probe
+        path: content.livenessProbe
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Probe
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: NodeSelector for the Pulp pods.
         displayName: Node Selector
         path: content.node_selector
         x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Periodic probe of container service readiness. Container will
+          be removed from service endpoints if the probe fails.
+        displayName: Readiness Probe
+        path: content.readinessProbe
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Probe
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Size is the size of number of pulp-content replicas
         displayName: Replicas
@@ -483,6 +555,13 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Postgres Con Max Age
         path: database.external_db.postgres_con_max_age
+      - description: Periodic probe of container liveness. Container will be restarted
+          if the probe fails.
+        displayName: Liveness Probe
+        path: database.livenessProbe
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Probe
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: NodeSelector for the database pod.
         displayName: Node Selector
         path: database.node_selector
@@ -531,6 +610,13 @@ spec:
         path: database.pvc
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Periodic probe of container service readiness. Container will
+          be removed from service endpoints if the probe fails.
+        displayName: Readiness Probe
+        path: database.readinessProbe
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Probe
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Node tolerations for the database pod.
         displayName: Tolerations
@@ -611,6 +697,12 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:select:Ingress
         - urn:alm:descriptor:com.tectonic.ui:select:LoadBalancer
         - urn:alm:descriptor:com.tectonic.ui:select:NodePort
+      - description: Define if the operator should or should not mount the custom
+          CA certificates added to the cluster via cluster-wide proxy config
+        displayName: Trusted Ca
+        path: mount_trusted_ca
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: Provide requested port value
         displayName: Node Port
         path: nodeport_port
@@ -647,6 +739,12 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route
+      - description: RouteLabels will append custom label(s) into routes (used by
+          router shard routeSelector).
+        displayName: Route Labels
+        path: route_labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: ConfigMap where the signing scripts are stored.
         displayName: Signing Scripts Configmap
         path: signing_scripts_configmap
@@ -676,6 +774,25 @@ spec:
         path: web
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: Periodic probe of container liveness. Container will be restarted
+          if the probe fails.
+        displayName: Liveness Probe
+        path: web.livenessProbe
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Probe
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: NodeSelector for the Web pods.
+        displayName: Node Selector
+        path: web.node_selector
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Periodic probe of container service readiness. Container will
+          be removed from service endpoints if the probe fails.
+        displayName: Readiness Probe
+        path: web.readinessProbe
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Probe
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Size is the size of number of pulp-web replicas
         displayName: Replicas
         path: web.replicas
@@ -694,10 +811,24 @@ spec:
         path: worker.affinity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Periodic probe of container liveness. Container will be restarted
+          if the probe fails.
+        displayName: Liveness Probe
+        path: worker.livenessProbe
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Probe
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: NodeSelector for the Pulp pods.
         displayName: Node Selector
         path: worker.node_selector
         x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Periodic probe of container service readiness. Container will
+          be removed from service endpoints if the probe fails.
+        displayName: Readiness Probe
+        path: worker.readinessProbe
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Probe
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Size is the size of number of pulp-worker replicas
         displayName: Replicas
@@ -854,6 +985,7 @@ spec:
           - ""
           resources:
           - pods
+          - pods/log
           verbs:
           - get
           - list
@@ -864,6 +996,7 @@ spec:
           verbs:
           - create
         - apiGroups:
+          - ""
           - rbac.authorization.k8s.io
           resources:
           - rolebindings
@@ -1044,6 +1177,8 @@ spec:
                 - --health-probe-bind-address=:8081
                 - --metrics-bind-address=127.0.0.1:8080
                 - --leader-elect
+                - --zap-log-level=debug
+                - --zap-stacktrace-level=error
                 command:
                 - /manager
                 env:

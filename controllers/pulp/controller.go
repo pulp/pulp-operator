@@ -57,8 +57,8 @@ type PulpReconciler struct {
 //+kubebuilder:rbac:groups=apps;networking.k8s.io,resources=deployments;statefulsets;ingresses,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=config.openshift.io,resources=ingresses,verbs=get;list;watch
 //+kubebuilder:rbac:groups=route.openshift.io,resources=routes;routes/custom-host,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;
-//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings;serviceaccounts,verbs=create;update;patch;delete;watch;get;list;
+//+kubebuilder:rbac:groups=core,resources=pods;pods/log,verbs=get;list;
+//+kubebuilder:rbac:groups=core;rbac.authorization.k8s.io,resources=roles;rolebindings;serviceaccounts,verbs=create;update;patch;delete;watch;get;list;
 //+kubebuilder:rbac:groups=core,resources=configmaps;secrets;services;persistentvolumeclaims,verbs=create;update;patch;delete;watch;get;list;
 //+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
