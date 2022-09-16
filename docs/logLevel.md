@@ -9,7 +9,7 @@ To do so, modify the `--zap-log-level=<new-level>` ARG from manager container of
 * error
 
 
-```
+```yaml
 $ kubectl edit deployment/<deployment-name>-controller-manager
 apiVersion: apps/v1
 kind: Deployment

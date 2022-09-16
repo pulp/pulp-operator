@@ -41,6 +41,9 @@ nav:
       - Routes: routes.md
   - Changelog: CHANGES.md
   - FAQ: faq.md
+  - Troubleshooting:
+      - Troubleshooting installations: tshoot/install.md
+      - Gathering data: tshoot/gatherData.md
 markdown_extensions:
   - toc:
       permalink: "#"
