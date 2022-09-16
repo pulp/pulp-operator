@@ -5,7 +5,7 @@ database_migrated=false
 echo "Checking for database migrations"
 while [ $database_migrated = false ]; do
   /usr/local/bin/pulpcore-manager showmigrations | grep '\[ \]'
-  if [ $? -gt 0 ]; then
+  if [ $? -eq 1 ]; then
     echo "Database migrated!"
     database_migrated=true
   else
