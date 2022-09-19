@@ -1,1 +1,0 @@
-Allows users to correctly set predefined pvc with backup_pvc.  It was hardcoded in the remove ownerReferences task.  Now correctly uses the dynamic variable backup_claim.
