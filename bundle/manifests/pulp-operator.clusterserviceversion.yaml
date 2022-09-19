@@ -91,6 +91,15 @@ metadata:
             "file_storage_size": "10Gi",
             "ingress_type": "route",
             "no_log": false,
+            "pulp_settings": {
+              "allowed_export_paths": [
+                "/tmp"
+              ],
+              "allowed_import_paths": [
+                "/tmp"
+              ],
+              "telemetry": false
+            },
             "route_host": "route_host_placeholder",
             "route_tls_termination_mechanism": "edge",
             "storage_type": "File",
@@ -1028,7 +1037,7 @@ spec:
                   value: redis:latest
                 - name: RELATED_IMAGE_PULP_POSTGRES
                   value: postgres:13
-                image: quay.io/pulp/pulp-operator:v0.14.0.dev
+                image: quay.io/pulp/pulp-operator:v0.14.0
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -1044,8 +1053,8 @@ spec:
                   periodSeconds: 10
                 resources:
                   limits:
-                    cpu: 500m
-                    memory: 768Mi
+                    cpu: "2"
+                    memory: 4000Mi
                   requests:
                     cpu: 10m
                     memory: 256Mi
