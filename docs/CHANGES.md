@@ -13,6 +13,41 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+0.14.0 (2022-09-19)
+===================
+
+
+Features
+--------
+
+- Omitted pulp-web role if ingress_type==route, which brings some benefits like:
+  * reduce point of failure
+  * reduce complexity
+  * reduce resource consumption
+  * reduce communication hops
+  [#436](https://github.com/pulp/pulp-operator/issues/436)
+- Add support for pulp_container signing service
+  [#564](https://github.com/pulp/pulp-operator/issues/564)
+
+
+Bugfixes
+--------
+
+- Adding NodeSelector/Toleration to Redis Deployment
+  [#561](https://github.com/pulp/pulp-operator/issues/561)
+- Allows users to correctly set predefined pvc with backup_pvc.  It was hardcoded in the remove ownerReferences task.  Now correctly uses the dynamic variable backup_claim.
+  [#610](https://github.com/pulp/pulp-operator/issues/610)
+
+
+Misc
+----
+
+- [#489](https://github.com/pulp/pulp-operator/issues/489), [#590](https://github.com/pulp/pulp-operator/issues/590)
+
+
+----
+
+
 0.13.0 (2022-07-04)
 ===================
 
