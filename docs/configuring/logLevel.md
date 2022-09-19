@@ -8,6 +8,11 @@ To do so, modify the `--zap-log-level=<new-level>` ARG from manager container of
 * info
 * error
 
+It is also possible to modify the `--zap-stacktrace-level` to:
+
+* info
+* error
+* panic
 
 ```yaml
 $ kubectl edit deployment/<deployment-name>-controller-manager
@@ -27,5 +32,5 @@ spec:
         - "--metrics-bind-address=127.0.0.1:8080"
         - "--leader-elect"
         - "--zap-log-level=debug"     <-------------------
-        - "--zap-stacktrace-level=error"
+        - "--zap-stacktrace-level=panic"  <---------------
 ```
