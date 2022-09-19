@@ -23,10 +23,13 @@ import (
 	"strconv"
 	"time"
 
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -39,17 +42,20 @@ import (
 
 func (r *PulpReconciler) pulpWorkerController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
+	// conditionType is used to update .status.conditions with the current resource state
+	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Worker-Ready"
+
 	// Worker Deployment
 	workerDeployment := &appsv1.Deployment{}
 	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-worker", Namespace: pulp.Namespace}, workerDeployment)
 	newWorkerDeployment := r.deploymentForPulpWorker(pulp)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new Pulp Worker Deployment", "Deployment.Namespace", newWorkerDeployment.Namespace, "Deployment.Name", newWorkerDeployment.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Worker-Ready", "CreatingWorkerDeployment", "Creating "+pulp.Name+"-worker deployment resource")
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingWorkerDeployment", "Creating "+pulp.Name+"-worker deployment resource")
 		err = r.Create(ctx, newWorkerDeployment)
 		if err != nil {
 			log.Error(err, "Failed to create new Pulp Worker Deployment", "Deployment.Namespace", newWorkerDeployment.Namespace, "Deployment.Name", newWorkerDeployment.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Worker-Ready", "ErrorCreatingWorkerDeployment", "Failed to create "+pulp.Name+"-worker deployment resource: "+err.Error())
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingWorkerDeployment", "Failed to create "+pulp.Name+"-worker deployment resource: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new Worker Deployment")
 			return ctrl.Result{}, err
 		}
@@ -64,12 +70,12 @@ func (r *PulpReconciler) pulpWorkerController(ctx context.Context, pulp *repoman
 	// Reconcile Deployment
 	if !equality.Semantic.DeepDerivative(newWorkerDeployment.Spec, workerDeployment.Spec) {
 		log.Info("The Worker Deployment has been modified! Reconciling ...")
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Worker-Ready", "UpdatingWorkerDeployment", "Reconciling "+pulp.Name+"-worker deployment resource")
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingWorkerDeployment", "Reconciling "+pulp.Name+"-worker deployment resource")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling Worker Deployment")
 		err = r.Update(ctx, newWorkerDeployment)
 		if err != nil {
 			log.Error(err, "Error trying to update the Worker Deployment object ... ")
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Worker-Ready", "ErrorUpdatingWorkerDeployment", "Failed to reconcile "+pulp.Name+"-worker deployment resource: "+err.Error())
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingWorkerDeployment", "Failed to reconcile "+pulp.Name+"-worker deployment resource: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile Worker Deployment")
 			return ctrl.Result{}, err
 		}
@@ -77,8 +83,11 @@ func (r *PulpReconciler) pulpWorkerController(ctx context.Context, pulp *repoman
 		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 	}
 
-	r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Worker-Ready", "WorkerTasksFinished", "All Worker tasks ran successfully")
-	r.recorder.Event(pulp, corev1.EventTypeNormal, "WorkerReady", "All Worker tasks ran successfully")
+	// we should only update the status when Worker-Ready==false
+	if v1.IsStatusConditionFalse(pulp.Status.Conditions, conditionType) {
+		r.updateStatus(ctx, pulp, metav1.ConditionTrue, conditionType, "WorkerTasksFinished", "All Worker tasks ran successfully")
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "WorkerReady", "All Worker tasks ran successfully")
+	}
 	return ctrl.Result{}, nil
 }
 

@@ -20,6 +20,8 @@ import (
 	"context"
 
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -30,16 +32,17 @@ import (
 
 func (r *PulpReconciler) CreateServiceAccount(ctx context.Context, pulp *repomanagerv1alpha1.Pulp) (ctrl.Result, error) {
 	log := r.RawLogger
+	conditionType := getApiConditionType(pulp)
 	sa := &corev1.ServiceAccount{}
 	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name, Namespace: pulp.Namespace}, sa)
 	expectedSA := r.pulpSA(pulp)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new "+pulp.Spec.DeploymentType+" ServiceAccount", "Namespace", expectedSA.Namespace, "Name", expectedSA.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "CreatingSA", "Creating "+pulp.Name+" SA resource")
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingSA", "Creating "+pulp.Name+" SA resource")
 		err = r.Create(ctx, expectedSA)
 		if err != nil {
 			log.Error(err, "Failed to create new "+pulp.Spec.DeploymentType+" ServiceAccount", "Namespace", expectedSA.Namespace, "Name", expectedSA.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "ErrorCreatingSA", "Failed to create "+pulp.Name+" SA: "+err.Error())
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingSA", "Failed to create "+pulp.Name+" SA: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new "+pulp.Spec.DeploymentType+" SA")
 			return ctrl.Result{}, err
 		}
@@ -56,16 +59,17 @@ func (r *PulpReconciler) CreateServiceAccount(ctx context.Context, pulp *repoman
 
 func (r *PulpReconciler) CreateRole(ctx context.Context, pulp *repomanagerv1alpha1.Pulp) (ctrl.Result, error) {
 	log := r.RawLogger
+	conditionType := getApiConditionType(pulp)
 	role := &rbacv1.Role{}
 	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name, Namespace: pulp.Namespace}, role)
 	expectedRole := r.pulpRole(pulp)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new "+pulp.Spec.DeploymentType+" Role", "Namespace", expectedRole.Namespace, "Name", expectedRole.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "CreatingRole", "Creating "+pulp.Name+" Role resource")
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingRole", "Creating "+pulp.Name+" Role resource")
 		err = r.Create(ctx, expectedRole)
 		if err != nil {
 			log.Error(err, "Failed to create new "+pulp.Spec.DeploymentType+" ServiceAccount", "Namespace", expectedRole.Namespace, "Name", expectedRole.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "ErrorCreatingRole", "Failed to create "+pulp.Name+" Role: "+err.Error())
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingRole", "Failed to create "+pulp.Name+" Role: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new "+pulp.Spec.DeploymentType+" Role")
 			return ctrl.Result{}, err
 		}
@@ -81,16 +85,17 @@ func (r *PulpReconciler) CreateRole(ctx context.Context, pulp *repomanagerv1alph
 
 func (r *PulpReconciler) CreateRoleBinding(ctx context.Context, pulp *repomanagerv1alpha1.Pulp) (ctrl.Result, error) {
 	log := r.RawLogger
+	conditionType := getApiConditionType(pulp)
 	rolebinding := &rbacv1.RoleBinding{}
 	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name, Namespace: pulp.Namespace}, rolebinding)
 	expectedRoleBinding := r.pulpRoleBinding(pulp)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new "+pulp.Spec.DeploymentType+" RoleBinding", "Namespace", expectedRoleBinding.Namespace, "Name", expectedRoleBinding.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "CreatingRoleBinding", "Creating "+pulp.Name+" RoleBinding resource")
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingRoleBinding", "Creating "+pulp.Name+" RoleBinding resource")
 		err = r.Create(ctx, expectedRoleBinding)
 		if err != nil {
 			log.Error(err, "Failed to create new "+pulp.Spec.DeploymentType+" ServiceAccount", "Namespace", expectedRoleBinding.Namespace, "Name", expectedRoleBinding.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "ErrorCreatingRoleBinding", "Failed to create "+pulp.Name+" RoleBinding: "+err.Error())
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingRoleBinding", "Failed to create "+pulp.Name+" RoleBinding: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new "+pulp.Spec.DeploymentType+" RoleBinding")
 			return ctrl.Result{}, err
 		}
@@ -174,4 +179,9 @@ func (r *PulpReconciler) pulpRoleBinding(m *repomanagerv1alpha1.Pulp) *rbacv1.Ro
 			Name:     m.Name,
 		},
 	}
+}
+
+// getConditionType returns a string with the .status.conditions.type from API resource
+func getApiConditionType(m *repomanagerv1alpha1.Pulp) string {
+	return cases.Title(language.English, cases.Compact).String(m.Spec.DeploymentType) + "-API-Ready"
 }

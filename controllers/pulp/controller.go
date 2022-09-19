@@ -22,10 +22,13 @@ import (
 	"reflect"
 	"strings"
 
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	policy "k8s.io/api/policy/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -109,6 +112,17 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		// Error reading the object - requeue the request.
 		log.Error(err, "Failed to get Pulp")
 		return ctrl.Result{}, err
+	}
+
+	// "initialize" operator's .status.condition field
+	if !v1.IsStatusConditionPresentAndEqual(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Operator-Finished-Execution", metav1.ConditionTrue) {
+		v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
+			Type:               cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Operator-Finished-Execution",
+			Status:             metav1.ConditionFalse,
+			Reason:             "OperatorRunning",
+			LastTransitionTime: metav1.Now(),
+			Message:            pulp.Name + " operator tasks running",
+		})
 	}
 
 	if strings.ToLower(pulp.Spec.IngressType) != "route" && pulp.Spec.ImageVersion != pulp.Spec.ImageWebVersion {
