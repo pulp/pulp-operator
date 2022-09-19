@@ -21,6 +21,54 @@ $ kubectl logs deployment/pulp-operator-controller-manager
 ...
 ```
 
+In addition to the logs, another way to follow the operator progress is by checking operator status:
+```json
+[
+  {
+    "lastTransitionTime": "2022-09-20T11:59:16Z",
+    "message": "All tasks ran successfully",
+    "reason": "OperatorFinishedExecution",
+    "status": "True",
+    "type": "Pulp-Operator-Finished-Execution"
+  },
+  {
+    "lastTransitionTime": "2022-09-20T11:59:16Z",
+    "message": "All API tasks ran successfully",
+    "reason": "ApiTasksFinished",
+    "status": "True",
+    "type": "Pulp-API-Ready"
+  },
+  {
+    "lastTransitionTime": "2022-09-20T11:56:33Z",
+    "message": "All Database tasks ran successfully",
+    "reason": "DatabaseTasksFinished",
+    "status": "True",
+    "type": "Pulp-Database-Ready"
+  },
+  {
+    "lastTransitionTime": "2022-09-20T11:59:00Z",
+    "message": "All Content tasks ran successfully",
+    "reason": "ContentTasksFinished",
+    "status": "True",
+    "type": "Pulp-Content-Ready"
+  },
+  {
+    "lastTransitionTime": "2022-09-20T11:56:34Z",
+    "message": "All Worker tasks ran successfully",
+    "reason": "WorkerTasksFinished",
+    "status": "True",
+    "type": "Pulp-Worker-Ready"
+  },
+  {
+    "lastTransitionTime": "2022-09-20T11:59:16Z",
+    "message": "All Web tasks ran successfully",
+    "reason": "WebTasksFinished",
+    "status": "True",
+    "type": "Pulp-Web-Ready"
+  }
+]
+```
+
 From Pulp api pods we could also check cluster's health:
 ```json
 $ kubectl exec deployment/example-pulp-api -- curl -s localhost:24817/pulp/api/v3/status/|jq

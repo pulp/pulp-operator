@@ -25,6 +25,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -43,6 +45,9 @@ import (
 
 func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
+	// conditionType is used to update .status.conditions with the current resource state
+	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-API-Ready"
+
 	// pulp-file-storage
 	// the PVC will be created only if a StorageClassName is provided
 	if _, storageType := controllers.MultiStorageConfigured(pulp, "Pulp"); storageType[0] == controllers.SCNameType {
@@ -52,11 +57,11 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 
 		if err != nil && errors.IsNotFound(err) {
 			log.Info("Creating a new Pulp API File Storage PVC", "PVC.Namespace", expected_pvc.Namespace, "PVC.Name", expected_pvc.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "CreatingPVC", "Creating "+pulp.Name+"-file-storage PVC resource")
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingPVC", "Creating "+pulp.Name+"-file-storage PVC resource")
 			err = r.Create(ctx, expected_pvc)
 			if err != nil {
 				log.Error(err, "Failed to create new Pulp File Storage PVC", "PVC.Namespace", expected_pvc.Namespace, "PVC.Name", expected_pvc.Name)
-				r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "ErrorCreatingPVC", "Failed to create "+pulp.Name+"-file-storage PVC: "+err.Error())
+				r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingPVC", "Failed to create "+pulp.Name+"-file-storage PVC: "+err.Error())
 				r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new file storage PVC")
 				return ctrl.Result{}, err
 			}
@@ -71,12 +76,12 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 		// Reconcile PVC
 		if !equality.Semantic.DeepDerivative(expected_pvc.Spec, pvcFound.Spec) {
 			log.Info("The PVC has been modified! Reconciling ...")
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "UpdatingFileStoragePVC", "Reconciling "+pulp.Name+"-file-storage PVC resource")
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingFileStoragePVC", "Reconciling "+pulp.Name+"-file-storage PVC resource")
 			r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling file storage PVC")
 			err = r.Update(ctx, expected_pvc)
 			if err != nil {
 				log.Error(err, "Error trying to update the PVC object ... ")
-				r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "ErrorUpdatingFileStoragePVC", "Failed to reconcile "+pulp.Name+"-file-storage PVC resource")
+				r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingFileStoragePVC", "Failed to reconcile "+pulp.Name+"-file-storage PVC resource")
 				r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile file storage PVC")
 				return ctrl.Result{}, err
 			}
@@ -93,12 +98,12 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 	if err != nil && errors.IsNotFound(err) {
 		// retrieve database credentials from postgres-secret only if we are not passing an external database settings
 		sec := r.pulpServerSecret(ctx, pulp, log)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "CreatingServerSecret", "Creating "+pulp.Name+"-server secret")
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingServerSecret", "Creating "+pulp.Name+"-server secret")
 		log.Info("Creating a new pulp-server secret", "Secret.Namespace", sec.Namespace, "Secret.Name", sec.Name)
 		err = r.Create(ctx, sec)
 		if err != nil {
 			log.Error(err, "Failed to create new pulp-server secret", "Secret.Namespace", sec.Namespace, "Secret.Name", sec.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "ErrorCreatingServerSecret", "Failed to create "+pulp.Name+"-server secret: "+err.Error())
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingServerSecret", "Failed to create "+pulp.Name+"-server secret: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create a new server secret")
 			return ctrl.Result{}, err
 		}
@@ -119,11 +124,11 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 		dbFields := pulpDBFieldsEncryptionSecret(pulp)
 		ctrl.SetControllerReference(pulp, dbFields, r.Scheme)
 		log.Info("Creating a new pulp-db-fields-encryption secret", "Secret.Namespace", dbFields.Namespace, "Secret.Name", dbFields.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "CreatingDBFieldsEncryptionSecret", "Creating "+pulp.Name+"-db-fields-encryption secret")
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingDBFieldsEncryptionSecret", "Creating "+pulp.Name+"-db-fields-encryption secret")
 		err = r.Create(ctx, dbFields)
 		if err != nil {
 			log.Error(err, "Failed to create new pulp-db-fields-encryption secret", "Secret.Namespace", dbFields.Namespace, "Secret.Name", dbFields.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "ErrorCreatingDBFieldsEncryptionSecret", "Failed to create "+pulp.Name+"-db-fields-encryption secret: "+err.Error())
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingDBFieldsEncryptionSecret", "Failed to create "+pulp.Name+"-db-fields-encryption secret: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create a new db-fields-encryption secret")
 			return ctrl.Result{}, err
 		}
@@ -148,11 +153,11 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 		adminPwd := pulpAdminPasswordSecret(pulp)
 		ctrl.SetControllerReference(pulp, adminPwd, r.Scheme)
 		log.Info("Creating a new pulp-admin-password secret", "Secret.Namespace", adminPwd.Namespace, "Secret.Name", adminPwd.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "CreatingAdminPasswordSecret", "Creating "+pulp.Name+"-admin-password secret")
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingAdminPasswordSecret", "Creating "+pulp.Name+"-admin-password secret")
 		err = r.Create(ctx, adminPwd)
 		if err != nil {
 			log.Error(err, "Failed to create new pulp-admin-password secret", "Secret.Namespace", adminPwd.Namespace, "Secret.Name", adminPwd.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "ErrorCreatingAdminPasswordSecret", "Failed to create "+pulp.Name+"-admin-password secret: "+err.Error())
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingAdminPasswordSecret", "Failed to create "+pulp.Name+"-admin-password secret: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create a new admin-password secret")
 			return ctrl.Result{}, err
 		}
@@ -174,11 +179,11 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 		// Following legacy pulp-operator implementation we are not setting ownerReferences to avoid garbage collection
 		//ctrl.SetControllerReference(pulp, adminPwd, r.Scheme)
 		log.Info("Creating a new pulp-container-auth secret", "Secret.Namespace", authSecret.Namespace, "Secret.Name", authSecret.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "CreatingContainerAuthSecret", "Creating "+pulp.Name+"-container-auth secret")
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingContainerAuthSecret", "Creating "+pulp.Name+"-container-auth secret")
 		err = r.Create(ctx, authSecret)
 		if err != nil {
 			log.Error(err, "Failed to create new pulp-container-auth secret", "Secret.Namespace", authSecret.Namespace, "Secret.Name", authSecret.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "ErrorCreatingContainerAuthSecret", "Failed to create "+pulp.Name+"-container-auth secret: "+err.Error())
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingContainerAuthSecret", "Failed to create "+pulp.Name+"-container-auth secret: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create a new container-auth secret")
 			return ctrl.Result{}, err
 		}
@@ -198,12 +203,12 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new deployment
 		log.Info("Creating a new Pulp API Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "CreatingApiDeployment", "Creating "+pulp.Name+"-api deployment")
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingApiDeployment", "Creating "+pulp.Name+"-api deployment")
 		controllers.CheckEmptyDir(pulp, controllers.PulpResource)
 		err = r.Create(ctx, dep)
 		if err != nil {
 			log.Error(err, "Failed to create new Pulp API Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "ErrorCreatingApiDeployment", "Failed to create "+pulp.Name+"-api deployment: "+err.Error())
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingApiDeployment", "Failed to create "+pulp.Name+"-api deployment: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create a new API deployment")
 			return ctrl.Result{}, err
 		}
@@ -219,12 +224,12 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 	// https://github.com/kubernetes-sigs/kubebuilder/issues/592
 	if !equality.Semantic.DeepDerivative(dep.Spec, found.Spec) {
 		log.Info("The API deployment has been modified! Reconciling ...")
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "UpdatingApiDeployment", "Reconciling "+pulp.Name+"-api deployment")
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingApiDeployment", "Reconciling "+pulp.Name+"-api deployment")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling API deployment")
 		err = r.Update(ctx, dep)
 		if err != nil {
 			log.Error(err, "Error trying to update the API deployment object ... ")
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "ErrorUpdatingApiDeployment", "Failed to reconcile "+pulp.Name+"-api deployment: "+err.Error())
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingApiDeployment", "Failed to reconcile "+pulp.Name+"-api deployment: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to update API deployment")
 			return ctrl.Result{}, err
 		}
@@ -239,11 +244,11 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new API Service", "Service.Namespace", newApiSvc.Namespace, "Service.Name", newApiSvc.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "CreatingApiService", "Creating "+pulp.Name+"-api-svc service")
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingApiService", "Creating "+pulp.Name+"-api-svc service")
 		err = r.Create(ctx, newApiSvc)
 		if err != nil {
 			log.Error(err, "Failed to create new API Service", "Service.Namespace", newApiSvc.Namespace, "Service.Name", newApiSvc.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "ErrorCreatingApiService", "Failed to create "+pulp.Name+"-api-svc service: "+err.Error())
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingApiService", "Failed to create "+pulp.Name+"-api-svc service: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new API service")
 			return ctrl.Result{}, err
 		}
@@ -258,12 +263,12 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 	// Ensure the service spec is as expected
 	if !equality.Semantic.DeepDerivative(newApiSvc.Spec, apiSvc.Spec) {
 		log.Info("The API service has been modified! Reconciling ...")
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "UpdatingApiService", "Reconciling "+pulp.Name+"-api-svc service")
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingApiService", "Reconciling "+pulp.Name+"-api-svc service")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling API service")
 		err = r.Update(ctx, newApiSvc)
 		if err != nil {
 			log.Error(err, "Error trying to update the API Service object ... ")
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-API-Ready", "ErrorUpdatingApiService", "Failed to reconcile "+pulp.Name+"-api-svc service: "+err.Error())
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingApiService", "Failed to reconcile "+pulp.Name+"-api-svc service: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to update API service")
 			return ctrl.Result{}, err
 		}

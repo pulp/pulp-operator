@@ -156,7 +156,7 @@ func genTokenAuthKey() (string, string) {
 func (r *PulpReconciler) updateStatus(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, conditionStatus metav1.ConditionStatus, conditionType, conditionReason, conditionMessage string) {
 
 	// if we are updating a status it means that operator didn't finish its execution
-	if !v1.IsStatusConditionPresentAndEqual(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Operator-Finished-Execution", metav1.ConditionTrue) {
+	if v1.IsStatusConditionPresentAndEqual(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Operator-Finished-Execution", metav1.ConditionTrue) {
 		v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
 			Type:               cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Operator-Finished-Execution",
 			Status:             metav1.ConditionFalse,
@@ -167,7 +167,7 @@ func (r *PulpReconciler) updateStatus(ctx context.Context, pulp *repomanagerv1al
 	}
 
 	v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
-		Type:               cases.Title(language.English, cases.Compact).String(conditionType),
+		Type:               conditionType,
 		Status:             conditionStatus,
 		Reason:             conditionReason,
 		LastTransitionTime: metav1.Now(),

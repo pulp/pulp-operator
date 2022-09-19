@@ -35,16 +35,43 @@ import (
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 )
 
+// pulpStatus will cheeck the READY state of the pods before considering the component status as ready
 func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
-	apiDeployment := &appsv1.Deployment{}
-	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, apiDeployment)
-	if err == nil {
-		if apiDeployment.Status.ReadyReplicas != apiDeployment.Status.Replicas {
-			log.Info(pulp.Spec.DeploymentType + " api not ready yet ...")
+	// This is a very ugly workaround to "fix" a possible race condition issue.
+	// During a reconciliation task we call the pulpStatus method to update the .status.conditions field.
+	// Without the sleep, when we do the isDeploymentReady check, the deployment can still be with the
+	// "old" state. This 0,2 seconds seems to be enough to delay the check and reflect the real state to
+	// the controller.
+	time.Sleep(time.Millisecond * 200)
+
+	// check if Content pods are READY
+	contentDeployment := &appsv1.Deployment{}
+	if err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-content", Namespace: pulp.Namespace}, contentDeployment); err == nil {
+		contentConditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Content-Ready"
+		if !isDeploymentReady(contentDeployment) {
+			log.Info(pulp.Spec.DeploymentType + " content not ready yet ...")
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, contentConditionType, "UpdatingContentDeployment", "Content deployment not ready yet")
 			return ctrl.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
-		} else {
-			r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-API-Ready", "ApiTasksFinished", "All API tasks ran successfully")
+		} else if v1.IsStatusConditionFalse(pulp.Status.Conditions, contentConditionType) {
+			r.updateStatus(ctx, pulp, metav1.ConditionTrue, contentConditionType, "ContentTasksFinished", "All Content tasks ran successfully")
+			r.recorder.Event(pulp, corev1.EventTypeNormal, "ContentReady", "All Content tasks ran successfully")
+		}
+	} else {
+		log.Error(err, "Failed to get Pulp Content Deployment")
+		return ctrl.Result{Requeue: true, RequeueAfter: 10 * time.Second}, nil
+	}
+
+	// check if API pods are READY
+	apiDeployment := &appsv1.Deployment{}
+	if err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, apiDeployment); err == nil {
+		apiConditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-API-Ready"
+		if !isDeploymentReady(apiDeployment) {
+			log.Info(pulp.Spec.DeploymentType + " api not ready yet ...")
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, apiConditionType, "UpdatingAPIDeployment", "API deployment not ready yet")
+			return ctrl.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
+		} else if v1.IsStatusConditionFalse(pulp.Status.Conditions, apiConditionType) {
+			r.updateStatus(ctx, pulp, metav1.ConditionTrue, apiConditionType, "ApiTasksFinished", "All API tasks ran successfully")
 			r.recorder.Event(pulp, corev1.EventTypeNormal, "APIReady", "All API tasks ran successfully")
 		}
 	} else {
@@ -52,15 +79,17 @@ func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alph
 		return ctrl.Result{Requeue: true, RequeueAfter: 10 * time.Second}, nil
 	}
 
+	// check web pods are READY
 	if strings.ToLower(pulp.Spec.IngressType) != "route" {
+		webConditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Web-Ready"
 		webDeployment := &appsv1.Deployment{}
-		err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web", Namespace: pulp.Namespace}, webDeployment)
-		if err == nil {
-			if webDeployment.Status.ReadyReplicas != webDeployment.Status.Replicas {
+		if err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web", Namespace: pulp.Namespace}, webDeployment); err == nil {
+			if !isDeploymentReady(webDeployment) {
 				log.Info(pulp.Spec.DeploymentType + " web not ready yet ...")
+				r.updateStatus(ctx, pulp, metav1.ConditionFalse, webConditionType, "UpdatingWebDeployment", "Web deployment not ready yet")
 				return ctrl.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
-			} else {
-				r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Web-Ready", "WebTasksFinished", "All Web tasks ran successfully")
+			} else if v1.IsStatusConditionFalse(pulp.Status.Conditions, webConditionType) {
+				r.updateStatus(ctx, pulp, metav1.ConditionTrue, webConditionType, "WebTasksFinished", "All Web tasks ran successfully")
 				r.recorder.Event(pulp, corev1.EventTypeNormal, "WebReady", "All Web tasks ran successfully")
 			}
 		} else {
@@ -69,6 +98,7 @@ func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alph
 		}
 	}
 
+	// if we get into here it means that all components are READY, so operator finished its execution
 	if v1.IsStatusConditionFalse(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Operator-Finished-Execution") {
 		v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
 			Type:               cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Operator-Finished-Execution",
@@ -81,4 +111,13 @@ func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alph
 		log.Info(pulp.Spec.DeploymentType + " operator finished execution ...")
 	}
 	return ctrl.Result{}, nil
+}
+
+// isDeploymentReady returns true if there is no unavailable Replicas for the deployment
+func isDeploymentReady(deployment *appsv1.Deployment) bool {
+
+	if deployment.Status.UnavailableReplicas > 0 {
+		return false
+	}
+	return true
 }
