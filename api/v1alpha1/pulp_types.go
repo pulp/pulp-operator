@@ -448,25 +448,29 @@ type Database struct {
 	// The default postgres image does not provide clustering
 	//Replicas int32 `json:"replicas,omitempty"`
 
+	// Configuration to use an external database
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ExternalDB ExternalDB `json:"external_db,omitempty"`
 
+	// PostgreSQL version
 	// +kubebuilder:default:="13"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	PostgresVersion string `json:"version,omitempty"`
 
+	// PostgreSQL port
 	// +kubebuilder:default:=5432
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number"}
 	PostgresPort int `json:"postgres_port,omitempty"`
 
+	// Configure PostgreSQL connection sslmode option
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="prefer"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	PostgresSSLMode string `json:"postgres_ssl_mode,omitempty"`
 
-	// Registry path to the PostgreSQL container to use
+	// PostgreSQL container image
 	// +kubebuilder:default:="postgres:13"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	PostgresImage string `json:"postgres_image,omitempty"`
@@ -476,16 +480,19 @@ type Database struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	PostgresExtraArgs []string `json:"postgres_extra_args,omitempty"`
 
+	// Registry path to the PostgreSQL container to use
 	// +kubebuilder:default:="/var/lib/postgresql/data/pgdata"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	PostgresDataPath string `json:"postgres_data_path,omitempty"`
 
+	// Arguments to pass to PostgreSQL initdb command when creating a new cluster.
 	// +kubebuilder:default:="--auth-host=scram-sha-256"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	PostgresInitdbArgs string `json:"postgres_initdb_args,omitempty"`
 
+	// PostgreSQL host authentication method
 	// +kubebuilder:default:="scram-sha-256"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec

@@ -34,8 +34,9 @@ nav:
       - Pulp Backup: backup.md
       - Pulp Restore: restore.md
   - Configuring:
-      - Pod Placement: configuring/podPlacement.md
+      - Database: configuring/database.md
       - Storage: configuring/storage.md
+      - Pod Placement: configuring/podPlacement.md
       - LogLevel: configuring/logLevel.md
       - Custom CA: configuring/customCA.md
       - Routes: configuring/routes.md
