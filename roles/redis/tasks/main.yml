@@ -28,9 +28,64 @@
     _node_affinity: "{{ raw_spec['affinity']['node_affinity'] | default({}) }}"
   when: affinity is defined and affinity.node_affinity is defined
 
+- name: Get the current redis pod information.
+  k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: '{{ ansible_operator_meta.namespace }}'
+    label_selectors:
+      - "app.kubernetes.io/name=redis"
+      - "app.kubernetes.io/instance=redis-{{ ansible_operator_meta.name }}"
+      - "app.kubernetes.io/component=cache"
+      - "app.kubernetes.io/managed-by={{ deployment_type }}-operator"
+    field_selectors:
+      - status.phase=Running
+  register: redis_pod
+
+- name: Set the resource pod name as a variable.
+  set_fact:
+    redis_pod_name: "{{ redis_pod['resources'][0]['metadata']['name'] | default('') }}"
+
 - name: redis deployment
   k8s:
     state: "{{ deployment_state }}"
     definition: "{{ lookup('template', 'templates/' + item + '.deployment.yaml.j2') | from_yaml }}"
   with_items:
     - redis
+  register: redis_deployment_result
+
+- block:
+    - name: Delete pod to reload a resource configuration
+      k8s:
+        api_version: v1
+        state: absent
+        kind: Pod
+        namespace: '{{ ansible_operator_meta.namespace }}'
+        name: '{{ redis_pod_name }}'
+        wait: yes
+      when:
+        - redis_pod_name | length
+
+    - name: Get the new resource pod information after updating resource.
+      k8s_info:
+        kind: Pod
+        namespace: '{{ ansible_operator_meta.namespace }}'
+        label_selectors:
+          - "app.kubernetes.io/name=redis"
+          - "app.kubernetes.io/instance=redis-{{ ansible_operator_meta.name }}"
+          - "app.kubernetes.io/component=cache"
+          - "app.kubernetes.io/managed-by={{ deployment_type }}-operator"
+        field_selectors:
+          - status.phase=Running
+      register: _new_pod
+      until:
+        - _new_pod['resources'] | length
+        - _new_pod['resources'][0]['metadata']['name'] != redis_pod_name
+      delay: 5
+      retries: 60
+
+    - name: Update new resource pod name as a variable.
+      set_fact:
+        redis_pod_name: '{{ _new_pod["resources"][0]["metadata"]["name"] }}'
+  when:
+    - redis_deployment_result.changed or api_deployment_result.changed

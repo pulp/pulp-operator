@@ -113,11 +113,6 @@
     cacheable: yes
   no_log: "{{ no_log }}"
 
-- name: Include redis role
-  include_role:
-    name: redis
-  when: pulp_combined_settings.cache_enabled
-
 - include_tasks:
     file: sso-configuration.yml
   when:
@@ -274,6 +269,12 @@
     definition: "{{ lookup('template', 'templates/' + item + '.deployment.yaml.j2') | from_yaml }}"
   with_items:
     - pulp-api
+  register: api_deployment_result
+
+- name: Include redis role
+  include_role:
+    name: redis
+  when: pulp_combined_settings.cache_enabled
 
 - k8s_status:
     api_version: "{{ api_version }}"
