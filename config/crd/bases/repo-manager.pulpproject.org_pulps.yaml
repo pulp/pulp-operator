@@ -2156,6 +2156,7 @@ spec:
                         type: object
                     type: object
                   external_db:
+                    description: Configuration to use an external database
                     properties:
                       postgres_con_max_age:
                         type: string
@@ -2328,6 +2329,7 @@ spec:
                     type: object
                   postgres_data_path:
                     default: /var/lib/postgresql/data/pgdata
+                    description: Registry path to the PostgreSQL container to use
                     type: string
                   postgres_extra_args:
                     items:
@@ -2335,16 +2337,20 @@ spec:
                     type: array
                   postgres_host_auth_method:
                     default: scram-sha-256
+                    description: PostgreSQL host authentication method
                     type: string
                   postgres_image:
                     default: postgres:13
-                    description: Registry path to the PostgreSQL container to use
+                    description: PostgreSQL container image
                     type: string
                   postgres_initdb_args:
                     default: --auth-host=scram-sha-256
+                    description: Arguments to pass to PostgreSQL initdb command when
+                      creating a new cluster.
                     type: string
                   postgres_port:
                     default: 5432
+                    description: PostgreSQL port
                     type: integer
                   postgres_resource_requirements:
                     description: Resource requirements for the database container.
@@ -2374,6 +2380,7 @@ spec:
                     type: object
                   postgres_ssl_mode:
                     default: prefer
+                    description: Configure PostgreSQL connection sslmode option
                     type: string
                   postgres_storage_class:
                     description: Name of the StorageClass required by the claim.
@@ -2581,6 +2588,7 @@ spec:
                     type: array
                   version:
                     default: "13"
+                    description: PostgreSQL version
                     type: string
                 type: object
               db_fields_encryption_secret:
