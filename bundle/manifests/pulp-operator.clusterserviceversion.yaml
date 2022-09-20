@@ -385,7 +385,9 @@ spec:
       - displayName: Configuration for the storage type utilized in the backup
         path: storage_type
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:select:File
+        - urn:alm:descriptor:com.tectonic.ui:select:S3
+        - urn:alm:descriptor:com.tectonic.ui:select:Azure
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:backup_source:PVC
       - displayName: Database restore label selector
         path: postgres_label_selector

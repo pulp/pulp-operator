@@ -52,6 +52,13 @@ spec:
                 type: string
               storage_type:
                 description: Configuration for the storage type utilized in the backup
+                enum:
+                - file
+                - File
+                - s3
+                - S3
+                - azure
+                - Azure
                 type: string
             type: object
           status:

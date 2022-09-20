@@ -49,6 +49,13 @@ spec:
                   type: string
                 storage_type:
                   description: Configuration for the storage type utilized in the backup
+                  enum:
+                    - file
+                    - File
+                    - s3
+                    - S3
+                    - azure
+                    - Azure
                   type: string
                 postgres_label_selector:
                   description: Label selector used to identify postgres pod for executing migration
