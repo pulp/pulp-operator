@@ -186,7 +186,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 	envVarsWorker := []corev1.EnvVar{
 		{Name: "POSTGRES_SERVICE_HOST", Value: PulpName + "-database-svc"},
 		{Name: "POSTGRES_SERVICE_PORT", Value: "5432"},
-		{Name: "REDIS_SERVICE_HOST", Value: PulpName + "-redis-svc"},
+		{Name: "REDIS_SERVICE_HOST", Value: PulpName + "-redis-svc." + PulpNamespace},
 		{Name: "REDIS_SERVICE_PORT", Value: strconv.Itoa(6379)},
 	}
 

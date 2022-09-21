@@ -898,7 +898,12 @@ spec:
                 properties:
                   enabled:
                     default: true
+                    description: Defines if cache should be enabled.
                     type: boolean
+                  external_cache_secret:
+                    description: Name of the secret with the parameters to connect
+                      to an external Redis cluster
+                    type: string
                   livenessProbe:
                     description: Periodic probe of container liveness. Container will
                       be restarted if the probe fails.
@@ -1208,11 +1213,10 @@ spec:
                         type: integer
                     type: object
                   redis_image:
-                    default: redis:latest
-                    description: The image name for the redis image.
+                    description: 'The image name for the redis image. [default: "redis:latest"]'
                     type: string
                   redis_port:
-                    default: 6379
+                    description: 'The port for Redis. [default: 6379]'
                     type: integer
                   redis_resource_requirements:
                     description: Resource requirements for the Redis container

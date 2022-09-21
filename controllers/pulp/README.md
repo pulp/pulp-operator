@@ -53,10 +53,11 @@
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| enabled |  | bool | false |
-| redis_image | The image name for the redis image. | string | false |
+| external_cache_secret | Name of the secret with the parameters to connect to an external Redis cluster | string | false |
+| enabled | Defines if cache should be enabled. | bool | false |
+| redis_image | The image name for the redis image. [default: \"redis:latest\"] | string | false |
 | redis_storage_class | Storage class to use for the Redis PVC | string | false |
-| redis_port |  | int | false |
+| redis_port | The port for Redis. [default: 6379] | int | false |
 | redis_resource_requirements | Resource requirements for the Redis container | corev1.ResourceRequirements | false |
 | pvc | PersistenVolumeClaim name that will be used by Redis pods If defined, the PVC must be provisioned by the user and the operator will only configure the deployment to use it | string | false |
 | readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |

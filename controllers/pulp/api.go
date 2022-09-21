@@ -373,12 +373,72 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		{Name: "PULP_API_WORKERS", Value: strconv.Itoa(m.Spec.Api.GunicornWorkers)},
 	}
 
+	// add cache configuration if enabled
 	if m.Spec.Cache.Enabled {
-		redisEnvVars := []corev1.EnvVar{
-			{Name: "REDIS_SERVICE_HOST", Value: m.Name + "-redis-svc." + m.Namespace},
-			{Name: "REDIS_SERVICE_PORT", Value: strconv.Itoa(m.Spec.Cache.RedisPort)},
+
+		// if there is no ExternalCacheSecret defined, we should
+		// use the redis instance provided by the operator
+		if len(m.Spec.Cache.ExternalCacheSecret) == 0 {
+			var cacheHost, cachePort string
+
+			if m.Spec.Cache.RedisPort == 0 {
+				cachePort = strconv.Itoa(6379)
+			} else {
+				cachePort = strconv.Itoa(m.Spec.Cache.RedisPort)
+			}
+			cacheHost = m.Name + "-redis-svc." + m.Namespace
+
+			redisEnvVars := []corev1.EnvVar{
+				{Name: "REDIS_SERVICE_HOST", Value: cacheHost},
+				{Name: "REDIS_SERVICE_PORT", Value: cachePort},
+			}
+			envVars = append(envVars, redisEnvVars...)
+		} else {
+			redisEnvVars := []corev1.EnvVar{
+				{
+					Name: "REDIS_SERVICE_HOST",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: m.Spec.Cache.ExternalCacheSecret,
+							},
+							Key: "REDIS_HOST",
+						},
+					},
+				}, {
+					Name: "REDIS_SERVICE_PORT",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: m.Spec.Cache.ExternalCacheSecret,
+							},
+							Key: "REDIS_PORT",
+						},
+					},
+				}, {
+					Name: "REDIS_SERVICE_DB",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: m.Spec.Cache.ExternalCacheSecret,
+							},
+							Key: "REDIS_DB",
+						},
+					},
+				}, {
+					Name: "REDIS_SERVICE_PASSWORD",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: m.Spec.Cache.ExternalCacheSecret,
+							},
+							Key: "REDIS_PASSWORD",
+						},
+					},
+				},
+			}
+			envVars = append(envVars, redisEnvVars...)
 		}
-		envVars = append(envVars, redisEnvVars...)
 	}
 
 	if m.Spec.SigningSecret != "" {
@@ -821,8 +881,7 @@ func (r *PulpReconciler) pulpServerSecret(ctx context.Context, m *repomanagerv1a
 	}
 
 	// default settings.py configuration
-	var pulp_settings = `CACHE_ENABLED = "True"
-DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
+	var pulp_settings = `DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
 GALAXY_COLLECTION_SIGNING_SERVICE = "ansible-default"
 GALAXY_CONTAINER_SIGNING_SERVICE = "container-default"
 ANSIBLE_API_HOSTNAME = "` + rootUrl + `"
@@ -845,9 +904,6 @@ GALAXY_FEATURE_FLAGS = {
 }
 PRIVATE_KEY_PATH = "/etc/pulp/keys/container_auth_private_key.pem"
 PUBLIC_KEY_PATH = "/etc/pulp/keys/container_auth_public_key.pem"
-REDIS_HOST =  "` + m.Name + `-redis-svc.` + m.Namespace + `"
-REDIS_PORT =  "6379"
-REDIS_PASSWORD = ""
 STATIC_ROOT = "/var/lib/operator/static/"
 TOKEN_AUTH_DISABLED = "False"
 TOKEN_SERVER = "http://` + m.Name + `-api-svc.` + m.Namespace + `.svc.cluster.local:24817/token/"
@@ -855,6 +911,39 @@ TOKEN_SIGNATURE_ALGORITHM = "ES256"
 `
 
 	pulp_settings = pulp_settings + fmt.Sprintln("API_ROOT = \"/pulp/\"")
+
+	// add cache settings
+	if m.Spec.Cache.Enabled {
+
+		var cacheHost, cachePort, cachePassword, cacheDB string
+
+		// if there is no ExternalCacheSecret defined, we should
+		// use the redis instance provided by the operator
+		if len(m.Spec.Cache.ExternalCacheSecret) == 0 {
+			if m.Spec.Cache.RedisPort == 0 {
+				cachePort = strconv.Itoa(6379)
+			} else {
+				cachePort = strconv.Itoa(m.Spec.Cache.RedisPort)
+			}
+			cacheHost = m.Name + "-redis-svc." + m.Namespace
+		} else {
+			// retrieve the connection data from ExternalCacheSecret secret
+			externalCacheData := []string{"REDIS_HOST", "REDIS_PORT", "REDIS_PASSWORD", "REDIS_DB"}
+			externalCacheConfig, _ := r.retrieveSecretData(context.TODO(), m.Spec.Cache.ExternalCacheSecret, m.Namespace, true, externalCacheData...)
+			cacheHost = externalCacheConfig["REDIS_HOST"]
+			cachePort = externalCacheConfig["REDIS_PORT"]
+			cachePassword = externalCacheConfig["REDIS_PASSWORD"]
+			cacheDB = externalCacheConfig["REDIS_DB"]
+		}
+
+		cacheSettings := `CACHE_ENABLED = "True"
+REDIS_HOST =  "` + cacheHost + `"
+REDIS_PORT =  "` + cachePort + `"
+REDIS_PASSWORD = "` + cachePassword + `"
+REDIS_DB = "` + cacheDB + `"
+`
+		pulp_settings = pulp_settings + cacheSettings
+	}
 
 	// if an Azure Blob is defined in Pulp CR we should add the
 	// credentials from azure secret into settings.py

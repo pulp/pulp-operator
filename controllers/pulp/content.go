@@ -303,13 +303,75 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(m.Spec.Content.GunicornTimeout)},
 		{Name: "PULP_CONTENT_WORKERS", Value: strconv.Itoa(m.Spec.Content.GunicornWorkers)},
 	}
+
+	// add cache configuration if enabled
 	if m.Spec.Cache.Enabled {
-		redisEnvVars := []corev1.EnvVar{
-			{Name: "REDIS_SERVICE_HOST", Value: m.Name + "-redis-svc." + m.Namespace},
-			{Name: "REDIS_SERVICE_PORT", Value: strconv.Itoa(m.Spec.Cache.RedisPort)},
+
+		// if there is no ExternalCacheSecret defined, we should
+		// use the redis instance provided by the operator
+		if len(m.Spec.Cache.ExternalCacheSecret) == 0 {
+			var cacheHost, cachePort string
+
+			if m.Spec.Cache.RedisPort == 0 {
+				cachePort = strconv.Itoa(6379)
+			} else {
+				cachePort = strconv.Itoa(m.Spec.Cache.RedisPort)
+			}
+			cacheHost = m.Name + "-redis-svc." + m.Namespace
+
+			redisEnvVars := []corev1.EnvVar{
+				{Name: "REDIS_SERVICE_HOST", Value: cacheHost},
+				{Name: "REDIS_SERVICE_PORT", Value: cachePort},
+			}
+			envVars = append(envVars, redisEnvVars...)
+		} else {
+			redisEnvVars := []corev1.EnvVar{
+				{
+					Name: "REDIS_SERVICE_HOST",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: m.Spec.Cache.ExternalCacheSecret,
+							},
+							Key: "REDIS_HOST",
+						},
+					},
+				}, {
+					Name: "REDIS_SERVICE_PORT",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: m.Spec.Cache.ExternalCacheSecret,
+							},
+							Key: "REDIS_PORT",
+						},
+					},
+				}, {
+					Name: "REDIS_SERVICE_DB",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: m.Spec.Cache.ExternalCacheSecret,
+							},
+							Key: "REDIS_DB",
+						},
+					},
+				}, {
+					Name: "REDIS_SERVICE_PASSWORD",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: m.Spec.Cache.ExternalCacheSecret,
+							},
+							Key: "REDIS_PASSWORD",
+						},
+					},
+				},
+			}
+			envVars = append(envVars, redisEnvVars...)
 		}
-		envVars = append(envVars, redisEnvVars...)
 	}
+
 	if m.Spec.SigningSecret != "" {
 		// for now, we are just dumping the error, but we should handle it
 		signingKeyFingerprint, _ := r.getSigningKeyFingerprint(m.Spec.SigningSecret, m.Namespace)
