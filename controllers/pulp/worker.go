@@ -19,7 +19,6 @@ package pulp
 import (
 	"context"
 	"os"
-	"reflect"
 	"strconv"
 	"time"
 
@@ -248,8 +247,12 @@ func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *a
 		topologySpreadConstraint = m.Spec.Worker.TopologySpreadConstraints
 	}
 
+	envVars := []corev1.EnvVar{}
 	var dbHost, dbPort string
-	if reflect.DeepEqual(m.Spec.Database.ExternalDB, repomanagerv1alpha1.ExternalDB{}) {
+
+	// if there is no ExternalDBSecret defined, we should
+	// use the postgres instance provided by the operator
+	if len(m.Spec.Database.ExternalDBSecret) == 0 {
 		containerPort := 0
 		if m.Spec.Database.PostgresPort == 0 {
 			containerPort = 5432
@@ -258,14 +261,37 @@ func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *a
 		}
 		dbHost = m.Name + "-database-svc"
 		dbPort = strconv.Itoa(containerPort)
-	} else {
-		dbHost = m.Spec.Database.ExternalDB.PostgresHost
-		dbPort = strconv.Itoa(m.Spec.Database.ExternalDB.PostgresPort)
-	}
 
-	envVars := []corev1.EnvVar{
-		{Name: "POSTGRES_SERVICE_HOST", Value: dbHost},
-		{Name: "POSTGRES_SERVICE_PORT", Value: dbPort},
+		postgresEnvVars := []corev1.EnvVar{
+			{Name: "POSTGRES_SERVICE_HOST", Value: dbHost},
+			{Name: "POSTGRES_SERVICE_PORT", Value: dbPort},
+		}
+		envVars = append(envVars, postgresEnvVars...)
+	} else {
+		postgresEnvVars := []corev1.EnvVar{
+			{
+				Name: "POSTGRES_SERVICE_HOST",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: m.Spec.Database.ExternalDBSecret,
+						},
+						Key: "POSTGRES_HOST",
+					},
+				},
+			}, {
+				Name: "POSTGRES_SERVICE_PORT",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: m.Spec.Database.ExternalDBSecret,
+						},
+						Key: "POSTGRES_PORT",
+					},
+				},
+			},
+		}
+		envVars = append(envVars, postgresEnvVars...)
 	}
 
 	// add cache configuration if enabled

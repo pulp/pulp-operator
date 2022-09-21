@@ -38,28 +38,25 @@ spec:
 ## Configuring Pulp operator to use an external PostgreSQL installation
 
 It is also possible to configure Pulp operator to point to a running PostgreSQL cluster.
-The following parameters are **required** to inform the operator how to connect to the external database:
+To do so, create a new `Secret` with the parameters to connect to the running PostgreSQL cluster:
+```
+$ kubectl -npulp create secret generic external-database \
+        --from-literal=POSTGRES_HOST=my-postgres-host.example.com  \
+        --from-literal=POSTGRES_PORT=5432  \
+        --from-literal=POSTGRES_USERNAME=pulp-admin  \
+        --from-literal=POSTGRES_PASSWORD=password  \
+        --from-literal=POSTGRES_DB_NAME=pulp \
+        --from-literal=POSTGRES_SSLMODE=prefer
+```
 
-* host
-* port
-* username
-* password
-* database name
-* ssl mode
+Make sure to define **all** of the above keys with your cluster configuration.
 
-With the above information, configure Pulp CR [`database.external_db`](/pulp_operator/pulp/#externaldb) parameter with them.
-For example:
+Now, configure Pulp operator CR to use the Secret:
 ```
 ...
 spec:
   database:
-    external_db:
-      postgres_port: 5432
-      postgres_host: my-postgres-host.example.com
-      postgres_user: pulp-admin
-      postgres_password: password
-      postgres_db_name: pulp
-      postgres_ssl_mode: prefer
+    external_db_secret: external-database
 ...
 ```
 

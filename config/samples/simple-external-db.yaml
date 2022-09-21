@@ -16,13 +16,7 @@ spec:
     replicas: 1
 
   database:
-    external_db:
-      postgres_port: 5432
-      postgres_ssl_mode: prefer
-      postgres_host: postgres.db.svc.cluster.local
-      postgres_user: pulp-admin
-      postgres_password: password
-      postgres_db_name: pulp
+    external_db_secret: external-database
 
   file_storage_access_mode: "ReadWriteOnce"
   file_storage_size: "2Gi"

@@ -19,7 +19,6 @@ package pulp
 import (
 	"context"
 	"os"
-	"reflect"
 	"strconv"
 	"time"
 
@@ -282,8 +281,16 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 
 	resources := m.Spec.Content.ResourceRequirements
 
+	envVars := []corev1.EnvVar{
+		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(m.Spec.Content.GunicornTimeout)},
+		{Name: "PULP_CONTENT_WORKERS", Value: strconv.Itoa(m.Spec.Content.GunicornWorkers)},
+	}
+
 	var dbHost, dbPort string
-	if reflect.DeepEqual(m.Spec.Database.ExternalDB, repomanagerv1alpha1.ExternalDB{}) {
+
+	// if there is no ExternalDBSecret defined, we should
+	// use the postgres instance provided by the operator
+	if len(m.Spec.Database.ExternalDBSecret) == 0 {
 		containerPort := 0
 		if m.Spec.Database.PostgresPort == 0 {
 			containerPort = 5432
@@ -292,19 +299,39 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 		}
 		dbHost = m.Name + "-database-svc"
 		dbPort = strconv.Itoa(containerPort)
+
+		postgresEnvVars := []corev1.EnvVar{
+			{Name: "POSTGRES_SERVICE_HOST", Value: dbHost},
+			{Name: "POSTGRES_SERVICE_PORT", Value: dbPort},
+		}
+		envVars = append(envVars, postgresEnvVars...)
 	} else {
-		dbHost = m.Spec.Database.ExternalDB.PostgresHost
-		dbPort = strconv.Itoa(m.Spec.Database.ExternalDB.PostgresPort)
+		postgresEnvVars := []corev1.EnvVar{
+			{
+				Name: "POSTGRES_SERVICE_HOST",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: m.Spec.Database.ExternalDBSecret,
+						},
+						Key: "POSTGRES_HOST",
+					},
+				},
+			}, {
+				Name: "POSTGRES_SERVICE_PORT",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: m.Spec.Database.ExternalDBSecret,
+						},
+						Key: "POSTGRES_PORT",
+					},
+				},
+			},
+		}
+		envVars = append(envVars, postgresEnvVars...)
 	}
 
-	envVars := []corev1.EnvVar{
-		{Name: "POSTGRES_SERVICE_HOST", Value: dbHost},
-		{Name: "POSTGRES_SERVICE_PORT", Value: dbPort},
-		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(m.Spec.Content.GunicornTimeout)},
-		{Name: "PULP_CONTENT_WORKERS", Value: strconv.Itoa(m.Spec.Content.GunicornWorkers)},
-	}
-
-	// add cache configuration if enabled
 	if m.Spec.Cache.Enabled {
 
 		// if there is no ExternalCacheSecret defined, we should
