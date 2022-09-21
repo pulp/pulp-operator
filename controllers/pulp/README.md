@@ -91,14 +91,14 @@
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
 | external_db | Configuration to use an external database | [ExternalDB](#externaldb) | false |
-| version | PostgreSQL version | string | false |
-| postgres_port | PostgreSQL port | int | false |
-| postgres_ssl_mode | Configure PostgreSQL connection sslmode option | string | false |
-| postgres_image | PostgreSQL container image | string | false |
+| version | PostgreSQL version [default: \"13\"] | string | false |
+| postgres_port | PostgreSQL port [default: 5432] | int | false |
+| postgres_ssl_mode | Configure PostgreSQL connection sslmode option [default: \"prefer\"] | string | false |
+| postgres_image | PostgreSQL container image [default: \"postgres:13\"] | string | false |
 | postgres_extra_args |  | []string | false |
-| postgres_data_path | Registry path to the PostgreSQL container to use | string | false |
-| postgres_initdb_args | Arguments to pass to PostgreSQL initdb command when creating a new cluster. | string | false |
-| postgres_host_auth_method | PostgreSQL host authentication method | string | false |
+| postgres_data_path | Registry path to the PostgreSQL container to use [default: \"/var/lib/postgresql/data/pgdata\"] | string | false |
+| postgres_initdb_args | Arguments to pass to PostgreSQL initdb command when creating a new cluster. [default: \"--auth-host=scram-sha-256\"] | string | false |
+| postgres_host_auth_method | PostgreSQL host authentication method [default: \"scram-sha-256\"] | string | false |
 | postgres_resource_requirements | Resource requirements for the database container. | corev1.ResourceRequirements | false |
 | affinity | Defines various deployment affinities. | [Affinity](#affinity) | false |
 | node_selector | NodeSelector for the database pod. | map[string]string | false |
