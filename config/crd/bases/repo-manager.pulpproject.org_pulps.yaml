@@ -2330,29 +2330,26 @@ spec:
                     description: NodeSelector for the database pod.
                     type: object
                   postgres_data_path:
-                    default: /var/lib/postgresql/data/pgdata
-                    description: Registry path to the PostgreSQL container to use
+                    description: 'Registry path to the PostgreSQL container to use
+                      [default: "/var/lib/postgresql/data/pgdata"]'
                     type: string
                   postgres_extra_args:
                     items:
                       type: string
                     type: array
                   postgres_host_auth_method:
-                    default: scram-sha-256
-                    description: PostgreSQL host authentication method
+                    description: 'PostgreSQL host authentication method [default:
+                      "scram-sha-256"]'
                     type: string
                   postgres_image:
-                    default: postgres:13
-                    description: PostgreSQL container image
+                    description: 'PostgreSQL container image [default: "postgres:13"]'
                     type: string
                   postgres_initdb_args:
-                    default: --auth-host=scram-sha-256
-                    description: Arguments to pass to PostgreSQL initdb command when
-                      creating a new cluster.
+                    description: 'Arguments to pass to PostgreSQL initdb command when
+                      creating a new cluster. [default: "--auth-host=scram-sha-256"]'
                     type: string
                   postgres_port:
-                    default: 5432
-                    description: PostgreSQL port
+                    description: 'PostgreSQL port [default: 5432]'
                     type: integer
                   postgres_resource_requirements:
                     description: Resource requirements for the database container.
@@ -2381,8 +2378,8 @@ spec:
                         type: object
                     type: object
                   postgres_ssl_mode:
-                    default: prefer
-                    description: Configure PostgreSQL connection sslmode option
+                    description: 'Configure PostgreSQL connection sslmode option [default:
+                      "prefer"]'
                     type: string
                   postgres_storage_class:
                     description: Name of the StorageClass required by the claim.
@@ -2589,8 +2586,7 @@ spec:
                       type: object
                     type: array
                   version:
-                    default: "13"
-                    description: PostgreSQL version
+                    description: 'PostgreSQL version [default: "13"]'
                     type: string
                 type: object
               db_fields_encryption_secret:
