@@ -1,4 +1,4 @@
-# Configuring Pulp database
+# Configuring Pulp Database
 
 Pulp operator provides a PostgreSQL database for Pulp to use, but it is also possible to configure the operator to use an external PostgreSQL installation. At this time, [Pulp 3.0 will only work with PostgreSQL](https://docs.pulpproject.org/pulpcore/installation/instructions.html?highlight=database#database-setup).
 
@@ -10,7 +10,7 @@ Pulp operator provides a PostgreSQL database for Pulp to use, but it is also pos
 If no `database` parameter is defined, Pulp operator will deploy PostgreSQL with the following configuration:
 
 * a `StatefulSet` will be provisioned to handle PostgreSQL pod
-* a single PostgreSQL replica will be available (it is not possible to form a cluster with this container)
+* a single PostgreSQL replica will be available (it is **not** possible to form a cluster with this container)
 * it will deploy a `docker.io/library/postgres:13` image
 * **no data will be persisted**, the container will mount an emptyDir (all data will be lost in case of pod restart)
 
@@ -23,7 +23,7 @@ A new `Secret` (&lt;deployment-name>-postgres-configuration) will also be create
   * the address to communicate with the database (this is a `k8s svc` address)
   * the service port
 
-A `service` will be created with the PostgreSQL pod as endpoint.
+A `Service` will be created with the PostgreSQL pod as endpoint.
 
 Here is an example of how to configure Pulp operator to deploy the database using a `Storage Class` called `standard`:
 ```

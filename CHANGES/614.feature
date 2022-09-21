@@ -1,0 +1,1 @@
+Added configuration to use external Redis instance.

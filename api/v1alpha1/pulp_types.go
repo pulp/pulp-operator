@@ -552,13 +552,18 @@ type Database struct {
 
 type Cache struct {
 
+	// Name of the secret with the parameters to connect to an external Redis cluster
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	ExternalCacheSecret string `json:"external_cache_secret,omitempty"`
+
+	// Defines if cache should be enabled.
 	// +kubebuilder:default:=true
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:booleanSwitch"}
 	Enabled bool `json:"enabled,omitempty"`
 
-	// The image name for the redis image.
-	// +kubebuilder:default:="redis:latest"
+	// The image name for the redis image. [default: "redis:latest"]
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	RedisImage string `json:"redis_image,omitempty"`
@@ -568,7 +573,7 @@ type Cache struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:StorageClass","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	RedisStorageClass string `json:"redis_storage_class,omitempty"`
 
-	// +kubebuilder:default:=6379
+	// The port for Redis. [default: 6379]
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	RedisPort int `json:"redis_port,omitempty"`

@@ -36,6 +36,7 @@ nav:
   - Configuring:
       - Database: configuring/database.md
       - Storage: configuring/storage.md
+      - Cache: configuring/cache.md
       - Pod Placement: configuring/podPlacement.md
       - LogLevel: configuring/logLevel.md
       - Custom CA: configuring/customCA.md
