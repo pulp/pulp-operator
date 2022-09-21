@@ -61,8 +61,8 @@ type PulpRestoreSpec struct {
 
 	// Configuration for the storage type utilized in the backup
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:default:="file"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +kubebuilder:default:="File"
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:select:File","urn:alm:descriptor:com.tectonic.ui:select:S3","urn:alm:descriptor:com.tectonic.ui:select:Azure"}
 	StorageType string `json:"storage_type"`
 
 	// Label selector used to identify postgres pod for executing migration

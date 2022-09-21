@@ -75,7 +75,7 @@ spec:
                   migration
                 type: string
               storage_type:
-                default: file
+                default: File
                 description: Configuration for the storage type utilized in the backup
                 type: string
             required:
