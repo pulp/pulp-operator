@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -351,8 +350,16 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		topologySpreadConstraint = m.Spec.Api.TopologySpreadConstraints
 	}
 
+	envVars := []corev1.EnvVar{
+		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(m.Spec.Api.GunicornTimeout)},
+		{Name: "PULP_API_WORKERS", Value: strconv.Itoa(m.Spec.Api.GunicornWorkers)},
+	}
+
 	var dbHost, dbPort string
-	if reflect.DeepEqual(m.Spec.Database.ExternalDB, repomanagerv1alpha1.ExternalDB{}) {
+
+	// if there is no ExternalDBSecret defined, we should
+	// use the postgres instance provided by the operator
+	if len(m.Spec.Database.ExternalDBSecret) == 0 {
 		containerPort := 0
 		if m.Spec.Database.PostgresPort == 0 {
 			containerPort = 5432
@@ -361,16 +368,37 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		}
 		dbHost = m.Name + "-database-svc"
 		dbPort = strconv.Itoa(containerPort)
-	} else {
-		dbHost = m.Spec.Database.ExternalDB.PostgresHost
-		dbPort = strconv.Itoa(m.Spec.Database.ExternalDB.PostgresPort)
-	}
 
-	envVars := []corev1.EnvVar{
-		{Name: "POSTGRES_SERVICE_HOST", Value: dbHost},
-		{Name: "POSTGRES_SERVICE_PORT", Value: dbPort},
-		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(m.Spec.Api.GunicornTimeout)},
-		{Name: "PULP_API_WORKERS", Value: strconv.Itoa(m.Spec.Api.GunicornWorkers)},
+		postgresEnvVars := []corev1.EnvVar{
+			{Name: "POSTGRES_SERVICE_HOST", Value: dbHost},
+			{Name: "POSTGRES_SERVICE_PORT", Value: dbPort},
+		}
+		envVars = append(envVars, postgresEnvVars...)
+	} else {
+		postgresEnvVars := []corev1.EnvVar{
+			{
+				Name: "POSTGRES_SERVICE_HOST",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: m.Spec.Database.ExternalDBSecret,
+						},
+						Key: "POSTGRES_HOST",
+					},
+				},
+			}, {
+				Name: "POSTGRES_SERVICE_PORT",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: m.Spec.Database.ExternalDBSecret,
+						},
+						Key: "POSTGRES_PORT",
+					},
+				},
+			},
+		}
+		envVars = append(envVars, postgresEnvVars...)
 	}
 
 	// add cache configuration if enabled
@@ -847,7 +875,7 @@ func (r *PulpReconciler) pulpServerSecret(ctx context.Context, m *repomanagerv1a
 	_, storageType := controllers.MultiStorageConfigured(m, "Pulp")
 
 	// if there is no external database configuration get the databaseconfig from pulp-postgres-configuration secret
-	if reflect.DeepEqual(m.Spec.Database.ExternalDB, repomanagerv1alpha1.ExternalDB{}) {
+	if len(m.Spec.Database.ExternalDBSecret) == 0 {
 		log.Info("Retrieving Postgres credentials from "+m.Name+"-postgres-configuration secret", "Secret.Namespace", m.Namespace, "Secret.Name", m.Name)
 		pgCredentials, err := r.retrieveSecretData(ctx, m.Name+"-postgres-configuration", m.Namespace, true, "username", "password", "database", "port", "sslmode")
 		if err != nil {
@@ -860,12 +888,18 @@ func (r *PulpReconciler) pulpServerSecret(ctx context.Context, m *repomanagerv1a
 		dbName = pgCredentials["database"]
 		dbSSLMode = pgCredentials["sslmode"]
 	} else {
-		dbHost = m.Spec.Database.ExternalDB.PostgresHost
-		dbPort = strconv.Itoa(m.Spec.Database.ExternalDB.PostgresPort)
-		dbUser = m.Spec.Database.ExternalDB.PostgresUser
-		dbPass = m.Spec.Database.ExternalDB.PostgresPassword
-		dbName = m.Spec.Database.ExternalDB.PostgresDBName
-		dbSSLMode = m.Spec.Database.ExternalDB.PostgresSSLMode
+		log.Info("Retrieving Postgres credentials from "+m.Spec.Database.ExternalDBSecret+" secret", "Secret.Namespace", m.Namespace, "Secret.Name", m.Name)
+		externalPostgresData := []string{"POSTGRES_HOST", "POSTGRES_PORT", "POSTGRES_USERNAME", "POSTGRES_PASSWORD", "POSTGRES_DB_NAME", "POSTGRES_SSLMODE"}
+		pgCredentials, err := r.retrieveSecretData(ctx, m.Spec.Database.ExternalDBSecret, m.Namespace, true, externalPostgresData...)
+		if err != nil {
+			log.Error(err, "Secret Not Found!", "Secret.Namespace", m.Namespace, "Secret.Name", m.Name)
+		}
+		dbHost = pgCredentials["POSTGRES_HOST"]
+		dbPort = pgCredentials["POSTGRES_PORT"]
+		dbUser = pgCredentials["POSTGRES_USERNAME"]
+		dbPass = pgCredentials["POSTGRES_PASSWORD"]
+		dbName = pgCredentials["POSTGRES_DB_NAME"]
+		dbSSLMode = pgCredentials["POSTGRES_SSLMODE"]
 	}
 
 	// Handling user facing URLs

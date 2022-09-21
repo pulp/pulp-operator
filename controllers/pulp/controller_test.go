@@ -166,19 +166,19 @@ var _ = Describe("Pulp controller", Ordered, func() {
 	}
 
 	envVarsApi := []corev1.EnvVar{
-		{Name: "POSTGRES_SERVICE_HOST", Value: PulpName + "-database-svc"},
-		{Name: "POSTGRES_SERVICE_PORT", Value: "5432"},
 		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(90)},
 		{Name: "PULP_API_WORKERS", Value: strconv.Itoa(2)},
+		{Name: "POSTGRES_SERVICE_HOST", Value: PulpName + "-database-svc"},
+		{Name: "POSTGRES_SERVICE_PORT", Value: "5432"},
 		{Name: "REDIS_SERVICE_HOST", Value: PulpName + "-redis-svc." + PulpNamespace},
 		{Name: "REDIS_SERVICE_PORT", Value: strconv.Itoa(6379)},
 	}
 
 	envVarsContent := []corev1.EnvVar{
-		{Name: "POSTGRES_SERVICE_HOST", Value: PulpName + "-database-svc"},
-		{Name: "POSTGRES_SERVICE_PORT", Value: "5432"},
 		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(90)},
 		{Name: "PULP_CONTENT_WORKERS", Value: strconv.Itoa(2)},
+		{Name: "POSTGRES_SERVICE_HOST", Value: PulpName + "-database-svc"},
+		{Name: "POSTGRES_SERVICE_PORT", Value: "5432"},
 		{Name: "REDIS_SERVICE_HOST", Value: PulpName + "-redis-svc." + PulpNamespace},
 		{Name: "REDIS_SERVICE_PORT", Value: strconv.Itoa(6379)},
 	}
@@ -820,7 +820,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		It("Should configure the database pod template with an emptyDir volume", func() {
 
 			By("Making sure that database type is not external")
-			if !reflect.DeepEqual(createdPulp.Spec.Database.ExternalDB, repomanagerv1alpha1.ExternalDB{}) {
+			if len(createdPulp.Spec.Database.ExternalDBSecret) > 0 {
 				Skip("External database does not need to provision a Persistent Volume")
 			}
 

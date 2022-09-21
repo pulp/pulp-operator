@@ -19,7 +19,6 @@ package pulp
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"strings"
 
 	"golang.org/x/text/cases"
@@ -167,7 +166,7 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	}
 
 	// Do not provision postgres resources if using external DB
-	if reflect.DeepEqual(pulp.Spec.Database.ExternalDB, repomanagerv1alpha1.ExternalDB{}) {
+	if len(pulp.Spec.Database.ExternalDBSecret) == 0 {
 		log.V(1).Info("Running database tasks")
 		pulpController, err = r.databaseController(ctx, pulp, log)
 		if err != nil {

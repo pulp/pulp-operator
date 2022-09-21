@@ -448,10 +448,10 @@ type Database struct {
 	// The default postgres image does not provide clustering
 	//Replicas int32 `json:"replicas,omitempty"`
 
-	// Configuration to use an external database
+	// Secret name with the configuration to use an external database
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	ExternalDB ExternalDB `json:"external_db,omitempty"`
+	ExternalDBSecret string `json:"external_db_secret,omitempty"`
 
 	// PostgreSQL version [default: "13"]
 	// +kubebuilder:validation:Optional

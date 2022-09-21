@@ -91,7 +91,7 @@
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| external_db | Configuration to use an external database | [ExternalDB](#externaldb) | false |
+| external_db_secret | Secret name with the configuration to use an external database ExternalDB ExternalDB `json:\"external_db,omitempty\"` | string | false |
 | version | PostgreSQL version [default: \"13\"] | string | false |
 | postgres_port | PostgreSQL port [default: 5432] | int | false |
 | postgres_ssl_mode | Configure PostgreSQL connection sslmode option [default: \"prefer\"] | string | false |

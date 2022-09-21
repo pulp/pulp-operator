@@ -2161,24 +2161,10 @@ spec:
                             x-kubernetes-map-type: atomic
                         type: object
                     type: object
-                  external_db:
-                    description: Configuration to use an external database
-                    properties:
-                      postgres_con_max_age:
-                        type: string
-                      postgres_db_name:
-                        type: string
-                      postgres_host:
-                        type: string
-                      postgres_password:
-                        type: string
-                      postgres_port:
-                        type: integer
-                      postgres_ssl_mode:
-                        type: string
-                      postgres_user:
-                        type: string
-                    type: object
+                  external_db_secret:
+                    description: Secret name with the configuration to use an external
+                      database ExternalDB ExternalDB `json:"external_db,omitempty"`
+                    type: string
                   livenessProbe:
                     description: Periodic probe of container liveness. Container will
                       be restarted if the probe fails.
