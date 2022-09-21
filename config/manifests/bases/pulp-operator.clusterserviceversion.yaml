@@ -270,6 +270,10 @@ spec:
       - description: Configuration for the storage type utilized in the backup
         displayName: Storage Type
         path: storage_type
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:select:File
+        - urn:alm:descriptor:com.tectonic.ui:select:S3
+        - urn:alm:descriptor:com.tectonic.ui:select:Azure
       statusDescriptors:
       - displayName: Conditions
         path: conditions
@@ -320,6 +324,12 @@ spec:
         path: api.node_selector
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: PodDisruptionBudget is an object to define the max disruption
+          that can be caused to a collection of pods
+        displayName: PDB
+        path: api.pdb
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: Periodic probe of container service readiness. Container will
           be removed from service endpoints if the probe fails.
         displayName: Readiness Probe
@@ -450,6 +460,12 @@ spec:
         path: content.node_selector
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: PodDisruptionBudget is an object to define the max disruption
+          that can be caused to a collection of pods
+        displayName: PDB
+        path: content.pdb
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: Periodic probe of container service readiness. Container will
           be removed from service endpoints if the probe fails.
         displayName: Readiness Probe
@@ -482,7 +498,8 @@ spec:
         path: database.affinity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: External DB
+      - description: Configuration to use an external database
+        displayName: External DB
         path: database.external_db
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
@@ -500,18 +517,23 @@ spec:
         path: database.node_selector
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Postgres Data Path
+      - description: Registry path to the PostgreSQL container to use
+        displayName: Postgres Data Path
         path: database.postgres_data_path
       - displayName: Postgres Extra Args
         path: database.postgres_extra_args
-      - displayName: Postgres Host Auth Method
+      - description: PostgreSQL host authentication method
+        displayName: Postgres Host Auth Method
         path: database.postgres_host_auth_method
-      - description: Registry path to the PostgreSQL container to use
+      - description: PostgreSQL container image
         displayName: Postgres Image
         path: database.postgres_image
-      - displayName: Postgres Initdb Args
+      - description: Arguments to pass to PostgreSQL initdb command when creating
+          a new cluster.
+        displayName: Postgres Initdb Args
         path: database.postgres_initdb_args
-      - displayName: Postgres Port
+      - description: PostgreSQL port
+        displayName: Postgres Port
         path: database.postgres_port
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:number
@@ -521,7 +543,8 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Postgres SSLMode
+      - description: Configure PostgreSQL connection sslmode option
+        displayName: Postgres SSLMode
         path: database.postgres_ssl_mode
       - description: Name of the StorageClass required by the claim.
         displayName: Postgres Storage Class
@@ -556,7 +579,8 @@ spec:
         path: database.tolerations
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Postgres Version
+      - description: PostgreSQL version
+        displayName: Postgres Version
         path: database.version
       - description: Secret where the Fernet symmetric encryption key is stored.
         displayName: Database encryption
@@ -719,6 +743,12 @@ spec:
         path: web.node_selector
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: PodDisruptionBudget is an object to define the max disruption
+          that can be caused to a collection of pods
+        displayName: PDB
+        path: web.pdb
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: Periodic probe of container service readiness. Container will
           be removed from service endpoints if the probe fails.
         displayName: Readiness Probe
@@ -756,6 +786,12 @@ spec:
         path: worker.node_selector
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: PodDisruptionBudget is an object to define the max disruption
+          that can be caused to a collection of pods
+        displayName: PDB
+        path: worker.pdb
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: Periodic probe of container service readiness. Container will
           be removed from service endpoints if the probe fails.
         displayName: Readiness Probe

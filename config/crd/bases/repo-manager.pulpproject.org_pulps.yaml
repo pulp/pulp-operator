@@ -494,6 +494,7 @@ spec:
                               only "value". The requirements are ANDed.
                             type: object
                         type: object
+                        x-kubernetes-map-type: atomic
                     type: object
                   readinessProbe:
                     description: Periodic probe of container service readiness. Container
@@ -1708,6 +1709,7 @@ spec:
                               only "value". The requirements are ANDed.
                             type: object
                         type: object
+                        x-kubernetes-map-type: atomic
                     type: object
                   readinessProbe:
                     description: Periodic probe of container service readiness. Container
@@ -2938,6 +2940,7 @@ spec:
                               only "value". The requirements are ANDed.
                             type: object
                         type: object
+                        x-kubernetes-map-type: atomic
                     type: object
                   readinessProbe:
                     description: Periodic probe of container service readiness. Container
@@ -3570,6 +3573,7 @@ spec:
                               only "value". The requirements are ANDed.
                             type: object
                         type: object
+                        x-kubernetes-map-type: atomic
                     type: object
                   readinessProbe:
                     description: Periodic probe of container service readiness. Container

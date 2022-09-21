@@ -421,6 +421,80 @@ spec:
                       type: string
                     description: NodeSelector for the Pulp pods.
                     type: object
+                  pdb:
+                    description: PodDisruptionBudget is an object to define the max
+                      disruption that can be caused to a collection of pods
+                    properties:
+                      maxUnavailable:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: An eviction is allowed if at most "maxUnavailable"
+                          pods selected by "selector" are unavailable after the eviction,
+                          i.e. even in absence of the evicted pod. For example, one
+                          can prevent all voluntary evictions by specifying 0. This
+                          is a mutually exclusive setting with "minAvailable".
+                        x-kubernetes-int-or-string: true
+                      minAvailable:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: An eviction is allowed if at least "minAvailable"
+                          pods selected by "selector" will still be available after
+                          the eviction, i.e. even in the absence of the evicted pod.  So
+                          for example you can prevent all voluntary evictions by specifying
+                          "100%".
+                        x-kubernetes-int-or-string: true
+                      selector:
+                        description: Label query over pods whose evictions are managed
+                          by the disruption budget. A null selector will match no
+                          pods, while an empty ({}) selector will select all pods
+                          within the namespace.
+                        properties:
+                          matchExpressions:
+                            description: matchExpressions is a list of label selector
+                              requirements. The requirements are ANDed.
+                            items:
+                              description: A label selector requirement is a selector
+                                that contains values, a key, and an operator that
+                                relates the key and values.
+                              properties:
+                                key:
+                                  description: key is the label key that the selector
+                                    applies to.
+                                  type: string
+                                operator:
+                                  description: operator represents a key's relationship
+                                    to a set of values. Valid operators are In, NotIn,
+                                    Exists and DoesNotExist.
+                                  type: string
+                                values:
+                                  description: values is an array of string values.
+                                    If the operator is In or NotIn, the values array
+                                    must be non-empty. If the operator is Exists or
+                                    DoesNotExist, the values array must be empty.
+                                    This array is replaced during a strategic merge
+                                    patch.
+                                  items:
+                                    type: string
+                                  type: array
+                              required:
+                              - key
+                              - operator
+                              type: object
+                            type: array
+                          matchLabels:
+                            additionalProperties:
+                              type: string
+                            description: matchLabels is a map of {key,value} pairs.
+                              A single {key,value} in the matchLabels map is equivalent
+                              to an element of matchExpressions, whose key field is
+                              "key", the operator is "In", and the values array contains
+                              only "value". The requirements are ANDed.
+                            type: object
+                        type: object
+                        x-kubernetes-map-type: atomic
+                    type: object
                   readinessProbe:
                     description: Periodic probe of container service readiness. Container
                       will be removed from service endpoints if the probe fails.
@@ -1562,6 +1636,80 @@ spec:
                       type: string
                     description: NodeSelector for the Pulp pods.
                     type: object
+                  pdb:
+                    description: PodDisruptionBudget is an object to define the max
+                      disruption that can be caused to a collection of pods
+                    properties:
+                      maxUnavailable:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: An eviction is allowed if at most "maxUnavailable"
+                          pods selected by "selector" are unavailable after the eviction,
+                          i.e. even in absence of the evicted pod. For example, one
+                          can prevent all voluntary evictions by specifying 0. This
+                          is a mutually exclusive setting with "minAvailable".
+                        x-kubernetes-int-or-string: true
+                      minAvailable:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: An eviction is allowed if at least "minAvailable"
+                          pods selected by "selector" will still be available after
+                          the eviction, i.e. even in the absence of the evicted pod.  So
+                          for example you can prevent all voluntary evictions by specifying
+                          "100%".
+                        x-kubernetes-int-or-string: true
+                      selector:
+                        description: Label query over pods whose evictions are managed
+                          by the disruption budget. A null selector will match no
+                          pods, while an empty ({}) selector will select all pods
+                          within the namespace.
+                        properties:
+                          matchExpressions:
+                            description: matchExpressions is a list of label selector
+                              requirements. The requirements are ANDed.
+                            items:
+                              description: A label selector requirement is a selector
+                                that contains values, a key, and an operator that
+                                relates the key and values.
+                              properties:
+                                key:
+                                  description: key is the label key that the selector
+                                    applies to.
+                                  type: string
+                                operator:
+                                  description: operator represents a key's relationship
+                                    to a set of values. Valid operators are In, NotIn,
+                                    Exists and DoesNotExist.
+                                  type: string
+                                values:
+                                  description: values is an array of string values.
+                                    If the operator is In or NotIn, the values array
+                                    must be non-empty. If the operator is Exists or
+                                    DoesNotExist, the values array must be empty.
+                                    This array is replaced during a strategic merge
+                                    patch.
+                                  items:
+                                    type: string
+                                  type: array
+                              required:
+                              - key
+                              - operator
+                              type: object
+                            type: array
+                          matchLabels:
+                            additionalProperties:
+                              type: string
+                            description: matchLabels is a map of {key,value} pairs.
+                              A single {key,value} in the matchLabels map is equivalent
+                              to an element of matchExpressions, whose key field is
+                              "key", the operator is "In", and the values array contains
+                              only "value". The requirements are ANDed.
+                            type: object
+                        type: object
+                        x-kubernetes-map-type: atomic
+                    type: object
                   readinessProbe:
                     description: Periodic probe of container service readiness. Container
                       will be removed from service endpoints if the probe fails.
@@ -2009,6 +2157,7 @@ spec:
                         type: object
                     type: object
                   external_db:
+                    description: Configuration to use an external database
                     properties:
                       postgres_con_max_age:
                         type: string
@@ -2181,6 +2330,7 @@ spec:
                     type: object
                   postgres_data_path:
                     default: /var/lib/postgresql/data/pgdata
+                    description: Registry path to the PostgreSQL container to use
                     type: string
                   postgres_extra_args:
                     items:
@@ -2188,16 +2338,20 @@ spec:
                     type: array
                   postgres_host_auth_method:
                     default: scram-sha-256
+                    description: PostgreSQL host authentication method
                     type: string
                   postgres_image:
                     default: postgres:13
-                    description: Registry path to the PostgreSQL container to use
+                    description: PostgreSQL container image
                     type: string
                   postgres_initdb_args:
                     default: --auth-host=scram-sha-256
+                    description: Arguments to pass to PostgreSQL initdb command when
+                      creating a new cluster.
                     type: string
                   postgres_port:
                     default: 5432
+                    description: PostgreSQL port
                     type: integer
                   postgres_resource_requirements:
                     description: Resource requirements for the database container.
@@ -2227,6 +2381,7 @@ spec:
                     type: object
                   postgres_ssl_mode:
                     default: prefer
+                    description: Configure PostgreSQL connection sslmode option
                     type: string
                   postgres_storage_class:
                     description: Name of the StorageClass required by the claim.
@@ -2434,6 +2589,7 @@ spec:
                     type: array
                   version:
                     default: "13"
+                    description: PostgreSQL version
                     type: string
                 type: object
               db_fields_encryption_secret:
@@ -2710,6 +2866,80 @@ spec:
                     additionalProperties:
                       type: string
                     description: NodeSelector for the Web pods.
+                    type: object
+                  pdb:
+                    description: PodDisruptionBudget is an object to define the max
+                      disruption that can be caused to a collection of pods
+                    properties:
+                      maxUnavailable:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: An eviction is allowed if at most "maxUnavailable"
+                          pods selected by "selector" are unavailable after the eviction,
+                          i.e. even in absence of the evicted pod. For example, one
+                          can prevent all voluntary evictions by specifying 0. This
+                          is a mutually exclusive setting with "minAvailable".
+                        x-kubernetes-int-or-string: true
+                      minAvailable:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: An eviction is allowed if at least "minAvailable"
+                          pods selected by "selector" will still be available after
+                          the eviction, i.e. even in the absence of the evicted pod.  So
+                          for example you can prevent all voluntary evictions by specifying
+                          "100%".
+                        x-kubernetes-int-or-string: true
+                      selector:
+                        description: Label query over pods whose evictions are managed
+                          by the disruption budget. A null selector will match no
+                          pods, while an empty ({}) selector will select all pods
+                          within the namespace.
+                        properties:
+                          matchExpressions:
+                            description: matchExpressions is a list of label selector
+                              requirements. The requirements are ANDed.
+                            items:
+                              description: A label selector requirement is a selector
+                                that contains values, a key, and an operator that
+                                relates the key and values.
+                              properties:
+                                key:
+                                  description: key is the label key that the selector
+                                    applies to.
+                                  type: string
+                                operator:
+                                  description: operator represents a key's relationship
+                                    to a set of values. Valid operators are In, NotIn,
+                                    Exists and DoesNotExist.
+                                  type: string
+                                values:
+                                  description: values is an array of string values.
+                                    If the operator is In or NotIn, the values array
+                                    must be non-empty. If the operator is Exists or
+                                    DoesNotExist, the values array must be empty.
+                                    This array is replaced during a strategic merge
+                                    patch.
+                                  items:
+                                    type: string
+                                  type: array
+                              required:
+                              - key
+                              - operator
+                              type: object
+                            type: array
+                          matchLabels:
+                            additionalProperties:
+                              type: string
+                            description: matchLabels is a map of {key,value} pairs.
+                              A single {key,value} in the matchLabels map is equivalent
+                              to an element of matchExpressions, whose key field is
+                              "key", the operator is "In", and the values array contains
+                              only "value". The requirements are ANDed.
+                            type: object
+                        type: object
+                        x-kubernetes-map-type: atomic
                     type: object
                   readinessProbe:
                     description: Periodic probe of container service readiness. Container
@@ -3269,6 +3499,80 @@ spec:
                     additionalProperties:
                       type: string
                     description: NodeSelector for the Pulp pods.
+                    type: object
+                  pdb:
+                    description: PodDisruptionBudget is an object to define the max
+                      disruption that can be caused to a collection of pods
+                    properties:
+                      maxUnavailable:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: An eviction is allowed if at most "maxUnavailable"
+                          pods selected by "selector" are unavailable after the eviction,
+                          i.e. even in absence of the evicted pod. For example, one
+                          can prevent all voluntary evictions by specifying 0. This
+                          is a mutually exclusive setting with "minAvailable".
+                        x-kubernetes-int-or-string: true
+                      minAvailable:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: An eviction is allowed if at least "minAvailable"
+                          pods selected by "selector" will still be available after
+                          the eviction, i.e. even in the absence of the evicted pod.  So
+                          for example you can prevent all voluntary evictions by specifying
+                          "100%".
+                        x-kubernetes-int-or-string: true
+                      selector:
+                        description: Label query over pods whose evictions are managed
+                          by the disruption budget. A null selector will match no
+                          pods, while an empty ({}) selector will select all pods
+                          within the namespace.
+                        properties:
+                          matchExpressions:
+                            description: matchExpressions is a list of label selector
+                              requirements. The requirements are ANDed.
+                            items:
+                              description: A label selector requirement is a selector
+                                that contains values, a key, and an operator that
+                                relates the key and values.
+                              properties:
+                                key:
+                                  description: key is the label key that the selector
+                                    applies to.
+                                  type: string
+                                operator:
+                                  description: operator represents a key's relationship
+                                    to a set of values. Valid operators are In, NotIn,
+                                    Exists and DoesNotExist.
+                                  type: string
+                                values:
+                                  description: values is an array of string values.
+                                    If the operator is In or NotIn, the values array
+                                    must be non-empty. If the operator is Exists or
+                                    DoesNotExist, the values array must be empty.
+                                    This array is replaced during a strategic merge
+                                    patch.
+                                  items:
+                                    type: string
+                                  type: array
+                              required:
+                              - key
+                              - operator
+                              type: object
+                            type: array
+                          matchLabels:
+                            additionalProperties:
+                              type: string
+                            description: matchLabels is a map of {key,value} pairs.
+                              A single {key,value} in the matchLabels map is equivalent
+                              to an element of matchExpressions, whose key field is
+                              "key", the operator is "In", and the values array contains
+                              only "value". The requirements are ANDed.
+                            type: object
+                        type: object
+                        x-kubernetes-map-type: atomic
                     type: object
                   readinessProbe:
                     description: Periodic probe of container service readiness. Container
