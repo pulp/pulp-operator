@@ -132,9 +132,6 @@ func (r *PulpReconciler) pulpWebController(ctx context.Context, pulp *repomanage
 // deploymentForPulpWeb returns a pulp-web Deployment object
 func (r *PulpReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 
-	runAsUser := int64(0)
-	fsGroup := int64(0)
-
 	ls := labelsForPulpWeb(m)
 	replicas := m.Spec.Web.Replicas
 	resources := m.Spec.Web.ResourceRequirements
@@ -226,10 +223,7 @@ func (r *PulpReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *apps
 							},
 						},
 					}},
-					SecurityContext: &corev1.PodSecurityContext{
-						RunAsUser: &runAsUser,
-						FSGroup:   &fsGroup,
-					},
+					SecurityContext: &corev1.PodSecurityContext{},
 					Volumes: []corev1.Volume{
 						{
 							Name: m.Name + "-nginx-conf",

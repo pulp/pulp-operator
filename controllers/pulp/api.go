@@ -324,8 +324,10 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		affinity.NodeAffinity = m.Spec.Api.Affinity.NodeAffinity
 	}
 
-	runAsUser := int64(0)
-	fsGroup := int64(0)
+	// pulp image is built to run with user 0
+	// we are enforcing the containers to run as 1000
+	runAsUser := int64(700)
+	fsGroup := int64(700)
 	podSecurityContext := &corev1.PodSecurityContext{}
 	IsOpenShift, _ := controllers.IsOpenShift()
 	if !IsOpenShift {

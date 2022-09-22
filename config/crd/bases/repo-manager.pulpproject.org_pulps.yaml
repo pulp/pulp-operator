@@ -2163,7 +2163,7 @@ spec:
                     type: object
                   external_db_secret:
                     description: Secret name with the configuration to use an external
-                      database ExternalDB ExternalDB `json:"external_db,omitempty"`
+                      database
                     type: string
                   livenessProbe:
                     description: Periodic probe of container liveness. Container will
