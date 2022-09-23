@@ -808,6 +808,7 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
+			Strategy: m.Spec.Api.Strategy,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: ls,
 			},

@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	policy "k8s.io/api/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -283,6 +284,11 @@ type Api struct {
 	// +optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	PDB *policy.PodDisruptionBudgetSpec `json:"pdb,omitempty"`
+
+	// The deployment strategy to use to replace existing pods with new ones.
+	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:updateStrategy","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	Strategy appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
 type Content struct {
@@ -346,6 +352,11 @@ type Content struct {
 	// +optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	PDB *policy.PodDisruptionBudgetSpec `json:"pdb,omitempty"`
+
+	// The deployment strategy to use to replace existing pods with new ones.
+	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:updateStrategy","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	Strategy appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
 type Worker struct {
@@ -397,6 +408,11 @@ type Worker struct {
 	// +optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	PDB *policy.PodDisruptionBudgetSpec `json:"pdb,omitempty"`
+
+	// The deployment strategy to use to replace existing pods with new ones.
+	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:updateStrategy","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	Strategy appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
 type Web struct {
@@ -613,6 +629,11 @@ type Cache struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	NodeSelector map[string]string `json:"node_selector,omitempty"`
+
+	// The deployment strategy to use to replace existing pods with new ones.
+	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:updateStrategy","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	Strategy appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
 // PulpStatus defines the observed state of Pulp
