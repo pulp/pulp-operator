@@ -510,6 +510,7 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
+			Strategy: m.Spec.Content.Strategy,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: ls,
 			},

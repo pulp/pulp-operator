@@ -460,6 +460,7 @@ func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *a
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
+			Strategy: m.Spec.Worker.Strategy,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: ls,
 			},
