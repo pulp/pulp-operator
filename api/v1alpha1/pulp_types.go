@@ -313,6 +313,11 @@ type Content struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 
+	// Topology rule(s) for the pods.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	TopologySpreadConstraints []corev1.TopologySpreadConstraint `json:"topology_spread_constraints,omitempty"`
+
 	// The timeout for the gunicorn process.
 	// +kubebuilder:default:=90
 	// +kubebuilder:validation:Optional
@@ -593,6 +598,16 @@ type Cache struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Probe","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	LivenessProbe *corev1.Probe `json:"livenessProbe,omitempty"`
+
+	// Defines various deployment affinities.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	Affinity Affinity `json:"affinity,omitempty"`
+
+	// Node tolerations for the Pulp pods.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 
 	// NodeSelector for the Pulp pods.
 	// +kubebuilder:validation:Optional

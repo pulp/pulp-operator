@@ -142,7 +142,7 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 	ls := labelsForPulpContent(m)
 
 	affinity := &corev1.Affinity{}
-	if m.Spec.Api.Affinity.NodeAffinity != nil {
+	if m.Spec.Content.Affinity.NodeAffinity != nil {
 		affinity.NodeAffinity = m.Spec.Content.Affinity.NodeAffinity
 	}
 
@@ -160,12 +160,12 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 	}
 
 	nodeSelector := map[string]string{}
-	if m.Spec.Api.NodeSelector != nil {
+	if m.Spec.Content.NodeSelector != nil {
 		nodeSelector = m.Spec.Content.NodeSelector
 	}
 
 	toleration := []corev1.Toleration{}
-	if m.Spec.Api.Tolerations != nil {
+	if m.Spec.Content.Tolerations != nil {
 		toleration = m.Spec.Content.Tolerations
 	}
 
@@ -277,8 +277,8 @@ func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *
 	}
 
 	topologySpreadConstraint := []corev1.TopologySpreadConstraint{}
-	if m.Spec.Api.TopologySpreadConstraints != nil {
-		topologySpreadConstraint = m.Spec.Api.TopologySpreadConstraints
+	if m.Spec.Content.TopologySpreadConstraints != nil {
+		topologySpreadConstraint = m.Spec.Content.TopologySpreadConstraints
 	}
 
 	resources := m.Spec.Content.ResourceRequirements

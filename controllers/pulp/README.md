@@ -62,6 +62,8 @@
 | pvc | PersistenVolumeClaim name that will be used by Redis pods If defined, the PVC must be provisioned by the user and the operator will only configure the deployment to use it | string | false |
 | readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |
 | livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
+| affinity | Defines various deployment affinities. | [Affinity](#affinity) | false |
+| tolerations | Node tolerations for the Pulp pods. | []corev1.Toleration | false |
 | node_selector | NodeSelector for the Pulp pods. | map[string]string | false |
 
 [Back to Custom Resources](#custom-resources)
@@ -77,6 +79,7 @@
 | affinity | Defines various deployment affinities. | [Affinity](#affinity) | false |
 | node_selector | NodeSelector for the Pulp pods. | map[string]string | false |
 | tolerations | Node tolerations for the Pulp pods. | []corev1.Toleration | false |
+| topology_spread_constraints | Topology rule(s) for the pods. | []corev1.TopologySpreadConstraint | false |
 | gunicorn_timeout | The timeout for the gunicorn process. | int | false |
 | gunicorn_workers | The number of gunicorn workers to use for the api. | int | false |
 | readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |
