@@ -208,8 +208,8 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 	replicas := int32(1)
 
 	affinity := &corev1.Affinity{}
-	if m.Spec.Api.Affinity.NodeAffinity != nil {
-		affinity.NodeAffinity = m.Spec.Api.Affinity.NodeAffinity
+	if m.Spec.Cache.Affinity.NodeAffinity != nil {
+		affinity.NodeAffinity = m.Spec.Cache.Affinity.NodeAffinity
 	}
 
 	nodeSelector := map[string]string{}
@@ -218,8 +218,8 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 	}
 
 	toleration := []corev1.Toleration{}
-	if m.Spec.Api.Tolerations != nil {
-		toleration = m.Spec.Api.Tolerations
+	if m.Spec.Cache.Tolerations != nil {
+		toleration = m.Spec.Cache.Tolerations
 	}
 
 	_, storageType := controllers.MultiStorageConfigured(m, "Cache")
