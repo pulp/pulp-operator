@@ -319,8 +319,7 @@ jobs:
       - name: Install httpie
         run: |
           echo ::group::HTTPIE
-          sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
+          pip install httpie tweepy
           echo ::endgroup::
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
           echo "IMG=quay.io/pulp/pulp-operator:devel" >> $GITHUB_ENV
@@ -338,3 +337,6 @@ jobs:
       - name: Deploy images
         run: .ci/scripts/deploy.sh
         shell: bash
+      - name: Tweet
+        if: startsWith(github.ref, 'refs/tags/')
+        run: python .ci/scripts/tweet.py ${GITHUB_REF##*/}
