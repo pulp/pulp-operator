@@ -249,7 +249,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_PULP_CHANNEL }}
   deploy:
     runs-on: ubuntu-latest
-    needs: [insta, components, molecule, galaxy]
+    needs: [insta, components, galaxy]
     steps:
       - uses: actions/checkout@v2
         with:
