@@ -17,6 +17,10 @@ metadata:
     owner: pulp-dev
 spec:
   replicas: {{ worker.replicas }}
+{% if worker.strategy is defined %}
+  strategy:
+    type: {{ worker.strategy }}
+{% endif %}
   selector:
     matchLabels:
       app.kubernetes.io/name: '{{ deployment_type }}-worker'

@@ -16,6 +16,10 @@ metadata:
     owner: pulp-dev
 spec:
   replicas: {{ web.replicas }}
+{% if web.strategy is defined %}
+  strategy:
+    type: {{ web.strategy }}
+{% endif %}
   selector:
     matchLabels:
       app.kubernetes.io/name: 'nginx'
