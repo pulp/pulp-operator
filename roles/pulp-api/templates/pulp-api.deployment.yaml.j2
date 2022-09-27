@@ -16,6 +16,10 @@ metadata:
     owner: pulp-dev
 spec:
   replicas: {{ api.replicas }}
+{% if api.strategy is defined %}
+  strategy:
+    type: {{ api.strategy }}
+{% endif %}
   selector:
     matchLabels:
       app.kubernetes.io/name: '{{ deployment_type }}-api'
