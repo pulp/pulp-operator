@@ -247,62 +247,6 @@ jobs:
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_PULP_CHANNEL }}
-  molecule:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          # by default, it uses a depth of 1
-          # this fetches all history so that we can read each commit
-          fetch-depth: 0
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v1
-        with:
-          python-version: '3.9'
-      - name: Install httpie
-        run: |
-          echo ::group::HTTPIE
-          sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
-          echo ::endgroup::
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo "IMG=quay.io/pulp/pulp-operator:devel" >> $GITHUB_ENV
-          echo "CI_TEST=true" >> $GITHUB_ENV
-        shell: bash
-      - name: Install
-        run: |
-          pip install --upgrade pip
-          sudo apt remove ansible
-          pip install ansible==4.0.0 molecule[docker,lint] six openshift==0.12.1 jmespath
-          ansible-galaxy collection install --force community.docker
-          ansible --version
-      - name: Uninstalling GHA kustomize
-        run: |
-          # hack for uninstalling kustomize from GHA
-          mv /usr/local/bin/kustomize /usr/local/bin/ghakustomize
-          make kustomize
-          mv ./bin/kustomize /usr/local/bin/kustomize
-          kustomize version
-        shell: bash
-      - name: Molecule test
-        run: .ci/scripts/molecule.sh
-        shell: bash
-        env:
-          PY_COLORS: '1'
-          ANSIBLE_FORCE_COLOR: '1'
-          MOLECULE_VERBOSITY: 2
-      - name: Logs
-        if: always()
-        run: .github/workflows/scripts/show_logs.sh -k
-        shell: bash
-      - name: Molecule destroy
-        if: always()
-        run: molecule -v destroy -s kind
-        shell: bash
-        env:
-          PY_COLORS: '1'
-          ANSIBLE_FORCE_COLOR: '1'
-
   deploy:
     runs-on: ubuntu-latest
     needs: [insta, components, molecule, galaxy]
