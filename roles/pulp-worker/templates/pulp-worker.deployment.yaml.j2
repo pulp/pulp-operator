@@ -39,8 +39,8 @@ spec:
 {% endif %}
 {% if is_k8s %}
       securityContext:
-        runAsUser: 0
-        fsGroup: 0
+        runAsUser: 700
+        fsGroup: 700
 {% endif %}
 {% if node_selector %}
       nodeSelector:
