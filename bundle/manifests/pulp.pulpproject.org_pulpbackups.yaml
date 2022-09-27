@@ -20,7 +20,7 @@ spec:
           spec:
             properties:
               backup_pvc:
-                description: Name of the PVC to be used for storing the backup
+                description: Name of existing PVC to be used for storing the backup (must be pre-created if specified)
                 type: string
               backup_pvc_namespace:
                 description: Namespace PVC is in
