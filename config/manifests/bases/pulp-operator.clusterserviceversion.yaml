@@ -348,6 +348,13 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: The deployment strategy to use to replace existing pods with
+          new ones.
+        displayName: Strategy
+        path: api.strategy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:updateStrategy
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Node tolerations for the Pulp pods.
         displayName: Tolerations
         path: api.tolerations
@@ -362,10 +369,22 @@ spec:
         path: cache
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - displayName: Enabled
+      - description: Defines various deployment affinities.
+        displayName: Affinity
+        path: cache.affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Defines if cache should be enabled.
+        displayName: Enabled
         path: cache.enabled
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+      - description: Name of the secret with the parameters to connect to an external
+          Redis cluster
+        displayName: External Cache Secret
+        path: cache.external_cache_secret
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container liveness. Container will be restarted
           if the probe fails.
         displayName: Liveness Probe
@@ -393,12 +412,13 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Probe
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: The image name for the redis image.
+      - description: 'The image name for the redis image. [default: "redis:latest"]'
         displayName: Redis Image
         path: cache.redis_image
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Redis Port
+      - description: 'The port for Redis. [default: 6379]'
+        displayName: Redis Port
         path: cache.redis_port
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:number
@@ -414,6 +434,18 @@ spec:
         path: cache.redis_storage_class
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:StorageClass
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: The deployment strategy to use to replace existing pods with
+          new ones.
+        displayName: Strategy
+        path: cache.strategy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:updateStrategy
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Node tolerations for the Pulp pods.
+        displayName: Tolerations
+        path: cache.tolerations
+        x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Container Auth Private Key
         path: container_auth_private_key_name
@@ -484,9 +516,21 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: The deployment strategy to use to replace existing pods with
+          new ones.
+        displayName: Strategy
+        path: content.strategy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:updateStrategy
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Node tolerations for the Pulp pods.
         displayName: Tolerations
         path: content.tolerations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Topology rule(s) for the pods.
+        displayName: Topology Spread Constraints
+        path: content.topology_spread_constraints
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Database
@@ -498,13 +542,11 @@ spec:
         path: database.affinity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Configuration to use an external database
-        displayName: External DB
-        path: database.external_db
+      - description: Secret name with the configuration to use an external database
+        displayName: External DBSecret
+        path: database.external_db_secret
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Postgres Con Max Age
-        path: database.external_db.postgres_con_max_age
       - description: Periodic probe of container liveness. Container will be restarted
           if the probe fails.
         displayName: Liveness Probe
@@ -517,22 +559,22 @@ spec:
         path: database.node_selector
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Registry path to the PostgreSQL container to use
+      - description: 'Registry path to the PostgreSQL container to use [default: "/var/lib/postgresql/data/pgdata"]'
         displayName: Postgres Data Path
         path: database.postgres_data_path
       - displayName: Postgres Extra Args
         path: database.postgres_extra_args
-      - description: PostgreSQL host authentication method
+      - description: 'PostgreSQL host authentication method [default: "scram-sha-256"]'
         displayName: Postgres Host Auth Method
         path: database.postgres_host_auth_method
-      - description: PostgreSQL container image
+      - description: 'PostgreSQL container image [default: "postgres:13"]'
         displayName: Postgres Image
         path: database.postgres_image
-      - description: Arguments to pass to PostgreSQL initdb command when creating
-          a new cluster.
+      - description: 'Arguments to pass to PostgreSQL initdb command when creating
+          a new cluster. [default: "--auth-host=scram-sha-256"]'
         displayName: Postgres Initdb Args
         path: database.postgres_initdb_args
-      - description: PostgreSQL port
+      - description: 'PostgreSQL port [default: 5432]'
         displayName: Postgres Port
         path: database.postgres_port
         x-descriptors:
@@ -543,7 +585,7 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Configure PostgreSQL connection sslmode option
+      - description: 'Configure PostgreSQL connection sslmode option [default: "prefer"]'
         displayName: Postgres SSLMode
         path: database.postgres_ssl_mode
       - description: Name of the StorageClass required by the claim.
@@ -579,7 +621,7 @@ spec:
         path: database.tolerations
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: PostgreSQL version
+      - description: 'PostgreSQL version [default: "13"]'
         displayName: Postgres Version
         path: database.version
       - description: Secret where the Fernet symmetric encryption key is stored.
@@ -809,6 +851,13 @@ spec:
         path: worker.resource_requirements
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: The deployment strategy to use to replace existing pods with
+          new ones.
+        displayName: Strategy
+        path: worker.strategy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:updateStrategy
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Node tolerations for the Pulp pods.
         displayName: Tolerations
