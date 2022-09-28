@@ -43,19 +43,15 @@ spec:
               image:
                 description: The image name (repo name) for the pulp image.
                 type: string
-                default: quay.io/pulp/pulp
               image_version:
                 description: The image version for the pulp image.
                 type: string
-                default: stable
               image_web:
                 description: The image name (repo name) for the pulp webserver image.
                 type: string
-                default: quay.io/pulp/pulp-web
               image_web_version:
                 description: The image version for the pulp webserver image.
                 type: string
-                default: stable
               redis_image:
                 description: The image name for the redis image.
                 type: string
