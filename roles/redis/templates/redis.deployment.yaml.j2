@@ -18,6 +18,10 @@ metadata:
     owner: pulp-dev
 spec:
   replicas: 1
+{% if api.strategy is defined %}
+  strategy:
+    type: {{ redis.strategy }}
+{% endif %}
   selector:
     matchLabels:
       app.kubernetes.io/name: 'redis'
@@ -76,8 +80,8 @@ spec:
                 - -i
                 - -c
                 - redis-cli -h 127.0.0.1 -p 6379
-{% if redis_resource_requirements is defined %}
-          resources: {{ redis_resource_requirements }}
+{% if redis.resource_requirements is defined %}
+          resources: {{ redis.resource_requirements }}
 {% endif %}
 {% if node_selector %}
       nodeSelector:
