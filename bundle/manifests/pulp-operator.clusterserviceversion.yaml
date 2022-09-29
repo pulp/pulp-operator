@@ -257,7 +257,8 @@ spec:
     owned:
     - description: Back up a deployment of the pulp, including all hosted Ansible
         content, secrets and the database. By default, a persistent volume claim will
-        be created using the default StorageClass on your cluster to store the backup on.
+        be created using the default StorageClass on your cluster to store the backup
+        on.
       displayName: Pulp Backup
       kind: PulpBackup
       name: pulpbackups.pulp.pulpproject.org
@@ -687,6 +688,13 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: The deployment strategy to use to replace existing pods with
+          new ones.
+        displayName: Strategy
+        path: api.strategy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:updateStrategy
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: API server resource requirements
         path: api.resource_requirements
         x-descriptors:
@@ -706,6 +714,13 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: The deployment strategy to use to replace existing pods with
+          new ones.
+        displayName: Strategy
+        path: content.strategy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:updateStrategy
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Content server resource requirements
         path: content.resource_requirements
         x-descriptors:
@@ -729,6 +744,13 @@ spec:
         path: worker.replicas
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:podCount
+      - description: The deployment strategy to use to replace existing pods with
+          new ones.
+        displayName: Strategy
+        path: worker.strategy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:updateStrategy
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Worker resource requirements
         path: worker.resource_requirements
         x-descriptors:
@@ -738,6 +760,13 @@ spec:
         path: web
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: The deployment strategy to use to replace existing pods with
+          new ones.
+        displayName: Strategy
+        path: web.strategy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:updateStrategy
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Web server resource requirements
         path: web.resource_requirements
         x-descriptors:
