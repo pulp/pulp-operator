@@ -6,21 +6,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  go-docs:
-    name: Publish go-based docs
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        ref: go-1.0.0-beta
-    - name: Run publish docs script
-      env:
-        PULP_DOCS_KEY: ${{ secrets.PULP_DOCS_KEY }}
-      run: .ci/scripts/publish_docs.sh go-1.0.0-beta
   publish-docs:
-    name: Publish ansible-based docs
+    name: Publish docs
     runs-on: ubuntu-latest
-    needs: go-docs
     steps:
     - uses: actions/checkout@v2
     - name: Run publish docs script
