@@ -39,6 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	routev1 "github.com/openshift/api/route/v1"
+
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 	pulp_backup "github.com/pulp/pulp-operator/controllers/backup"
 	pulp "github.com/pulp/pulp-operator/controllers/pulp"
@@ -160,6 +161,10 @@ func main() {
 		Scheme:     mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PulpRestore")
+		os.Exit(1)
+	}
+	if err = (&repomanagerv1alpha1.Pulp{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "Pulp")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
