@@ -10,14 +10,14 @@ resources:
 patchesStrategicMerge:
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
 # patches here are for enabling the conversion webhook for each CRD
-#- patches/webhook_in_pulps.yaml
+- patches/webhook_in_pulps.yaml
 #- patches/webhook_in_pulpbackups.yaml
 #- patches/webhook_in_pulprestores.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.
 # patches here are for enabling the CA injection for each CRD
-#- patches/cainjection_in_pulps.yaml
+- patches/cainjection_in_pulps.yaml
 #- patches/cainjection_in_pulpbackups.yaml
 #- patches/cainjection_in_pulprestores.yaml
 #+kubebuilder:scaffold:crdkustomizecainjectionpatch
