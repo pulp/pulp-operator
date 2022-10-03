@@ -214,7 +214,7 @@ metadata:
     operators.operatorframework.io/builder: operator-sdk-v1.23.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/pulp/pulp-operator
-  name: pulp-operator.v1.0.0-beta
+  name: pulp-operator.v1.0.0-alpha
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -965,7 +965,7 @@ spec:
 
     ## Pulp Operator
 
-    Pulp Operator is under active development and not production ready yet. The goal is to provide a scalable and robust cluster for Pulp 3.
+    Pulp Operator is under active development, with the goal to provide a scalable and robust cluster for Pulp 3.
 
     Note that Pulp operator works with three different types of service containers (the operator itself, the main service and the web service):
 
@@ -1284,7 +1284,7 @@ spec:
                   value: redis:latest
                 - name: RELATED_IMAGE_PULP_POSTGRES
                   value: postgres:13
-                image: quay.io/pulp/pulp-operator:v1.0.0-beta
+                image: quay.io/pulp/pulp-operator:v1.0.0-alpha
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -1386,4 +1386,4 @@ spec:
     name: pulp-redis
   - image: postgres:13
     name: pulp-postgres
-  version: 1.0.0-beta
+  version: 1.0.0-alpha
