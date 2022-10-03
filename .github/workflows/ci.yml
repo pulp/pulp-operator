@@ -2,13 +2,13 @@ name: Pulp CI
 on:
   push:
     branches:
-      - go-1.0.0-beta
+      - go-1.0.0-alpha
     tags:
       - '*'
   workflow_dispatch:
   pull_request:
     branches:
-      - go-1.0.0-beta
+      - go-1.0.0-alpha
   schedule:
     # * is a special character in YAML so you have to quote this string
     # runs at 3:00 UTC daily
