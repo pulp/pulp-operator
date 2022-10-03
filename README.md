@@ -28,7 +28,7 @@ If you want to evaluate Pulp quickly, try [Pulp in One Container](https://pulppr
 
 An [Ansible Operator](https://www.ansible.com/blog/ansible-operator) for Pulp 3.
 
-Pulp Operator is under active development and not production ready yet. The goal is to provide a scalable and robust cluster for Pulp 3.
+Pulp Operator is under active development, with the goal to provide a scalable and robust cluster for Pulp 3.
 
 Note that Pulp operator works with three different types of service containers (the operator itself, the main service and the web service):
 
