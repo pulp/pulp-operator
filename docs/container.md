@@ -96,10 +96,4 @@ An image with the pulp operator binary.
 
 ## Build
 
-The images can be built with the help of an Ansible playbook. To build the images:
-
-    ansible-playbook build.yaml
-
-See `containers/vars/defaults.yaml` for how to customize the `"images"` variable (data structure).
-
-You can add `-e cache=false` to that command to prevent outdated image layers from being used.
+The images can be found [here](https://github.com/pulp/pulp-oci-images/tree/latest/images): [https://docs.pulpproject.org/pulp_oci_images/](https://docs.pulpproject.org/pulp_oci_images/)
