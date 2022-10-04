@@ -45,12 +45,12 @@ type PulpBackupReconciler struct {
 	Scheme     *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulpbackups,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulpbackups/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulpbackups/finalizers,verbs=update
-//+kubebuilder:rbac:groups=core,resources=pods;persistentvolumes;persistentvolumeclaims,verbs=create;update;patch;delete;watch;get;list;
-//+kubebuilder:rbac:groups=core,resources=pods/exec,verbs=create;
-//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulp,verbs=get;list;
+//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,namespace=pulp,resources=pulpbackups,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,namespace=pulp,resources=pulpbackups/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,namespace=pulp,resources=pulpbackups/finalizers,verbs=update
+//+kubebuilder:rbac:groups=core,namespace=pulp,resources=pods;persistentvolumes;persistentvolumeclaims,verbs=create;update;patch;delete;watch;get;list;
+//+kubebuilder:rbac:groups=core,namespace=pulp,resources=pods/exec,verbs=create;
+//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,namespace=pulp,resources=pulp,verbs=get;list;
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

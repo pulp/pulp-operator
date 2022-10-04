@@ -54,17 +54,17 @@ type PulpReconciler struct {
 	recorder   record.EventRecorder
 }
 
-//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulps,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulps/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,resources=pulps/finalizers,verbs=update
-//+kubebuilder:rbac:groups=apps;networking.k8s.io,resources=deployments;statefulsets;ingresses,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,namespace=pulp,resources=pulps,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,namespace=pulp,resources=pulps/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,namespace=pulp,resources=pulps/finalizers,verbs=update
+//+kubebuilder:rbac:groups=apps;networking.k8s.io,namespace=pulp,resources=deployments;statefulsets;ingresses,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=config.openshift.io,resources=ingresses,verbs=get;list;watch
-//+kubebuilder:rbac:groups=route.openshift.io,resources=routes;routes/custom-host,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=pods;pods/log,verbs=get;list;
-//+kubebuilder:rbac:groups=core;rbac.authorization.k8s.io,resources=roles;rolebindings;serviceaccounts,verbs=create;update;patch;delete;watch;get;list;
-//+kubebuilder:rbac:groups=core,resources=configmaps;secrets;services;persistentvolumeclaims,verbs=create;update;patch;delete;watch;get;list;
-//+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
-//+kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=get;list;create;delete;patch;update
+//+kubebuilder:rbac:groups=route.openshift.io,namespace=pulp,resources=routes;routes/custom-host,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,namespace=pulp,resources=pods;pods/log,verbs=get;list;
+//+kubebuilder:rbac:groups=core;rbac.authorization.k8s.io,namespace=pulp,resources=roles;rolebindings;serviceaccounts,verbs=create;update;patch;delete;watch;get;list;
+//+kubebuilder:rbac:groups=core,namespace=pulp,resources=configmaps;secrets;services;persistentvolumeclaims,verbs=create;update;patch;delete;watch;get;list;
+//+kubebuilder:rbac:groups="",namespace=pulp,resources=events,verbs=create;patch
+//+kubebuilder:rbac:groups=policy,namespace=pulp,resources=poddisruptionbudgets,verbs=get;list;create;delete;patch;update;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
