@@ -18,7 +18,6 @@ Pulp is completely free and open-source!
 * License: GPLv2+
 * Documentation: [https://docs.pulpproject.org/](https://docs.pulpproject.org/)
 * Source: [https://github.com/pulp/pulpcore/](https://github.com/pulp/pulpcore/)
-* Bugs: [https://pulp.plan.io/projects/pulp](https://pulp.plan.io/projects/pulp)
 
 For more information, check out the project website: [https://pulpproject.org](https://pulpproject.org)
 
