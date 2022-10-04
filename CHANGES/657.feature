@@ -1,0 +1,1 @@
+Let the operator namespace-scoped.
