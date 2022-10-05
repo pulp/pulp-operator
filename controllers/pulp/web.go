@@ -126,6 +126,12 @@ func (r *PulpReconciler) pulpWebController(ctx context.Context, pulp *repomanage
 		return ctrl.Result{}, err
 	}
 
+	// Reconcile Service
+	if err := r.reconcileObject(ctx, pulp, newWebSvc, webSvc, conditionType, log); err != nil {
+		log.Error(err, "Failed to update "+pulp.Name+"-web-svc service")
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{}, nil
 }
 

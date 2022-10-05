@@ -18,6 +18,7 @@ package pulp_test
 
 import (
 	"context"
+	"go/build"
 	"path/filepath"
 	"testing"
 
@@ -58,7 +59,10 @@ var _ = BeforeSuite(func() {
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "bases")},
+		CRDDirectoryPaths: []string{
+			filepath.Join("..", "..", "config", "crd", "bases"),
+			filepath.Join(build.Default.GOPATH, "pkg", "mod", "github.com", "openshift", "api@v0.0.0-20220825183227-75c111537c4d", "route", "v1", "route.crd.yaml"),
+		},
 		ErrorIfCRDPathMissing: true,
 	}
 

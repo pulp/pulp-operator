@@ -40,6 +40,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/go-logr/logr"
+	routev1 "github.com/openshift/api/route/v1"
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 	"github.com/pulp/pulp-operator/controllers"
 )
@@ -141,6 +142,17 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		}
 	}
 
+	// Checking immutable fields update
+	immutableFields := []string{
+		"DeploymentType", "ObjectStorageAzureSecret", "ObjectStorageS3Secret", "DBFieldsEncryptionSecret",
+	}
+	for _, field := range immutableFields {
+		// if tried to modify an immutable field we should trigger a reconcile loop
+		if r.checkImmutableFields(ctx, pulp, field, log) {
+			return ctrl.Result{}, nil
+		}
+	}
+
 	var pulpController reconcile.Result
 
 	// Create an empty ConfigMap in which CNO will inject custom CAs
@@ -223,15 +235,29 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return pulpController, nil
 	}
 
-	if strings.ToLower(pulp.Spec.IngressType) == "route" {
-		log.V(1).Info("Running route tasks")
-		pulpController, err = r.pulpRouteController(ctx, pulp, log)
-		if err != nil {
-			return pulpController, err
-		} else if pulpController.Requeue {
-			return pulpController, nil
-		} else if pulpController.RequeueAfter > 0 {
-			return pulpController, nil
+	// if this is the first reconciliation loop (.status.ingress_type == "") OR
+	// if there is no update in ingressType field
+	if len(pulp.Status.IngressType) == 0 || pulp.Status.IngressType == pulp.Spec.IngressType {
+		if strings.ToLower(pulp.Spec.IngressType) == "route" {
+			log.V(1).Info("Running route tasks")
+			pulpController, err = r.pulpRouteController(ctx, pulp, log)
+			if err != nil {
+				return pulpController, err
+			} else if pulpController.Requeue {
+				return pulpController, nil
+			} else if pulpController.RequeueAfter > 0 {
+				return pulpController, nil
+			}
+		} else {
+			log.V(1).Info("Running web tasks")
+			pulpController, err = r.pulpWebController(ctx, pulp, log)
+			if err != nil {
+				return pulpController, err
+			} else if pulpController.Requeue {
+				return pulpController, nil
+			} else if pulpController.RequeueAfter > 0 {
+				return pulpController, nil
+			}
 		}
 	} else if strings.ToLower(pulp.Spec.IngressType) == "ingress" {
 		log.V(1).Info("Running ingress tasks")
@@ -244,15 +270,8 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 			return pulpController, nil
 		}
 	} else {
-		log.V(1).Info("Running web tasks")
-		pulpController, err = r.pulpWebController(ctx, pulp, log)
-		if err != nil {
-			return pulpController, err
-		} else if pulpController.Requeue {
-			return pulpController, nil
-		} else if pulpController.RequeueAfter > 0 {
-			return pulpController, nil
-		}
+		r.updateIngressType(ctx, pulp)
+		return ctrl.Result{}, nil
 	}
 
 	log.V(1).Info("Running PDB tasks")
@@ -284,6 +303,19 @@ func (r *PulpReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	// creates a new eventRecorder to be able to interact with events
 	r.recorder = mgr.GetEventRecorderFor("Pulp")
+
+	if IsOpenShift, _ := controllers.IsOpenShift(); IsOpenShift {
+		return ctrl.NewControllerManagedBy(mgr).
+			For(&repomanagerv1alpha1.Pulp{}).
+			Owns(&appsv1.StatefulSet{}).
+			Owns(&appsv1.Deployment{}).
+			Owns(&corev1.Service{}).
+			Owns(&corev1.Secret{}).
+			Owns(&corev1.ConfigMap{}).
+			Owns(&policy.PodDisruptionBudget{}).
+			Owns(&routev1.Route{}).
+			Complete(r)
+	}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&repomanagerv1alpha1.Pulp{}).
