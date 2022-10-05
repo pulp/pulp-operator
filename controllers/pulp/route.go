@@ -41,6 +41,9 @@ import (
 
 func (r *PulpReconciler) pulpRouteController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
+	// conditionType is used to update .status.conditions with the current resource state
+	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Route-Ready"
+
 	podList := &corev1.PodList{}
 	labels := map[string]string{
 		"app.kubernetes.io/part-of":    pulp.Spec.DeploymentType,
@@ -59,9 +62,9 @@ func (r *PulpReconciler) pulpRouteController(ctx context.Context, pulp *repomana
 	var IsPodRunning bool = false
 	var pod = corev1.Pod{}
 	for _, p := range podList.Items {
-		log.Info("Checking Worker pod", "Pod", p.Name, "Status", p.Status.Phase)
+		log.V(1).Info("Checking Worker pod", "Pod", p.Name, "Status", p.Status.Phase)
 		if p.Status.Phase == "Running" {
-			log.Info("Running!", "Pod", p.Name, "Status", p.Status.Phase)
+			log.V(1).Info("Running!", "Pod", p.Name, "Status", p.Status.Phase)
 			IsPodRunning = true
 			pod = p
 			break
@@ -80,7 +83,7 @@ func (r *PulpReconciler) pulpRouteController(ctx context.Context, pulp *repomana
 	cmdOutput, err := controllers.ContainerExec(r, &pod, execCmd, "worker", pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to get routes from "+pod.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Route-Ready", "Failed to get routes!", "FailedGet"+pod.Name)
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "Failed to get routes!", "FailedGet"+pod.Name)
 		return ctrl.Result{}, err
 	}
 	var pulpPlugins []RoutePlugin
@@ -120,38 +123,50 @@ func (r *PulpReconciler) pulpRouteController(ctx context.Context, pulp *repomana
 	pulpPlugins = append(defaultPlugins, pulpPlugins...)
 	for _, plugin := range pulpPlugins {
 		// get route
-		pulpRoute := &routev1.Route{}
-		err := r.Get(ctx, types.NamespacedName{Name: plugin.Name, Namespace: pulp.Namespace}, pulpRoute)
+		currentRoute := &routev1.Route{}
+		expectedRoute := r.pulpRouteObject(pulp, &plugin, routeHost)
+		err := r.Get(ctx, types.NamespacedName{Name: plugin.Name, Namespace: pulp.Namespace}, currentRoute)
 
 		// Create the route in case it is not found
 		if err != nil && errors.IsNotFound(err) {
-			routeObj := pulpRouteObject(pulp, &plugin, routeHost)
-			ctrl.SetControllerReference(pulp, routeObj, r.Scheme)
-			log.Info("Creating a new route", "Route.Namespace", routeObj.Namespace, "Route.Name", routeObj.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Route-Ready", "CreatingRoute", "Creating "+pulp.Name+"-route")
-			err = r.Create(ctx, routeObj)
-			if err != nil {
-				log.Error(err, "Failed to create new route", "Route.Namespace", routeObj.Namespace, "Route.Name", routeObj.Name)
-				r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Route-Ready", "ErrorCreatingRoute", "Failed to create "+pulp.Name+"-route: "+err.Error())
+			log.Info("Creating a new route", "Route.Namespace", expectedRoute.Namespace, "Route.Name", expectedRoute.Name)
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingRoute", "Creating "+pulp.Name+"-route")
+			if err := r.Create(ctx, expectedRoute); err != nil {
+				log.Error(err, "Failed to create new route", "Route.Namespace", expectedRoute.Namespace, "Route.Name", expectedRoute.Name)
+				r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingRoute", "Failed to create "+pulp.Name+"-route: "+err.Error())
 				r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new route")
 				return ctrl.Result{}, err
 			}
+			return ctrl.Result{}, nil
 		} else if err != nil {
 			log.Error(err, "Failed to get route")
+			return ctrl.Result{}, err
+		}
+
+		// Ensure route specs are as expected
+		if err := r.reconcileObject(ctx, pulp, expectedRoute, currentRoute, conditionType, log); err != nil {
+			log.Error(err, "Failed to update route spec")
+			return ctrl.Result{}, err
+		}
+
+		// Ensure route labels and annotations are as expected
+		if err := r.reconcileMetadata(ctx, pulp, expectedRoute, currentRoute, conditionType, log); err != nil {
+			log.Error(err, "Failed to update route labels")
 			return ctrl.Result{}, err
 		}
 	}
 
 	// we should only update the status when Route-Ready==false
-	if v1.IsStatusConditionFalse(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Route-Ready") {
-		r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Route-Ready", "RouteTasksFinished", "All Route tasks ran successfully")
+	if v1.IsStatusConditionFalse(pulp.Status.Conditions, conditionType) {
+		r.updateStatus(ctx, pulp, metav1.ConditionTrue, conditionType, "RouteTasksFinished", "All Route tasks ran successfully")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "RouteReady", "All Route tasks ran successfully")
 	}
 	return ctrl.Result{}, nil
 }
 
-// pulp-route
-func pulpRouteObject(m *repomanagerv1alpha1.Pulp, p *RoutePlugin, routeHost string) *routev1.Route {
+// pulpRouteObject returns the route object with the specs defined in pulp CR
+func (r *PulpReconciler) pulpRouteObject(m *repomanagerv1alpha1.Pulp, p *RoutePlugin, routeHost string) *routev1.Route {
+
 	weight := int32(100)
 	annotation := map[string]string{
 		"haproxy.router.openshift.io/timeout": m.Spec.HAProxyTimeout,
@@ -160,8 +175,14 @@ func pulpRouteObject(m *repomanagerv1alpha1.Pulp, p *RoutePlugin, routeHost stri
 		annotation["haproxy.router.openshift.io/rewrite-target"] = p.Rewrite
 	}
 
-	labels := m.Spec.RouteLabels
-	return &routev1.Route{
+	labels := map[string]string{}
+	labels["pulp_cr"] = m.Name
+	labels["owner"] = "pulp-dev"
+	for k, v := range m.Spec.RouteLabels {
+		labels[k] = v
+	}
+
+	route := &routev1.Route{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        p.Name,
 			Namespace:   m.Namespace,
@@ -186,6 +207,10 @@ func pulpRouteObject(m *repomanagerv1alpha1.Pulp, p *RoutePlugin, routeHost stri
 			WildcardPolicy: routev1.WildcardPolicyNone,
 		},
 	}
+
+	// Set Pulp instance as the owner and controller
+	ctrl.SetControllerReference(m, route, r.Scheme)
+	return route
 }
 
 // RoutePlugin defines a plugin route.

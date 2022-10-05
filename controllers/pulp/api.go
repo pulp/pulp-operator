@@ -40,6 +40,7 @@ import (
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 	"github.com/pulp/pulp-operator/controllers"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
@@ -234,6 +235,13 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 		}
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Reconciled API deployment")
 		return ctrl.Result{Requeue: true}, nil
+	}
+
+	// update pulp CR with default values
+	if len(pulp.Spec.DBFieldsEncryptionSecret) == 0 {
+		patch := client.MergeFrom(pulp.DeepCopy())
+		pulp.Spec.DBFieldsEncryptionSecret = pulp.Name + "-db-fields-encryption"
+		r.Patch(ctx, pulp, patch)
 	}
 
 	// SERVICE

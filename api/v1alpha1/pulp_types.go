@@ -24,24 +24,23 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // PulpSpec defines the desired state of Pulp
 type PulpSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Name of the deployment type.
-	//+kubebuilder:default:="pulp"
+	// +kubebuilder:default:="pulp"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	DeploymentType string `json:"deployment_type,omitempty"`
 
 	// The size of the file storage; for example 100Gi.
+	// This field should be used only if file_storage_storage_class is provided
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File"}
 	FileStorageSize string `json:"file_storage_size,omitempty"`
 
 	// The file storage access mode.
+	// This field should be used only if file_storage_storage_class is provided
 	// +kubebuilder:validation:Enum:=ReadWriteMany;ReadWriteOnce
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File","urn:alm:descriptor:com.tectonic.ui:select:ReadWriteMany"}
 	FileStorageAccessMode string `json:"file_storage_access_mode,omitempty"`
@@ -490,19 +489,6 @@ type Web struct {
 	PDB *policy.PodDisruptionBudgetSpec `json:"pdb,omitempty"`
 }
 
-type ExternalDB struct {
-	PostgresPort     int    `json:"postgres_port,omitempty"`
-	PostgresSSLMode  string `json:"postgres_ssl_mode,omitempty"`
-	PostgresHost     string `json:"postgres_host,omitempty"`
-	PostgresUser     string `json:"postgres_user,omitempty"`
-	PostgresPassword string `json:"postgres_password,omitempty"`
-	PostgresDBName   string `json:"postgres_db_name,omitempty"`
-
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	PostgresConMaxAge string `json:"postgres_con_max_age,omitempty"`
-}
-
 type Database struct {
 	// Size is the size of number of db replicas
 	// The default postgres image does not provide clustering
@@ -679,6 +665,16 @@ type Cache struct {
 type PulpStatus struct {
 	//+operator-sdk:csv:customresourcedefinitions:type=status,xDescriptors={"urn:alm:descriptor:io.kubernetes.conditions"}
 	Conditions []metav1.Condition `json:"conditions"`
+	// Name of the deployment type.
+	DeploymentType string `json:"deployment_type,omitempty"`
+	// The secret for Azure compliant object storage configuration.
+	ObjectStorageAzureSecret string `json:"object_storage_azure_secret,omitempty"`
+	// The secret for S3 compliant object storage configuration.
+	ObjectStorageS3Secret string `json:"object_storage_s3_secret,omitempty"`
+	// Secret where the Fernet symmetric encryption key is stored.
+	DBFieldsEncryptionSecret string `json:"db_fields_encryption_secret,omitempty"`
+	// The ingress type to use to reach the deployed instance
+	IngressType string `json:"ingress_type,omitempty"`
 }
 
 // Pulp is the Schema for the pulps API

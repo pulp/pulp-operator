@@ -112,6 +112,46 @@ func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alph
 		r.Status().Update(ctx, pulp)
 		log.Info(pulp.Spec.DeploymentType + " operator finished execution ...")
 	}
+
+	// we will only set .status.deployment_type in the first execution (len==0)
+	if len(pulp.Status.DeploymentType) == 0 {
+		pulp.Status.DeploymentType = pulp.Spec.DeploymentType
+		r.Status().Update(ctx, pulp)
+	}
+
+	// we will only set .status.object_storage_azure_secret in the first execution (len==0)
+	// and if .spec.object_storage_azure_secret is defined
+	if len(pulp.Status.ObjectStorageAzureSecret) == 0 && len(pulp.Spec.ObjectStorageAzureSecret) > 0 {
+		pulp.Status.ObjectStorageAzureSecret = pulp.Spec.ObjectStorageAzureSecret
+		r.Status().Update(ctx, pulp)
+	}
+
+	// we will only set .status.object_storage_s3_secret in the first execution (len==0)
+	// and if .spec.object_storage_s3_secret is defined
+	if len(pulp.Status.ObjectStorageS3Secret) == 0 && len(pulp.Spec.ObjectStorageS3Secret) > 0 {
+		pulp.Status.ObjectStorageS3Secret = pulp.Spec.ObjectStorageS3Secret
+		r.Status().Update(ctx, pulp)
+	}
+
+	// we will only set .status.db_fields_encryption_secret in the first execution (len==0)
+	// and we'll set with the value from pulp.spec.db_fields_encryption_secret if defined
+	if len(pulp.Status.DBFieldsEncryptionSecret) == 0 && len(pulp.Spec.DBFieldsEncryptionSecret) > 0 {
+		pulp.Status.DBFieldsEncryptionSecret = pulp.Spec.DBFieldsEncryptionSecret
+		r.Status().Update(ctx, pulp)
+
+		// if pulp.spec.db_fields_encryption_secret is not defined we should set .status with the default value
+	} else if len(pulp.Status.DBFieldsEncryptionSecret) == 0 && len(pulp.Spec.DBFieldsEncryptionSecret) == 0 {
+		pulp.Status.DBFieldsEncryptionSecret = pulp.Name + "-db-fields-encryption"
+		r.Status().Update(ctx, pulp)
+	}
+
+	// if there is no .status.ingress_type defined yet, we'll populate it with the current value
+	// this field can be modified (by other functions/methods) if .spec.ingress_type is modified
+	if len(pulp.Status.IngressType) == 0 {
+		pulp.Status.IngressType = pulp.Spec.IngressType
+		r.Status().Update(ctx, pulp)
+	}
+
 	return ctrl.Result{}, nil
 }
 

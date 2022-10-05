@@ -10,7 +10,6 @@
 * [Cache](#cache)
 * [Content](#content)
 * [Database](#database)
-* [ExternalDB](#externaldb)
 * [PulpList](#pulplist)
 * [PulpSpec](#pulpspec)
 * [PulpStatus](#pulpstatus)
@@ -118,22 +117,6 @@
 
 [Back to Custom Resources](#custom-resources)
 
-#### ExternalDB
-
-
-
-| Field | Description | Scheme | Required |
-| ----- | ----------- | ------ | -------- |
-| postgres_port |  | int | false |
-| postgres_ssl_mode |  | string | false |
-| postgres_host |  | string | false |
-| postgres_user |  | string | false |
-| postgres_password |  | string | false |
-| postgres_db_name |  | string | false |
-| postgres_con_max_age |  | string | false |
-
-[Back to Custom Resources](#custom-resources)
-
 #### Pulp
 
 Pulp is the Schema for the pulps API
@@ -164,8 +147,8 @@ PulpSpec defines the desired state of Pulp
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
 | deployment_type | Name of the deployment type. | string | false |
-| file_storage_size | The size of the file storage; for example 100Gi. | string | false |
-| file_storage_access_mode | The file storage access mode. | string | false |
+| file_storage_size | The size of the file storage; for example 100Gi. This field should be used only if file_storage_storage_class is provided | string | false |
+| file_storage_access_mode | The file storage access mode. This field should be used only if file_storage_storage_class is provided | string | false |
 | file_storage_storage_class | Storage class to use for the file persistentVolumeClaim | string | false |
 | object_storage_azure_secret | The secret for Azure compliant object storage configuration. | string | false |
 | object_storage_s3_secret | The secret for S3 compliant object storage configuration. | string | false |
@@ -215,6 +198,11 @@ PulpStatus defines the observed state of Pulp
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
 | conditions |  | []metav1.Condition | true |
+| deployment_type | Name of the deployment type. | string | false |
+| object_storage_azure_secret | The secret for Azure compliant object storage configuration. | string | false |
+| object_storage_s3_secret | The secret for S3 compliant object storage configuration. | string | false |
+| db_fields_encryption_secret | Secret where the Fernet symmetric encryption key is stored. | string | false |
+| ingress_type | The ingress type to use to reach the deployed instance | string | false |
 
 [Back to Custom Resources](#custom-resources)
 
