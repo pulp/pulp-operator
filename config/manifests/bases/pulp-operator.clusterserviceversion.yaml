@@ -290,6 +290,10 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - displayName: Redis deployment configuration
+        path: redis
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: The deployment strategy to use to replace existing pods with
           new ones.
         displayName: Strategy
@@ -299,6 +303,10 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: In-memory data store resource requirements
         path: redis.resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: In-memory data store resource requirements (Deprecated)
+        path: redis_resource_requirements
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
       - displayName: Redis image
