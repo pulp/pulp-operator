@@ -19,8 +19,7 @@ metadata:
 spec:
   replicas: 1
 {% if redis.strategy is defined %}
-  strategy:
-    type: {{ redis.strategy }}
+  strategy: {{ redis.strategy }}
 {% endif %}
   selector:
     matchLabels:

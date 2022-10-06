@@ -2,7 +2,8 @@
 _redis_image: redis:latest
 
 redis:
-  strategy: Recreate
+  strategy:
+    type: Recreate
   resource_requirements:
     requests:
       cpu: 200m

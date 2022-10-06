@@ -17,8 +17,7 @@ metadata:
 spec:
   replicas: {{ api.replicas }}
 {% if api.strategy is defined %}
-  strategy:
-    type: {{ api.strategy }}
+  strategy: {{ api.strategy }}
 {% endif %}
   selector:
     matchLabels:
