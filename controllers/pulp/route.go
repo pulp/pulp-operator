@@ -125,13 +125,13 @@ func (r *PulpReconciler) pulpRouteController(ctx context.Context, pulp *repomana
 
 		// Create the route in case it is not found
 		if err != nil && errors.IsNotFound(err) {
-			routePwd := pulpRouteObject(pulp, &plugin, routeHost)
-			ctrl.SetControllerReference(pulp, routePwd, r.Scheme)
-			log.Info("Creating a new route", "Route.Namespace", routePwd.Namespace, "Route.Name", routePwd.Name)
+			routeObj := pulpRouteObject(pulp, &plugin, routeHost)
+			ctrl.SetControllerReference(pulp, routeObj, r.Scheme)
+			log.Info("Creating a new route", "Route.Namespace", routeObj.Namespace, "Route.Name", routeObj.Name)
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Route-Ready", "CreatingRoute", "Creating "+pulp.Name+"-route")
-			err = r.Create(ctx, routePwd)
+			err = r.Create(ctx, routeObj)
 			if err != nil {
-				log.Error(err, "Failed to create new route", "Route.Namespace", routePwd.Namespace, "Route.Name", routePwd.Name)
+				log.Error(err, "Failed to create new route", "Route.Namespace", routeObj.Namespace, "Route.Name", routeObj.Name)
 				r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Route-Ready", "ErrorCreatingRoute", "Failed to create "+pulp.Name+"-route: "+err.Error())
 				r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new route")
 				return ctrl.Result{}, err
