@@ -18,7 +18,15 @@ metadata:
 spec:
   replicas: {{ worker.replicas }}
 {% if worker.strategy is defined %}
-  strategy: {{ worker.strategy }}
+  strategy:
+    type: {{ worker.strategy.type }}
+{% if worker.strategy.type == "Recreate" %}
+    rollingUpdate: null
+{% elif worker.strategy.type == "RollingUpdate" %}
+    rollingUpdate:
+      maxSurge:  {{ worker.strategy.rollingUpdate.maxSurge | default("25%")}}
+      maxUnavailable: {{ worker.strategy.rollingUpdate.maxUnavailable | default("25%")}}
+{% endif %}
 {% endif %}
   selector:
     matchLabels:

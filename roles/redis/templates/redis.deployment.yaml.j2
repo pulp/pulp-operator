@@ -19,7 +19,15 @@ metadata:
 spec:
   replicas: 1
 {% if redis.strategy is defined %}
-  strategy: {{ redis.strategy }}
+  strategy:
+    type: {{ redis.strategy.type }}
+{% if redis.strategy.type == "Recreate" %}
+    rollingUpdate: null
+{% elif redis.strategy.type == "RollingUpdate" %}
+    rollingUpdate:
+      maxSurge:  {{ redis.strategy.rollingUpdate.maxSurge | default("25%")}}
+      maxUnavailable: {{ redis.strategy.rollingUpdate.maxUnavailable | default("25%")}}
+{% endif %}
 {% endif %}
   selector:
     matchLabels:

@@ -19,7 +19,14 @@ spec:
   replicas: {{ resource_manager.replicas }}
 {% if resource_manager.strategy is defined %}
   strategy:
-    type: {{ resource_manager.strategy }}
+    type: {{ resource_manager.strategy.type }}
+{% if resource_manager.strategy.type == "Recreate" %}
+    rollingUpdate: null
+{% elif resource_manager.strategy.type == "RollingUpdate" %}
+    rollingUpdate:
+      maxSurge:  {{ resource_manager.strategy.rollingUpdate.maxSurge | default("25%")}}
+      maxUnavailable: {{ resource_manager.strategy.rollingUpdate.maxUnavailable | default("25%")}}
+{% endif %}
 {% endif %}
   selector:
     matchLabels:
