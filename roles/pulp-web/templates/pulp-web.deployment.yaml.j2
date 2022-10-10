@@ -17,7 +17,15 @@ metadata:
 spec:
   replicas: {{ web.replicas }}
 {% if web.strategy is defined %}
-  strategy: {{ web.strategy }}
+  strategy:
+    type: {{ web.strategy.type }}
+{% if web.strategy.type == "Recreate" %}
+    rollingUpdate: null
+{% elif web.strategy.type == "RollingUpdate" %}
+    rollingUpdate:
+      maxSurge:  {{ web.strategy.rollingUpdate.maxSurge | default("25%")}}
+      maxUnavailable: {{ web.strategy.rollingUpdate.maxUnavailable | default("25%")}}
+{% endif %}
 {% endif %}
   selector:
     matchLabels:
