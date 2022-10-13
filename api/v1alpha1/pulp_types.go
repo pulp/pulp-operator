@@ -98,6 +98,15 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:select:Route","urn:alm:descriptor:com.tectonic.ui:select:Ingress","urn:alm:descriptor:com.tectonic.ui:select:LoadBalancer","urn:alm:descriptor:com.tectonic.ui:select:NodePort"}
 	IngressType string `json:"ingress_type,omitempty"`
 
+	// Annotations for the Ingress
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
+	IngressAnnotations map[string]string `json:"ingress_annotations,omitempty"`
+
+	// Ingress DNS host
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
+	IngressHost string `json:"ingress_host,omitempty"`
+
 	// Route DNS host
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route"}
@@ -118,6 +127,36 @@ type PulpSpec struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	HAProxyTimeout string `json:"haproxy_timeout,omitempty"`
+
+	// The client max body size for Nginx Ingress
+	// +kubebuilder:default:="10m"
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
+	NginxMaxBodySize string `json:"nginx_client_max_body_size,omitempty"`
+
+	// The proxy body size for Nginx Ingress
+	// +kubebuilder:default:="0"
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
+	NginxProxyBodySize string `json:"nginx_proxy_body_size,omitempty"`
+
+	// The proxy read timeout for Nginx Ingress
+	// +kubebuilder:default:="120s"
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
+	NginxProxyReadTimeout string `json:"nginx_proxy_read_timeout,omitempty"`
+
+	// The proxy connect timeout for Nginx Ingress
+	// +kubebuilder:default:="120s"
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
+	NginxProxyConnectTimeout string `json:"nginx_proxy_connect_timeout,omitempty"`
+
+	// The proxy send timeout for Nginx Ingress
+	// +kubebuilder:default:="120s"
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
+	NginxProxySendTimeout string `json:"nginx_proxy_send_timeout,omitempty"`
 
 	// Secret where the container token certificates are stored.
 	// +kubebuilder:validation:Optional

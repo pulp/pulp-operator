@@ -123,8 +123,8 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 			Message:            pulp.Name + " operator tasks running",
 		})
 	}
-
-	if strings.ToLower(pulp.Spec.IngressType) != "route" && pulp.Spec.ImageVersion != pulp.Spec.ImageWebVersion {
+	needsPulpWeb := strings.ToLower(pulp.Spec.IngressType) != "route" && !controllers.IsNginxIngressSupported(r)
+	if needsPulpWeb && pulp.Spec.ImageVersion != pulp.Spec.ImageWebVersion {
 		err := fmt.Errorf("image version and image web version should be equal ")
 		log.Error(err, "ImageVersion should be equal to ImageWebVersion")
 		return ctrl.Result{}, err
@@ -226,6 +226,16 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	if strings.ToLower(pulp.Spec.IngressType) == "route" {
 		log.V(1).Info("Running route tasks")
 		pulpController, err = r.pulpRouteController(ctx, pulp, log)
+		if err != nil {
+			return pulpController, err
+		} else if pulpController.Requeue {
+			return pulpController, nil
+		} else if pulpController.RequeueAfter > 0 {
+			return pulpController, nil
+		}
+	} else if strings.ToLower(pulp.Spec.IngressType) == "ingress" {
+		log.V(1).Info("Running ingress tasks")
+		pulpController, err = r.pulpIngressController(ctx, pulp, log)
 		if err != nil {
 			return pulpController, err
 		} else if pulpController.Requeue {

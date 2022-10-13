@@ -4,15 +4,15 @@ go 1.18
 
 require (
 	github.com/go-logr/logr v1.2.3
-	github.com/onsi/ginkgo/v2 v2.1.4
-	github.com/onsi/gomega v1.19.0
+	github.com/onsi/ginkgo/v2 v2.1.6
+	github.com/onsi/gomega v1.20.1
 	github.com/openshift/api v0.0.0-20220825183227-75c111537c4d
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
 	golang.org/x/text v0.3.7
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.25.0
-	k8s.io/apimachinery v0.25.0
+	k8s.io/api v0.25.2
+	k8s.io/apimachinery v0.25.2
 	k8s.io/client-go v0.25.0
 	sigs.k8s.io/controller-runtime v0.12.3
 )

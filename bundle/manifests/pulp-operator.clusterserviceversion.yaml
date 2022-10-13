@@ -753,6 +753,18 @@ spec:
         path: image_web_version
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: Annotations for the Ingress
+        displayName: Ingress Annotations
+        path: ingress_annotations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
+      - description: Ingress DNS host
+        displayName: Ingress Host
+        path: ingress_host
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
       - description: The ingress type to use to reach the deployed instance
         displayName: Ingress Type
         path: ingress_type
@@ -767,6 +779,36 @@ spec:
         path: mount_trusted_ca
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: The client max body size for Nginx Ingress
+        displayName: Nginx Max Body Size
+        path: nginx_client_max_body_size
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
+      - description: The proxy body size for Nginx Ingress
+        displayName: Nginx Proxy Body Size
+        path: nginx_proxy_body_size
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
+      - description: The proxy connect timeout for Nginx Ingress
+        displayName: Nginx Proxy Connect Timeout
+        path: nginx_proxy_connect_timeout
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
+      - description: The proxy read timeout for Nginx Ingress
+        displayName: Nginx Proxy Read Timeout
+        path: nginx_proxy_read_timeout
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
+      - description: The proxy send timeout for Nginx Ingress
+        displayName: Nginx Proxy Send Timeout
+        path: nginx_proxy_send_timeout
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
       - description: Provide requested port value
         displayName: Node Port
         path: nodeport_port
@@ -1090,7 +1132,7 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.annotations['olm.targetNamespaces']
-                image: quay.io/rhn_support_hyagi/pulp-operator:v1.0.0-alpha
+                image: quay.io/pulp/pulp-operator:v1.0.0-alpha
                 livenessProbe:
                   httpGet:
                     path: /healthz

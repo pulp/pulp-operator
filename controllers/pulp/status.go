@@ -33,6 +33,7 @@ import (
 
 	"github.com/go-logr/logr"
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	"github.com/pulp/pulp-operator/controllers"
 )
 
 // pulpStatus will cheeck the READY state of the pods before considering the component status as ready
@@ -80,7 +81,8 @@ func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alph
 	}
 
 	// check web pods are READY
-	if strings.ToLower(pulp.Spec.IngressType) != "route" {
+	isNginxIngress := strings.ToLower(pulp.Spec.IngressType) == "ingress" && controllers.IsNginxIngressSupported(r)
+	if strings.ToLower(pulp.Spec.IngressType) != "route" && !isNginxIngress {
 		webConditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Web-Ready"
 		webDeployment := &appsv1.Deployment{}
 		if err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web", Namespace: pulp.Namespace}, webDeployment); err == nil {
@@ -116,8 +118,5 @@ func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alph
 // isDeploymentReady returns true if there is no unavailable Replicas for the deployment
 func isDeploymentReady(deployment *appsv1.Deployment) bool {
 
-	if deployment.Status.UnavailableReplicas > 0 {
-		return false
-	}
-	return true
+	return deployment.Status.UnavailableReplicas <= 0
 }

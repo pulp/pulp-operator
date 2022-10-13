@@ -907,6 +907,9 @@ func (r *PulpReconciler) pulpServerSecret(ctx context.Context, m *repomanagerv1a
 
 	// Handling user facing URLs
 	rootUrl := "http://" + m.Name + "-web-svc." + m.Namespace + ".svc.cluster.local:24880"
+	if strings.ToLower(m.Spec.IngressType) == "ingress" {
+		rootUrl = "https://" + m.Spec.IngressHost
+	}
 	if strings.ToLower(m.Spec.IngressType) == "route" {
 		if len(m.Spec.RouteHost) == 0 {
 			ingress := &configv1.Ingress{}

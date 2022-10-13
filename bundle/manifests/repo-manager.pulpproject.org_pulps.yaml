@@ -3218,6 +3218,14 @@ spec:
                 default: stable
                 description: The image version for the pulp webserver image.
                 type: string
+              ingress_annotations:
+                additionalProperties:
+                  type: string
+                description: Annotations for the Ingress
+                type: object
+              ingress_host:
+                description: Ingress DNS host
+                type: string
               ingress_type:
                 description: The ingress type to use to reach the deployed instance
                 enum:
@@ -3237,6 +3245,26 @@ spec:
                   custom CA certificates added to the cluster via cluster-wide proxy
                   config
                 type: boolean
+              nginx_client_max_body_size:
+                default: 10m
+                description: The client max body size for Nginx Ingress
+                type: string
+              nginx_proxy_body_size:
+                default: "0"
+                description: The proxy body size for Nginx Ingress
+                type: string
+              nginx_proxy_connect_timeout:
+                default: 120s
+                description: The proxy connect timeout for Nginx Ingress
+                type: string
+              nginx_proxy_read_timeout:
+                default: 120s
+                description: The proxy read timeout for Nginx Ingress
+                type: string
+              nginx_proxy_send_timeout:
+                default: 120s
+                description: The proxy send timeout for Nginx Ingress
+                type: string
               nodeport_port:
                 description: Provide requested port value
                 format: int32

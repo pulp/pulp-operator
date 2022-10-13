@@ -175,10 +175,17 @@ PulpSpec defines the desired state of Pulp
 | signing_scripts_configmap | ConfigMap where the signing scripts are stored. | string | false |
 | storage_type | Configuration for the storage type utilized in the backup | string | false |
 | ingress_type | The ingress type to use to reach the deployed instance | string | false |
+| ingress_annotations | Annotations for the Ingress | map[string]string | false |
+| ingress_host | Ingress DNS host | string | false |
 | route_host | Route DNS host | string | false |
 | route_labels | RouteLabels will append custom label(s) into routes (used by router shard routeSelector). | map[string]string | false |
 | nodeport_port | Provide requested port value | int32 | false |
 | haproxy_timeout | The timeout for HAProxy. | string | false |
+| nginx_client_max_body_size | The client max body size for Nginx Ingress | string | false |
+| nginx_proxy_body_size | The proxy body size for Nginx Ingress | string | false |
+| nginx_proxy_read_timeout | The proxy read timeout for Nginx Ingress | string | false |
+| nginx_proxy_connect_timeout | The proxy connect timeout for Nginx Ingress | string | false |
+| nginx_proxy_send_timeout | The proxy send timeout for Nginx Ingress | string | false |
 | container_token_secret | Secret where the container token certificates are stored. | string | false |
 | container_auth_public_key_name |  | string | false |
 | container_auth_private_key_name |  | string | false |
