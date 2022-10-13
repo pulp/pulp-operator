@@ -3,6 +3,7 @@ package pulp_restore
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
@@ -95,7 +96,8 @@ func (r *PulpRestoreReconciler) scaleDeployments(ctx context.Context, pulpRestor
 		pulp.Spec.Api.Replicas = 1
 		pulp.Spec.Content.Replicas = 1
 		pulp.Spec.Worker.Replicas = 1
-		if pulp.Spec.IngressType != "route" && pulp.Spec.IngressType != "Route" {
+		isNginxIngress := strings.ToLower(pulp.Spec.IngressType) == "ingress" && !controllers.IsNginxIngressSupported(r)
+		if strings.ToLower(pulp.Spec.IngressType) != "route" && !isNginxIngress {
 			pulp.Spec.Web.Replicas = 1
 		}
 	}

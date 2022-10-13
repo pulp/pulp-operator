@@ -40,6 +40,7 @@ nav:
       - Pod Placement: configuring/podPlacement.md
       - LogLevel: configuring/logLevel.md
       - Custom CA: configuring/customCA.md
+      - Reverse Proxy: configuring/reverse_proxy.md
       - Routes: configuring/routes.md
       - Pod Disruption Budget: configuring/pdb.md
   - Changelog: CHANGES.md

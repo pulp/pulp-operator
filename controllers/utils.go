@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"bytes"
+	"context"
 	"reflect"
 	"strings"
 	"time"
@@ -11,11 +12,13 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
+	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -181,6 +184,27 @@ func ContainerExec[T any](client T, pod *corev1.Pod, command []string, container
 	// But this is just a guess!!! We need to investigate it further.
 	time.Sleep(time.Second)
 	return result, nil
+}
+
+type PulpClient struct {
+	client.Client
+}
+
+// isNginxIngressSupported returns true if Nginx Ingress Controller is set
+func IsNginxIngressSupported[T any](resource T) bool {
+	// get the concrete value of client ({PulpBackup,PulpBackupReconciler,PulpRestoreReconciler})
+	clientConcrete := reflect.ValueOf(resource)
+	restClient := reflect.Indirect(clientConcrete).FieldByName("Client").Elem().Interface().(client.Client)
+	ctx := context.TODO()
+	ingressClassList := &netv1.IngressClassList{}
+	if err := restClient.List(ctx, ingressClassList); err == nil {
+		for _, ic := range ingressClassList.Items {
+			if ic.Spec.Controller == "k8s.io/ingress-nginx" {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // customZapLogger should be used only for warn messages
