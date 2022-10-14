@@ -195,6 +195,13 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 		return ctrl.Result{}, err
 	}
 
+	// update pulp CR with pulp-container-auth secret value
+	if len(pulp.Spec.ContainerTokenSecret) == 0 {
+		patch := client.MergeFrom(pulp.DeepCopy())
+		pulp.Spec.ContainerTokenSecret = pulp.Name + "-container-auth"
+		r.Patch(ctx, pulp, patch)
+	}
+
 	// Create pulp-api deployment
 	found := &appsv1.Deployment{}
 	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, found)
