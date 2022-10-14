@@ -64,7 +64,7 @@ func (r *PulpBackupReconciler) backupSecret(ctx context.Context, pulpBackup *rep
 	log.Info("Postgres configuration secret backup finished")
 
 	// FIELDS ENCRYPTION SECRET
-	err = r.createBackupFile(ctx, secretType{"db_fields_encryption_secret", pulpBackup, backupDir, "container_token_secret.yaml", pulpBackup.Spec.DeploymentName + "-db-fields-encryption", pod})
+	err = r.createBackupFile(ctx, secretType{"db_fields_encryption_secret", pulpBackup, backupDir, "db_fields_encryption_secret.yaml", pulpBackup.Spec.DeploymentName + "-db-fields-encryption", pod})
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func (r *PulpBackupReconciler) backupSecret(ctx context.Context, pulpBackup *rep
 	}
 
 	// CONTAINER TOKEN SECRET
-	err = r.createBackupFile(ctx, secretType{"container_token_secret", pulpBackup, backupDir, "db_fields_encryption_secret.yaml", pulpBackup.Spec.DeploymentName + "-container-auth", pod})
+	err = r.createBackupFile(ctx, secretType{"container_token_secret", pulpBackup, backupDir, "container_token_secret.yaml", pulpBackup.Spec.DeploymentName + "-container-auth", pod})
 	if err != nil {
 		return err
 	}
