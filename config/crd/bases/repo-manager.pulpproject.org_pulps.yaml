@@ -4700,6 +4700,9 @@ spec:
                   - type
                   type: object
                 type: array
+              container_token_secret:
+                description: Secret where the container token certificates are stored.
+                type: string
               db_fields_encryption_secret:
                 description: Secret where the Fernet symmetric encryption key is stored.
                 type: string

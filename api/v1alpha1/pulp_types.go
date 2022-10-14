@@ -675,6 +675,8 @@ type PulpStatus struct {
 	DBFieldsEncryptionSecret string `json:"db_fields_encryption_secret,omitempty"`
 	// The ingress type to use to reach the deployed instance
 	IngressType string `json:"ingress_type,omitempty"`
+	// Secret where the container token certificates are stored.
+	ContainerTokenSecret string `json:"container_token_secret,omitempty"`
 }
 
 // Pulp is the Schema for the pulps API

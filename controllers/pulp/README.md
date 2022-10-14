@@ -203,6 +203,7 @@ PulpStatus defines the observed state of Pulp
 | object_storage_s3_secret | The secret for S3 compliant object storage configuration. | string | false |
 | db_fields_encryption_secret | Secret where the Fernet symmetric encryption key is stored. | string | false |
 | ingress_type | The ingress type to use to reach the deployed instance | string | false |
+| container_token_secret | Secret where the container token certificates are stored. | string | false |
 
 [Back to Custom Resources](#custom-resources)
 

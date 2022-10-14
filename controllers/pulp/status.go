@@ -113,6 +113,11 @@ func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alph
 		log.Info(pulp.Spec.DeploymentType + " operator finished execution ...")
 	}
 
+	/*
+		[TODO] refactor the following conditionals to avoid repetitive code
+		.status fields that are used by reconcile logic
+	*/
+
 	// we will only set .status.deployment_type in the first execution (len==0)
 	if len(pulp.Status.DeploymentType) == 0 {
 		pulp.Status.DeploymentType = pulp.Spec.DeploymentType
@@ -149,6 +154,19 @@ func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alph
 	// this field can be modified (by other functions/methods) if .spec.ingress_type is modified
 	if len(pulp.Status.IngressType) == 0 {
 		pulp.Status.IngressType = pulp.Spec.IngressType
+		r.Status().Update(ctx, pulp)
+	}
+
+	// we will only set .status.container_token_secret in the first execution (len==0)
+	// and we'll set with the value from pulp.spec.container_token_secret if defined
+	if len(pulp.Status.ContainerTokenSecret) == 0 && len(pulp.Spec.ContainerTokenSecret) > 0 {
+		pulp.Status.ContainerTokenSecret = pulp.Spec.ContainerTokenSecret
+		r.Status().Update(ctx, pulp)
+
+		// if pulp.spec.container_token_secret is not defined we should set .status with the
+		// secret created by the operator
+	} else if len(pulp.Status.ContainerTokenSecret) == 0 && len(pulp.Spec.ContainerTokenSecret) == 0 {
+		pulp.Status.ContainerTokenSecret = pulp.Name + "-container-auth"
 		r.Status().Update(ctx, pulp)
 	}
 
