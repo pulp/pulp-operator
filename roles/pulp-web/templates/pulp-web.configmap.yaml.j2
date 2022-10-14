@@ -41,6 +41,7 @@ data:
         {% if route_tls_termination_mechanism | lower == 'passthrough' %}
         server {
             listen 8080 default_server;
+            listen [::]:8080 default_server;
             server_name _;
 
             proxy_read_timeout {{ nginx_proxy_read_timeout }};
