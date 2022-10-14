@@ -30,6 +30,12 @@ type postgresSecret struct {
 }
 
 type containerTokenSecret struct {
+	ContainerAuthPublicKey  string `json:"container_auth_public_key.pem"`
+	ContainerAuthPrivateKey string `json:"container_auth_private_key.pem"`
+	ContainerTokenSecret    string `json:"container_token_secret"`
+}
+
+type dbFieldsEncryptionSecret struct {
 	DatabaseFields           string `json:"database_fields.symmetric.key"`
 	DbFieldsEncryptionSecret string `json:"db_fields_encryption_secret"`
 }
@@ -93,9 +99,14 @@ func (r *PulpRestoreReconciler) restoreSecret(ctx context.Context, pulpRestore *
 		return err
 	}
 
+	// restore db fields encryption secret
+	if _, err := r.secret(ctx, resourceTypeContainerToken, "db_fields_encryption_secret", backupDir, "db_fields_encryption_secret.yaml", pod, pulpRestore); err != nil {
+		return err
+	}
+
 	// restore container token secret
 	// this secret is not mandatory. If the backup file is not found is not an error
-	if found, err := r.secret(ctx, resourceTypeContainerToken, "db_fields_encryption_secret", backupDir, "container_token_secret.yaml", pod, pulpRestore); found && err != nil {
+	if found, err := r.secret(ctx, resourceTypeContainerToken, "container_token_secret", backupDir, "container_token_secret.yaml", pod, pulpRestore); found && err != nil {
 		return err
 	}
 
@@ -160,7 +171,7 @@ func (r *PulpRestoreReconciler) secret(ctx context.Context, resourceType, secret
 			yaml.Unmarshal([]byte(cmdOutput), &secretType)
 			v = reflect.ValueOf(secretType)
 		case "db_fields_encryption_secret":
-			secretType := containerTokenSecret{}
+			secretType := dbFieldsEncryptionSecret{}
 			yaml.Unmarshal([]byte(cmdOutput), &secretType)
 			v = reflect.ValueOf(secretType)
 		case "storage_secret":
@@ -177,6 +188,10 @@ func (r *PulpRestoreReconciler) secret(ctx context.Context, resourceType, secret
 			v = reflect.ValueOf(secretType)
 		case "sso_secret":
 			secretType := ssoSecret{}
+			yaml.Unmarshal([]byte(cmdOutput), &secretType)
+			v = reflect.ValueOf(secretType)
+		case "container_token_secret":
+			secretType := containerTokenSecret{}
 			yaml.Unmarshal([]byte(cmdOutput), &secretType)
 			v = reflect.ValueOf(secretType)
 		}
