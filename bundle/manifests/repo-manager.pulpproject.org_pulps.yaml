@@ -3174,13 +3174,15 @@ spec:
                 description: Name of the deployment type.
                 type: string
               file_storage_access_mode:
-                description: The file storage access mode.
+                description: The file storage access mode. This field should be used
+                  only if file_storage_storage_class is provided
                 enum:
                 - ReadWriteMany
                 - ReadWriteOnce
                 type: string
               file_storage_size:
-                description: The size of the file storage; for example 100Gi.
+                description: The size of the file storage; for example 100Gi. This
+                  field should be used only if file_storage_storage_class is provided
                 type: string
               file_storage_storage_class:
                 description: Storage class to use for the file persistentVolumeClaim
@@ -4697,6 +4699,24 @@ spec:
                   - type
                   type: object
                 type: array
+              container_token_secret:
+                description: Secret where the container token certificates are stored.
+                type: string
+              db_fields_encryption_secret:
+                description: Secret where the Fernet symmetric encryption key is stored.
+                type: string
+              deployment_type:
+                description: Name of the deployment type.
+                type: string
+              ingress_type:
+                description: The ingress type to use to reach the deployed instance
+                type: string
+              object_storage_azure_secret:
+                description: The secret for Azure compliant object storage configuration.
+                type: string
+              object_storage_s3_secret:
+                description: The secret for S3 compliant object storage configuration.
+                type: string
             required:
             - conditions
             type: object
