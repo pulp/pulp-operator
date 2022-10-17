@@ -181,6 +181,22 @@ func (r *PulpReconciler) updateStatus(ctx context.Context, pulp *repomanagerv1al
 	r.Status().Update(ctx, pulp)
 }
 
+// updatCRField patches fieldName in Pulp CR with fieldValue
+func (r *PulpReconciler) updateCRField(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, fieldName, fieldValue string) error {
+	field := reflect.Indirect(reflect.ValueOf(&pulp.Spec)).FieldByName(fieldName)
+
+	// we will only set the field (with default values) if there is nothing defined yet
+	// this is to avoid overwriting user definition
+	if len(field.Interface().(string)) == 0 {
+		patch := client.MergeFrom(pulp.DeepCopy())
+		field.SetString(fieldValue)
+		if err := r.Patch(ctx, pulp, patch); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // createEmptyConfigMap creates an empty ConfigMap that is used by CNO (Cluster Network Operator) to
 // inject custom CA into containers
 func (r *PulpReconciler) createEmptyConfigMap(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {

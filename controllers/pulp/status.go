@@ -170,6 +170,18 @@ func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alph
 		r.Status().Update(ctx, pulp)
 	}
 
+	// we will only set .status.admin_password_secret in the first execution (len==0)
+	// and we'll set with the value from pulp.spec.admin_password_secret if defined
+	if len(pulp.Status.AdminPasswordSecret) == 0 && len(pulp.Spec.AdminPasswordSecret) > 0 {
+		pulp.Status.AdminPasswordSecret = pulp.Spec.AdminPasswordSecret
+		r.Status().Update(ctx, pulp)
+
+		// if pulp.spec.admin_password_secret is not defined we should set .status with the default value
+	} else if len(pulp.Status.AdminPasswordSecret) == 0 && len(pulp.Spec.AdminPasswordSecret) == 0 {
+		pulp.Status.AdminPasswordSecret = pulp.Name + "-admin-password"
+		r.Status().Update(ctx, pulp)
+	}
+
 	return ctrl.Result{}, nil
 }
 
