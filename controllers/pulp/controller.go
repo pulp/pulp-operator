@@ -315,6 +315,7 @@ func (r *PulpReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			Owns(&corev1.ConfigMap{}).
 			Owns(&policy.PodDisruptionBudget{}).
 			Owns(&routev1.Route{}).
+			Owns(&corev1.ServiceAccount{}).
 			Complete(r)
 	}
 
@@ -326,5 +327,6 @@ func (r *PulpReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.Secret{}).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&policy.PodDisruptionBudget{}).
+		Owns(&corev1.ServiceAccount{}).
 		Complete(r)
 }

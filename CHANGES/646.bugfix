@@ -1,2 +1,3 @@
 Set ContainerTokenSecret as immutable (the controller will reconcile with the same value if the field is modified).
 Set AdminPasswordSecret as immutable (the controller will reconcile with the same value if the field is modified).
+Added ImagePullSecrets reconciliation logic.

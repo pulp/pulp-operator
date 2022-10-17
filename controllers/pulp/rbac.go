@@ -18,6 +18,8 @@ package pulp
 
 import (
 	"context"
+	"reflect"
+	"regexp"
 
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 	"golang.org/x/text/cases"
@@ -52,6 +54,23 @@ func (r *PulpReconciler) CreateServiceAccount(ctx context.Context, pulp *repoman
 	} else if err != nil {
 		log.Error(err, "Failed to get "+pulp.Spec.DeploymentType+" SA")
 		return ctrl.Result{}, err
+	}
+
+	// add the internalRegistrySecret to the list of imagePullSecrets
+	internalRegistrySecret := r.getInternalRegistrySecret(ctx, pulp.Name, pulp.Namespace)
+	if internalRegistrySecret != "" {
+		expectedSA.ImagePullSecrets = append([]corev1.LocalObjectReference{{Name: internalRegistrySecret}}, expectedSA.ImagePullSecrets...)
+	}
+
+	// Check and reconcile pulp-sa imagePullSecrets
+	if !reflect.DeepEqual(sa.ImagePullSecrets, expectedSA.ImagePullSecrets) {
+		log.Info("The imagePullSecrets from SA has been modified! Reconciling ...")
+		err = r.Update(ctx, expectedSA)
+		if err != nil {
+			log.Error(err, "Error trying to update the imagePullSecrets from SA object ... ")
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{Requeue: true}, nil
 	}
 
 	return r.CreateRole(ctx, pulp)
@@ -111,10 +130,12 @@ func (r *PulpReconciler) CreateRoleBinding(ctx context.Context, pulp *repomanage
 
 func (r *PulpReconciler) pulpSA(m *repomanagerv1alpha1.Pulp) *corev1.ServiceAccount {
 	var imagePullSecrets []corev1.LocalObjectReference
+
 	for _, pullSecret := range m.Spec.ImagePullSecrets {
 		imagePullSecrets = append(imagePullSecrets, corev1.LocalObjectReference{Name: pullSecret})
 	}
-	return &corev1.ServiceAccount{
+
+	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name,
 			Namespace: m.Namespace,
@@ -125,6 +146,25 @@ func (r *PulpReconciler) pulpSA(m *repomanagerv1alpha1.Pulp) *corev1.ServiceAcco
 		},
 		ImagePullSecrets: imagePullSecrets,
 	}
+
+	// Set Pulp instance as the owner and controller
+	ctrl.SetControllerReference(m, sa, r.Scheme)
+	return sa
+}
+
+// getInternalRegistrySecret gets the imagePullSecret for the internal registry that is created
+// and added to the SA in OCP environments based on pattern:
+//  <operator_instance_name>-dockercfg-<hash>
+func (r *PulpReconciler) getInternalRegistrySecret(ctx context.Context, saName, saNamespace string) string {
+	sa := &corev1.ServiceAccount{}
+	r.Get(ctx, types.NamespacedName{Name: saName, Namespace: saNamespace}, sa)
+	for _, imagePullSecret := range sa.ImagePullSecrets {
+		if match, _ := regexp.MatchString(saName+"-dockercfg-([a-z0-9]){5}", imagePullSecret.Name); match {
+			return imagePullSecret.Name
+		}
+	}
+
+	return ""
 }
 
 func (r *PulpReconciler) pulpRole(m *repomanagerv1alpha1.Pulp) *rbacv1.Role {
