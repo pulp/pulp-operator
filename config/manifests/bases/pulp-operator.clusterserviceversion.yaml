@@ -635,13 +635,15 @@ spec:
         path: deployment_type
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - description: The file storage access mode.
+      - description: The file storage access mode. This field should be used only
+          if file_storage_storage_class is provided
         displayName: File Storage Access Mode
         path: file_storage_access_mode
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File
         - urn:alm:descriptor:com.tectonic.ui:select:ReadWriteMany
-      - description: The size of the file storage; for example 100Gi.
+      - description: The size of the file storage; for example 100Gi. This field should
+          be used only if file_storage_storage_class is provided
         displayName: File Storage Size
         path: file_storage_size
         x-descriptors:
