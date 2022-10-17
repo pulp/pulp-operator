@@ -5,4 +5,4 @@
 
 A pulp plugin may have [webserver snippets](https://docs.pulpproject.org/pulpcore/plugins/plugin-writer/concepts/index.html#configuring-reverse-proxy-with-custom-urls) to route custom URLs.
 
-The operator convert these snippets into paths on [routes](/pulp_operator/configuring/routes/) and NGINX Ingress Controllers, for other contollers, we provide the web service with the [web image](/pulp_operator/container/#pulp-web).
+The operator convert these snippets into paths on [routes](https://docs.pulpproject.org/pulp_operator/configuring/routes/) and NGINX Ingress Controllers, for other contollers, we provide the web service with the [web image](https://docs.pulpproject.org/pulp_operator/container/#pulp-web).

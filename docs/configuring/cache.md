@@ -7,7 +7,7 @@ Pulp operator provides a single node Redis server for Pulp to use, but it is als
 
 ## Configuring Pulp operator to deploy a Redis instance
 
-[Pulp CR page](/pulp_operator/pulp/#cache) has all the parameters that can be set to inform Pulp operator how it should deploy the Redis container.
+[Pulp CR page](https://docs.pulpproject.org/pulp_operator/pulp/#cache) has all the parameters that can be set to inform Pulp operator how it should deploy the Redis container.
 
 If no `cache` parameter is defined, Pulp operator will deploy Redis with the following configuration:
 

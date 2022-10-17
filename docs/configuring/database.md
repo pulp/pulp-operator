@@ -5,7 +5,7 @@ Pulp operator provides a PostgreSQL database for Pulp to use, but it is also pos
 
 ## Configuring Pulp operator to deploy a PostgreSQL instance
 
-[Pulp CR page](/pulp_operator/pulp/#database) has all the parameters that can be set to inform Pulp operator how it should deploy the PostgreSQL container.
+[Pulp CR page](https://docs.pulpproject.org/pulp_operator/pulp/#database) has all the parameters that can be set to inform Pulp operator how it should deploy the PostgreSQL container.
 
 If no `database` parameter is defined, Pulp operator will deploy PostgreSQL with the following configuration:
 

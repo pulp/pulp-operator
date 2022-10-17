@@ -36,7 +36,7 @@ If the Kubernetes cluster has no Storage Class configured, it is possible to con
 
 
 !!! note
-    If the Storage Class defined will provision RWO volumes, it is recommended to also set the [`Deployment strategy`](/pulp_operator/pulp/) in Pulp CR as [`Recreate`](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#recreate-deployment) to avoid the [`Multi-Attach`](/pulp_operator/faq/#how-can-i-fix-the-multi-attach-error-for-volume-my-volume-volume-is-already-used-by-pods-my-pod) volume error.
+    If the Storage Class defined will provision RWO volumes, it is recommended to also set the [`Deployment strategy`](https://docs.pulpproject.org/pulp_operator/pulp/) in Pulp CR as [`Recreate`](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#recreate-deployment) to avoid the [`Multi-Attach`](https://docs.pulpproject.org/pulp_operator/faq/#how-can-i-fix-the-multi-attach-error-for-volume-my-volume-volume-is-already-used-by-pods-my-pod) volume error.
 
 
 ## Configuring Pulp Operator storage to use a Persistent Volume Claim
@@ -58,13 +58,13 @@ If the installation namespace has no Persistent Volume Claim available, it is po
 
 
 !!! note
-    If the Persistent Volume Claim defined is bound to a RWO volume, it is recommended to also set the [`Deployment strategy`](/pulp_operator/pulp/) in Pulp CR as [`Recreate`](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#recreate-deployment) to avoid the [`Multi-Attach`](/pulp_operator/faq/#how-can-i-fix-the-multi-attach-error-for-volume-my-volume-volume-is-already-used-by-pods-my-pod) volume error.
+    If the Persistent Volume Claim defined is bound to a RWO volume, it is recommended to also set the [`Deployment strategy`](https://docs.pulpproject.org/pulp_operator/pulp/) in Pulp CR as [`Recreate`](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#recreate-deployment) to avoid the [`Multi-Attach`](https://docs.pulpproject.org/pulp_operator/faq/#how-can-i-fix-the-multi-attach-error-for-volume-my-volume-volume-is-already-used-by-pods-my-pod) volume error.
 
 ## Configuring Pulp Operator to use object storage
 
 Pulp operator has the following parameters to configure Pulp core components with Object Storage:
 
-* `ObjectStorageAzureSecret` - defines the name of the secret with Azure compliant object storage configuration. 
+* `ObjectStorageAzureSecret` - defines the name of the secret with Azure compliant object storage configuration.
 * `ObjectStorageS3Secret` - defines the name of the secret with S3 compliant object storage configuration.
 
 When Pulp operator is configured with one of the above parameters it is expected that the secrets are already present in the namespace of Pulp installation.
