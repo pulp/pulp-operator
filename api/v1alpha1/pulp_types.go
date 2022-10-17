@@ -677,6 +677,8 @@ type PulpStatus struct {
 	IngressType string `json:"ingress_type,omitempty"`
 	// Secret where the container token certificates are stored.
 	ContainerTokenSecret string `json:"container_token_secret,omitempty"`
+	// Secret where the administrator password can be found
+	AdminPasswordSecret string `json:"admin_password_secret,omitempty"`
 }
 
 // Pulp is the Schema for the pulps API

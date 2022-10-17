@@ -145,7 +145,7 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	// Checking immutable fields update
 	immutableFields := []string{
 		"DeploymentType", "ObjectStorageAzureSecret", "ObjectStorageS3Secret", "DBFieldsEncryptionSecret",
-		"ContainerTokenSecret",
+		"ContainerTokenSecret", "AdminPasswordSecret",
 	}
 	for _, field := range immutableFields {
 		// if tried to modify an immutable field we should trigger a reconcile loop

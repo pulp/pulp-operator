@@ -4632,6 +4632,9 @@ spec:
           status:
             description: PulpStatus defines the observed state of Pulp
             properties:
+              admin_password_secret:
+                description: Secret where the administrator password can be found
+                type: string
               conditions:
                 items:
                   description: "Condition contains details for one aspect of the current

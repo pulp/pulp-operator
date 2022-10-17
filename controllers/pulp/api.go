@@ -169,6 +169,11 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 		return ctrl.Result{}, err
 	}
 
+	// update pulp CR admin-password secret with default name
+	if err := r.updateCRField(ctx, pulp, "AdminPasswordSecret", pulp.Name+"-admin-password"); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	// Create pulp-container-auth secret
 	containerAuth := &corev1.Secret{}
 	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-container-auth", Namespace: pulp.Namespace}, containerAuth)

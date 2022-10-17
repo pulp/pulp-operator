@@ -204,6 +204,7 @@ PulpStatus defines the observed state of Pulp
 | db_fields_encryption_secret | Secret where the Fernet symmetric encryption key is stored. | string | false |
 | ingress_type | The ingress type to use to reach the deployed instance | string | false |
 | container_token_secret | Secret where the container token certificates are stored. | string | false |
+| admin_password_secret | Secret where the administrator password can be found | string | false |
 
 [Back to Custom Resources](#custom-resources)
 
