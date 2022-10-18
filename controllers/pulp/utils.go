@@ -458,12 +458,16 @@ func deploymentModified(expectedState, currentState *appsv1.Deployment) bool {
 	//   in case of TrustedCA being true and eventually modified to false (the trusted-ca cm will not get unmounted).
 	// * we are checking the .[]Containers.[]Volumemounts instead of []Volumes because reflect.DeepEqual(dep.Volumes,found.Volumes)
 	//   identifies VolumeSource.EmptyDir being diff (not sure why).
-	// * we are checking NodeSelector through Semantic.DeepEqual(expectedState.NodeSelector,currentState.NodeSelector) because the
-	//   DeepDerivative(expectedState.Spec, currentState.Spec) only checks if labels defined in expectedState are in currentState, but not
-	//   if what is in the currentState is also in expectedState and we are not using reflect.DeepEqual because it will consider [] != nil
+	// * for NodeSelector, Tolerations, TopologySpreadConstraints, ResourceRequirements
+	//     we are checking through Semantic.DeepEqual(expectedState.NodeSelector,currentState.NodeSelector) because the
+	//     DeepDerivative(expectedState.Spec, currentState.Spec) only checks if {labels,tolerations,constraints} defined in expectedState are in currentState, but not
+	//     if what is in the currentState is also in expectedState and we are not using reflect.DeepEqual because it will consider [] != nil
 	if !equality.Semantic.DeepDerivative(expectedState.Spec, currentState.Spec) ||
 		!reflect.DeepEqual(expectedState.Spec.Template.Spec.Containers[0].VolumeMounts, currentState.Spec.Template.Spec.Containers[0].VolumeMounts) ||
-		!equality.Semantic.DeepEqual(expectedState.Spec.Template.Spec.NodeSelector, currentState.Spec.Template.Spec.NodeSelector) {
+		!equality.Semantic.DeepEqual(expectedState.Spec.Template.Spec.NodeSelector, currentState.Spec.Template.Spec.NodeSelector) ||
+		!equality.Semantic.DeepEqual(expectedState.Spec.Template.Spec.Tolerations, currentState.Spec.Template.Spec.Tolerations) ||
+		!equality.Semantic.DeepEqual(expectedState.Spec.Template.Spec.TopologySpreadConstraints, currentState.Spec.Template.Spec.TopologySpreadConstraints) ||
+		!equality.Semantic.DeepEqual(expectedState.Spec.Template.Spec.Containers[0].Resources, currentState.Spec.Template.Spec.Containers[0].Resources) {
 		return true
 	}
 	return false
