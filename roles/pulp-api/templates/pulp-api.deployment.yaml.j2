@@ -143,7 +143,7 @@ spec:
               containerPort: 24817
           livenessProbe:
             httpGet:
-              path: "{{ pulp_combined_settings.api_root }}api/v3/status/"
+              path: "/pulp/api/v3/status/"
               port: 24817
               scheme: HTTP
             failureThreshold: 5
@@ -154,7 +154,7 @@ spec:
             exec:
               command:
                 - /usr/bin/readyz.py
-                - "{{ pulp_combined_settings.api_root }}api/v3/status/"
+                - "/pulp/api/v3/status/"
             failureThreshold: 10
             initialDelaySeconds: 30
             periodSeconds: 10
