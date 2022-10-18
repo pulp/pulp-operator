@@ -2,7 +2,7 @@ CR_KIND ?= Pulp
 LOWER_CR_KIND = $(shell echo $(CR_KIND) | tr A-Z a-z)
 CR_PLURAL ?= pulps
 CR_DOMAIN ?= pulpproject.org
-APP_IMAGE ?= quay.io/pulp/pulp
+APP_IMAGE ?= quay.io/pulp/pulp-minimal
 WEB_IMAGE ?= quay.io/pulp/pulp-web
 
 # VERSION defines the project version for the bundle.

@@ -174,7 +174,7 @@ type PulpSpec struct {
 
 	// The image name (repo name) for the pulp image.
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:default:="quay.io/pulp/pulp"
+	// +kubebuilder:default:="quay.io/pulp/pulp-minimal"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	Image string `json:"image,omitempty"`
 

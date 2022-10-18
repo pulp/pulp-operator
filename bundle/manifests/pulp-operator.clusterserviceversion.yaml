@@ -80,8 +80,8 @@ metadata:
             "file_storage_access_mode": "ReadWriteOnce",
             "file_storage_size": "2Gi",
             "file_storage_storage_class": "standard",
-            "image_version": "latest",
-            "image_web_version": "latest",
+            "image_version": "nightly",
+            "image_web_version": "nightly",
             "ingress_type": "nodeport",
             "pulp_settings": {
               "allowed_export_paths": [
@@ -132,10 +132,10 @@ metadata:
             "file_storage_access_mode": "ReadWriteMany",
             "file_storage_size": "10Gi",
             "file_storage_storage_class": "standard",
-            "image": "quay.io/pulp/galaxy",
-            "image_version": "latest",
+            "image": "quay.io/pulp/galaxy-minimal",
+            "image_version": "nightly",
             "image_web": "quay.io/pulp/galaxy-web",
-            "image_web_version": "latest",
+            "image_web_version": "nightly",
             "ingress_type": "nodeport",
             "pulp_settings": {
               "allowed_export_paths": [
@@ -1126,7 +1126,7 @@ spec:
                 - /manager
                 env:
                 - name: RELATED_IMAGE_PULP
-                  value: quay.io/pulp/pulp:stable
+                  value: quay.io/pulp/pulp-minimal:stable
                 - name: RELATED_IMAGE_PULP_WEB
                   value: quay.io/pulp/pulp-web:stable
                 - name: RELATED_IMAGE_PULP_REDIS
@@ -1429,7 +1429,7 @@ spec:
     name: Pulp Community
     url: https://github.com/pulp/pulp-operator
   relatedImages:
-  - image: quay.io/pulp/pulp:stable
+  - image: quay.io/pulp/pulp-minimal:stable
     name: pulp
   - image: quay.io/pulp/pulp-web:stable
     name: pulp-web

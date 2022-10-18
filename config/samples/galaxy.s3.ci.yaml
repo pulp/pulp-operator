@@ -4,10 +4,10 @@ metadata:
   name: galaxy-example
 spec:
   deployment_type: galaxy
-  image: quay.io/pulp/galaxy
-  image_version: latest
+  image: quay.io/pulp/galaxy-minimal
+  image_version: nightly
   image_web: quay.io/pulp/galaxy-web
-  image_web_version: latest
+  image_web_version: nightly
   admin_password_secret: "example-pulp-admin-password"
   signing_secret: "signing-galaxy"
   signing_scripts_configmap: "signing-scripts"
