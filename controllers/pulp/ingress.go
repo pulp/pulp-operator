@@ -118,7 +118,7 @@ func (r *PulpReconciler) pulpIngressController(ctx context.Context, pulp *repoma
 
 	// Create the ingress in case it is not found
 	if err != nil && errors.IsNotFound(err) {
-		ingressObj := r.pulpIngressObject(pulp, pulpPlugins)
+		ingressObj := r.pulpIngressObject(ctx, pulp, pulpPlugins)
 		ctrl.SetControllerReference(pulp, ingressObj, r.Scheme)
 		log.Info("Creating a new ingress", "Ingress.Namespace", ingressObj.Namespace, "Ingress.Name", ingressObj.Name)
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Ingress-Ready", "CreatingIngress", "Creating "+pulp.Name+"-ingress")
@@ -143,7 +143,19 @@ func (r *PulpReconciler) pulpIngressController(ctx context.Context, pulp *repoma
 }
 
 // pulp-ingress
-func (r *PulpReconciler) pulpIngressObject(m *repomanagerv1alpha1.Pulp, plugins []IngressPlugin) *netv1.Ingress {
+func (r *PulpReconciler) pulpIngressObject(ctx context.Context, m *repomanagerv1alpha1.Pulp, plugins []IngressPlugin) *netv1.Ingress {
+	IsNginxIngressSupported := false
+	ingressClassList := &netv1.IngressClassList{}
+	ingressClassName := ""
+	if err := r.List(ctx, ingressClassList); err == nil {
+		for _, ic := range ingressClassList.Items {
+			ingressClassName = ic.Name
+			if ic.Spec.Controller == "k8s.io/ingress-nginx" {
+				IsNginxIngressSupported = true
+				break
+			}
+		}
+	}
 	annotation := map[string]string{
 		"haproxy.router.openshift.io/timeout": m.Spec.HAProxyTimeout,
 	}
@@ -151,7 +163,7 @@ func (r *PulpReconciler) pulpIngressObject(m *repomanagerv1alpha1.Pulp, plugins 
 	var path netv1.HTTPIngressPath
 	pathType := netv1.PathTypePrefix
 	rewrite := ""
-	if controllers.IsNginxIngressSupported(r) {
+	if IsNginxIngressSupported {
 		annotation["nginx.ingress.kubernetes.io/proxy-body-size"] = m.Spec.NginxProxyBodySize
 		annotation["nginx.org/client-max-body-size"] = m.Spec.NginxMaxBodySize
 		annotation["nginx.ingress.kubernetes.io/proxy-read-timeout"] = m.Spec.NginxProxyReadTimeout
@@ -198,24 +210,36 @@ func (r *PulpReconciler) pulpIngressObject(m *repomanagerv1alpha1.Pulp, plugins 
 	for key, val := range m.Spec.IngressAnnotations {
 		annotation[key] = val
 	}
-	return &netv1.Ingress{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        m.Name,
-			Namespace:   m.Namespace,
-			Annotations: annotation,
-		},
-		Spec: netv1.IngressSpec{
-			Rules: []netv1.IngressRule{
-				{
-					Host: m.Spec.IngressHost,
-					IngressRuleValue: netv1.IngressRuleValue{
-						HTTP: &netv1.HTTPIngressRuleValue{
-							Paths: paths,
-						},
+	ingressSpec := netv1.IngressSpec{
+		Rules: []netv1.IngressRule{
+			{
+				Host: m.Spec.IngressHost,
+				IngressRuleValue: netv1.IngressRuleValue{
+					HTTP: &netv1.HTTPIngressRuleValue{
+						Paths: paths,
 					},
 				},
 			},
 		},
+	}
+	if len(ingressClassName) > 0 {
+		ingressSpec.IngressClassName = &ingressClassName
+	}
+	labels := map[string]string{
+		"app.kubernetes.io/name":       "ingress",
+		"app.kubernetes.io/instance":   "ingress-" + m.Name,
+		"app.kubernetes.io/component":  "ingress",
+		"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
+		"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
+	}
+	return &netv1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        m.Name,
+			Namespace:   m.Namespace,
+			Labels:      labels,
+			Annotations: annotation,
+		},
+		Spec: ingressSpec,
 	}
 }
 
