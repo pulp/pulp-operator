@@ -19,6 +19,7 @@ package pulp
 import (
 	"context"
 	"os"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -67,7 +68,8 @@ func (r *PulpReconciler) pulpContentController(ctx context.Context, pulp *repoma
 	}
 
 	// Reconcile Deployment
-	if !equality.Semantic.DeepDerivative(newCntDeployment.Spec, cntDeployment.Spec) {
+	if !equality.Semantic.DeepDerivative(newCntDeployment.Spec, cntDeployment.Spec) ||
+		!reflect.DeepEqual(newCntDeployment.Spec.Template.Spec.Containers[0].VolumeMounts, cntDeployment.Spec.Template.Spec.Containers[0].VolumeMounts) {
 		log.Info("The Content Deployment has been modified! Reconciling ...")
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingContentDeployment", "Reconciling "+pulp.Name+"-content deployment resource")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling content deployment")

@@ -19,6 +19,7 @@ package pulp
 import (
 	"context"
 	"os"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -67,7 +68,8 @@ func (r *PulpReconciler) pulpWorkerController(ctx context.Context, pulp *repoman
 	}
 
 	// Reconcile Deployment
-	if !equality.Semantic.DeepDerivative(newWorkerDeployment.Spec, workerDeployment.Spec) {
+	if !equality.Semantic.DeepDerivative(newWorkerDeployment.Spec, workerDeployment.Spec) ||
+		!reflect.DeepEqual(newWorkerDeployment.Spec.Template.Spec.Containers[0].VolumeMounts, workerDeployment.Spec.Template.Spec.Containers[0].VolumeMounts) {
 		log.Info("The Worker Deployment has been modified! Reconciling ...")
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingWorkerDeployment", "Reconciling "+pulp.Name+"-worker deployment resource")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling Worker Deployment")
