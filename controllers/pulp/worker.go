@@ -19,7 +19,6 @@ package pulp
 import (
 	"context"
 	"os"
-	"reflect"
 	"strconv"
 	"time"
 
@@ -27,7 +26,6 @@ import (
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,8 +66,7 @@ func (r *PulpReconciler) pulpWorkerController(ctx context.Context, pulp *repoman
 	}
 
 	// Reconcile Deployment
-	if !equality.Semantic.DeepDerivative(newWorkerDeployment.Spec, workerDeployment.Spec) ||
-		!reflect.DeepEqual(newWorkerDeployment.Spec.Template.Spec.Containers[0].VolumeMounts, workerDeployment.Spec.Template.Spec.Containers[0].VolumeMounts) {
+	if deploymentModified(newWorkerDeployment, workerDeployment) {
 		log.Info("The Worker Deployment has been modified! Reconciling ...")
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingWorkerDeployment", "Reconciling "+pulp.Name+"-worker deployment resource")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling Worker Deployment")
