@@ -3,3 +3,6 @@ Set AdminPasswordSecret as immutable (the controller will reconcile with the sam
 Added ImagePullSecrets reconciliation logic.
 Fixed TrustedCa volumeMount reconciliation logic.
 Fixed NodeSelector reconciliation logic.
+Fixed Tolerations reconciliation logic.
+Fixed TopologySpreadConstraints reconciliation logic.
+Fixed ResourceRequirements removal logic.
