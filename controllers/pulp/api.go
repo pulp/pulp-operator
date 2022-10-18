@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -233,15 +232,8 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 		return ctrl.Result{}, err
 	}
 
-	// Ensure the deployment template spec is as expected
-	// https://github.com/kubernetes-sigs/kubebuilder/issues/592
-	// * we are checking the []VolumeMounts because DeepDerivative will only make sure that
-	//   what is in the expected definition is found in the current running deployment, which can have a gap
-	//   in case of TrustedCA being true and eventually modified to false (the trusted-ca cm will not get unmounted).
-	// * we are checking the .[]Containers.[]Volumemounts instead of []Volumes because reflect.DeepEqual(dep.Volumes,found.Volumes)
-	//   identifies VolumeSource.EmptyDir being diff (not sure why).
-	if !equality.Semantic.DeepDerivative(dep.Spec, found.Spec) ||
-		!reflect.DeepEqual(dep.Spec.Template.Spec.Containers[0].VolumeMounts, found.Spec.Template.Spec.Containers[0].VolumeMounts) {
+	// Ensure the deployment spec is as expected
+	if deploymentModified(dep, found) {
 		log.Info("The API deployment has been modified! Reconciling ...")
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingApiDeployment", "Reconciling "+pulp.Name+"-api deployment")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling API deployment")

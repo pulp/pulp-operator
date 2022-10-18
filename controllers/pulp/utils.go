@@ -446,3 +446,25 @@ func (r *PulpReconciler) reconcileMetadata(ctx context.Context, pulp *repomanage
 
 	return nil
 }
+
+// deploymentModified returns true if a spec from deployment is not
+// with the expected contents defined in Pulp CR
+func deploymentModified(expectedState, currentState *appsv1.Deployment) bool {
+
+	// Ensure the deployment template spec is as expected
+	// https://github.com/kubernetes-sigs/kubebuilder/issues/592
+	// * we are checking the []VolumeMounts because DeepDerivative will only make sure that
+	//   what is in the expected definition is found in the current running deployment, which can have a gap
+	//   in case of TrustedCA being true and eventually modified to false (the trusted-ca cm will not get unmounted).
+	// * we are checking the .[]Containers.[]Volumemounts instead of []Volumes because reflect.DeepEqual(dep.Volumes,found.Volumes)
+	//   identifies VolumeSource.EmptyDir being diff (not sure why).
+	// * we are checking NodeSelector through Semantic.DeepEqual(expectedState.NodeSelector,currentState.NodeSelector) because the
+	//   DeepDerivative(expectedState.Spec, currentState.Spec) only checks if labels defined in expectedState are in currentState, but not
+	//   if what is in the currentState is also in expectedState and we are not using reflect.DeepEqual because it will consider [] != nil
+	if !equality.Semantic.DeepDerivative(expectedState.Spec, currentState.Spec) ||
+		!reflect.DeepEqual(expectedState.Spec.Template.Spec.Containers[0].VolumeMounts, currentState.Spec.Template.Spec.Containers[0].VolumeMounts) ||
+		!equality.Semantic.DeepEqual(expectedState.Spec.Template.Spec.NodeSelector, currentState.Spec.Template.Spec.NodeSelector) {
+		return true
+	}
+	return false
+}

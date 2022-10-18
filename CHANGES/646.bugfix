@@ -2,3 +2,4 @@ Set ContainerTokenSecret as immutable (the controller will reconcile with the sa
 Set AdminPasswordSecret as immutable (the controller will reconcile with the same value if the field is modified).
 Added ImagePullSecrets reconciliation logic.
 Fixed TrustedCa volumeMount reconciliation logic.
+Fixed NodeSelector reconciliation logic.
