@@ -810,7 +810,7 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 	if len(m.Spec.Image) > 0 && len(m.Spec.ImageVersion) > 0 {
 		Image = m.Spec.Image + ":" + m.Spec.ImageVersion
 	} else if Image == "" {
-		Image = "quay.io/pulp/pulp:stable"
+		Image = "quay.io/pulp/pulp-minimal:stable"
 	}
 
 	// deployment definition

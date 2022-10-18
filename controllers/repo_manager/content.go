@@ -487,7 +487,7 @@ func (r *RepoManagerReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.
 	if len(m.Spec.Image) > 0 && len(m.Spec.ImageVersion) > 0 {
 		Image = m.Spec.Image + ":" + m.Spec.ImageVersion
 	} else if Image == "" {
-		Image = "quay.io/pulp/pulp:stable"
+		Image = "quay.io/pulp/pulp-minimal:stable"
 	}
 
 	readinessProbe := m.Spec.Content.ReadinessProbe

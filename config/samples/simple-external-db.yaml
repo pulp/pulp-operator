@@ -4,8 +4,8 @@ metadata:
   name: pulp
 spec:
   deployment_type: pulp
-  image_version: latest
-  image_web_version: latest
+  image_version: nightly
+  image_web_version: nightly
   api:
     replicas: 1
   content:

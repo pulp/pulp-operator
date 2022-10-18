@@ -554,7 +554,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 					Volumes:            volumesApi,
 					Containers: []corev1.Container{{
 						Name:  "api",
-						Image: "quay.io/pulp/pulp:latest",
+						Image: "quay.io/pulp/pulp-minimal:latest",
 						Args:  []string{"pulp-api"},
 						Env:   envVarsApi,
 						Ports: []corev1.ContainerPort{{

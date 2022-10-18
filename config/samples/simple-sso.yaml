@@ -5,8 +5,8 @@ metadata:
 spec:
   deployment_type: pulp
   cache_enabled: true
-  image_version: latest
-  image_web_version: latest
+  image_version: nightly
+  image_web_version: nightly
 #  affinity:
 #    nodeAffinity:
 #      requiredDuringSchedulingIgnoredDuringExecution:

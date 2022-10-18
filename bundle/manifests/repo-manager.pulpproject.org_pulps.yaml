@@ -5785,7 +5785,7 @@ spec:
                 description: The timeout for HAProxy.
                 type: string
               image:
-                default: quay.io/pulp/pulp
+                default: quay.io/pulp/pulp-minimal
                 description: The image name (repo name) for the pulp image.
                 type: string
               image_pull_policy:
