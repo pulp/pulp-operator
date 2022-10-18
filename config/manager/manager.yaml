@@ -62,10 +62,9 @@ spec:
                 fieldPath: metadata.namespace
         securityContext:
           allowPrivilegeEscalation: false
-        # TODO(user): uncomment for common cases that do not require escalating privileges
-        # capabilities:
-        #   drop:
-        #     - "ALL"
+        capabilities:
+          drop:
+            - "ALL"
         livenessProbe:
           httpGet:
             path: /healthz
