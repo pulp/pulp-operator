@@ -25,6 +25,7 @@ import (
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	netv1 "k8s.io/api/networking/v1"
 	policy "k8s.io/api/policy/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
@@ -249,6 +250,16 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 			} else if pulpController.RequeueAfter > 0 {
 				return pulpController, nil
 			}
+		} else if strings.ToLower(pulp.Spec.IngressType) == "ingress" {
+			log.V(1).Info("Running ingress tasks")
+			pulpController, err = r.pulpIngressController(ctx, pulp, log)
+			if err != nil {
+				return pulpController, err
+			} else if pulpController.Requeue {
+				return pulpController, nil
+			} else if pulpController.RequeueAfter > 0 {
+				return pulpController, nil
+			}
 		} else {
 			log.V(1).Info("Running web tasks")
 			pulpController, err = r.pulpWebController(ctx, pulp, log)
@@ -259,16 +270,6 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 			} else if pulpController.RequeueAfter > 0 {
 				return pulpController, nil
 			}
-		}
-	} else if strings.ToLower(pulp.Spec.IngressType) == "ingress" {
-		log.V(1).Info("Running ingress tasks")
-		pulpController, err = r.pulpIngressController(ctx, pulp, log)
-		if err != nil {
-			return pulpController, err
-		} else if pulpController.Requeue {
-			return pulpController, nil
-		} else if pulpController.RequeueAfter > 0 {
-			return pulpController, nil
 		}
 	} else {
 		r.updateIngressType(ctx, pulp)
@@ -316,6 +317,7 @@ func (r *PulpReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			Owns(&policy.PodDisruptionBudget{}).
 			Owns(&routev1.Route{}).
 			Owns(&corev1.ServiceAccount{}).
+			Owns(&netv1.Ingress{}).
 			Complete(r)
 	}
 
