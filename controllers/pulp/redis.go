@@ -212,6 +212,14 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 		affinity.NodeAffinity = m.Spec.Cache.Affinity.NodeAffinity
 	}
 
+	// if no strategy is defined in pulp CR we are setting `strategy.Type` with the
+	// default value ("RollingUpdate"), this will be helpful during the reconciliation
+	// when a strategy was previously defined and eventually the field is removed
+	strategy := m.Spec.Cache.Strategy
+	if strategy.Type == "" {
+		strategy.Type = "RollingUpdate"
+	}
+
 	nodeSelector := map[string]string{}
 	if m.Spec.Cache.NodeSelector != nil {
 		nodeSelector = m.Spec.Cache.NodeSelector
@@ -332,7 +340,7 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
-			Strategy: m.Spec.Cache.Strategy,
+			Strategy: strategy,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"app.kubernetes.io/name":       "redis",

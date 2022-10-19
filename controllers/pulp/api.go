@@ -343,6 +343,14 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		affinity.NodeAffinity = m.Spec.Api.Affinity.NodeAffinity
 	}
 
+	// if no strategy is defined in pulp CR we are setting `strategy.Type` with the
+	// default value ("RollingUpdate"), this will be helpful during the reconciliation
+	// when a strategy was previously defined and eventually the field is removed
+	strategy := m.Spec.Api.Strategy
+	if strategy.Type == "" {
+		strategy.Type = "RollingUpdate"
+	}
+
 	// pulp image is built to run with user 0
 	// we are enforcing the containers to run as 1000
 	runAsUser := int64(700)
@@ -827,7 +835,7 @@ func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *apps
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
-			Strategy: m.Spec.Api.Strategy,
+			Strategy: strategy,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: ls,
 			},
