@@ -26,7 +26,6 @@ import (
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -88,7 +87,7 @@ func (r *PulpReconciler) pulpWebController(ctx context.Context, pulp *repomanage
 	}
 
 	// Reconcile Deployment
-	if !equality.Semantic.DeepDerivative(newWebDeployment.Spec, webDeployment.Spec) {
+	if deploymentModified(newWebDeployment, webDeployment) {
 		log.Info("The Web Deployment has been modified! Reconciling ...")
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingWebDeployment", "Reconciling "+pulp.Name+"-web deployment resource")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling Web Deployment")
