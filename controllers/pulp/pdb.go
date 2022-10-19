@@ -18,6 +18,7 @@ package pulp
 
 import (
 	"context"
+	"reflect"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -43,10 +44,15 @@ func (r *PulpReconciler) pdbController(ctx context.Context, pulp *repomanagerv1a
 
 	for component, pdb := range pdbList {
 
+		pdbFound := &policy.PodDisruptionBudget{}
+		err := r.Get(ctx, types.NamespacedName{Name: component + "-pdb", Namespace: pulp.Namespace}, pdbFound)
+
 		// check if PDB is defined
-		if pdb != nil {
-			pdbFound := &policy.PodDisruptionBudget{}
-			err := r.Get(ctx, types.NamespacedName{Name: component + "-pdb", Namespace: pulp.Namespace}, pdbFound)
+		// we need to check if pdb != nil (no .Spec.<component>.PDB field defined)
+		// we also need to check if .Spec.<component>.PDB field is defined but with no content. For example:
+		// api:
+		//    pdb: {}
+		if pdb != nil && !reflect.DeepEqual(pdb, &policy.PodDisruptionBudgetSpec{}) {
 
 			// add label selector to PDBSpec
 			// even though it is possible to pass a selector through PodDisruptionBudgetSpec we will overwrite
@@ -97,6 +103,18 @@ func (r *PulpReconciler) pdbController(ctx context.Context, pulp *repomanagerv1a
 				return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
 			}
 
+			// and finally we need to check if pdb == nil || pdb == {} to remove any PDB resource
+			// previously created but removed from Pulp CR
+		} else {
+			// if PDB is not found it means that it has been removed already, so nothing to do
+			if err != nil && k8s_error.IsNotFound(err) {
+				continue
+			} else if err != nil {
+				log.Error(err, "Failed to get "+component+" PDB")
+				return ctrl.Result{}, err
+			}
+
+			r.Delete(ctx, pdbFound)
 		}
 	}
 

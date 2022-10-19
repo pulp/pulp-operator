@@ -6,3 +6,4 @@ Fixed NodeSelector reconciliation logic.
 Fixed Tolerations reconciliation logic.
 Fixed TopologySpreadConstraints reconciliation logic.
 Fixed ResourceRequirements removal logic.
+Fixed PDB removal logic.
