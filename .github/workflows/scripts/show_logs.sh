@@ -56,5 +56,11 @@ if [[ "$KUBE" == "minikube" ]]; then
   echo ::endgroup::
 fi
 
+if [[ "$INGRESS_TYPE" == "ingress" ]]; then
+    export BASE_ADDR="http://ingress.local"
+else
+    export BASE_ADDR="http://localhost:24880"
+fi
+
 echo "Status endpoint"
-http --follow --timeout 30 --check-status --pretty format --print hb http://localhost:24880/pulp/api/v3/status/ || true
+http --follow --timeout 30 --check-status --pretty format --print hb $BASE_ADDR/pulp/api/v3/status/ || true
