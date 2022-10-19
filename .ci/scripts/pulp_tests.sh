@@ -5,13 +5,17 @@ set -euo pipefail
 KUBE="k3s"
 SERVER=$(hostname)
 WEB_PORT="24817"
-if [[ "${1-}" == "--minikube" ]] || [[ "${1-}" == "-m" ]]; then
+if [[ "$INGRESS_TYPE" == "ingress" ]]; then
+  SERVER=ingress.local
+  echo $(minikube ip) ingress.local | sudo tee -a /etc/hosts
+elif [[ "${1-}" == "--minikube" ]] || [[ "${1-}" == "-m" ]]; then
   KUBE="minikube"
   SERVER="localhost"
   if [[ "$CI_TEST" == "true" ]]; then
     SVC_NAME="example-pulp-web-svc"
     WEB_PORT="24880"
     kubectl port-forward service/$SVC_NAME $WEB_PORT:$WEB_PORT &
+    echo 127.0.0.1   example-pulp-web-svc.pulp-operator-system.svc.cluster.local | sudo tee -a /etc/hosts
   fi
 fi
 
@@ -21,7 +25,11 @@ login admin
 password password\
 " > ~/.netrc
 
-export BASE_ADDR="http://$SERVER:$WEB_PORT"
+if [[ "$INGRESS_TYPE" == "ingress" ]]; then
+    export BASE_ADDR="http://$SERVER"
+else
+    export BASE_ADDR="http://$SERVER:$WEB_PORT"
+fi
 echo $BASE_ADDR
 
 if [ -z "$(pip3 freeze | grep pulp-cli)" ]; then
@@ -41,7 +49,6 @@ EOF
 fi
 
 cat ~/.config/pulp/cli.toml | tee ~/.config/pulp/settings.toml
-echo 127.0.0.1   example-pulp-web-svc.pulp-operator-system.svc.cluster.local | sudo tee -a /etc/hosts
 
 pulp status | jq
 
