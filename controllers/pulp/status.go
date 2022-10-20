@@ -182,6 +182,13 @@ func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alph
 		r.Status().Update(ctx, pulp)
 	}
 
+	// we will only set .status.external_cache_secret in the first execution (len==0)
+	// and if .spec.external_cache_secret is defined
+	if len(pulp.Status.ExternalCacheSecret) == 0 && len(pulp.Spec.Cache.ExternalCacheSecret) > 0 {
+		pulp.Status.ExternalCacheSecret = pulp.Spec.Cache.ExternalCacheSecret
+		r.Status().Update(ctx, pulp)
+	}
+
 	return ctrl.Result{}, nil
 }
 

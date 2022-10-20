@@ -205,6 +205,7 @@ PulpStatus defines the observed state of Pulp
 | ingress_type | The ingress type to use to reach the deployed instance | string | false |
 | container_token_secret | Secret where the container token certificates are stored. | string | false |
 | admin_password_secret | Secret where the administrator password can be found | string | false |
+| external_cache_secret | Name of the secret with the parameters to connect to an external Redis cluster | string | false |
 
 [Back to Custom Resources](#custom-resources)
 

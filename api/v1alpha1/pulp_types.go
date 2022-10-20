@@ -679,6 +679,8 @@ type PulpStatus struct {
 	ContainerTokenSecret string `json:"container_token_secret,omitempty"`
 	// Secret where the administrator password can be found
 	AdminPasswordSecret string `json:"admin_password_secret,omitempty"`
+	// Name of the secret with the parameters to connect to an external Redis cluster
+	ExternalCacheSecret string `json:"external_cache_secret,omitempty"`
 }
 
 // Pulp is the Schema for the pulps API
