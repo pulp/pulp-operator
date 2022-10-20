@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package pulp
+package repo_manager
 
 import (
 	"context"
@@ -32,7 +32,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *PulpReconciler) CreateServiceAccount(ctx context.Context, pulp *repomanagerv1alpha1.Pulp) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) CreateServiceAccount(ctx context.Context, pulp *repomanagerv1alpha1.Pulp) (ctrl.Result, error) {
 	log := r.RawLogger
 	conditionType := getApiConditionType(pulp)
 	sa := &corev1.ServiceAccount{}
@@ -76,7 +76,7 @@ func (r *PulpReconciler) CreateServiceAccount(ctx context.Context, pulp *repoman
 	return r.CreateRole(ctx, pulp)
 }
 
-func (r *PulpReconciler) CreateRole(ctx context.Context, pulp *repomanagerv1alpha1.Pulp) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) CreateRole(ctx context.Context, pulp *repomanagerv1alpha1.Pulp) (ctrl.Result, error) {
 	log := r.RawLogger
 	conditionType := getApiConditionType(pulp)
 	role := &rbacv1.Role{}
@@ -102,7 +102,7 @@ func (r *PulpReconciler) CreateRole(ctx context.Context, pulp *repomanagerv1alph
 	return r.CreateRoleBinding(ctx, pulp)
 }
 
-func (r *PulpReconciler) CreateRoleBinding(ctx context.Context, pulp *repomanagerv1alpha1.Pulp) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) CreateRoleBinding(ctx context.Context, pulp *repomanagerv1alpha1.Pulp) (ctrl.Result, error) {
 	log := r.RawLogger
 	conditionType := getApiConditionType(pulp)
 	rolebinding := &rbacv1.RoleBinding{}
@@ -128,7 +128,7 @@ func (r *PulpReconciler) CreateRoleBinding(ctx context.Context, pulp *repomanage
 	return ctrl.Result{}, nil
 }
 
-func (r *PulpReconciler) pulpSA(m *repomanagerv1alpha1.Pulp) *corev1.ServiceAccount {
+func (r *RepoManagerReconciler) pulpSA(m *repomanagerv1alpha1.Pulp) *corev1.ServiceAccount {
 	var imagePullSecrets []corev1.LocalObjectReference
 
 	for _, pullSecret := range m.Spec.ImagePullSecrets {
@@ -155,7 +155,7 @@ func (r *PulpReconciler) pulpSA(m *repomanagerv1alpha1.Pulp) *corev1.ServiceAcco
 // getInternalRegistrySecret gets the imagePullSecret for the internal registry that is created
 // and added to the SA in OCP environments based on pattern:
 //  <operator_instance_name>-dockercfg-<hash>
-func (r *PulpReconciler) getInternalRegistrySecret(ctx context.Context, saName, saNamespace string) string {
+func (r *RepoManagerReconciler) getInternalRegistrySecret(ctx context.Context, saName, saNamespace string) string {
 	sa := &corev1.ServiceAccount{}
 	r.Get(ctx, types.NamespacedName{Name: saName, Namespace: saNamespace}, sa)
 	for _, imagePullSecret := range sa.ImagePullSecrets {
@@ -167,7 +167,7 @@ func (r *PulpReconciler) getInternalRegistrySecret(ctx context.Context, saName, 
 	return ""
 }
 
-func (r *PulpReconciler) pulpRole(m *repomanagerv1alpha1.Pulp) *rbacv1.Role {
+func (r *RepoManagerReconciler) pulpRole(m *repomanagerv1alpha1.Pulp) *rbacv1.Role {
 	return &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name,
@@ -197,7 +197,7 @@ func (r *PulpReconciler) pulpRole(m *repomanagerv1alpha1.Pulp) *rbacv1.Role {
 	}
 }
 
-func (r *PulpReconciler) pulpRoleBinding(m *repomanagerv1alpha1.Pulp) *rbacv1.RoleBinding {
+func (r *RepoManagerReconciler) pulpRoleBinding(m *repomanagerv1alpha1.Pulp) *rbacv1.RoleBinding {
 	return &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name,

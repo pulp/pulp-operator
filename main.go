@@ -40,9 +40,9 @@ import (
 
 	routev1 "github.com/openshift/api/route/v1"
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
-	pulp_backup "github.com/pulp/pulp-operator/controllers/backup"
-	pulp "github.com/pulp/pulp-operator/controllers/pulp"
-	pulp_restore "github.com/pulp/pulp-operator/controllers/restore"
+	repo_manager_backup "github.com/pulp/pulp-operator/controllers/backup"
+	repo_manager "github.com/pulp/pulp-operator/controllers/repo_manager"
+	repo_manager_restore "github.com/pulp/pulp-operator/controllers/restore"
 
 	uzap "go.uber.org/zap"
 	//+kubebuilder:scaffold:imports
@@ -133,7 +133,7 @@ func main() {
 		setupLog.Error(err, "failed to construct a new REST client")
 	}
 
-	if err = (&pulp.PulpReconciler{
+	if err = (&repo_manager.RepoManagerReconciler{
 		Client:     mgr.GetClient(),
 		RawLogger:  mgr.GetLogger(),
 		RESTClient: restClient,
@@ -143,7 +143,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Pulp")
 		os.Exit(1)
 	}
-	if err = (&pulp_backup.PulpBackupReconciler{
+	if err = (&repo_manager_backup.RepoManagerBackupReconciler{
 		Client:     mgr.GetClient(),
 		RawLogger:  mgr.GetLogger(),
 		RESTClient: restClient,
@@ -153,7 +153,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "PulpBackup")
 		os.Exit(1)
 	}
-	if err = (&pulp_restore.PulpRestoreReconciler{
+	if err = (&repo_manager_restore.RepoManagerRestoreReconciler{
 		Client:     mgr.GetClient(),
 		RawLogger:  mgr.GetLogger(),
 		RESTClient: restClient,

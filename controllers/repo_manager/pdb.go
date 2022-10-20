@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package pulp
+package repo_manager
 
 import (
 	"context"
@@ -33,7 +33,7 @@ import (
 )
 
 // pdbController creates and reconciles {api,content,worker,web} pdbs
-func (r *PulpReconciler) pdbController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) pdbController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	pdbList := map[string]*policy.PodDisruptionBudgetSpec{
 		"api":       pulp.Spec.Api.PDB,

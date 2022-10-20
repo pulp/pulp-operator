@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package pulp
+package repo_manager
 
 import (
 	"context"
@@ -39,7 +39,7 @@ import (
 	"github.com/pulp/pulp-operator/controllers"
 )
 
-func (r *PulpReconciler) pulpRouteController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Route-Ready"
@@ -165,7 +165,7 @@ func (r *PulpReconciler) pulpRouteController(ctx context.Context, pulp *repomana
 }
 
 // pulpRouteObject returns the route object with the specs defined in pulp CR
-func (r *PulpReconciler) pulpRouteObject(m *repomanagerv1alpha1.Pulp, p *RoutePlugin, routeHost string) *routev1.Route {
+func (r *RepoManagerReconciler) pulpRouteObject(m *repomanagerv1alpha1.Pulp, p *RoutePlugin, routeHost string) *routev1.Route {
 
 	weight := int32(100)
 	annotation := map[string]string{

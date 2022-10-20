@@ -1,4 +1,4 @@
-package pulp
+package repo_manager
 
 import (
 	"context"
@@ -52,7 +52,7 @@ func createPwd(pwdSize int) string {
 }
 
 // Retrieve specific keys from secret object
-func (r *PulpReconciler) retrieveSecretData(ctx context.Context, secretName, secretNamespace string, required bool, keys ...string) (map[string]string, error) {
+func (r *RepoManagerReconciler) retrieveSecretData(ctx context.Context, secretName, secretNamespace string, required bool, keys ...string) (map[string]string, error) {
 	found := &corev1.Secret{}
 	err := r.Get(ctx, types.NamespacedName{Name: secretName, Namespace: secretNamespace}, found)
 	if err != nil {
@@ -77,7 +77,7 @@ func (r *PulpReconciler) retrieveSecretData(ctx context.Context, secretName, sec
 }
 
 // Get signing key fingerprint from secret object
-func (r *PulpReconciler) getSigningKeyFingerprint(secretName, secretNamespace string) (string, error) {
+func (r *RepoManagerReconciler) getSigningKeyFingerprint(secretName, secretNamespace string) (string, error) {
 
 	ctx := context.TODO()
 	secretData, err := r.retrieveSecretData(ctx, secretName, secretNamespace, true, "signing_service.gpg")
@@ -163,7 +163,7 @@ func genTokenAuthKey() (string, string) {
 	return privateKey, publicKey
 }
 
-func (r *PulpReconciler) updateStatus(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, conditionStatus metav1.ConditionStatus, conditionType, conditionReason, conditionMessage string) {
+func (r *RepoManagerReconciler) updateStatus(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, conditionStatus metav1.ConditionStatus, conditionType, conditionReason, conditionMessage string) {
 
 	// if we are updating a status it means that operator didn't finish its execution
 	if v1.IsStatusConditionPresentAndEqual(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Operator-Finished-Execution", metav1.ConditionTrue) {
@@ -187,7 +187,7 @@ func (r *PulpReconciler) updateStatus(ctx context.Context, pulp *repomanagerv1al
 }
 
 // updatCRField patches fieldName in Pulp CR with fieldValue
-func (r *PulpReconciler) updateCRField(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, fieldName, fieldValue string) error {
+func (r *RepoManagerReconciler) updateCRField(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, fieldName, fieldValue string) error {
 	field := reflect.Indirect(reflect.ValueOf(&pulp.Spec)).FieldByName(fieldName)
 
 	// we will only set the field (with default values) if there is nothing defined yet
@@ -204,7 +204,7 @@ func (r *PulpReconciler) updateCRField(ctx context.Context, pulp *repomanagerv1a
 
 // createEmptyConfigMap creates an empty ConfigMap that is used by CNO (Cluster Network Operator) to
 // inject custom CA into containers
-func (r *PulpReconciler) createEmptyConfigMap(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) createEmptyConfigMap(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	configMap := &corev1.ConfigMap{}
 	err := r.Get(ctx, types.NamespacedName{Name: caConfigMapName, Namespace: pulp.Namespace}, configMap)
@@ -274,7 +274,7 @@ func mountCASpec(pulp *repomanagerv1alpha1.Pulp, volumes []corev1.Volume, volume
 
 // checkImmutableFields verifies if a user tried to modify an immutable field and rollback
 // the change if so
-func (r *PulpReconciler) checkImmutableFields(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, field immutableField, log logr.Logger) bool {
+func (r *RepoManagerReconciler) checkImmutableFields(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, field immutableField, log logr.Logger) bool {
 
 	fieldSpec := reflect.Value{}
 
@@ -316,7 +316,7 @@ func (r *PulpReconciler) checkImmutableFields(ctx context.Context, pulp *repoman
 
 // updateIngressType will check the current definition of ingress_type and will handle the different
 // modification scenarios
-func (r *PulpReconciler) updateIngressType(ctx context.Context, pulp *repomanagerv1alpha1.Pulp) {
+func (r *RepoManagerReconciler) updateIngressType(ctx context.Context, pulp *repomanagerv1alpha1.Pulp) {
 
 	// if pulp CR was defined with route and user modified it to anything else
 	// delete all routes with operator's labels
@@ -377,7 +377,7 @@ func (r *PulpReconciler) updateIngressType(ctx context.Context, pulp *repomanage
 // [TODO] Find a generic way to assert the object type to avoid these repetitive blocks of code
 // reconcileObject will check if the definition from Pulp CR is reflecting the current
 // object state and if not will synchronize the configuration
-func (r *PulpReconciler) reconcileObject(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, expectedState, currentState interface{}, conditionType string, log logr.Logger) error {
+func (r *RepoManagerReconciler) reconcileObject(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, expectedState, currentState interface{}, conditionType string, log logr.Logger) error {
 
 	switch expectedState := expectedState.(type) {
 	case *routev1.Route:
@@ -427,7 +427,7 @@ func (r *PulpReconciler) reconcileObject(ctx context.Context, pulp *repomanagerv
 // for some reason, if we try to use DeepDerivative like
 //    if !equality.Semantic.DeepDerivative(expectedState.(*routev1.Route), currentState.(*routev1.Route)) ...
 // it will get into an infinite loop
-func (r *PulpReconciler) reconcileMetadata(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, expectedState, currentState interface{}, conditionType string, log logr.Logger) error {
+func (r *RepoManagerReconciler) reconcileMetadata(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, expectedState, currentState interface{}, conditionType string, log logr.Logger) error {
 
 	switch expectedState.(type) {
 	case *routev1.Route:

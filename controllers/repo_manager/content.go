@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package pulp
+package repo_manager
 
 import (
 	"context"
@@ -39,7 +39,7 @@ import (
 	"github.com/pulp/pulp-operator/controllers"
 )
 
-func (r *PulpReconciler) pulpContentController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) pulpContentController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Content-Ready"
@@ -125,7 +125,7 @@ func (r *PulpReconciler) pulpContentController(ctx context.Context, pulp *repoma
 }
 
 // deploymentForPulpContent returns a pulp-content Deployment object
-func (r *PulpReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
+func (r *RepoManagerReconciler) deploymentForPulpContent(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 
 	labels := map[string]string{
 		"app.kubernetes.io/name":       m.Spec.DeploymentType + "-content",
@@ -573,7 +573,7 @@ func labelsForPulpContent(m *repomanagerv1alpha1.Pulp) map[string]string {
 }
 
 // serviceForContent returns a service object for pulp-content
-func (r *PulpReconciler) serviceForContent(m *repomanagerv1alpha1.Pulp) *corev1.Service {
+func (r *RepoManagerReconciler) serviceForContent(m *repomanagerv1alpha1.Pulp) *corev1.Service {
 
 	svc := serviceContentObject(m.Name, m.Namespace, m.Spec.DeploymentType)
 

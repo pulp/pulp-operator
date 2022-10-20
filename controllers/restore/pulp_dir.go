@@ -1,4 +1,4 @@
-package pulp_restore
+package repo_manager_restore
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 )
 
 // backupPulpDir copies the content of /var/lib/pulp into the backup PVC
-func (r *PulpRestoreReconciler) restorePulpDir(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupPVCName, backupDir string, pod *corev1.Pod) error {
+func (r *RepoManagerRestoreReconciler) restorePulpDir(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupPVCName, backupDir string, pod *corev1.Pod) error {
 
 	// if file-storage PVC is not provisioned it means that pulp is deployed with object storage
 	// in this case, we should just return without action

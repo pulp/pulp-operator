@@ -1,4 +1,4 @@
-package pulp_test
+package repo_manager_test
 
 import (
 	"context"

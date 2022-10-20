@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package pulp_backup_test
+package repo_manager_backup_test
 
 import (
 	_ "github.com/onsi/ginkgo/v2"

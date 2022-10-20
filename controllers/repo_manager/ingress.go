@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package pulp
+package repo_manager
 
 import (
 	"context"
@@ -38,7 +38,7 @@ import (
 	"github.com/pulp/pulp-operator/controllers"
 )
 
-func (r *PulpReconciler) pulpIngressController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	podList := &corev1.PodList{}
 	labels := map[string]string{
@@ -143,7 +143,7 @@ func (r *PulpReconciler) pulpIngressController(ctx context.Context, pulp *repoma
 }
 
 // pulp-ingress
-func (r *PulpReconciler) pulpIngressObject(ctx context.Context, m *repomanagerv1alpha1.Pulp, plugins []IngressPlugin) *netv1.Ingress {
+func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repomanagerv1alpha1.Pulp, plugins []IngressPlugin) *netv1.Ingress {
 	IsNginxIngressSupported := false
 	ingressClassList := &netv1.IngressClassList{}
 	ingressClassName := ""

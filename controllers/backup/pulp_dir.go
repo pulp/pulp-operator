@@ -1,4 +1,4 @@
-package pulp_backup
+package repo_manager_backup
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 )
 
 // backupPulpDir copies the content of /var/lib/pulp into the backup PVC
-func (r *PulpBackupReconciler) backupPulpDir(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string, pod *corev1.Pod) error {
+func (r *RepoManagerBackupReconciler) backupPulpDir(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string, pod *corev1.Pod) error {
 	log := r.RawLogger
 
 	pulp := &repomanagerv1alpha1.Pulp{}

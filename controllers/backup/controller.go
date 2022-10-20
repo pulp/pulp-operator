@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package pulp_backup
+package repo_manager_backup
 
 import (
 	"context"
@@ -36,8 +36,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// PulpBackupReconciler reconciles a PulpBackup object
-type PulpBackupReconciler struct {
+// RepoManagerBackupReconciler reconciles a PulpBackup object
+type RepoManagerBackupReconciler struct {
 	client.Client
 	RawLogger  logr.Logger
 	RESTClient rest.Interface
@@ -54,7 +54,7 @@ type PulpBackupReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *RepoManagerBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.RawLogger
 	backupDir := "/backup"
 
@@ -129,7 +129,7 @@ func (r *PulpBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 }
 
 // waitPodReady waits until container gets into a "READY" state
-func (r *PulpBackupReconciler) waitPodReady(ctx context.Context, namespace, podName string) (*corev1.Pod, error) {
+func (r *RepoManagerBackupReconciler) waitPodReady(ctx context.Context, namespace, podName string) (*corev1.Pod, error) {
 	var err error
 	for timeout := 0; timeout < 120; timeout++ {
 		pod := &corev1.Pod{}
@@ -144,7 +144,7 @@ func (r *PulpBackupReconciler) waitPodReady(ctx context.Context, namespace, podN
 }
 
 // createBackupPod provisions the backup-manager pod where the backup steps will run
-func (r *PulpBackupReconciler) createBackupPod(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string) (*corev1.Pod, error) {
+func (r *RepoManagerBackupReconciler) createBackupPod(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string) (*corev1.Pod, error) {
 	log := r.RawLogger
 
 	// we are considering that pulp CR instance is running in the same namespace as pulpbackup and
@@ -275,7 +275,7 @@ func (r *PulpBackupReconciler) createBackupPod(ctx context.Context, pulpBackup *
 }
 
 // cleanup deletes the backup-manager pod
-func (r *PulpBackupReconciler) cleanup(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup) error {
+func (r *RepoManagerBackupReconciler) cleanup(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup) error {
 	bkpPod := &corev1.Pod{}
 	r.Get(ctx, types.NamespacedName{Name: pulpBackup.Name + "-backup-manager", Namespace: pulpBackup.Namespace}, bkpPod)
 	r.Delete(ctx, bkpPod)
@@ -294,7 +294,7 @@ func (r *PulpBackupReconciler) cleanup(ctx context.Context, pulpBackup *repomana
 }
 
 // createBackupPVC provisions the pulp-backup-claim PVC that will store the backup
-func (r *PulpBackupReconciler) createBackupPVC(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup) error {
+func (r *RepoManagerBackupReconciler) createBackupPVC(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup) error {
 	log := r.RawLogger
 
 	var storageClassName string
@@ -355,7 +355,7 @@ func (r *PulpBackupReconciler) createBackupPVC(ctx context.Context, pulpBackup *
 }
 
 // updateStatus modifies a .status.condition from pulpbackup CR
-func (r *PulpBackupReconciler) updateStatus(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, conditionStatus metav1.ConditionStatus, conditionType, conditionMessage, conditionReason string) {
+func (r *RepoManagerBackupReconciler) updateStatus(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, conditionStatus metav1.ConditionStatus, conditionType, conditionMessage, conditionReason string) {
 	v1.SetStatusCondition(&pulpBackup.Status.Conditions, metav1.Condition{
 		Type:               conditionType,
 		Status:             conditionStatus,
@@ -367,7 +367,7 @@ func (r *PulpBackupReconciler) updateStatus(ctx context.Context, pulpBackup *rep
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *PulpBackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *RepoManagerBackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&repomanagerv1alpha1.PulpBackup{}).
 		WithEventFilter(controllers.IgnoreUpdateCRStatusPredicate()).

@@ -1,4 +1,4 @@
-package pulp_restore
+package repo_manager_restore
 
 import (
 	"context"
@@ -82,7 +82,7 @@ const (
 )
 
 // restoreSecret restores the operator secrets created by pulpbackup CR
-func (r *PulpRestoreReconciler) restoreSecret(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupDir string, pod *corev1.Pod) error {
+func (r *RepoManagerRestoreReconciler) restoreSecret(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupDir string, pod *corev1.Pod) error {
 
 	// [TODO]
 	// type secretTypes struct {resourceType string, secretNameKey string, backupFile string}
@@ -135,7 +135,7 @@ func (r *PulpRestoreReconciler) restoreSecret(ctx context.Context, pulpRestore *
 // resourceType: the type of the secret (like AdminPassword, or ObjectStorage, or ContainerToken, etc)
 // secretNameKey: is the secret's key that contains the secret name to be restored
 // it returns false and the error if the file is not found
-func (r *PulpRestoreReconciler) secret(ctx context.Context, resourceType, secretNameKey, backupDir, backupFile string, pod *corev1.Pod, pulpRestore *repomanagerv1alpha1.PulpRestore) (bool, error) {
+func (r *RepoManagerRestoreReconciler) secret(ctx context.Context, resourceType, secretNameKey, backupDir, backupFile string, pod *corev1.Pod, pulpRestore *repomanagerv1alpha1.PulpRestore) (bool, error) {
 
 	log := r.RawLogger
 

@@ -133,11 +133,11 @@ func MultiStorageConfigured(pulp *repomanagerv1alpha1.Pulp, resource string) (bo
 // ContainerExec runs a command in the container
 func ContainerExec[T any](client T, pod *corev1.Pod, command []string, container, namespace string) (string, error) {
 
-	// get the concrete value of client ({PulpBackup,PulpBackupReconciler,PulpRestoreReconciler})
+	// get the concrete value of client ({PulpBackup,RepoManagerBackupReconciler,RepoManagerRestoreReconciler})
 	clientConcrete := reflect.ValueOf(client)
 
 	// here we are using the Indirect method to get the value where client is pointing to
-	// after that we are taking the RESTClient field from PulpBackup|PulpBackupReconciler|PulpRestoreReconciler and
+	// after that we are taking the RESTClient field from PulpBackup|RepoManagerBackupReconciler|RepoManagerRestoreReconciler and
 	// "transforming" it into an interface{} (through the Interface() method)
 	// and finally we are asserting that it is a *rest.RESTClient so that we can run the Post() method later
 	restClient := reflect.Indirect(clientConcrete).FieldByName("RESTClient").Elem().Interface().(*rest.RESTClient)
@@ -192,7 +192,7 @@ type PulpClient struct {
 
 // isNginxIngressSupported returns true if Nginx Ingress Controller is set
 func IsNginxIngressSupported[T any](resource T) bool {
-	// get the concrete value of client ({PulpBackup,PulpBackupReconciler,PulpRestoreReconciler})
+	// get the concrete value of client ({PulpBackup,RepoManagerBackupReconciler,RepoManagerRestoreReconciler})
 	clientConcrete := reflect.ValueOf(resource)
 	restClient := reflect.Indirect(clientConcrete).FieldByName("Client").Elem().Interface().(client.Client)
 	ctx := context.TODO()

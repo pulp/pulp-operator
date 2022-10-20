@@ -1,4 +1,4 @@
-package pulp_restore
+package repo_manager_restore
 
 import (
 	"context"
@@ -16,7 +16,7 @@ import (
 // isFileStorage returns true if pulp is deployed with storage type = file
 // this is a workaround to identify if it will be necessary to mount /var/lib/pulp in the backup-manager pod
 // to restore its contents
-func (r *PulpRestoreReconciler) isFileStorage(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore) bool {
+func (r *RepoManagerRestoreReconciler) isFileStorage(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore) bool {
 	// if file-storage PVC is not provisioned it means that pulp is deployed with object storage
 	// in this case, we should just return restorePulpDir without action
 	fileStoragePVC := &corev1.PersistentVolumeClaim{}
@@ -28,7 +28,7 @@ func (r *PulpRestoreReconciler) isFileStorage(ctx context.Context, pulpRestore *
 }
 
 // backupPVCFound returns the name of PVC and true if backup-claim PVC is found else return nil,false
-func (r *PulpRestoreReconciler) backupPVCFound(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore) (string, bool) {
+func (r *RepoManagerRestoreReconciler) backupPVCFound(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore) (string, bool) {
 
 	backupPVCName := ""
 	if pulpRestore.Spec.BackupPVC == "" {
@@ -46,7 +46,7 @@ func (r *PulpRestoreReconciler) backupPVCFound(ctx context.Context, pulpRestore 
 
 // [TODO] refactor updateStatus so that it can be used by pulp, pulpRestore, and pulpBackup controllers
 // updateStatus modifies a .status.condition from pulpbackup CR
-func (r *PulpRestoreReconciler) updateStatus(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, conditionStatus metav1.ConditionStatus, conditionType, conditionMessage, conditionReason string) {
+func (r *RepoManagerRestoreReconciler) updateStatus(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, conditionStatus metav1.ConditionStatus, conditionType, conditionMessage, conditionReason string) {
 	v1.SetStatusCondition(&pulpRestore.Status.Conditions, metav1.Condition{
 		Type:               conditionType,
 		Status:             conditionStatus,
@@ -59,7 +59,7 @@ func (r *PulpRestoreReconciler) updateStatus(ctx context.Context, pulpRestore *r
 
 // [TODO] refactor cleanup so that it can be used by pulpRestore and pulpBackup controllers
 // cleanup deletes the backup-manager pod
-func (r *PulpRestoreReconciler) cleanup(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore) error {
+func (r *RepoManagerRestoreReconciler) cleanup(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore) error {
 	restorePod := &corev1.Pod{}
 	r.Get(ctx, types.NamespacedName{Name: pulpRestore.Name + "-backup-manager", Namespace: pulpRestore.Namespace}, restorePod)
 	r.Delete(ctx, restorePod)
@@ -79,7 +79,7 @@ func (r *PulpRestoreReconciler) cleanup(ctx context.Context, pulpRestore *repoma
 
 // [TODO] refactor createBackupPod so that it can be used by pulpRestore and pulpBackup controllers
 // createBackupPod provisions the backup-manager pod where the restore steps will run
-func (r *PulpRestoreReconciler) createRestorePod(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupPVCName, backupDir string) (*corev1.Pod, error) {
+func (r *RepoManagerRestoreReconciler) createRestorePod(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupPVCName, backupDir string) (*corev1.Pod, error) {
 	log := r.RawLogger
 
 	labels := map[string]string{
@@ -187,7 +187,7 @@ func (r *PulpRestoreReconciler) createRestorePod(ctx context.Context, pulpRestor
 }
 
 // waitPodReady waits until container gets into a "READY" state or 120 seconds timeout
-func (r *PulpRestoreReconciler) waitPodReady(ctx context.Context, namespace, podName string) (*corev1.Pod, error) {
+func (r *RepoManagerRestoreReconciler) waitPodReady(ctx context.Context, namespace, podName string) (*corev1.Pod, error) {
 	var err error
 	for timeout := 0; timeout < 120; timeout++ {
 		pod := &corev1.Pod{}
