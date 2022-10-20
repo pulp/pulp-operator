@@ -36,6 +36,11 @@ const (
 	caConfigMapName = "user-ca-bundle"
 )
 
+type immutableField struct {
+	FieldName string
+	FieldPath interface{}
+}
+
 // Generate a random string with length pwdSize
 func createPwd(pwdSize int) string {
 	const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -269,16 +274,23 @@ func mountCASpec(pulp *repomanagerv1alpha1.Pulp, volumes []corev1.Volume, volume
 
 // checkImmutableFields verifies if a user tried to modify an immutable field and rollback
 // the change if so
-func (r *PulpReconciler) checkImmutableFields(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, field string, log logr.Logger) bool {
+func (r *PulpReconciler) checkImmutableFields(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, field immutableField, log logr.Logger) bool {
+
+	fieldSpec := reflect.Value{}
 
 	// access the field by its string name
 	// for fieldSpec we need to pass it as a reference because we will need to change
 	// its value back in case of immutable field
-	fieldSpec := reflect.Indirect(reflect.ValueOf(&pulp.Spec)).FieldByName(field)
+	switch field.FieldPath.(type) {
+	case repomanagerv1alpha1.PulpSpec:
+		fieldSpec = reflect.Indirect(reflect.ValueOf(&pulp.Spec)).FieldByName(field.FieldName)
+	case repomanagerv1alpha1.Cache:
+		fieldSpec = reflect.Indirect(reflect.ValueOf(&pulp.Spec.Cache)).FieldByName(field.FieldName)
+	}
 
 	// for fieldStatus, as we just need its content, we dont need to get a
 	// pointer to it
-	fieldStatus := reflect.ValueOf(pulp.Status).FieldByName(field)
+	fieldStatus := reflect.ValueOf(pulp.Status).FieldByName(field.FieldName)
 
 	// first we need to call the Interface() method to use the field as interface{}
 	// then we assert that the interface{} is a string so we can check if the len > 0
@@ -295,8 +307,8 @@ func (r *PulpReconciler) checkImmutableFields(ctx context.Context, pulp *repoman
 		// if we had used update it would fill a lot of other fields with default values
 		// which would also trigger a reconciliation loop
 		r.Patch(ctx, pulp, patch)
-		err := fmt.Errorf("%s field is immutable", field)
-		log.Error(err, "Could not update "+field+" field")
+		err := fmt.Errorf("%s field is immutable", field.FieldName)
+		log.Error(err, "Could not update "+field.FieldName+" field")
 		return true
 	}
 	return false

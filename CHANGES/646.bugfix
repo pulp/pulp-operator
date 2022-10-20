@@ -8,3 +8,4 @@ Fixed TopologySpreadConstraints reconciliation logic.
 Fixed ResourceRequirements removal logic.
 Fixed PDB removal logic.
 Fixed Strategy removal logic.
+Set Cache.ExternalCacheSecret as immutable (the controller will reconcile with the same value if the field is modified).

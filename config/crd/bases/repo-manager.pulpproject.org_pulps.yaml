@@ -4712,6 +4712,10 @@ spec:
               deployment_type:
                 description: Name of the deployment type.
                 type: string
+              external_cache_secret:
+                description: Name of the secret with the parameters to connect to
+                  an external Redis cluster
+                type: string
               ingress_type:
                 description: The ingress type to use to reach the deployed instance
                 type: string
