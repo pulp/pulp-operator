@@ -171,6 +171,10 @@ func redisDataPVC(m *repomanagerv1alpha1.Pulp) *corev1.PersistentVolumeClaim {
 func redisSvc(m *repomanagerv1alpha1.Pulp) *corev1.Service {
 	servicePortProto := corev1.Protocol("TCP")
 	targetPort := intstr.IntOrString{IntVal: 6379}
+	port := m.Spec.Cache.RedisPort
+	if port == 0 {
+		port = 6379
+	}
 
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -193,7 +197,7 @@ func redisSvc(m *repomanagerv1alpha1.Pulp) *corev1.Service {
 				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
 			},
 			Ports: []corev1.ServicePort{{
-				Port:       6379,
+				Port:       int32(port),
 				Protocol:   servicePortProto,
 				TargetPort: targetPort,
 				Name:       "redis-6379",

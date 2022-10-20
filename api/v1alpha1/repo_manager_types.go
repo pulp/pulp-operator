@@ -611,7 +611,7 @@ type Cache struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:StorageClass","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	RedisStorageClass string `json:"redis_storage_class,omitempty"`
 
-	// The port for Redis. [default: 6379]
+	// The port that will be exposed by Redis Service. [default: 6379]
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	RedisPort int `json:"redis_port,omitempty"`
