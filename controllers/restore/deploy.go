@@ -1,4 +1,4 @@
-package pulp_restore
+package repo_manager_restore
 
 import (
 	"context"
@@ -20,7 +20,7 @@ type PodReplicas struct {
 }
 
 // restorePulpCR recreates the pulp CR with the content from backup
-func (r *PulpRestoreReconciler) restorePulpCR(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupDir string, pod *corev1.Pod) (PodReplicas, error) {
+func (r *RepoManagerRestoreReconciler) restorePulpCR(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupDir string, pod *corev1.Pod) (PodReplicas, error) {
 	pulp := &repomanagerv1alpha1.Pulp{}
 	podReplicas := PodReplicas{}
 
@@ -77,7 +77,7 @@ func (r *PulpRestoreReconciler) restorePulpCR(ctx context.Context, pulpRestore *
 // scaleDeployments will rescale the deployments with:
 // - if KeepBackupReplicasCount = true  - it will keep the same amount of replicas from backup
 // - if KeepBackupReplicasCount = false - it will deploy 1 replica for each component
-func (r *PulpRestoreReconciler) scaleDeployments(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, podReplicas PodReplicas) error {
+func (r *RepoManagerRestoreReconciler) scaleDeployments(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, podReplicas PodReplicas) error {
 	log := r.RawLogger
 	pulp := &repomanagerv1alpha1.Pulp{}
 

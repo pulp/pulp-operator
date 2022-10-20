@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package pulp
+package repo_manager
 
 import (
 	"context"
@@ -37,7 +37,7 @@ import (
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 )
 
-func (r *PulpReconciler) pulpWebController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) pulpWebController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Web-Ready"
@@ -135,7 +135,7 @@ func (r *PulpReconciler) pulpWebController(ctx context.Context, pulp *repomanage
 }
 
 // deploymentForPulpWeb returns a pulp-web Deployment object
-func (r *PulpReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
+func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 
 	ls := labelsForPulpWeb(m)
 	replicas := m.Spec.Web.Replicas
@@ -300,7 +300,7 @@ func serviceForPulpWeb(m *repomanagerv1alpha1.Pulp) *corev1.Service {
 }
 
 // wouldn't it be better to handle the configmap content by loading it from a file?
-func (r *PulpReconciler) pulpWebConfigMap(m *repomanagerv1alpha1.Pulp) *corev1.ConfigMap {
+func (r *RepoManagerReconciler) pulpWebConfigMap(m *repomanagerv1alpha1.Pulp) *corev1.ConfigMap {
 	sec := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-configmap",

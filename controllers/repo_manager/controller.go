@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package pulp
+package repo_manager
 
 import (
 	"context"
@@ -46,8 +46,8 @@ import (
 	"github.com/pulp/pulp-operator/controllers"
 )
 
-// PulpReconciler reconciles a Pulp object
-type PulpReconciler struct {
+// RepoManagerReconciler reconciles a Pulp object
+type RepoManagerReconciler struct {
 	client.Client
 	RawLogger  logr.Logger
 	RESTClient rest.Interface
@@ -70,7 +70,7 @@ type PulpReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.RawLogger
 
 	IsOpenShift, _ := controllers.IsOpenShift()
@@ -306,7 +306,7 @@ func (r *PulpReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *PulpReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *RepoManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	// creates a new eventRecorder to be able to interact with events
 	r.recorder = mgr.GetEventRecorderFor("Pulp")

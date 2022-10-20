@@ -1,4 +1,4 @@
-package pulp
+package repo_manager
 
 import (
 	"context"
@@ -19,7 +19,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *PulpReconciler) pulpCacheController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) pulpCacheController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// pulp-redis-data PVC
 	// the PVC will be created only if a StorageClassName is provided

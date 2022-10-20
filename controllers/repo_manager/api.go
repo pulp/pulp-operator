@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package pulp
+package repo_manager
 
 import (
 	"context"
@@ -43,7 +43,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-API-Ready"
@@ -298,7 +298,7 @@ func (r *PulpReconciler) pulpApiController(ctx context.Context, pulp *repomanage
 }
 
 // fileStoragePVC returns a PVC object
-func (r *PulpReconciler) fileStoragePVC(m *repomanagerv1alpha1.Pulp) *corev1.PersistentVolumeClaim {
+func (r *RepoManagerReconciler) fileStoragePVC(m *repomanagerv1alpha1.Pulp) *corev1.PersistentVolumeClaim {
 
 	// Define the new PVC
 	pvc := &corev1.PersistentVolumeClaim{
@@ -334,7 +334,7 @@ func (r *PulpReconciler) fileStoragePVC(m *repomanagerv1alpha1.Pulp) *corev1.Per
 }
 
 // deploymentForPulpApi returns a pulp-api Deployment object
-func (r *PulpReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
+func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 	replicas := m.Spec.Api.Replicas
 	ls := labelsForPulpApi(m)
 
@@ -899,7 +899,7 @@ func labelsForPulpApi(m *repomanagerv1alpha1.Pulp) map[string]string {
 
 // pulpServerSecret creates the pulp-server secret object which is used to
 // populate the /etc/pulp/settings.py config file
-func (r *PulpReconciler) pulpServerSecret(ctx context.Context, m *repomanagerv1alpha1.Pulp, log logr.Logger) *corev1.Secret {
+func (r *RepoManagerReconciler) pulpServerSecret(ctx context.Context, m *repomanagerv1alpha1.Pulp, log logr.Logger) *corev1.Secret {
 
 	var dbHost, dbPort, dbUser, dbPass, dbName, dbSSLMode string
 	_, storageType := controllers.MultiStorageConfigured(m, "Pulp")
@@ -1124,7 +1124,7 @@ func pulpContainerAuth(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
 }
 
 // serviceForAPI returns a service object for pulp-api
-func (r *PulpReconciler) serviceForAPI(m *repomanagerv1alpha1.Pulp) *corev1.Service {
+func (r *RepoManagerReconciler) serviceForAPI(m *repomanagerv1alpha1.Pulp) *corev1.Service {
 
 	svc := serviceAPIObject(m.Name, m.Namespace, m.Spec.DeploymentType)
 

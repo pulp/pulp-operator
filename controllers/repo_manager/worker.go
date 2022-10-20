@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package pulp
+package repo_manager
 
 import (
 	"context"
@@ -38,7 +38,7 @@ import (
 	"github.com/pulp/pulp-operator/controllers"
 )
 
-func (r *PulpReconciler) pulpWorkerController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) pulpWorkerController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Worker-Ready"
@@ -90,7 +90,7 @@ func (r *PulpReconciler) pulpWorkerController(ctx context.Context, pulp *repoman
 }
 
 // deploymentForPulpWorker returns a pulp-worker Deployment object
-func (r *PulpReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
+func (r *RepoManagerReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 	ls := labelsForPulpWorker(m)
 	labels := map[string]string{
 		"app.kubernetes.io/name":       m.Spec.DeploymentType + "-worker",

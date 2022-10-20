@@ -1,4 +1,4 @@
-package pulp_backup
+package repo_manager_backup
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 )
 
 // backupDatabase runs a pg_dump inside backup-manager pod and store it in backup PVC
-func (r *PulpBackupReconciler) backupDatabase(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string, pod *corev1.Pod) error {
+func (r *RepoManagerBackupReconciler) backupDatabase(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string, pod *corev1.Pod) error {
 	log := r.RawLogger
 	backupFile := "pulp.db"
 

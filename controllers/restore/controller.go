@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package pulp_restore
+package repo_manager_restore
 
 import (
 	"context"
@@ -31,8 +31,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// PulpRestoreReconciler reconciles a PulpRestore object
-type PulpRestoreReconciler struct {
+// RepoManagerRestoreReconciler reconciles a PulpRestore object
+type RepoManagerRestoreReconciler struct {
 	client.Client
 	RawLogger  logr.Logger
 	RESTClient rest.Interface
@@ -47,7 +47,7 @@ type PulpRestoreReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *RepoManagerRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.RawLogger
 	backupDir := "/backup"
 
@@ -171,7 +171,7 @@ func (r *PulpRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *PulpRestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *RepoManagerRestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&repomanagerv1alpha1.PulpRestore{}).
 		WithEventFilter(controllers.IgnoreUpdateCRStatusPredicate()).

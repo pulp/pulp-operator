@@ -1,4 +1,4 @@
-package pulp_backup
+package repo_manager_backup
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func (r *PulpBackupReconciler) backupCR(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string, pod *corev1.Pod) error {
+func (r *RepoManagerBackupReconciler) backupCR(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string, pod *corev1.Pod) error {
 	log := r.RawLogger
 
 	// we are considering that pulp CR instance is running in the same namespace as pulpbackup and

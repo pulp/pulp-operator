@@ -1,4 +1,4 @@
-package pulp_backup
+package repo_manager_backup
 
 import (
 	"context"
@@ -34,7 +34,7 @@ type secretType struct {
 }
 
 // backupSecrets makes a copy of the Secrets used by Pulp components
-func (r *PulpBackupReconciler) backupSecret(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string, pod *corev1.Pod) error {
+func (r *RepoManagerBackupReconciler) backupSecret(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string, pod *corev1.Pod) error {
 	log := r.RawLogger
 
 	// we are considering that pulp CR instance is running in the same namespace as pulpbackup and
@@ -117,7 +117,7 @@ func (r *PulpBackupReconciler) backupSecret(ctx context.Context, pulpBackup *rep
 }
 
 // createBackupFile stores the content of the secrets in a file located in a backup PV
-func (r *PulpBackupReconciler) createBackupFile(ctx context.Context, secretType secretType) error {
+func (r *RepoManagerBackupReconciler) createBackupFile(ctx context.Context, secretType secretType) error {
 	log := r.RawLogger
 
 	secret := &corev1.Secret{}

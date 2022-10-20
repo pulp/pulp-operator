@@ -95,9 +95,9 @@ help: ## Display this help.
 .PHONY: manifests
 manifests: controller-gen crd-to-markdown ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-	$(CRD_MARKDOWN) -f api/v1alpha1/pulp_types.go -n Pulp > controllers/pulp/README.md
-	$(CRD_MARKDOWN) -f api/v1alpha1/pulpbackup_types.go -n PulpBackup > controllers/backup/README.md
-	$(CRD_MARKDOWN) -f api/v1alpha1/pulprestore_types.go -n PulpRestore > controllers/restore/README.md
+	$(CRD_MARKDOWN) -f api/v1alpha1/repo_manager_types.go -n Pulp > controllers/repo_manager/README.md
+	$(CRD_MARKDOWN) -f api/v1alpha1/repo_manager_backup_types.go -n PulpBackup > controllers/backup/README.md
+	$(CRD_MARKDOWN) -f api/v1alpha1/repo_manager_restore_types.go -n PulpRestore > controllers/restore/README.md
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.

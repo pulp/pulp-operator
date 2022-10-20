@@ -1,4 +1,4 @@
-package pulp_restore
+package repo_manager_restore
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 )
 
 // restoreDatabaseData scales down the pods and runs a pg_restore
-func (r *PulpRestoreReconciler) restoreDatabaseData(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupDir string, pod *corev1.Pod) error {
+func (r *RepoManagerRestoreReconciler) restoreDatabaseData(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupDir string, pod *corev1.Pod) error {
 	log := r.RawLogger
 	backupFile := "pulp.db"
 
@@ -54,7 +54,7 @@ func (r *PulpRestoreReconciler) restoreDatabaseData(ctx context.Context, pulpRes
 }
 
 // waitDBReady waits until db container gets into a "READY" state
-func (r *PulpRestoreReconciler) waitDBReady(ctx context.Context, namespace, stsName string) error {
+func (r *RepoManagerRestoreReconciler) waitDBReady(ctx context.Context, namespace, stsName string) error {
 	var err error
 	for timeout := 0; timeout < 120; timeout++ {
 		sts := &appsv1.StatefulSet{}

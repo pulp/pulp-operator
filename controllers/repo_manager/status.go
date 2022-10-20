@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package pulp
+package repo_manager
 
 import (
 	"context"
@@ -37,7 +37,7 @@ import (
 )
 
 // pulpStatus will cheeck the READY state of the pods before considering the component status as ready
-func (r *PulpReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// This is a very ugly workaround to "fix" a possible race condition issue.
 	// During a reconciliation task we call the pulpStatus method to update the .status.conditions field.

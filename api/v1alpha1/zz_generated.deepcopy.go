@@ -22,9 +22,9 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	policyv1 "k8s.io/api/policy/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -33,7 +33,7 @@ func (in *Affinity) DeepCopyInto(out *Affinity) {
 	*out = *in
 	if in.NodeAffinity != nil {
 		in, out := &in.NodeAffinity, &out.NodeAffinity
-		*out = new(v1.NodeAffinity)
+		*out = new(corev1.NodeAffinity)
 		(*in).DeepCopyInto(*out)
 	}
 }
@@ -61,14 +61,14 @@ func (in *Api) DeepCopyInto(out *Api) {
 	}
 	if in.Tolerations != nil {
 		in, out := &in.Tolerations, &out.Tolerations
-		*out = make([]v1.Toleration, len(*in))
+		*out = make([]corev1.Toleration, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
 	if in.TopologySpreadConstraints != nil {
 		in, out := &in.TopologySpreadConstraints, &out.TopologySpreadConstraints
-		*out = make([]v1.TopologySpreadConstraint, len(*in))
+		*out = make([]corev1.TopologySpreadConstraint, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -76,12 +76,12 @@ func (in *Api) DeepCopyInto(out *Api) {
 	in.ResourceRequirements.DeepCopyInto(&out.ResourceRequirements)
 	if in.ReadinessProbe != nil {
 		in, out := &in.ReadinessProbe, &out.ReadinessProbe
-		*out = new(v1.Probe)
+		*out = new(corev1.Probe)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.LivenessProbe != nil {
 		in, out := &in.LivenessProbe, &out.LivenessProbe
-		*out = new(v1.Probe)
+		*out = new(corev1.Probe)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.PDB != nil {
@@ -108,18 +108,18 @@ func (in *Cache) DeepCopyInto(out *Cache) {
 	in.RedisResourceRequirements.DeepCopyInto(&out.RedisResourceRequirements)
 	if in.ReadinessProbe != nil {
 		in, out := &in.ReadinessProbe, &out.ReadinessProbe
-		*out = new(v1.Probe)
+		*out = new(corev1.Probe)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.LivenessProbe != nil {
 		in, out := &in.LivenessProbe, &out.LivenessProbe
-		*out = new(v1.Probe)
+		*out = new(corev1.Probe)
 		(*in).DeepCopyInto(*out)
 	}
 	in.Affinity.DeepCopyInto(&out.Affinity)
 	if in.Tolerations != nil {
 		in, out := &in.Tolerations, &out.Tolerations
-		*out = make([]v1.Toleration, len(*in))
+		*out = make([]corev1.Toleration, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -158,26 +158,26 @@ func (in *Content) DeepCopyInto(out *Content) {
 	}
 	if in.Tolerations != nil {
 		in, out := &in.Tolerations, &out.Tolerations
-		*out = make([]v1.Toleration, len(*in))
+		*out = make([]corev1.Toleration, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
 	if in.TopologySpreadConstraints != nil {
 		in, out := &in.TopologySpreadConstraints, &out.TopologySpreadConstraints
-		*out = make([]v1.TopologySpreadConstraint, len(*in))
+		*out = make([]corev1.TopologySpreadConstraint, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
 	if in.ReadinessProbe != nil {
 		in, out := &in.ReadinessProbe, &out.ReadinessProbe
-		*out = new(v1.Probe)
+		*out = new(corev1.Probe)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.LivenessProbe != nil {
 		in, out := &in.LivenessProbe, &out.LivenessProbe
-		*out = new(v1.Probe)
+		*out = new(corev1.Probe)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.PDB != nil {
@@ -217,7 +217,7 @@ func (in *Database) DeepCopyInto(out *Database) {
 	}
 	if in.Tolerations != nil {
 		in, out := &in.Tolerations, &out.Tolerations
-		*out = make([]v1.Toleration, len(*in))
+		*out = make([]corev1.Toleration, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -229,12 +229,12 @@ func (in *Database) DeepCopyInto(out *Database) {
 	}
 	if in.ReadinessProbe != nil {
 		in, out := &in.ReadinessProbe, &out.ReadinessProbe
-		*out = new(v1.Probe)
+		*out = new(corev1.Probe)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.LivenessProbe != nil {
 		in, out := &in.LivenessProbe, &out.LivenessProbe
-		*out = new(v1.Probe)
+		*out = new(corev1.Probe)
 		(*in).DeepCopyInto(*out)
 	}
 }
@@ -355,7 +355,7 @@ func (in *PulpBackupStatus) DeepCopyInto(out *PulpBackupStatus) {
 	*out = *in
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
-		*out = make([]metav1.Condition, len(*in))
+		*out = make([]v1.Condition, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -483,7 +483,7 @@ func (in *PulpRestoreStatus) DeepCopyInto(out *PulpRestoreStatus) {
 	*out = *in
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
-		*out = make([]metav1.Condition, len(*in))
+		*out = make([]v1.Condition, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -546,7 +546,7 @@ func (in *PulpStatus) DeepCopyInto(out *PulpStatus) {
 	*out = *in
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
-		*out = make([]metav1.Condition, len(*in))
+		*out = make([]v1.Condition, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -569,12 +569,12 @@ func (in *Web) DeepCopyInto(out *Web) {
 	in.ResourceRequirements.DeepCopyInto(&out.ResourceRequirements)
 	if in.ReadinessProbe != nil {
 		in, out := &in.ReadinessProbe, &out.ReadinessProbe
-		*out = new(v1.Probe)
+		*out = new(corev1.Probe)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.LivenessProbe != nil {
 		in, out := &in.LivenessProbe, &out.LivenessProbe
-		*out = new(v1.Probe)
+		*out = new(corev1.Probe)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.NodeSelector != nil {
@@ -615,26 +615,26 @@ func (in *Worker) DeepCopyInto(out *Worker) {
 	}
 	if in.Tolerations != nil {
 		in, out := &in.Tolerations, &out.Tolerations
-		*out = make([]v1.Toleration, len(*in))
+		*out = make([]corev1.Toleration, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
 	if in.TopologySpreadConstraints != nil {
 		in, out := &in.TopologySpreadConstraints, &out.TopologySpreadConstraints
-		*out = make([]v1.TopologySpreadConstraint, len(*in))
+		*out = make([]corev1.TopologySpreadConstraint, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
 	if in.ReadinessProbe != nil {
 		in, out := &in.ReadinessProbe, &out.ReadinessProbe
-		*out = new(v1.Probe)
+		*out = new(corev1.Probe)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.LivenessProbe != nil {
 		in, out := &in.LivenessProbe, &out.LivenessProbe
-		*out = new(v1.Probe)
+		*out = new(corev1.Probe)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.PDB != nil {

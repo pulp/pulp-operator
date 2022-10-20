@@ -1,4 +1,4 @@
-package pulp
+package repo_manager
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 )
 
 // ssoConfig sets the configurations needed to authenticate pulp through keycloak
-func (r *PulpReconciler) ssoConfig(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, pulpSettings *string) error {
+func (r *RepoManagerReconciler) ssoConfig(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, pulpSettings *string) error {
 	log := r.RawLogger
 
 	// Check for specified sso configuration secret
