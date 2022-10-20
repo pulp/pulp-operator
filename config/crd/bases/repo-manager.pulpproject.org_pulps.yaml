@@ -1487,7 +1487,8 @@ spec:
                     description: 'The image name for the redis image. [default: "redis:latest"]'
                     type: string
                   redis_port:
-                    description: 'The port for Redis. [default: 6379]'
+                    description: 'The port that will be exposed by Redis Service.
+                      [default: 6379]'
                     type: integer
                   redis_resource_requirements:
                     description: Resource requirements for the Redis container
