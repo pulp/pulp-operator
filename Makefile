@@ -70,6 +70,11 @@ endif
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
+CR_KIND ?= Pulp
+LOWER_CR_KIND = $(shell echo $(CR_KIND) | tr A-Z a-z)
+CR_PLURAL ?= pulps
+CR_DOMAIN ?= pulpproject.org
+
 .PHONY: all
 all: build
 
@@ -95,9 +100,9 @@ help: ## Display this help.
 .PHONY: manifests
 manifests: controller-gen crd-to-markdown ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-	$(CRD_MARKDOWN) -f api/v1alpha1/repo_manager_types.go -n Pulp > controllers/repo_manager/README.md
-	$(CRD_MARKDOWN) -f api/v1alpha1/repo_manager_backup_types.go -n PulpBackup > controllers/backup/README.md
-	$(CRD_MARKDOWN) -f api/v1alpha1/repo_manager_restore_types.go -n PulpRestore > controllers/restore/README.md
+	$(CRD_MARKDOWN) -f api/v1alpha1/repo_manager_types.go -n $(CR_KIND) > controllers/repo_manager/README.md
+	$(CRD_MARKDOWN) -f api/v1alpha1/repo_manager_backup_types.go -n $(CR_KIND)Backup > controllers/backup/README.md
+	$(CRD_MARKDOWN) -f api/v1alpha1/repo_manager_restore_types.go -n $(CR_KIND)Restore > controllers/restore/README.md
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -132,6 +137,29 @@ endif
 build: generate fmt vet ## Build manager binary.
 	go build -o bin/manager main.go
 
+.PHONY: rename
+rename: ## Replace Custom Resource name
+	find api/v1alpha1/*_types.go -exec sed -i "s/Pulp/${CR_KIND}/g" {} \;
+	find controllers/*.go -exec sed -i "s/Pulp/${CR_KIND}/g" {} \;
+	find controllers/*/*.go -exec sed -i "s/Pulp/${CR_KIND}/g" {} \;
+	find config/samples/*.yaml -exec sed -i "s/Pulp/${CR_KIND}/g" {} \;
+	sed -i "s/Pulp/${CR_KIND}/g" PROJECT
+	sed -i "s/pulpproject.org/${CR_DOMAIN}/g" PROJECT main.go
+	find api/v1alpha1/* -exec sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" {} \;
+	find bundle/manifests/* -exec sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" {} \;
+	find config/*/* -exec sed -i "s/pulps/${CR_PLURAL}/g" {} \;
+	find config/*/* -exec sed -i "s/pulprestores/${LOWER_CR_KIND}restores/g" {} \;
+	find config/*/* -exec sed -i "s/pulpbackups/${LOWER_CR_KIND}backups/g" {} \;
+	find config/*/* -exec sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" {} \;
+	find controllers/*/*.go -exec sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" {} \;
+	sed -i "s/default:=\"pulp\"/default:=\"${LOWER_CR_KIND}\"/" api/v1alpha1/repo_manager_types.go
+	mv config/crd/bases/repo-manager.pulpproject.org_pulps.yaml config/crd/bases/repo-manager.${CR_DOMAIN}_${CR_PLURAL}.yaml
+	mv config/crd/bases/repo-manager.pulpproject.org_pulpbackups.yaml config/crd/bases/repo-manager.${CR_DOMAIN}_${LOWER_CR_KIND}backups.yaml
+	mv config/crd/bases/repo-manager.pulpproject.org_pulprestores.yaml config/crd/bases/repo-manager.${CR_DOMAIN}_${LOWER_CR_KIND}restores.yaml
+	mv bundle/manifests/repo-manager.pulpproject.org_pulps.yaml bundle/manifests/repo-manager.${CR_DOMAIN}_${CR_PLURAL}.yaml
+	mv bundle/manifests/repo-manager.pulpproject.org_pulpbackups.yaml bundle/manifests/repo-manager.${CR_DOMAIN}_${LOWER_CR_KIND}backups.yaml
+	mv bundle/manifests/repo-manager.pulpproject.org_pulprestores.yaml bundle/manifests/repo-manager.${CR_DOMAIN}_${LOWER_CR_KIND}restores.yaml
+
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
@@ -160,7 +188,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 
 .PHONY: local
 local: kustomize ## Run controller in the K8s cluster specified in ~/.kube/config.
-	.ci/scripts/local.sh
+	.ci/scripts/local.sh $(CR_KIND) $(CR_DOMAIN) $(CR_PLURAL)
 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
@@ -184,6 +212,7 @@ KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 CRD_MARKDOWN ?= $(LOCALBIN)/crd-to-markdown
+SDK_BIN = $(LOCALBIN)/operator-sdk
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v3.8.7
@@ -211,12 +240,28 @@ envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
 $(ENVTEST): $(LOCALBIN)
 	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
+.PHONY: sdkbin
+sdkbin: ## Download operator-sdk locally if necessary, preferring the $(pwd)/bin path over global if both exist.
+ifeq (,$(wildcard $(SDK_BIN)))
+ifeq (,$(shell which operator-sdk 2>/dev/null))
+	@{ \
+	set -e ;\
+	mkdir -p $(dir $(SDK_BIN)) ;\
+	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
+	curl -sSLo $(SDK_BIN) https://github.com/operator-framework/operator-sdk/releases/download/v1.24.1/operator-sdk_$${OS}_$${ARCH} ;\
+	chmod +x $(SDK_BIN) ;\
+	}
+else
+SDK_BIN = $(shell which operator-sdk)
+endif
+endif
+
 .PHONY: bundle
-bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
-	operator-sdk generate kustomize manifests -q
+bundle: sdkbin manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
+	$(SDK_BIN) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle $(BUNDLE_GEN_FLAGS)
-	operator-sdk bundle validate ./bundle
+	$(KUSTOMIZE) build config/manifests | $(SDK_BIN) generate bundle $(BUNDLE_GEN_FLAGS)
+	$(SDK_BIN) bundle validate ./bundle
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
