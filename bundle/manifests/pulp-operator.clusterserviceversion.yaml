@@ -360,7 +360,7 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Api
         path: api
-      - description: Defines various deployment affinities.
+      - description: Affinity is a group of affinity scheduling rules.
         displayName: Affinity
         path: api.affinity
         x-descriptors:
@@ -434,7 +434,7 @@ spec:
         path: cache
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - description: Defines various deployment affinities.
+      - description: Affinity is a group of affinity scheduling rules.
         displayName: Affinity
         path: cache.affinity
         x-descriptors:
@@ -482,7 +482,7 @@ spec:
         path: cache.redis_image
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: 'The port for Redis. [default: 6379]'
+      - description: 'The port that will be exposed by Redis Service. [default: 6379]'
         displayName: Redis Port
         path: cache.redis_port
         x-descriptors:
@@ -528,7 +528,7 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Content
         path: content
-      - description: Defines various deployment affinities.
+      - description: Affinity is a group of affinity scheduling rules.
         displayName: Affinity
         path: content.affinity
         x-descriptors:
@@ -602,7 +602,7 @@ spec:
         path: database
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Defines various deployment affinities.
+      - description: Affinity is a group of affinity scheduling rules.
         displayName: Affinity
         path: database.affinity
         x-descriptors:
@@ -920,7 +920,7 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Worker
         path: worker
-      - description: Defines various deployment affinities.
+      - description: Affinity is a group of affinity scheduling rules.
         displayName: Affinity
         path: worker.affinity
         x-descriptors:

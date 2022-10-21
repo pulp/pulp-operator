@@ -254,11 +254,6 @@ type PulpSpec struct {
 	TrustedCa bool `json:"mount_trusted_ca,omitempty"`
 }
 
-type Affinity struct {
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:nodeAffinity","urn:alm:descriptor:com.tectonic.ui:advanced"}
-	*corev1.NodeAffinity `json:"nodeAffinity,omitempty" protobuf:"bytes,1,opt,name=nodeAffinity"`
-}
-
 type Api struct {
 
 	// Size is the size of number of pulp-api replicas.
@@ -269,10 +264,10 @@ type Api struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:podCount"}
 	Replicas int32 `json:"replicas"`
 
-	// Defines various deployment affinities.
+	// Affinity is a group of affinity scheduling rules.
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	Affinity Affinity `json:"affinity,omitempty"`
+	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 
 	// NodeSelector for the Pulp pods.
 	// +kubebuilder:validation:Optional
@@ -342,10 +337,10 @@ type Content struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
 
-	// Defines various deployment affinities.
+	// Affinity is a group of affinity scheduling rules.
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	Affinity Affinity `json:"affinity,omitempty"`
+	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 
 	// NodeSelector for the Pulp pods.
 	// +kubebuilder:validation:Optional
@@ -410,10 +405,10 @@ type Worker struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
 
-	// Defines various deployment affinities.
+	// Affinity is a group of affinity scheduling rules.
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	Affinity Affinity `json:"affinity,omitempty"`
+	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 
 	// NodeSelector for the Pulp pods.
 	// +kubebuilder:validation:Optional
@@ -541,10 +536,10 @@ type Database struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ResourceRequirements corev1.ResourceRequirements `json:"postgres_resource_requirements,omitempty"`
 
-	// Defines various deployment affinities.
+	// Affinity is a group of affinity scheduling rules.
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	Affinity Affinity `json:"affinity,omitempty"`
+	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 
 	// NodeSelector for the database pod.
 	// +kubebuilder:validation:Optional
@@ -640,10 +635,10 @@ type Cache struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Probe","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	LivenessProbe *corev1.Probe `json:"livenessProbe,omitempty"`
 
-	// Defines various deployment affinities.
+	// Affinity is a group of affinity scheduling rules.
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	Affinity Affinity `json:"affinity,omitempty"`
+	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 
 	// Node tolerations for the Pulp pods.
 	// +kubebuilder:validation:Optional

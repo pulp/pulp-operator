@@ -5,7 +5,6 @@
 
 ### Sub Resources
 
-* [Affinity](#affinity)
 * [Api](#api)
 * [Cache](#cache)
 * [Content](#content)
@@ -16,16 +15,6 @@
 * [Web](#web)
 * [Worker](#worker)
 
-#### Affinity
-
-
-
-| Field | Description | Scheme | Required |
-| ----- | ----------- | ------ | -------- |
-| nodeAffinity |  | *corev1.NodeAffinity | false |
-
-[Back to Custom Resources](#custom-resources)
-
 #### Api
 
 
@@ -33,7 +22,7 @@
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
 | replicas | Size is the size of number of pulp-api replicas. | int32 | true |
-| affinity | Defines various deployment affinities. | [Affinity](#affinity) | false |
+| affinity | Affinity is a group of affinity scheduling rules. | *corev1.Affinity | false |
 | node_selector | NodeSelector for the Pulp pods. | map[string]string | false |
 | tolerations | Node tolerations for the Pulp pods. | []corev1.Toleration | false |
 | topology_spread_constraints | Topology rule(s) for the pods. | []corev1.TopologySpreadConstraint | false |
@@ -62,7 +51,7 @@
 | pvc | PersistenVolumeClaim name that will be used by Redis pods If defined, the PVC must be provisioned by the user and the operator will only configure the deployment to use it | string | false |
 | readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |
 | livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
-| affinity | Defines various deployment affinities. | [Affinity](#affinity) | false |
+| affinity | Affinity is a group of affinity scheduling rules. | *corev1.Affinity | false |
 | tolerations | Node tolerations for the Pulp pods. | []corev1.Toleration | false |
 | node_selector | NodeSelector for the Pulp pods. | map[string]string | false |
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
@@ -77,7 +66,7 @@
 | ----- | ----------- | ------ | -------- |
 | replicas | Size is the size of number of pulp-content replicas | int32 | true |
 | resource_requirements | Resource requirements for the pulp-content container | corev1.ResourceRequirements | false |
-| affinity | Defines various deployment affinities. | [Affinity](#affinity) | false |
+| affinity | Affinity is a group of affinity scheduling rules. | *corev1.Affinity | false |
 | node_selector | NodeSelector for the Pulp pods. | map[string]string | false |
 | tolerations | Node tolerations for the Pulp pods. | []corev1.Toleration | false |
 | topology_spread_constraints | Topology rule(s) for the pods. | []corev1.TopologySpreadConstraint | false |
@@ -106,7 +95,7 @@
 | postgres_initdb_args | Arguments to pass to PostgreSQL initdb command when creating a new cluster. [default: \"--auth-host=scram-sha-256\"] | string | false |
 | postgres_host_auth_method | PostgreSQL host authentication method [default: \"scram-sha-256\"] | string | false |
 | postgres_resource_requirements | Resource requirements for the database container. | corev1.ResourceRequirements | false |
-| affinity | Defines various deployment affinities. | [Affinity](#affinity) | false |
+| affinity | Affinity is a group of affinity scheduling rules. | *corev1.Affinity | false |
 | node_selector | NodeSelector for the database pod. | map[string]string | false |
 | tolerations | Node tolerations for the database pod. | []corev1.Toleration | false |
 | postgres_storage_requirements | Temporarily modifying it as a string to avoid an issue with backup and json.Unmarshal when set as resource.Quantity and no value passed on pulp CR, during backup steps json.Unmarshal is settings it with \"0\" | string | false |
@@ -232,7 +221,7 @@ PulpStatus defines the observed state of Pulp
 | ----- | ----------- | ------ | -------- |
 | replicas | Size is the size of number of pulp-worker replicas | int32 | true |
 | resource_requirements | Resource requirements for the pulp-api container | corev1.ResourceRequirements | false |
-| affinity | Defines various deployment affinities. | [Affinity](#affinity) | false |
+| affinity | Affinity is a group of affinity scheduling rules. | *corev1.Affinity | false |
 | node_selector | NodeSelector for the Pulp pods. | map[string]string | false |
 | tolerations | Node tolerations for the Pulp pods. | []corev1.Toleration | false |
 | topology_spread_constraints | Topology rule(s) for the pods. | []corev1.TopologySpreadConstraint | false |

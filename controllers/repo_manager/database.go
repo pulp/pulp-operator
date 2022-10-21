@@ -178,8 +178,8 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 	replicas := int32(1)
 
 	affinity := &corev1.Affinity{}
-	if m.Spec.Database.Affinity.NodeAffinity != nil {
-		affinity.NodeAffinity = m.Spec.Database.Affinity.NodeAffinity
+	if m.Spec.Database.Affinity != nil {
+		affinity = m.Spec.Database.Affinity
 	}
 
 	nodeSelector := map[string]string{}

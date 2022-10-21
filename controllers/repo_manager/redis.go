@@ -212,8 +212,8 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 	replicas := int32(1)
 
 	affinity := &corev1.Affinity{}
-	if m.Spec.Cache.Affinity.NodeAffinity != nil {
-		affinity.NodeAffinity = m.Spec.Cache.Affinity.NodeAffinity
+	if m.Spec.Cache.Affinity != nil {
+		affinity = m.Spec.Cache.Affinity
 	}
 
 	// if no strategy is defined in pulp CR we are setting `strategy.Type` with the

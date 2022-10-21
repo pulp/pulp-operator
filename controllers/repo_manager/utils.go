@@ -479,7 +479,8 @@ func deploymentModified(expectedState, currentState *appsv1.Deployment) bool {
 		!equality.Semantic.DeepEqual(expectedState.Spec.Template.Spec.NodeSelector, currentState.Spec.Template.Spec.NodeSelector) ||
 		!equality.Semantic.DeepEqual(expectedState.Spec.Template.Spec.Tolerations, currentState.Spec.Template.Spec.Tolerations) ||
 		!equality.Semantic.DeepEqual(expectedState.Spec.Template.Spec.TopologySpreadConstraints, currentState.Spec.Template.Spec.TopologySpreadConstraints) ||
-		!equality.Semantic.DeepEqual(expectedState.Spec.Template.Spec.Containers[0].Resources, currentState.Spec.Template.Spec.Containers[0].Resources) {
+		!equality.Semantic.DeepEqual(expectedState.Spec.Template.Spec.Containers[0].Resources, currentState.Spec.Template.Spec.Containers[0].Resources) ||
+		!equality.Semantic.DeepEqual(expectedState.Spec.Template.Spec.Affinity, currentState.Spec.Template.Spec.Affinity) {
 		return true
 	}
 	return false
