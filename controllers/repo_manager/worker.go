@@ -103,8 +103,8 @@ func (r *RepoManagerReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.P
 	replicas := m.Spec.Worker.Replicas
 
 	affinity := &corev1.Affinity{}
-	if m.Spec.Worker.Affinity.NodeAffinity != nil {
-		affinity.NodeAffinity = m.Spec.Worker.Affinity.NodeAffinity
+	if m.Spec.Worker.Affinity != nil {
+		affinity = m.Spec.Worker.Affinity
 	}
 
 	// if no strategy is defined in pulp CR we are setting `strategy.Type` with the

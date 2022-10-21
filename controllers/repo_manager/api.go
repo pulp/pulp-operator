@@ -339,8 +339,8 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 	ls := labelsForPulpApi(m)
 
 	affinity := &corev1.Affinity{}
-	if m.Spec.Api.Affinity.NodeAffinity != nil {
-		affinity.NodeAffinity = m.Spec.Api.Affinity.NodeAffinity
+	if m.Spec.Api.Affinity != nil {
+		affinity = m.Spec.Api.Affinity
 	}
 
 	// if no strategy is defined in pulp CR we are setting `strategy.Type` with the
