@@ -1,1 +1,1 @@
-../controllers/pulp/README.md
+../controllers/repo_manager/README.md
