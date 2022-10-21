@@ -163,9 +163,12 @@ func genTokenAuthKey() (string, string) {
 	return privateKey, publicKey
 }
 
+// updateStatus will set the new condition value for a .status.conditions[]
+// it will also set Pulp-Operator-Finished-Execution to false
 func (r *RepoManagerReconciler) updateStatus(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, conditionStatus metav1.ConditionStatus, conditionType, conditionReason, conditionMessage string) {
 
 	// if we are updating a status it means that operator didn't finish its execution
+	// set Pulp-Operator-Finished-Execution to false
 	if v1.IsStatusConditionPresentAndEqual(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Operator-Finished-Execution", metav1.ConditionTrue) {
 		v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
 			Type:               cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Operator-Finished-Execution",
@@ -176,14 +179,19 @@ func (r *RepoManagerReconciler) updateStatus(ctx context.Context, pulp *repomana
 		})
 	}
 
-	v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
-		Type:               conditionType,
-		Status:             conditionStatus,
-		Reason:             conditionReason,
-		LastTransitionTime: metav1.Now(),
-		Message:            conditionMessage,
-	})
-	r.Status().Update(ctx, pulp)
+	// we will only update if the current condition is not as expected
+	if !v1.IsStatusConditionPresentAndEqual(pulp.Status.Conditions, conditionType, conditionStatus) {
+
+		v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
+			Type:               conditionType,
+			Status:             conditionStatus,
+			Reason:             conditionReason,
+			LastTransitionTime: metav1.Now(),
+			Message:            conditionMessage,
+		})
+
+		r.Status().Update(ctx, pulp)
+	}
 }
 
 // updatCRField patches fieldName in Pulp CR with fieldValue

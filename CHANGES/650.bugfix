@@ -1,0 +1,1 @@
+Fixed the backoff loop not incrementing exponentially on error.
