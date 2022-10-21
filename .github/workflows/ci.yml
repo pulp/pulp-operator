@@ -86,6 +86,7 @@ jobs:
           echo ::endgroup::
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
+          echo "TEST=pulp" >> $GITHUB_ENV
           echo "INGRESS_TYPE=${{ matrix.INGRESS_TYPE }}" >> $GITHUB_ENV
         shell: bash
       - name: Updating registries configuration
@@ -199,6 +200,7 @@ jobs:
           echo ::endgroup::
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
+          echo "TEST=galaxy" >> $GITHUB_ENV
           echo "CI_TEST_STORAGE=${{ matrix.STORAGE }}" >> $GITHUB_ENV
           echo "API_ROOT=/api/galaxy/pulp/" >> $GITHUB_ENV
         shell: bash
@@ -223,13 +225,15 @@ jobs:
         run: |
           make test
         shell: bash
+      - name: Rename kind to Galaxy
+        run: make rename manifests bundle generate CR_KIND=Galaxy CR_DOMAIN=ansible.com CR_PLURAL=galaxies
       - name: Prepare Object Storage
         run: |
           .ci/scripts/prepare-object-storage.sh
         shell: bash
       - name: Deploy pulp-operator to K8s
         run: |
-          make local
+          make local CR_KIND=Galaxy CR_DOMAIN=ansible.com CR_PLURAL=galaxies
           kubectl get namespace
           kubectl config set-context --current --namespace=pulp-operator-system
           kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
@@ -246,7 +250,7 @@ jobs:
           fi
         shell: bash
       - name: Check and wait pulp-operator deploy
-        run: kubectl wait --for condition=Galaxy-Operator-Finished-Execution pulp/galaxy-example --timeout=600s
+        run: kubectl wait --for condition=Galaxy-Operator-Finished-Execution galaxy/galaxy-example --timeout=600s
         shell: bash
       - name: KubeLinter
         if: github.event_name == 'pull_request'
@@ -300,8 +304,6 @@ jobs:
         shell: bash
       - name: Build images
         run: |
-          sudo wget https://github.com/operator-framework/operator-sdk/releases/download/v1.23.0/operator-sdk_linux_amd64 -O /usr/local/bin/operator-sdk
-          sudo chmod +x /usr/local/bin/operator-sdk
           make manifests bundle docker-build bundle-build catalog-build
         shell: bash
       - name: Quay login

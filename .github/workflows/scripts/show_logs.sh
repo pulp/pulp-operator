@@ -18,7 +18,7 @@ kubectl get events --sort-by='.metadata.creationTimestamp'
 echo ::endgroup::
 
 echo ::group::OBJECTS
-kubectl get pulp,pvc,configmap,serviceaccount,secret,networkpolicy,ingress,service,deployment,statefulset,hpa,job,cronjob -o yaml
+kubectl get ${TEST:-pulp},pvc,configmap,serviceaccount,secret,networkpolicy,ingress,service,deployment,statefulset,hpa,job,cronjob -o yaml
 echo ::endgroup::
 
 echo ::group::OPERATOR_LOGS

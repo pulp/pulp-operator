@@ -186,10 +186,6 @@ func ContainerExec[T any](client T, pod *corev1.Pod, command []string, container
 	return result, nil
 }
 
-type PulpClient struct {
-	client.Client
-}
-
 // isNginxIngressSupported returns true if Nginx Ingress Controller is set
 func IsNginxIngressSupported[T any](resource T) bool {
 	// get the concrete value of client ({PulpBackup,RepoManagerBackupReconciler,RepoManagerRestoreReconciler})
