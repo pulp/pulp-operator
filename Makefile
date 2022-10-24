@@ -1,3 +1,10 @@
+CR_KIND ?= Pulp
+LOWER_CR_KIND = $(shell echo $(CR_KIND) | tr A-Z a-z)
+CR_PLURAL ?= pulps
+CR_DOMAIN ?= pulpproject.org
+APP_IMAGE ?= quay.io/pulp/pulp
+WEB_IMAGE ?= quay.io/pulp/pulp-web
+
 # VERSION defines the project version for the bundle.
 # Update this value when you upgrade the version of your project.
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
@@ -32,7 +39,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 # For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
 # pulpproject.org/pulp-operator-bundle:$VERSION and pulpproject.org/pulp-operator-catalog:$VERSION.
 #IMAGE_TAG_BASE ?= pulpproject.org/pulp-operator
-IMAGE_TAG_BASE ?= quay.io/pulp/pulp-operator
+IMAGE_TAG_BASE ?= quay.io/pulp/$(LOWER_CR_KIND)-operator
 
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
@@ -51,7 +58,7 @@ endif
 
 # Image URL to use all building/pushing image targets
 IMG ?= $(IMAGE_TAG_BASE):v$(VERSION)
-NAMESPACE ?= pulp-operator-system
+NAMESPACE ?= $(LOWER_CR_KIND)-operator-system
 WATCH_NAMESPACE ?= $(NAMESPACE)
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
@@ -69,11 +76,6 @@ endif
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
-
-CR_KIND ?= Pulp
-LOWER_CR_KIND = $(shell echo $(CR_KIND) | tr A-Z a-z)
-CR_PLURAL ?= pulps
-CR_DOMAIN ?= pulpproject.org
 
 .PHONY: all
 all: build
@@ -150,9 +152,16 @@ rename: ## Replace Custom Resource name
 	find config/*/* -exec sed -i "s/pulps/${CR_PLURAL}/g" {} \;
 	find config/*/* -exec sed -i "s/pulprestores/${LOWER_CR_KIND}restores/g" {} \;
 	find config/*/* -exec sed -i "s/pulpbackups/${LOWER_CR_KIND}backups/g" {} \;
+	sed -i "s/pulp/${LOWER_CR_KIND}/g" config/default/kustomization.yaml
+	find config/*/* -exec sed -i "s/3b5210cd.pulpproject.org/3b5210cd.${CR_DOMAIN}/g" {} \;
 	find config/*/* -exec sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" {} \;
 	find controllers/*/*.go -exec sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" {} \;
+	find controllers/*/*.go -exec sed -i "s/pulps/${CR_PLURAL}/g" {} \;
+	find controllers/*/*.go -exec sed -i "s/pulpbackup/${LOWER_CR_KIND}backup/g" {} \;
+	find controllers/*/*.go -exec sed -i "s/pulprestore/${LOWER_CR_KIND}restore/g" {} \;
 	sed -i "s/default:=\"pulp\"/default:=\"${LOWER_CR_KIND}\"/" api/v1alpha1/repo_manager_types.go
+	sed -i "s|quay.io/pulp/pulp|${APP_IMAGE}|g" api/v1alpha1/repo_manager_types.go
+	sed -i "s|quay.io/pulp/pulp-web|${WEB_IMAGE}|g" api/v1alpha1/repo_manager_types.go
 	mv config/crd/bases/repo-manager.pulpproject.org_pulps.yaml config/crd/bases/repo-manager.${CR_DOMAIN}_${CR_PLURAL}.yaml
 	mv config/crd/bases/repo-manager.pulpproject.org_pulpbackups.yaml config/crd/bases/repo-manager.${CR_DOMAIN}_${LOWER_CR_KIND}backups.yaml
 	mv config/crd/bases/repo-manager.pulpproject.org_pulprestores.yaml config/crd/bases/repo-manager.${CR_DOMAIN}_${LOWER_CR_KIND}restores.yaml
@@ -188,7 +197,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 
 .PHONY: local
 local: kustomize ## Run controller in the K8s cluster specified in ~/.kube/config.
-	.ci/scripts/local.sh $(CR_KIND) $(CR_DOMAIN) $(CR_PLURAL)
+	.ci/scripts/local.sh $(CR_KIND) $(CR_DOMAIN) $(CR_PLURAL) $(APP_IMAGE) $(WEB_IMAGE)
 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
