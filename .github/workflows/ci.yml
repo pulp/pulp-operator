@@ -226,7 +226,7 @@ jobs:
           make test
         shell: bash
       - name: Rename kind to Galaxy
-        run: make rename manifests bundle generate CR_KIND=Galaxy CR_DOMAIN=ansible.com CR_PLURAL=galaxies
+        run: make rename manifests bundle generate CR_KIND=Galaxy CR_DOMAIN=ansible.com CR_PLURAL=galaxies APP_IMAGE=quay.io/pulp/galaxy WEB_IMAGE=quay.io/pulp/galaxy-web
       - name: Prepare Object Storage
         run: |
           .ci/scripts/prepare-object-storage.sh
