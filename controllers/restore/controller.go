@@ -40,10 +40,10 @@ type RepoManagerRestoreReconciler struct {
 	Scheme     *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,namespace=pulp,resources=pulprestores,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,namespace=pulp,resources=pulprestores/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,namespace=pulp,resources=pulprestores/finalizers,verbs=update
-//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,namespace=pulp,resources=pulpbackup;pulp,verbs=get;list;
+//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,namespace=pulp-operator-system,resources=pulprestores,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,namespace=pulp-operator-system,resources=pulprestores/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,namespace=pulp-operator-system,resources=pulprestores/finalizers,verbs=update
+//+kubebuilder:rbac:groups=repo-manager.pulpproject.org,namespace=pulp-operator-system,resources=pulpbackups;pulps,verbs=get;list;
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
