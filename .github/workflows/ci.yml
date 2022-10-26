@@ -75,6 +75,9 @@ jobs:
 
   components:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        IMAGE: [minimal, s6]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -94,6 +97,7 @@ jobs:
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
           echo "IMG=quay.io/pulp/pulp-operator:devel" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
+          echo "CI_TEST_IMAGE=${{ matrix.IMAGE }}" >> $GITHUB_ENV
         shell: bash
       - name: Start minikube
         run: |
@@ -151,8 +155,13 @@ jobs:
       matrix:
         include:
           - STORAGE: filesystem
+            IMAGE: minimal
+          - STORAGE: filesystem
+            IMAGE: s6
           - STORAGE: azure
+            IMAGE: minimal
           - STORAGE: s3
+            IMAGE: minimal
     steps:
       - uses: actions/checkout@v2
         with:
@@ -173,6 +182,7 @@ jobs:
           echo "IMG=quay.io/pulp/pulp-operator:devel" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
           echo "CI_TEST_STORAGE=${{ matrix.STORAGE }}" >> $GITHUB_ENV
+          echo "CI_TEST_IMAGE=${{ matrix.IMAGE }}" >> $GITHUB_ENV
           echo "API_ROOT=/api/galaxy/pulp/" >> $GITHUB_ENV
         shell: bash
       - name: Start minikube

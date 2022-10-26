@@ -3,7 +3,7 @@ kind: Pulp
 metadata:
   name: ocp-example
 spec:
-  image: quay.io/pulp/galaxy
+  image: quay.io/pulp/galaxy-minimal
   image_web: quay.io/pulp/galaxy-web
   no_log: false
   admin_password_secret: "example-pulp-admin-password"
