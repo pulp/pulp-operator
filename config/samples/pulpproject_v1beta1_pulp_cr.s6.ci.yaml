@@ -4,8 +4,8 @@ metadata:
   name: example-pulp
 #spec:
   # The registry to grab the pulp image from.
-# image: quay.io/pulp/pulp-minimal
-# image_version: stable
+  image: quay.io/pulp/pulp
+  image_version: stable
 
 # Pulp settings.
 # pulp_settings:

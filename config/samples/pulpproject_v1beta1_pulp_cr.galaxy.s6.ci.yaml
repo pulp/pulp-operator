@@ -1,35 +1,53 @@
 apiVersion: pulp.pulpproject.org/v1beta1
 kind: Pulp
 metadata:
-  name: galaxy-demo
+  name: example-pulp
 spec:
-  ingress_type: Ingress
-  image: quay.io/pulp/galaxy-minimal
-  image_version: stable
+  image: quay.io/pulp/pulp-galaxy-ng
+  image_version: latest
   image_web: quay.io/pulp/galaxy-web
-  image_web_version: stable
+  image_web_version: nightly
+  no_log: false
   admin_password_secret: "example-pulp-admin-password"
-  container_token_secret: "container-auth"
+  signing_secret: "signing-galaxy"
+  signing_scripts_configmap: "signing-scripts"
   storage_type: File
+  ingress_type: nodeport
   # k3s local-path requires this
   file_storage_access_mode: "ReadWriteMany"
   # We have a little over 10GB free on GHA VMs/instances
   file_storage_size: "10Gi"
+  pulp_settings:
+    api_root: "/api/galaxy/pulp/"
+    allowed_export_paths:
+      - /tmp
+    allowed_import_paths:
+      - /tmp
+    telemetry: false
   content:
     replicas: 1
     resource_requirements:
       requests:
         cpu: 150m
         memory: 256Mi
+      limits:
+        cpu: 800m
+        memory: 1Gi
   worker:
     replicas: 1
     resource_requirements:
       requests:
         cpu: 150m
         memory: 256Mi
+      limits:
+        cpu: 800m
+        memory: 1Gi
   web:
     replicas: 1
     resource_requirements:
       requests:
         cpu: 100m
         memory: 256Mi
+      limits:
+        cpu: 800m
+        memory: 1Gi

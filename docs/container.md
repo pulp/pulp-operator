@@ -1,6 +1,6 @@
 # Containers
 
-## Pulp
+## Pulp Minimal
 
 An all-in-one [pulp](https://github.com/pulp/pulpcore) image that can assume each of the following types of service:
 
@@ -25,7 +25,7 @@ Currently built with the following plugins:
 
 ### Tags
 
-* `latest`: Built nightly, with master/main branches of each plugin.
+* `nightly`: Built nightly, with master/main branches of each plugin.
 * `stable`: Built on push, with latest released version of each plugin.
 * `3.y.z`:  Pulpcore 3.y.z version and its compatible plugins.
 
@@ -39,14 +39,14 @@ with pulpcore and plugins specific configuration.
 
 ### Tags
 
-* `latest`: Built nightly, with master/main branches of [pulpcore](https://github.com/pulp/pulpcore) and its plugins.
+* `nightly`: Built nightly, with master/main branches of [pulpcore](https://github.com/pulp/pulpcore) and its plugins.
 * `stable`: Built on push, with latest released version of each plugin.
 * `3.y.z`:  Pulpcore 3.y.z version and its compatible plugins.
 
 [https://quay.io/repository/pulp/pulp-web?tab=tags](https://quay.io/repository/pulp/pulp-web?tab=tags)
 
 
-## Galaxy
+## Galaxy Minimal
 
 An all-in-one [galaxy](https://github.com/ansible/galaxy_ng) image that can assume each of the following types of service:
 
@@ -61,7 +61,7 @@ An all-in-one [galaxy](https://github.com/ansible/galaxy_ng) image that can assu
 
 ### Tags
 
-* `latest`: Built nightly, with master branch of [galaxy](https://github.com/ansible/galaxy_ng).
+* `nightly`: Built nightly, with master branch of [galaxy](https://github.com/ansible/galaxy_ng).
 * `stable`: Built on push, with latest released version of galaxy.
 * `4.y.z`:  Galaxy 4.y.z version.
 
@@ -75,7 +75,7 @@ with galaxy specific configuration.
 
 ### Tags
 
-* `latest`: Built nightly, with master branch of galaxy.
+* `nightly`: Built nightly, with master branch of galaxy.
 * `stable`: Built on push, with latest released version of galaxy.
 * `4.y.z`:  Galaxy 4.y.z version.
 

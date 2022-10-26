@@ -67,6 +67,13 @@ elif [[ "$CI_TEST_STORAGE" == "s3" ]]; then
   $KUBECTL apply -f $KUBE_ASSETS_DIR/pulp-admin-password.secret.yaml
   echo "Will deploy container auth secret for testing ..."
   $KUBECTL apply -f $KUBE_ASSETS_DIR/pulp-container-auth.secret.yaml
+elif [[ "$CI_TEST" == "galaxy" && "$CI_TEST_IMAGE" == "s6" ]]; then
+  CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.galaxy.s6.ci.yaml
+  echo "Will deploy admin password secret for testing ..."
+  $KUBECTL apply -f $KUBE_ASSETS_DIR/pulp-admin-password.secret.yaml
+  echo "Will deploy signing secret for testing ..."
+  $KUBECTL apply -f $KUBE_ASSETS_DIR/galaxy_sign.secret.yaml
+  $KUBECTL apply -f $KUBE_ASSETS_DIR/signing_scripts.configmap.yaml
 elif [[ "$CI_TEST" == "galaxy" ]]; then
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.galaxy.ci.yaml
   echo "Will deploy admin password secret for testing ..."
@@ -80,6 +87,8 @@ elif [[ "$CI_TEST" == "galaxy-container" ]]; then
   $KUBECTL apply -f $KUBE_ASSETS_DIR/pulp-admin-password.secret.yaml
   echo "Will deploy container auth secret for testing ..."
   $KUBECTL apply -f $KUBE_ASSETS_DIR/pulp-container-auth.secret.yaml
+elif [[ "$CI_TEST_IMAGE" == "s6" ]]; then
+  CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.s6.ci.yaml
 elif [[ "$(hostname)" == "pulp-demo"* ]]; then
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.pulp-demo.yaml
 else
