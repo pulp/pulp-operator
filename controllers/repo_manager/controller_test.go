@@ -30,13 +30,13 @@ import (
 )
 
 const (
-	PulpName      = "pulp-operator"
-	PulpNamespace = "default"
-	StsName       = "pulp-operator-database"
-	ApiName       = "pulp-operator-api"
-	ContentName   = "pulp-operator-content"
-	WorkerName    = "pulp-operator-worker"
 	OperatorType  = "pulp"
+	PulpName      = OperatorType + "-operator"
+	PulpNamespace = "default"
+	StsName       = PulpName + "-database"
+	ApiName       = PulpName + "-api"
+	ContentName   = PulpName + "-content"
+	WorkerName    = PulpName + "-worker"
 
 	timeout  = time.Second
 	interval = time.Millisecond * 250
@@ -52,7 +52,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		"app.kubernetes.io/instance":   "postgres-" + PulpName,
 		"app.kubernetes.io/component":  "database",
 		"app.kubernetes.io/part-of":    OperatorType,
-		"app.kubernetes.io/managed-by": OperatorType + "-operator",
+		"app.kubernetes.io/managed-by": PulpName,
 		"owner":                        "pulp-dev",
 		"app":                          "postgresql",
 		"pulp_cr":                      PulpName,
@@ -63,7 +63,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		"app.kubernetes.io/instance":   OperatorType + "-api-" + PulpName,
 		"app.kubernetes.io/component":  "api",
 		"app.kubernetes.io/part-of":    OperatorType,
-		"app.kubernetes.io/managed-by": OperatorType + "-operator",
+		"app.kubernetes.io/managed-by": PulpName,
 		"app":                          "pulp-api",
 		"pulp_cr":                      PulpName,
 	}
@@ -73,7 +73,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		"app.kubernetes.io/instance":   OperatorType + "-content-" + PulpName,
 		"app.kubernetes.io/component":  "content",
 		"app.kubernetes.io/part-of":    OperatorType,
-		"app.kubernetes.io/managed-by": OperatorType + "-operator",
+		"app.kubernetes.io/managed-by": PulpName,
 		"app":                          "pulp-content",
 		"pulp_cr":                      PulpName,
 	}
@@ -83,7 +83,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		"app.kubernetes.io/instance":   OperatorType + "-worker-" + PulpName,
 		"app.kubernetes.io/component":  "worker",
 		"app.kubernetes.io/part-of":    OperatorType,
-		"app.kubernetes.io/managed-by": OperatorType + "-operator",
+		"app.kubernetes.io/managed-by": PulpName,
 		"app":                          "pulp-worker",
 		"pulp_cr":                      PulpName,
 	}
@@ -482,7 +482,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				"app.kubernetes.io/instance":   "postgres-" + PulpName,
 				"app.kubernetes.io/component":  "database",
 				"app.kubernetes.io/part-of":    OperatorType,
-				"app.kubernetes.io/managed-by": OperatorType + "-operator",
+				"app.kubernetes.io/managed-by": PulpName,
 				"owner":                        "pulp-dev",
 			},
 		},
@@ -533,7 +533,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				"app.kubernetes.io/instance":   OperatorType + "-api-" + PulpName,
 				"app.kubernetes.io/component":  "api",
 				"app.kubernetes.io/part-of":    OperatorType,
-				"app.kubernetes.io/managed-by": OperatorType + "-operator",
+				"app.kubernetes.io/managed-by": PulpName,
 				"app":                          "pulp-api",
 				"pulp_cr":                      PulpName,
 				"owner":                        "pulp-dev",
@@ -580,7 +580,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				"app.kubernetes.io/instance":   OperatorType + "-content-" + PulpName,
 				"app.kubernetes.io/component":  "content",
 				"app.kubernetes.io/part-of":    OperatorType,
-				"app.kubernetes.io/managed-by": OperatorType + "-operator",
+				"app.kubernetes.io/managed-by": PulpName,
 				"app":                          "pulp-content",
 				"pulp_cr":                      PulpName,
 				"owner":                        "pulp-dev",
@@ -633,7 +633,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				"app.kubernetes.io/instance":   OperatorType + "-worker-" + PulpName,
 				"app.kubernetes.io/component":  "worker",
 				"app.kubernetes.io/part-of":    OperatorType,
-				"app.kubernetes.io/managed-by": OperatorType + "-operator",
+				"app.kubernetes.io/managed-by": PulpName,
 				"owner":                        "pulp-dev",
 			},
 		},
