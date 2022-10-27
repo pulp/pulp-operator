@@ -29,6 +29,11 @@ type PulpSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
+	// Define if the operator should stop managing Pulp resources.
+	// If set to true, the operator will not execute any task (it will be "disabled").
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	Unmanaged bool `json:"unmanaged,omitempty"`
+
 	// Name of the deployment type.
 	// +kubebuilder:default:="pulp"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
