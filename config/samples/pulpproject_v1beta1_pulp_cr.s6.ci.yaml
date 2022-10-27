@@ -2,65 +2,49 @@ apiVersion: pulp.pulpproject.org/v1beta1
 kind: Pulp
 metadata:
   name: example-pulp
-#spec:
-  # The registry to grab the pulp image from.
+spec:
   image: quay.io/pulp/pulp
-  image_version: stable
-
-# Pulp settings.
-# pulp_settings:
-#   debug: "True"
-#   AUTHENTICATION_BACKEND_PRESET: ldap
-#   AUTH_LDAP_SERVER_URI: "ldap://ldap:10389"
-#   AUTH_LDAP_BIND_DN: "cn=admin,dc=planetexpress,dc=com"
-#   AUTH_LDAP_BIND_PASSWORD: "GoodNewsEveryone"
-#   AUTH_LDAP_USER_SEARCH_BASE_DN: "ou=people,dc=planetexpress,dc=com"
-#   AUTH_LDAP_USER_SEARCH_SCOPE: "SUBTREE"
-#   AUTH_LDAP_USER_SEARCH_FILTER: "(uid=%(user)s)"
-#   AUTH_LDAP_GROUP_SEARCH_BASE_DN: "ou=people,dc=planetexpress,dc=com"
-#   AUTH_LDAP_GROUP_SEARCH_SCOPE: "SUBTREE"
-#   AUTH_LDAP_GROUP_SEARCH_FILTER :  "(objectClass=Group)"
-#   AUTH_LDAP_GROUP_TYPE_CLASS: "django_auth_ldap.config:GroupOfNamesType"
-  # The pulp adminstrator password secret.
-# admin_password_secret:
-  # PostgreSQL container settings secret.
-# postgres_configuration_secret: pg_secret_name
-  # Configuration for the persistentVolumeClaim for /var/lib/pulp
-# storage_type: File
-  # Select storage type: File, S3, Azure
-  # If your K8s cluster is only 1 node, and its StorageClass /
-  # provisioner does not support ReadWriteMany, then you must change
-  # this to "ReadWriteOnce".
-  #
-  # If your K8s cluster is multiple nodes, and does not support
-  # ReadWriteMany, then pulp-operator is currently incompatible.
-  #
-  # Reference on which support ReadWriteMany:
-  # https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes
-# file_storage_access_mode: "ReadWriteMany"
-
-  # How much space do you want to give Pulp for storing content under
-  # /var/lib/pulp ?
-  # https://docs.pulpproject.org/en/3.0/nightly/installation/configuration.html#media-root
-
-  # For reference, epel7 x86_64 is currently (2019-07) 30G. So 100G
-  # should be sufficient for a test deployment with only the RPM
-  # content plugin.
-# file_storage_size: "100Gi"
-# object_storage_s3_secret: example-pulp-object-storage
-  # Configuration for S3 credentals
-# object_storage_azure_secret: example-pulp-object-storage
-  # Configuration for Azure credentals
-  # Values below are set in roles rather than in playbook.yaml
-# api:
-#   replicas: 1
-#   log_level: INFO
-# content:
-#   replicas: 2
-#   log_level: INFO
-# worker:
-#   replicas: 2
-# resource_manager:
-    # Waiting on this to be implemented:
-    # https://pulp.plan.io/issues/3707
-#   replicas: 1
+  image_version: nightly
+  image_web_version: nightly
+  no_log: false
+  admin_password_secret: "example-pulp-admin-password"
+  storage_type: File
+  ingress_type: nodeport
+  # k3s local-path requires this
+  file_storage_access_mode: "ReadWriteMany"
+  # We have a little over 10GB free on GHA VMs/instances
+  file_storage_size: "10Gi"
+  container_token_secret: "container-auth"
+  pulp_settings:
+    allowed_export_paths:
+      - /tmp
+    allowed_import_paths:
+      - /tmp
+    telemetry: false
+  content:
+    replicas: 1
+    resource_requirements:
+      requests:
+        cpu: 150m
+        memory: 256Mi
+      limits:
+        cpu: 800m
+        memory: 1Gi
+  worker:
+    replicas: 1
+    resource_requirements:
+      requests:
+        cpu: 150m
+        memory: 256Mi
+      limits:
+        cpu: 800m
+        memory: 1Gi
+  web:
+    replicas: 1
+    resource_requirements:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 800m
+        memory: 1Gi

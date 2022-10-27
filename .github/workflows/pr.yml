@@ -75,6 +75,7 @@ jobs:
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
           echo "IMG=quay.io/pulp/pulp-operator:devel" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
+          echo "CI_TEST_IMAGE=minimal" >> $GITHUB_ENV
         shell: bash
       - name: Start minikube
         run: |
