@@ -218,6 +218,17 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		} else if pulpController.RequeueAfter > 0 {
 			return pulpController, nil
 		}
+
+		// remove redis resources if cache is not enabled
+	} else {
+		pulpController, err = r.deprovisionCache(ctx, pulp, log)
+		if err != nil {
+			return pulpController, err
+		} else if pulpController.Requeue {
+			return pulpController, nil
+		} else if pulpController.RequeueAfter > 0 {
+			return pulpController, nil
+		}
 	}
 
 	log.V(1).Info("Running API tasks")

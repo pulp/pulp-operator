@@ -5910,8 +5910,9 @@ spec:
                 - azure
                 type: string
               unmanaged:
-                description: Define if the operator should be disabled. If set to
-                  true, the operator will not execute any task (it will be "disabled").
+                description: Define if the operator should stop managing Pulp resources.
+                  If set to true, the operator will not execute any task (it will
+                  be "disabled").
                 type: boolean
               web:
                 properties:
