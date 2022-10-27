@@ -160,8 +160,10 @@ rename: ## Replace Custom Resource name
 	find controllers/*/*.go -exec sed -i "s/pulpbackup/${LOWER_CR_KIND}backup/g" {} \;
 	find controllers/*/*.go -exec sed -i "s/pulprestore/${LOWER_CR_KIND}restore/g" {} \;
 	sed -i "s/default:=\"pulp\"/default:=\"${LOWER_CR_KIND}\"/" api/v1alpha1/repo_manager_types.go
-	sed -i "s|quay.io/pulp/pulp|${APP_IMAGE}|g" api/v1alpha1/repo_manager_types.go
+	sed -i "s|quay.io/pulp/pulp-minimal|${APP_IMAGE}|g" api/v1alpha1/repo_manager_types.go
 	sed -i "s|quay.io/pulp/pulp-web|${WEB_IMAGE}|g" api/v1alpha1/repo_manager_types.go
+	sed -i '0,/OperatorType/s/OperatorType.*/OperatorType  = "${LOWER_CR_KIND}"/' controllers/repo_manager/controller_test.go
+	sed -i "s|quay.io/pulp/pulp-minimal|${APP_IMAGE}|g" controllers/repo_manager/controller_test.go
 	mv config/crd/bases/repo-manager.pulpproject.org_pulps.yaml config/crd/bases/repo-manager.${CR_DOMAIN}_${CR_PLURAL}.yaml
 	mv config/crd/bases/repo-manager.pulpproject.org_pulpbackups.yaml config/crd/bases/repo-manager.${CR_DOMAIN}_${LOWER_CR_KIND}backups.yaml
 	mv config/crd/bases/repo-manager.pulpproject.org_pulprestores.yaml config/crd/bases/repo-manager.${CR_DOMAIN}_${LOWER_CR_KIND}restores.yaml
