@@ -27,7 +27,7 @@ kind: Role
 metadata:
   creationTimestamp: null
   name: manager-role
-  namespace: pulp
+  namespace: pulp-operator-system
 rules:
 - apiGroups:
   - ""
@@ -124,21 +124,6 @@ rules:
 - apiGroups:
   - repo-manager.pulpproject.org
   resources:
-  - pulp
-  verbs:
-  - get
-  - list
-- apiGroups:
-  - repo-manager.pulpproject.org
-  resources:
-  - pulp
-  - pulpbackup
-  verbs:
-  - get
-  - list
-- apiGroups:
-  - repo-manager.pulpproject.org
-  resources:
   - pulpbackups
   verbs:
   - create
@@ -148,6 +133,14 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - repo-manager.pulpproject.org
+  resources:
+  - pulpbackups
+  - pulps
+  verbs:
+  - get
+  - list
 - apiGroups:
   - repo-manager.pulpproject.org
   resources:
