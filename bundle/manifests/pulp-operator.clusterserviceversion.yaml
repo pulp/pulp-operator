@@ -211,7 +211,7 @@ metadata:
     createdAt: "2021-03-26 16:57:40"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
-    operators.operatorframework.io/builder: operator-sdk-v1.24.1
+    operators.operatorframework.io/builder: operator-sdk-v1.25.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/pulp/pulp-operator
   name: pulp-operator.v1.0.0-alpha
@@ -1057,6 +1057,14 @@ spec:
           - list
           - watch
         - apiGroups:
+          - networking.k8s.io
+          resources:
+          - ingressclasses
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
           - authentication.k8s.io
           resources:
           - tokenreviews
@@ -1294,21 +1302,6 @@ spec:
         - apiGroups:
           - repo-manager.pulpproject.org
           resources:
-          - pulp
-          verbs:
-          - get
-          - list
-        - apiGroups:
-          - repo-manager.pulpproject.org
-          resources:
-          - pulp
-          - pulpbackup
-          verbs:
-          - get
-          - list
-        - apiGroups:
-          - repo-manager.pulpproject.org
-          resources:
           - pulpbackups
           verbs:
           - create
@@ -1318,6 +1311,14 @@ spec:
           - patch
           - update
           - watch
+        - apiGroups:
+          - repo-manager.pulpproject.org
+          resources:
+          - pulpbackups
+          - pulps
+          verbs:
+          - get
+          - list
         - apiGroups:
           - repo-manager.pulpproject.org
           resources:
