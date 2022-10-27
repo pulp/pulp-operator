@@ -29,6 +29,7 @@ nav:
   - Getting Started: quickstart.md
   - Contributing: contributing.md
   - Containers: container.md
+  - Architecture: architecture.md
   - Custom Resources:
       - Pulp: pulp.md
       - Pulp Backup: backup.md
