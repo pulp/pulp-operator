@@ -33,8 +33,14 @@ $KUBECTL get deployment
 # The Custom Resource (and any ConfigMaps) do not.
 if [[ -e config/samples/pulpproject_v1beta1_pulp_cr.yaml ]]; then
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.yaml
-elif [[ "$CI_TEST" == "true" ]]; then
+elif [[ "$CI_TEST" == "true" && "$CI_TEST_IMAGE" == "minimal" ]]; then
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.ci.yaml
+  echo "Will deploy admin password secret for testing ..."
+  $KUBECTL apply -f $KUBE_ASSETS_DIR/pulp-admin-password.secret.yaml
+  echo "Will deploy container auth secret for testing ..."
+  $KUBECTL apply -f $KUBE_ASSETS_DIR/pulp-container-auth.secret.yaml
+elif [[ "$CI_TEST" == "true" && "$CI_TEST_IMAGE" == "s6" ]]; then
+  CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.s6.ci.yaml
   echo "Will deploy admin password secret for testing ..."
   $KUBECTL apply -f $KUBE_ASSETS_DIR/pulp-admin-password.secret.yaml
   echo "Will deploy container auth secret for testing ..."
@@ -87,8 +93,6 @@ elif [[ "$CI_TEST" == "galaxy-container" ]]; then
   $KUBECTL apply -f $KUBE_ASSETS_DIR/pulp-admin-password.secret.yaml
   echo "Will deploy container auth secret for testing ..."
   $KUBECTL apply -f $KUBE_ASSETS_DIR/pulp-container-auth.secret.yaml
-elif [[ "$CI_TEST_IMAGE" == "s6" ]]; then
-  CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.s6.ci.yaml
 elif [[ "$(hostname)" == "pulp-demo"* ]]; then
   CUSTOM_RESOURCE=pulpproject_v1beta1_pulp_cr.pulp-demo.yaml
 else
