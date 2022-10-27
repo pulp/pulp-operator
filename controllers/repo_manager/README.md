@@ -135,6 +135,7 @@ PulpSpec defines the desired state of Pulp
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
+| unmanaged | Define if the operator should be disabled. If set to true, the operator will not execute any task (it will be \"disabled\"). | bool | false |
 | deployment_type | Name of the deployment type. | string | false |
 | file_storage_size | The size of the file storage; for example 100Gi. This field should be used only if file_storage_storage_class is provided | string | false |
 | file_storage_access_mode | The file storage access mode. This field should be used only if file_storage_storage_class is provided | string | false |

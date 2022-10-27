@@ -116,6 +116,13 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
+	// if Unmanaged the operator should do nothing
+	// this is useful in situations where we don't want the operator to do reconciliation
+	// for example, during a troubleshooting or for testing
+	if pulp.Spec.Unmanaged {
+		return ctrl.Result{}, nil
+	}
+
 	// "initialize" operator's .status.condition field
 	if !v1.IsStatusConditionPresentAndEqual(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Operator-Finished-Execution", metav1.ConditionTrue) {
 		v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
