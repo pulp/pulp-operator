@@ -388,3 +388,25 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 		},
 	}
 }
+
+// deprovisionCache removes Redis resources in case cache is not enabled anymore
+// or in case of a new definition with an external Redis instance
+func (r *RepoManagerReconciler) deprovisionCache(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+	// redis-svc Service
+	svcFound := &corev1.Service{}
+	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-redis-svc", Namespace: pulp.Namespace}, svcFound)
+	if !errors.IsNotFound(err) {
+		log.Info("Removing Redis service", "Service.Namespace", pulp.Namespace, "Service.Name", pulp.Name+"-redis-svc")
+		r.Delete(ctx, svcFound)
+	}
+
+	// redis Deployment
+	deploymentFound := &appsv1.Deployment{}
+	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-redis", Namespace: pulp.Namespace}, deploymentFound)
+	if !errors.IsNotFound(err) {
+		log.Info("Removing Redis deployment", "Deployment.Namespace", pulp.Namespace, "Deployment.Name", pulp.Name+"-redis")
+		r.Delete(ctx, deploymentFound)
+	}
+
+	return ctrl.Result{}, nil
+}
