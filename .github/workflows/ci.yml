@@ -221,19 +221,19 @@ jobs:
           mv ./bin/kustomize /usr/local/bin/kustomize
           kustomize version
         shell: bash
+      - name: Rename kind to Galaxy
+        run: make rename manifests bundle generate CR_KIND=Galaxy CR_DOMAIN=ansible.com CR_PLURAL=galaxies APP_IMAGE=quay.io/pulp/galaxy-minimal WEB_IMAGE=quay.io/pulp/galaxy-web
       - name: Check code format and generate manifests
         run: |
-          make test
+          make test CR_KIND=Galaxy CR_DOMAIN=ansible.com CR_PLURAL=galaxies APP_IMAGE=quay.io/pulp/galaxy-minimal WEB_IMAGE=quay.io/pulp/galaxy-web
         shell: bash
-      - name: Rename kind to Galaxy
-        run: make rename manifests bundle generate CR_KIND=Galaxy CR_DOMAIN=ansible.com CR_PLURAL=galaxies APP_IMAGE=quay.io/pulp/galaxy WEB_IMAGE=quay.io/pulp/galaxy-web
       - name: Prepare Object Storage
         run: |
           .ci/scripts/prepare-object-storage.sh
         shell: bash
       - name: Deploy pulp-operator to K8s
         run: |
-          make local CR_KIND=Galaxy CR_DOMAIN=ansible.com CR_PLURAL=galaxies
+          make local CR_KIND=Galaxy CR_DOMAIN=ansible.com CR_PLURAL=galaxies APP_IMAGE=quay.io/pulp/galaxy-minimal WEB_IMAGE=quay.io/pulp/galaxy-web
           kubectl get namespace
           kubectl config set-context --current --namespace=pulp-operator-system
           kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
