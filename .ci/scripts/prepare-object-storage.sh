@@ -20,4 +20,9 @@ elif [[ "$CI_TEST_STORAGE" == "s3" ]]; then
   mc config host add s3 http://$(minikube ip):9000 AKIAIT2Z5TDYPX3ARJBA fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS --api S3v4
   mc config host rm local
   mc mb s3/pulp3 --region us-east-1
+elif [[ "$CI_TEST_STORAGE" == "gcp" ]]; then
+  # https://www.claritician.com/how-to-mock-google-cloud-storage-during-development
+  # https://hub.docker.com/r/fsouza/fake-gcs-server
+  # https://github.com/fsouza/fake-gcs-server
+  docker run -d -p 5050:4443 -v storage_data:/storage fsouza/fake-gcs-server -scheme http
 fi
