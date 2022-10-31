@@ -40,6 +40,9 @@ import (
 
 func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
+	// conditionType is used to update .status.conditions with the current resource state
+	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Ingress-Ready"
+
 	podList := &corev1.PodList{}
 	labels := map[string]string{
 		"app.kubernetes.io/part-of":    pulp.Spec.DeploymentType,
@@ -58,9 +61,9 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 	var IsPodRunning bool = false
 	var pod = corev1.Pod{}
 	for _, p := range podList.Items {
-		log.Info("Checking Content pod", "Pod", p.Name, "Status", p.Status.Phase)
+		log.V(1).Info("Checking Content pod", "Pod", p.Name, "Status", p.Status.Phase)
 		if p.Status.Phase == "Running" {
-			log.Info("Running!", "Pod", p.Name, "Status", p.Status.Phase)
+			log.V(1).Info("Running!", "Pod", p.Name, "Status", p.Status.Phase)
 			IsPodRunning = true
 			pod = p
 			break
@@ -79,7 +82,7 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 	cmdOutput, err := controllers.ContainerExec(r, &pod, execCmd, "content", pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to get ingresss from "+pod.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Ingress-Ready", "Failed to get ingresss!", "FailedGet"+pod.Name)
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "Failed to get ingresss!", "FailedGet"+pod.Name)
 		return ctrl.Result{}, err
 	}
 	var pulpPlugins []IngressPlugin
@@ -113,19 +116,19 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 	pulpPlugins = append(defaultPlugins, pulpPlugins...)
 
 	// get ingress
-	pulpIngress := &netv1.Ingress{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name, Namespace: pulp.Namespace}, pulpIngress)
+	currentIngress := &netv1.Ingress{}
+	expectedIngress := r.pulpIngressObject(ctx, pulp, pulpPlugins)
+	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name, Namespace: pulp.Namespace}, currentIngress)
 
 	// Create the ingress in case it is not found
 	if err != nil && errors.IsNotFound(err) {
-		ingressObj := r.pulpIngressObject(ctx, pulp, pulpPlugins)
-		ctrl.SetControllerReference(pulp, ingressObj, r.Scheme)
-		log.Info("Creating a new ingress", "Ingress.Namespace", ingressObj.Namespace, "Ingress.Name", ingressObj.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Ingress-Ready", "CreatingIngress", "Creating "+pulp.Name+"-ingress")
-		err = r.Create(ctx, ingressObj)
+		ctrl.SetControllerReference(pulp, expectedIngress, r.Scheme)
+		log.Info("Creating a new ingress", "Ingress.Namespace", expectedIngress.Namespace, "Ingress.Name", expectedIngress.Name)
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingIngress", "Creating "+pulp.Name+"-ingress")
+		err = r.Create(ctx, expectedIngress)
 		if err != nil {
-			log.Error(err, "Failed to create new ingress", "Ingress.Namespace", ingressObj.Namespace, "Ingress.Name", ingressObj.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, pulp.Spec.DeploymentType+"-Ingress-Ready", "ErrorCreatingIngress", "Failed to create "+pulp.Name+"-ingress: "+err.Error())
+			log.Error(err, "Failed to create new ingress", "Ingress.Namespace", expectedIngress.Namespace, "Ingress.Name", expectedIngress.Name)
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingIngress", "Failed to create "+pulp.Name+"-ingress: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new ingress")
 			return ctrl.Result{}, err
 		}
@@ -134,9 +137,21 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 		return ctrl.Result{}, err
 	}
 
+	// Ensure ingress specs are as expected
+	if err := r.reconcileObject(ctx, pulp, expectedIngress, currentIngress, conditionType, log); err != nil {
+		log.Error(err, "Failed to update ingress spec")
+		return ctrl.Result{}, err
+	}
+
+	// Ensure ingress labels and annotations are as expected
+	if err := r.reconcileMetadata(ctx, pulp, expectedIngress, currentIngress, conditionType, log); err != nil {
+		log.Error(err, "Failed to update ingress labels")
+		return ctrl.Result{}, err
+	}
+
 	// we should only update the status when Ingress-Ready==false
-	if v1.IsStatusConditionFalse(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Ingress-Ready") {
-		r.updateStatus(ctx, pulp, metav1.ConditionTrue, pulp.Spec.DeploymentType+"-Ingress-Ready", "IngressTasksFinished", "All Ingress tasks ran successfully")
+	if v1.IsStatusConditionFalse(pulp.Status.Conditions, conditionType) {
+		r.updateStatus(ctx, pulp, metav1.ConditionTrue, conditionType, "IngressTasksFinished", "All Ingress tasks ran successfully")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "IngressReady", "All Ingress tasks ran successfully")
 	}
 	return ctrl.Result{}, nil
