@@ -156,19 +156,48 @@ func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repoma
 			}
 		}
 	}
+
+	// set HAProxy default values
+	hAProxyTimeout := m.Spec.HAProxyTimeout
+	if len(hAProxyTimeout) == 0 {
+		hAProxyTimeout = "180s"
+	}
 	annotation := map[string]string{
-		"haproxy.router.openshift.io/timeout": m.Spec.HAProxyTimeout,
+		"haproxy.router.openshift.io/timeout": hAProxyTimeout,
 	}
 	var paths []netv1.HTTPIngressPath
 	var path netv1.HTTPIngressPath
 	pathType := netv1.PathTypePrefix
 	rewrite := ""
+
+	// set Nginx default values
+	nginxProxyBodySize := m.Spec.NginxProxyBodySize
+	if len(nginxProxyBodySize) == 0 {
+		nginxProxyBodySize = "0"
+	}
+	nginxMaxBodySize := m.Spec.NginxMaxBodySize
+	if len(nginxMaxBodySize) == 0 {
+		nginxMaxBodySize = "10m"
+	}
+	nginxProxyReadTimeout := m.Spec.NginxProxyReadTimeout
+	if len(nginxProxyReadTimeout) == 0 {
+		nginxProxyReadTimeout = "120s"
+	}
+	nginxProxySendTimeout := m.Spec.NginxProxySendTimeout
+	if len(nginxProxySendTimeout) == 0 {
+		nginxProxySendTimeout = "120s"
+	}
+	nginxProxyConnectTimeout := m.Spec.NginxProxyConnectTimeout
+	if len(nginxProxyConnectTimeout) == 0 {
+		nginxProxyConnectTimeout = "120s"
+	}
+
 	if IsNginxIngressSupported {
-		annotation["nginx.ingress.kubernetes.io/proxy-body-size"] = m.Spec.NginxProxyBodySize
-		annotation["nginx.org/client-max-body-size"] = m.Spec.NginxMaxBodySize
-		annotation["nginx.ingress.kubernetes.io/proxy-read-timeout"] = m.Spec.NginxProxyReadTimeout
-		annotation["nginx.ingress.kubernetes.io/proxy-connect-timeout"] = m.Spec.NginxProxyConnectTimeout
-		annotation["nginx.ingress.kubernetes.io/proxy-send-timeout"] = m.Spec.NginxProxySendTimeout
+		annotation["nginx.ingress.kubernetes.io/proxy-body-size"] = nginxProxyBodySize
+		annotation["nginx.org/client-max-body-size"] = nginxMaxBodySize
+		annotation["nginx.ingress.kubernetes.io/proxy-read-timeout"] = nginxProxyReadTimeout
+		annotation["nginx.ingress.kubernetes.io/proxy-connect-timeout"] = nginxProxyConnectTimeout
+		annotation["nginx.ingress.kubernetes.io/proxy-send-timeout"] = nginxProxySendTimeout
 		for _, plugin := range plugins {
 			if len(plugin.Rewrite) > 0 {
 				rewrite = "rewrite ^" + strings.TrimRight(plugin.Path, "/") + "* " + plugin.Rewrite + ";"

@@ -5782,7 +5782,6 @@ spec:
                 description: Storage class to use for the file persistentVolumeClaim
                 type: string
               haproxy_timeout:
-                default: 180s
                 description: The timeout for HAProxy.
                 type: string
               image:
@@ -5842,23 +5841,18 @@ spec:
                   config
                 type: boolean
               nginx_client_max_body_size:
-                default: 10m
                 description: The client max body size for Nginx Ingress
                 type: string
               nginx_proxy_body_size:
-                default: "0"
                 description: The proxy body size for Nginx Ingress
                 type: string
               nginx_proxy_connect_timeout:
-                default: 120s
                 description: The proxy connect timeout for Nginx Ingress
                 type: string
               nginx_proxy_read_timeout:
-                default: 120s
                 description: The proxy read timeout for Nginx Ingress
                 type: string
               nginx_proxy_send_timeout:
-                default: 120s
                 description: The proxy send timeout for Nginx Ingress
                 type: string
               nodeport_port:

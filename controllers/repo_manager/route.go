@@ -168,9 +168,16 @@ func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *r
 func (r *RepoManagerReconciler) pulpRouteObject(m *repomanagerv1alpha1.Pulp, p *RoutePlugin, routeHost string) *routev1.Route {
 
 	weight := int32(100)
-	annotation := map[string]string{
-		"haproxy.router.openshift.io/timeout": m.Spec.HAProxyTimeout,
+
+	// set HAProxy default values
+	hAProxyTimeout := m.Spec.HAProxyTimeout
+	if len(hAProxyTimeout) == 0 {
+		hAProxyTimeout = "180s"
 	}
+	annotation := map[string]string{
+		"haproxy.router.openshift.io/timeout": hAProxyTimeout,
+	}
+
 	if len(p.Rewrite) > 0 {
 		annotation["haproxy.router.openshift.io/rewrite-target"] = p.Rewrite
 	}
