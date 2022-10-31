@@ -127,37 +127,31 @@ type PulpSpec struct {
 	NodePort int32 `json:"nodeport_port,omitempty"`
 
 	// The timeout for HAProxy.
-	// +kubebuilder:default:="180s"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	HAProxyTimeout string `json:"haproxy_timeout,omitempty"`
 
 	// The client max body size for Nginx Ingress
-	// +kubebuilder:default:="10m"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
 	NginxMaxBodySize string `json:"nginx_client_max_body_size,omitempty"`
 
 	// The proxy body size for Nginx Ingress
-	// +kubebuilder:default:="0"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
 	NginxProxyBodySize string `json:"nginx_proxy_body_size,omitempty"`
 
 	// The proxy read timeout for Nginx Ingress
-	// +kubebuilder:default:="120s"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
 	NginxProxyReadTimeout string `json:"nginx_proxy_read_timeout,omitempty"`
 
 	// The proxy connect timeout for Nginx Ingress
-	// +kubebuilder:default:="120s"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
 	NginxProxyConnectTimeout string `json:"nginx_proxy_connect_timeout,omitempty"`
 
 	// The proxy send timeout for Nginx Ingress
-	// +kubebuilder:default:="120s"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
 	NginxProxySendTimeout string `json:"nginx_proxy_send_timeout,omitempty"`
