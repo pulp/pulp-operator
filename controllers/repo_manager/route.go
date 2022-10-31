@@ -39,6 +39,13 @@ import (
 	"github.com/pulp/pulp-operator/controllers"
 )
 
+// pluginReturn is used to control goroutines execution
+type pluginReturn struct {
+	ctrl.Result
+	error
+}
+
+// pulpRouteController creates the routes based on snippets defined in pulp-worker pod
 func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// conditionType is used to update .status.conditions with the current resource state
@@ -121,39 +128,64 @@ func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *r
 		routeHost = pulp.Name + "." + ingress.Spec.Domain
 	}
 	pulpPlugins = append(defaultPlugins, pulpPlugins...)
+
+	// channel used to receive the return value from each goroutine
+	c := make(chan pluginReturn)
+
 	for _, plugin := range pulpPlugins {
-		// get route
-		currentRoute := &routev1.Route{}
-		expectedRoute := r.pulpRouteObject(pulp, &plugin, routeHost)
-		err := r.Get(ctx, types.NamespacedName{Name: plugin.Name, Namespace: pulp.Namespace}, currentRoute)
 
-		// Create the route in case it is not found
-		if err != nil && errors.IsNotFound(err) {
-			log.Info("Creating a new route", "Route.Namespace", expectedRoute.Namespace, "Route.Name", expectedRoute.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingRoute", "Creating "+pulp.Name+"-route")
-			if err := r.Create(ctx, expectedRoute); err != nil {
-				log.Error(err, "Failed to create new route", "Route.Namespace", expectedRoute.Namespace, "Route.Name", expectedRoute.Name)
-				r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingRoute", "Failed to create "+pulp.Name+"-route: "+err.Error())
-				r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new route")
-				return ctrl.Result{}, err
+		// provision each route resource concurrently
+		go func(plugin RoutePlugin) {
+
+			// get route
+			currentRoute := &routev1.Route{}
+			expectedRoute := r.pulpRouteObject(pulp, &plugin, routeHost)
+			err := r.Get(ctx, types.NamespacedName{Name: plugin.Name, Namespace: pulp.Namespace}, currentRoute)
+
+			// Create the route in case it is not found
+			if err != nil && errors.IsNotFound(err) {
+				log.Info("Creating a new route", "Route.Namespace", expectedRoute.Namespace, "Route.Name", expectedRoute.Name)
+				r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingRoute", "Creating "+pulp.Name+"-route")
+				if err := r.Create(ctx, expectedRoute); err != nil {
+					log.Error(err, "Failed to create new route", "Route.Namespace", expectedRoute.Namespace, "Route.Name", expectedRoute.Name)
+					r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingRoute", "Failed to create "+pulp.Name+"-route: "+err.Error())
+					r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new route")
+					c <- pluginReturn{ctrl.Result{}, err}
+					return
+				}
+				c <- pluginReturn{ctrl.Result{}, nil}
+				return
+			} else if err != nil {
+				log.Error(err, "Failed to get route")
+				c <- pluginReturn{ctrl.Result{}, err}
+				return
 			}
-			return ctrl.Result{}, nil
-		} else if err != nil {
-			log.Error(err, "Failed to get route")
-			return ctrl.Result{}, err
+
+			// Ensure route specs are as expected
+			if err := r.reconcileObject(ctx, pulp, expectedRoute, currentRoute, conditionType, log); err != nil {
+				log.Error(err, "Failed to update route spec")
+				c <- pluginReturn{ctrl.Result{}, err}
+				return
+			}
+
+			// Ensure route labels and annotations are as expected
+			if err := r.reconcileMetadata(ctx, pulp, expectedRoute, currentRoute, conditionType, log); err != nil {
+				log.Error(err, "Failed to update route labels")
+				c <- pluginReturn{ctrl.Result{}, err}
+				return
+			}
+
+		}(plugin)
+
+		// if there is no element in chan it means the goroutine didnt have any errors
+		// nor any reconciliation loop (ctrl.Result{}, nil) requested
+		// we need to check this to avoid getting into a blocked state with the channel
+		// waiting for a value to be "consumed" which would never be delivered
+		if len(c) > 0 {
+			pluginRoutineReturn := <-c
+			return pluginRoutineReturn.Result, pluginRoutineReturn.error
 		}
 
-		// Ensure route specs are as expected
-		if err := r.reconcileObject(ctx, pulp, expectedRoute, currentRoute, conditionType, log); err != nil {
-			log.Error(err, "Failed to update route spec")
-			return ctrl.Result{}, err
-		}
-
-		// Ensure route labels and annotations are as expected
-		if err := r.reconcileMetadata(ctx, pulp, expectedRoute, currentRoute, conditionType, log); err != nil {
-			log.Error(err, "Failed to update route labels")
-			return ctrl.Result{}, err
-		}
 	}
 
 	// we should only update the status when Route-Ready==false
