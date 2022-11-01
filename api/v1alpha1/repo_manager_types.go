@@ -31,10 +31,12 @@ type PulpSpec struct {
 
 	// Define if the operator should stop managing Pulp resources.
 	// If set to true, the operator will not execute any task (it will be "disabled").
+	// Default: false
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	Unmanaged bool `json:"unmanaged,omitempty"`
 
 	// Name of the deployment type.
+	// Default: "pulp"
 	// +kubebuilder:default:="pulp"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	DeploymentType string `json:"deployment_type,omitempty"`
@@ -67,7 +69,7 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:S3"}
 	ObjectStorageS3Secret string `json:"object_storage_s3_secret,omitempty"`
 
-	// PersistenVolumeClaim name that will be used by Pulp pods
+	// PersistenVolumeClaim name that will be used by Pulp pods.
 	// If defined, the PVC must be provisioned by the user and the operator will only
 	// configure the deployment to use it
 	// +kubebuilder:validation:Optional
@@ -75,17 +77,20 @@ type PulpSpec struct {
 	PVC string `json:"pvc,omitempty"`
 
 	// Secret where the Fernet symmetric encryption key is stored.
+	// Default: <operators's name>-"-db-fields-encryption"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Database encryption"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	DBFieldsEncryptionSecret string `json:"db_fields_encryption_secret,omitempty"`
 
 	// Secret where the signing certificates are stored.
+	// Default: <operators's name>-"-signing-scripts"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	SigningSecret string `json:"signing_secret,omitempty"`
 
 	// ConfigMap where the signing scripts are stored.
+	// Default: <operators's name>-"-signing-scripts"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:ConfigMap","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	SigningScriptsConfigmap string `json:"signing_scripts_configmap,omitempty"`
@@ -96,7 +101,8 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:select:File","urn:alm:descriptor:com.tectonic.ui:select:S3","urn:alm:descriptor:com.tectonic.ui:select:Azure"}
 	StorageType string `json:"storage_type,omitempty"`
 
-	// The ingress type to use to reach the deployed instance
+	// The ingress type to use to reach the deployed instance.
+	// Default: none (will not expose the service)
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Enum:=none;Ingress;ingress;Route;route;LoadBalancer;loadbalancer;NodePort;nodeport
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:select:Route","urn:alm:descriptor:com.tectonic.ui:select:Ingress","urn:alm:descriptor:com.tectonic.ui:select:LoadBalancer","urn:alm:descriptor:com.tectonic.ui:select:NodePort"}
@@ -111,12 +117,14 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
 	IngressHost string `json:"ingress_host,omitempty"`
 
-	// Route DNS host
+	// Route DNS host.
+	// Default: <operator's name> + "." + ingress.Spec.Domain
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route"}
 	RouteHost string `json:"route_host,omitempty"`
 
 	// RouteLabels will append custom label(s) into routes (used by router shard routeSelector).
+	// Default: {"pulp_cr": "<operator's name>", "owner": "pulp-dev" }
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	RouteLabels map[string]string `json:"route_labels,omitempty"`
@@ -127,116 +135,140 @@ type PulpSpec struct {
 	NodePort int32 `json:"nodeport_port,omitempty"`
 
 	// The timeout for HAProxy.
+	// Default: "180s"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	HAProxyTimeout string `json:"haproxy_timeout,omitempty"`
 
-	// The client max body size for Nginx Ingress
+	// The client max body size for Nginx Ingress.
+	// Default: "10m"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
 	NginxMaxBodySize string `json:"nginx_client_max_body_size,omitempty"`
 
-	// The proxy body size for Nginx Ingress
+	// The proxy body size for Nginx Ingress.
+	// Default: "0"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
 	NginxProxyBodySize string `json:"nginx_proxy_body_size,omitempty"`
 
-	// The proxy read timeout for Nginx Ingress
+	// The proxy read timeout for Nginx Ingress.
+	// Default: "120s"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
 	NginxProxyReadTimeout string `json:"nginx_proxy_read_timeout,omitempty"`
 
-	// The proxy connect timeout for Nginx Ingress
+	// The proxy connect timeout for Nginx Ingress.
+	// Default: "120s"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
 	NginxProxyConnectTimeout string `json:"nginx_proxy_connect_timeout,omitempty"`
 
-	// The proxy send timeout for Nginx Ingress
+	// The proxy send timeout for Nginx Ingress.
+	// Default: "120s"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
 	NginxProxySendTimeout string `json:"nginx_proxy_send_timeout,omitempty"`
 
 	// Secret where the container token certificates are stored.
+	// Default: <operator's name> + "-container-auth"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ContainerTokenSecret string `json:"container_token_secret,omitempty"`
 
+	// Public Key name from `<operator's name> + "-container-auth-certs"` Secret.
+	// Default: "container_auth_public_key.pem"
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="container_auth_public_key.pem"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ContainerAuthPublicKey string `json:"container_auth_public_key_name,omitempty"`
 
+	// Private Key name from `<operator's name> + "-container-auth-certs"` Secret.
+	// Default: "container_auth_private_key.pem"
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="container_auth_private_key.pem"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ContainerAuthPrivateKey string `json:"container_auth_private_key_name,omitempty"`
 
 	// The image name (repo name) for the pulp image.
+	// Default: "quay.io/pulp/pulp-minimal:stable"
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="quay.io/pulp/pulp-minimal"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	Image string `json:"image,omitempty"`
 
 	// The image version for the pulp image.
+	// Default: "stable"
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="stable"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ImageVersion string `json:"image_version,omitempty"`
 
-	// Image pull policy for container image
+	// Image pull policy for container image.
+	// Default: "IfNotPresent"
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Enum:=IfNotPresent;Always;Never
 	// +kubebuilder:default:="IfNotPresent"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:imagePullPolicy"}
 	ImagePullPolicy string `json:"image_pull_policy,omitempty"`
 
+	// Api defines desired state of pulpcore-api resources
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	Api Api `json:"api,omitempty"`
 
+	// Database defines desired state of postgres resources
 	//+kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	Database Database `json:"database,omitempty"`
 
+	// Content defines desired state of pulpcore-content resources
 	//+kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	Content Content `json:"content,omitempty"`
 
+	// Worker defines desired state of pulpcore-worker resources
 	//+kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	Worker Worker `json:"worker,omitempty"`
 
+	// Web defines desired state of pulpcore-web (reverse-proxy) resources
 	//+kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	Web Web `json:"web,omitempty"`
 
+	// Cache defines desired state of redis resources
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	Cache Cache `json:"cache,omitempty"`
 
-	// The pulp settings.
+	// Definition of /etc/pulp/settings.py config file.
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	PulpSettings runtime.RawExtension `json:"pulp_settings,omitempty"`
 
 	// The image name (repo name) for the pulp webserver image.
+	// Default: "quay.io/pulp/pulp-web"
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="quay.io/pulp/pulp-web"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	ImageWeb string `json:"image_web,omitempty"`
 
 	// The image version for the pulp webserver image.
+	// Default: "stable"
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="stable"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	ImageWebVersion string `json:"image_web_version,omitempty"`
 
-	// Secret where the administrator password can be found
+	// Secret where the administrator password can be found.
+	// Default: <operator's name> + "-admin-password"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	AdminPasswordSecret string `json:"admin_password_secret,omitempty"`
 
-	// Image pull secrets for container images
+	// Image pull secrets for container images.
+	// Default: []
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ImagePullSecrets []string `json:"image_pull_secrets,omitempty"`
@@ -246,16 +278,19 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	SSOSecret string `json:"sso_secret,omitempty"`
 
-	// Define if the operator should or should not mount the custom CA certificates added to the cluster via cluster-wide proxy config
+	// Define if the operator should or should not mount the custom CA certificates added to the cluster via cluster-wide proxy config.
+	// Default: false
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:=false
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	TrustedCa bool `json:"mount_trusted_ca,omitempty"`
 }
 
+// Api defines desired state of pulpcore-api resources
 type Api struct {
 
 	// Size is the size of number of pulp-api replicas.
+	// Default: 1
 	// +kubebuilder:default:=1
 	// +kubebuilder:validation:Minimum:=0
 	// +kubebuilder:validation:Optional
@@ -284,12 +319,14 @@ type Api struct {
 	TopologySpreadConstraints []corev1.TopologySpreadConstraint `json:"topology_spread_constraints,omitempty"`
 
 	// The timeout for the gunicorn process.
+	// Default: 90
 	// +kubebuilder:default:=90
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	GunicornTimeout int `json:"gunicorn_timeout,omitempty"`
 
 	// The number of gunicorn workers to use for the api.
+	// Default: 2
 	// +kubebuilder:default:=2
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number","urn:alm:descriptor:com.tectonic.ui:advanced"}
@@ -323,8 +360,10 @@ type Api struct {
 	Strategy appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
+// Content defines desired state of pulpcore-content resources
 type Content struct {
-	// Size is the size of number of pulp-content replicas
+	// Size is the size of number of pulp-content replicas.
+	// Default: 2
 	// +kubebuilder:default:=2
 	// +kubebuilder:validation:Minimum:=0
 	// +kubebuilder:validation:Optional
@@ -357,12 +396,14 @@ type Content struct {
 	TopologySpreadConstraints []corev1.TopologySpreadConstraint `json:"topology_spread_constraints,omitempty"`
 
 	// The timeout for the gunicorn process.
+	// Default: 90
 	// +kubebuilder:default:=90
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	GunicornTimeout int `json:"gunicorn_timeout,omitempty"`
 
 	// The number of gunicorn workers to use for the api.
+	// Default: 2
 	// +kubebuilder:default:=2
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number","urn:alm:descriptor:com.tectonic.ui:advanced"}
@@ -391,8 +432,10 @@ type Content struct {
 	Strategy appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
+// Worker defines desired state of pulpcore-worker resources
 type Worker struct {
-	// Size is the size of number of pulp-worker replicas
+	// Size is the size of number of pulp-worker replicas.
+	// Default: 2
 	// +kubebuilder:default:=2
 	// +kubebuilder:validation:Minimum:=0
 	// +kubebuilder:validation:Optional
@@ -447,8 +490,10 @@ type Worker struct {
 	Strategy appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
+// Web defines desired state of pulpcore-web (reverse-proxy) resources
 type Web struct {
-	// Size is the size of number of pulp-web replicas
+	// Size is the size of number of pulp-web replicas.
+	// Default: 1
 	// +kubebuilder:default:=1
 	// +kubebuilder:validation:Minimum:=0
 	// +kubebuilder:validation:Optional
@@ -483,6 +528,7 @@ type Web struct {
 	PDB *policy.PodDisruptionBudgetSpec `json:"pdb,omitempty"`
 }
 
+// Database defines desired state of postgres
 type Database struct {
 	// Size is the size of number of db replicas
 	// The default postgres image does not provide clustering
@@ -498,34 +544,41 @@ type Database struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	PostgresVersion string `json:"version,omitempty"`
 
-	// PostgreSQL port [default: 5432]
+	// PostgreSQL port.
+	// Default: 5432
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number"}
 	PostgresPort int `json:"postgres_port,omitempty"`
 
-	// Configure PostgreSQL connection sslmode option [default: "prefer"]
+	// Configure PostgreSQL connection sslmode option.
+	// Default: "prefer"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	PostgresSSLMode string `json:"postgres_ssl_mode,omitempty"`
 
-	// PostgreSQL container image [default: "postgres:13"]
+	// PostgreSQL container image.
+	// Default: "postgres:13"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	PostgresImage string `json:"postgres_image,omitempty"`
 
+	// Arguments to pass to postgres process
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	PostgresExtraArgs []string `json:"postgres_extra_args,omitempty"`
 
-	// Registry path to the PostgreSQL container to use [default: "/var/lib/postgresql/data/pgdata"]
+	// Registry path to the PostgreSQL container to use.
+	// Default: "/var/lib/postgresql/data/pgdata"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	PostgresDataPath string `json:"postgres_data_path,omitempty"`
 
-	// Arguments to pass to PostgreSQL initdb command when creating a new cluster. [default: "--auth-host=scram-sha-256"]
+	// Arguments to pass to PostgreSQL initdb command when creating a new cluster.
+	// Default: "--auth-host=scram-sha-256"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	PostgresInitdbArgs string `json:"postgres_initdb_args,omitempty"`
 
-	// PostgreSQL host authentication method [default: "scram-sha-256"]
+	// PostgreSQL host authentication method.
+	// Default: "scram-sha-256"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	PostgresHostAuthMethod string `json:"postgres_host_auth_method,omitempty"`
@@ -582,6 +635,7 @@ type Database struct {
 	LivenessProbe *corev1.Probe `json:"livenessProbe,omitempty"`
 }
 
+// Cache defines desired state of redis resources
 type Cache struct {
 
 	// Name of the secret with the parameters to connect to an external Redis cluster
@@ -590,12 +644,14 @@ type Cache struct {
 	ExternalCacheSecret string `json:"external_cache_secret,omitempty"`
 
 	// Defines if cache should be enabled.
+	// Default: true
 	// +kubebuilder:default:=true
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:booleanSwitch"}
 	Enabled bool `json:"enabled,omitempty"`
 
-	// The image name for the redis image. [default: "redis:latest"]
+	// The image name for the redis image.
+	// Default: "redis:latest"
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	RedisImage string `json:"redis_image,omitempty"`
