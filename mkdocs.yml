@@ -44,6 +44,7 @@ nav:
       - Reverse Proxy: configuring/reverse_proxy.md
       - Routes: configuring/routes.md
       - Pod Disruption Budget: configuring/pdb.md
+      - Secrets: configuring/secrets.md
   - Changelog: CHANGES.md
   - FAQ: faq.md
   - Troubleshooting:
