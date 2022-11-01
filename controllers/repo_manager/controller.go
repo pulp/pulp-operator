@@ -151,6 +151,13 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		}
 	}
 
+	// Check if this is an OCP cluster and "ingress_type: route".
+	if !IsOpenShift && strings.ToLower(pulp.Spec.IngressType) == "route" {
+		err := fmt.Errorf("ingress_type is configured with route in a non-ocp environment")
+		log.Error(err, "Please choose another ingress_type (options: [ingress,nodeport]). Route resources are specific to OpenShift installations.")
+		return ctrl.Result{}, err
+	}
+
 	// Checking immutable fields update
 	immutableFields := []immutableField{
 		{FieldName: "DeploymentType", FieldPath: repomanagerv1alpha1.PulpSpec{}},
