@@ -51,13 +51,17 @@ do
     fi
 done
 
+echo "Pulling ..."
 podman pull quay.io/pulp/pulp-operator:devel
+echo "Login ..."
 podman login --tls-verify=false -u admin -p password localhost:24880
+echo "Tagging ..."
 podman tag quay.io/pulp/pulp-operator:devel localhost:24880/pulp/pulp-operator:devel
+echo "Pushing ..."
 podman push --tls-verify=false localhost:24880/pulp/pulp-operator:devel
 
-
-curl -H "Authorization:Token $TOKEN" http://localhost:24880/api/galaxy/_ui/v1/execution-environments/repositories/ | jq
+echo "Repositories ..."
+curl -H "Authorization:Token $TOKEN" http://localhost:24880/api/galaxy/v3/plugin/execution-environments/repositories/ | jq
 
 cat >> ansible.cfg << ANSIBLECFG
 [defaults]
