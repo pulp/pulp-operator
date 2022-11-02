@@ -60,8 +60,8 @@ type RepoManagerReconciler struct {
 //+kubebuilder:rbac:groups=repo-manager.pulpproject.org,namespace=pulp-operator-system,resources=pulps/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=repo-manager.pulpproject.org,namespace=pulp-operator-system,resources=pulps/finalizers,verbs=update
 //+kubebuilder:rbac:groups=apps;networking.k8s.io,namespace=pulp-operator-system,resources=deployments;statefulsets;ingresses,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=config.openshift.io,resources=ingresses,verbs=get;list;watch
-//+kubebuilder:rbac:groups=networking.k8s.io,resources=ingressclasses,verbs=get;list;watch
+//+kubebuilder:rbac:groups=config.openshift.io,namespace=pulp-operator-system,resources=ingresses,verbs=get;list;watch
+//+kubebuilder:rbac:groups=networking.k8s.io,namespace=pulp-operator-system,resources=ingressclasses,verbs=get;list;watch
 //+kubebuilder:rbac:groups=route.openshift.io,namespace=pulp-operator-system,resources=routes;routes/custom-host,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,namespace=pulp-operator-system,resources=pods;pods/log,verbs=get;list;
 //+kubebuilder:rbac:groups=core;rbac.authorization.k8s.io,namespace=pulp-operator-system,resources=roles;rolebindings;serviceaccounts,verbs=create;update;patch;delete;watch;get;list;
