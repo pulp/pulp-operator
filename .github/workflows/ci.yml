@@ -302,16 +302,12 @@ jobs:
           mv ./bin/kustomize /usr/local/bin/kustomize
           kustomize version
         shell: bash
-      - name: Build images
-        run: |
-          make manifests bundle docker-build bundle-build catalog-build
-        shell: bash
       - name: Quay login
         env:
           QUAY_BOT_PASSWORD: ${{ secrets.QUAY_BOT_PASSWORD }}
           QUAY_BOT_USERNAME: pulp+github
         run: echo "$QUAY_BOT_PASSWORD" | docker login -u "$QUAY_BOT_USERNAME" --password-stdin quay.io
-      - name: Push images
+      - name: Build and Push images
         run: |
-          make docker-push bundle-push catalog-push
+          make docker-build docker-push bundle-build bundle-push catalog-build catalog-push
         shell: bash
