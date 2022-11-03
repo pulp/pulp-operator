@@ -13,6 +13,126 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+1.0.0-alpha.1 (2022-11-03)
+==========================
+
+
+Features
+--------
+
+- Added PDB configuration through Pulp CR.
+  [#433](https://github.com/pulp/pulp-operator/issues/433)
+- Modified affinity field to allow inter-pod affinity/anti-affinity configuration.
+  [#434](https://github.com/pulp/pulp-operator/issues/434)
+- Added option to mount custom CA.
+  [#513](https://github.com/pulp/pulp-operator/issues/513)
+- Added probe fields in pulp CR.
+  [#516](https://github.com/pulp/pulp-operator/issues/516)
+- Added configuration to change the operator log level.
+  [#571](https://github.com/pulp/pulp-operator/issues/571)
+- Added a field to control the restore deployment replicas.
+  By default it will be set to false (restore controller will redeploy only a single replica of each component).
+  [#572](https://github.com/pulp/pulp-operator/issues/572)
+- Added more node selector configuration (cache and web pods).
+  Added field to define route labels.
+  [#577](https://github.com/pulp/pulp-operator/issues/577)
+- Added default readiness probe for pulp-web pods.
+  [#579](https://github.com/pulp/pulp-operator/issues/579)
+- Added configuration to use external Redis instance.
+  [#614](https://github.com/pulp/pulp-operator/issues/614)
+- Modified (through processPodSecurityContext) the UID that runs the entrypoint of the container process.
+  [#627](https://github.com/pulp/pulp-operator/issues/627)
+- Modified Pulp CRD to collect info to connect to an external database from a Secret.
+  [#630](https://github.com/pulp/pulp-operator/issues/630)
+- Added a field to configure the deployment strategy.
+  [#635](https://github.com/pulp/pulp-operator/issues/635)
+- Let the operator namespace-scoped.
+  [#657](https://github.com/pulp/pulp-operator/issues/657)
+- Use Nginx Ingress as reverse proxy
+  [#660](https://github.com/pulp/pulp-operator/issues/660)
+- Added a check for configurations in non-ocp env with ingress_type==route.
+  [#669](https://github.com/pulp/pulp-operator/issues/669)
+- Updated CRD field comments.
+  [#711](https://github.com/pulp/pulp-operator/issues/711)
+- Utilize the renamed `pulp-minimal` and `galaxy-minimal` images. Also have CI test the new big s6-contining images `pulp` and `pulp-galaxy-ng`.
+  [#717](https://github.com/pulp/pulp-operator/issues/717)
+- Set nginx fields default values in controller (not in CR).
+  [#722](https://github.com/pulp/pulp-operator/issues/722)
+- Improved route paths provisioning loop.
+  [#729](https://github.com/pulp/pulp-operator/issues/729)
+
+
+Bugfixes
+--------
+
+- Added logic on how to handle different/multiple types of storage in Pulp CR.
+  [#526](https://github.com/pulp/pulp-operator/issues/526)
+- Fixed an issue with backup of PVCs manually created.
+  [#580](https://github.com/pulp/pulp-operator/issues/580)
+- Fixed an issue with backup controller failing when there was no signing secret.
+  [#581](https://github.com/pulp/pulp-operator/issues/581)
+- Fixed .status.condition not reflecting the real state.
+  [#600](https://github.com/pulp/pulp-operator/issues/600)
+- Add serviceaccounts permission
+  [#601](https://github.com/pulp/pulp-operator/issues/601)
+- Removed default values for Pulp database when configuring external PostgreSQL.
+  [#622](https://github.com/pulp/pulp-operator/issues/622)
+- Set ContainerTokenSecret as immutable (the controller will reconcile with the same value if the field is modified).
+  Set AdminPasswordSecret as immutable (the controller will reconcile with the same value if the field is modified).
+  Added ImagePullSecrets reconciliation logic.
+  Fixed TrustedCa volumeMount reconciliation logic.
+  Fixed NodeSelector reconciliation logic.
+  Fixed Tolerations reconciliation logic.
+  Fixed TopologySpreadConstraints reconciliation logic.
+  Fixed ResourceRequirements removal logic.
+  Fixed PDB removal logic.
+  Fixed Strategy removal logic.
+  Set Cache.ExternalCacheSecret as immutable (the controller will reconcile with the same value if the field is modified).
+  Fixed Cache.RedisPort reconciliation logic.
+  Fixed Cache.Resources reconciliation logic.
+  Fixed Cache.NodeSelector reconciliation logic.
+  Fixed Cache.Tolerations reconciliation logic.
+  [#646](https://github.com/pulp/pulp-operator/issues/646)
+- Fixed a bug in route reconciliation.
+  [#648](https://github.com/pulp/pulp-operator/issues/648)
+- Fixed the backoff loop not incrementing exponentially on error.
+  [#650](https://github.com/pulp/pulp-operator/issues/650)
+- Ensure Nginx Ingress Controller is used when multiple controllers are installed
+  [#673](https://github.com/pulp/pulp-operator/issues/673)
+- Added ingressclass clusterrole.
+  [#709](https://github.com/pulp/pulp-operator/issues/709)
+- Ensure ingress status conditions
+  [#714](https://github.com/pulp/pulp-operator/issues/714)
+- Fixed issue with headless services propagating new address to pulp-web pods.
+  [#737](https://github.com/pulp/pulp-operator/issues/737)
+
+
+Improved Documentation
+----------------------
+
+- Added steps to configure object storage.
+  [#593](https://github.com/pulp/pulp-operator/issues/593)
+- Added troubleshooting section.
+  [#596](https://github.com/pulp/pulp-operator/issues/596)
+- Stacktrace enabled only for above "panic" level.
+  [#605](https://github.com/pulp/pulp-operator/issues/605)
+- Added steps to configure operator's database.
+  [#619](https://github.com/pulp/pulp-operator/issues/619)
+- Fix broken links
+  [#681](https://github.com/pulp/pulp-operator/issues/681)
+- Added a section explaining default secrets created by the operator.
+  [#683](https://github.com/pulp/pulp-operator/issues/683)
+
+
+Misc
+----
+
+- [#678](https://github.com/pulp/pulp-operator/issues/678), [#692](https://github.com/pulp/pulp-operator/issues/692)
+
+
+----
+
+
 0.14.0 (2022-09-19)
 ===================
 
