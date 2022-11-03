@@ -35,9 +35,11 @@ spec:
             description: PulpSpec defines the desired state of Pulp
             properties:
               admin_password_secret:
-                description: Secret where the administrator password can be found
+                description: 'Secret where the administrator password can be found.
+                  Default: <operator''s name> + "-admin-password"'
                 type: string
               api:
+                description: Api defines desired state of pulpcore-api resources
                 properties:
                   affinity:
                     description: Affinity is a group of affinity scheduling rules.
@@ -909,11 +911,12 @@ spec:
                     type: object
                   gunicorn_timeout:
                     default: 90
-                    description: The timeout for the gunicorn process.
+                    description: 'The timeout for the gunicorn process. Default: 90'
                     type: integer
                   gunicorn_workers:
                     default: 2
-                    description: The number of gunicorn workers to use for the api.
+                    description: 'The number of gunicorn workers to use for the api.
+                      Default: 2'
                     type: integer
                   livenessProbe:
                     description: Periodic probe of container liveness. Container will
@@ -1294,7 +1297,8 @@ spec:
                     type: object
                   replicas:
                     default: 1
-                    description: Size is the size of number of pulp-api replicas.
+                    description: 'Size is the size of number of pulp-api replicas.
+                      Default: 1'
                     format: int32
                     minimum: 0
                     nullable: true
@@ -1593,6 +1597,7 @@ spec:
                     type: array
                 type: object
               cache:
+                description: Cache defines desired state of redis resources
                 properties:
                   affinity:
                     description: Affinity is a group of affinity scheduling rules.
@@ -2464,7 +2469,7 @@ spec:
                     type: object
                   enabled:
                     default: true
-                    description: Defines if cache should be enabled.
+                    description: 'Defines if cache should be enabled. Default: true'
                     type: boolean
                   external_cache_secret:
                     description: Name of the secret with the parameters to connect
@@ -2779,7 +2784,7 @@ spec:
                         type: integer
                     type: object
                   redis_image:
-                    description: 'The image name for the redis image. [default: "redis:latest"]'
+                    description: 'The image name for the redis image. Default: "redis:latest"'
                     type: string
                   redis_port:
                     description: 'The port that will be exposed by Redis Service.
@@ -2909,14 +2914,20 @@ spec:
                 type: object
               container_auth_private_key_name:
                 default: container_auth_private_key.pem
+                description: 'Private Key name from `<operator''s name> + "-container-auth-certs"`
+                  Secret. Default: "container_auth_private_key.pem"'
                 type: string
               container_auth_public_key_name:
                 default: container_auth_public_key.pem
+                description: 'Public Key name from `<operator''s name> + "-container-auth-certs"`
+                  Secret. Default: "container_auth_public_key.pem"'
                 type: string
               container_token_secret:
-                description: Secret where the container token certificates are stored.
+                description: 'Secret where the container token certificates are stored.
+                  Default: <operator''s name> + "-container-auth"'
                 type: string
               content:
+                description: Content defines desired state of pulpcore-content resources
                 properties:
                   affinity:
                     description: Affinity is a group of affinity scheduling rules.
@@ -3788,11 +3799,12 @@ spec:
                     type: object
                   gunicorn_timeout:
                     default: 90
-                    description: The timeout for the gunicorn process.
+                    description: 'The timeout for the gunicorn process. Default: 90'
                     type: integer
                   gunicorn_workers:
                     default: 2
-                    description: The number of gunicorn workers to use for the api.
+                    description: 'The number of gunicorn workers to use for the api.
+                      Default: 2'
                     type: integer
                   livenessProbe:
                     description: Periodic probe of container liveness. Container will
@@ -4173,7 +4185,8 @@ spec:
                     type: object
                   replicas:
                     default: 2
-                    description: Size is the size of number of pulp-content replicas
+                    description: 'Size is the size of number of pulp-content replicas.
+                      Default: 2'
                     format: int32
                     minimum: 0
                     nullable: true
@@ -4472,6 +4485,7 @@ spec:
                     type: array
                 type: object
               database:
+                description: Database defines desired state of postgres resources
                 properties:
                   affinity:
                     description: Affinity is a group of affinity scheduling rules.
@@ -5500,26 +5514,27 @@ spec:
                     description: NodeSelector for the database pod.
                     type: object
                   postgres_data_path:
-                    description: 'Registry path to the PostgreSQL container to use
-                      [default: "/var/lib/postgresql/data/pgdata"]'
+                    description: 'Registry path to the PostgreSQL container to use.
+                      Default: "/var/lib/postgresql/data/pgdata"'
                     type: string
                   postgres_extra_args:
+                    description: Arguments to pass to postgres process
                     items:
                       type: string
                     type: array
                   postgres_host_auth_method:
-                    description: 'PostgreSQL host authentication method [default:
-                      "scram-sha-256"]'
+                    description: 'PostgreSQL host authentication method. Default:
+                      "scram-sha-256"'
                     type: string
                   postgres_image:
-                    description: 'PostgreSQL container image [default: "postgres:13"]'
+                    description: 'PostgreSQL container image. Default: "postgres:13"'
                     type: string
                   postgres_initdb_args:
                     description: 'Arguments to pass to PostgreSQL initdb command when
-                      creating a new cluster. [default: "--auth-host=scram-sha-256"]'
+                      creating a new cluster. Default: "--auth-host=scram-sha-256"'
                     type: string
                   postgres_port:
-                    description: 'PostgreSQL port [default: 5432]'
+                    description: 'PostgreSQL port. Default: 5432'
                     type: integer
                   postgres_resource_requirements:
                     description: Resource requirements for the database container.
@@ -5548,8 +5563,8 @@ spec:
                         type: object
                     type: object
                   postgres_ssl_mode:
-                    description: 'Configure PostgreSQL connection sslmode option [default:
-                      "prefer"]'
+                    description: 'Configure PostgreSQL connection sslmode option.
+                      Default: "prefer"'
                     type: string
                   postgres_storage_class:
                     description: Name of the StorageClass required by the claim.
@@ -5760,11 +5775,12 @@ spec:
                     type: string
                 type: object
               db_fields_encryption_secret:
-                description: Secret where the Fernet symmetric encryption key is stored.
+                description: 'Secret where the Fernet symmetric encryption key is
+                  stored. Default: <operators''s name>-"-db-fields-encryption"'
                 type: string
               deployment_type:
                 default: pulp
-                description: Name of the deployment type.
+                description: 'Name of the deployment type. Default: "pulp"'
                 type: string
               file_storage_access_mode:
                 description: The file storage access mode. This field should be used
@@ -5781,37 +5797,39 @@ spec:
                 description: Storage class to use for the file persistentVolumeClaim
                 type: string
               haproxy_timeout:
-                default: 180s
-                description: The timeout for HAProxy.
+                description: 'The timeout for HAProxy. Default: "180s"'
                 type: string
               image:
                 default: quay.io/pulp/pulp-minimal
-                description: The image name (repo name) for the pulp image.
+                description: 'The image name (repo name) for the pulp image. Default:
+                  "quay.io/pulp/pulp-minimal:stable"'
                 type: string
               image_pull_policy:
                 default: IfNotPresent
-                description: Image pull policy for container image
+                description: 'Image pull policy for container image. Default: "IfNotPresent"'
                 enum:
                 - IfNotPresent
                 - Always
                 - Never
                 type: string
               image_pull_secrets:
-                description: Image pull secrets for container images
+                description: 'Image pull secrets for container images. Default: []'
                 items:
                   type: string
                 type: array
               image_version:
                 default: stable
-                description: The image version for the pulp image.
+                description: 'The image version for the pulp image. Default: "stable"'
                 type: string
               image_web:
                 default: quay.io/pulp/pulp-web
-                description: The image name (repo name) for the pulp webserver image.
+                description: 'The image name (repo name) for the pulp webserver image.
+                  Default: "quay.io/pulp/pulp-web"'
                 type: string
               image_web_version:
                 default: stable
-                description: The image version for the pulp webserver image.
+                description: 'The image version for the pulp webserver image. Default:
+                  "stable"'
                 type: string
               ingress_annotations:
                 additionalProperties:
@@ -5822,7 +5840,8 @@ spec:
                 description: Ingress DNS host
                 type: string
               ingress_type:
-                description: The ingress type to use to reach the deployed instance
+                description: 'The ingress type to use to reach the deployed instance.
+                  Default: none (will not expose the service)'
                 enum:
                 - none
                 - Ingress
@@ -5836,29 +5855,26 @@ spec:
                 type: string
               mount_trusted_ca:
                 default: false
-                description: Define if the operator should or should not mount the
+                description: 'Define if the operator should or should not mount the
                   custom CA certificates added to the cluster via cluster-wide proxy
-                  config
+                  config. Default: false'
                 type: boolean
               nginx_client_max_body_size:
-                default: 10m
-                description: The client max body size for Nginx Ingress
+                description: 'The client max body size for Nginx Ingress. Default:
+                  "10m"'
                 type: string
               nginx_proxy_body_size:
-                default: "0"
-                description: The proxy body size for Nginx Ingress
+                description: 'The proxy body size for Nginx Ingress. Default: "0"'
                 type: string
               nginx_proxy_connect_timeout:
-                default: 120s
-                description: The proxy connect timeout for Nginx Ingress
+                description: 'The proxy connect timeout for Nginx Ingress. Default:
+                  "120s"'
                 type: string
               nginx_proxy_read_timeout:
-                default: 120s
-                description: The proxy read timeout for Nginx Ingress
+                description: 'The proxy read timeout for Nginx Ingress. Default: "120s"'
                 type: string
               nginx_proxy_send_timeout:
-                default: 120s
-                description: The proxy send timeout for Nginx Ingress
+                description: 'The proxy send timeout for Nginx Ingress. Default: "120s"'
                 type: string
               nodeport_port:
                 description: Provide requested port value
@@ -5871,28 +5887,32 @@ spec:
                 description: The secret for S3 compliant object storage configuration.
                 type: string
               pulp_settings:
-                description: The pulp settings.
+                description: Definition of /etc/pulp/settings.py config file.
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               pvc:
-                description: PersistenVolumeClaim name that will be used by Pulp pods
+                description: PersistenVolumeClaim name that will be used by Pulp pods.
                   If defined, the PVC must be provisioned by the user and the operator
                   will only configure the deployment to use it
                 type: string
               route_host:
-                description: Route DNS host
+                description: 'Route DNS host. Default: <operator''s name> + "." +
+                  ingress.Spec.Domain'
                 type: string
               route_labels:
                 additionalProperties:
                   type: string
-                description: RouteLabels will append custom label(s) into routes (used
-                  by router shard routeSelector).
+                description: 'RouteLabels will append custom label(s) into routes
+                  (used by router shard routeSelector). Default: {"pulp_cr": "<operator''s
+                  name>", "owner": "pulp-dev" }'
                 type: object
               signing_scripts_configmap:
-                description: ConfigMap where the signing scripts are stored.
+                description: 'ConfigMap where the signing scripts are stored. Default:
+                  <operators''s name>-"-signing-scripts"'
                 type: string
               signing_secret:
-                description: Secret where the signing certificates are stored.
+                description: 'Secret where the signing certificates are stored. Default:
+                  <operators''s name>-"-signing-scripts"'
                 type: string
               sso_secret:
                 description: Secret where Single Sign-on configuration can be found
@@ -5908,7 +5928,14 @@ spec:
                 - Azure
                 - azure
                 type: string
+              unmanaged:
+                description: 'Define if the operator should stop managing Pulp resources.
+                  If set to true, the operator will not execute any task (it will
+                  be "disabled"). Default: false'
+                type: boolean
               web:
+                description: Web defines desired state of pulpcore-web (reverse-proxy)
+                  resources
                 properties:
                   livenessProbe:
                     description: Periodic probe of container liveness. Container will
@@ -6289,7 +6316,8 @@ spec:
                     type: object
                   replicas:
                     default: 1
-                    description: Size is the size of number of pulp-web replicas
+                    description: 'Size is the size of number of pulp-web replicas.
+                      Default: 1'
                     format: int32
                     minimum: 0
                     nullable: true
@@ -6322,6 +6350,7 @@ spec:
                     type: object
                 type: object
               worker:
+                description: Worker defines desired state of pulpcore-worker resources
                 properties:
                   affinity:
                     description: Affinity is a group of affinity scheduling rules.
@@ -7570,7 +7599,8 @@ spec:
                     type: object
                   replicas:
                     default: 2
-                    description: Size is the size of number of pulp-worker replicas
+                    description: 'Size is the size of number of pulp-worker replicas.
+                      Default: 2'
                     format: int32
                     minimum: 0
                     nullable: true
