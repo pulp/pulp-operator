@@ -1,0 +1,1 @@
+Fixed issue with headless services propagating new address to pulp-web pods.

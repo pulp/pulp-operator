@@ -1163,8 +1163,6 @@ func serviceAPISpec(name, namespace, deployment_type string) corev1.ServiceSpec 
 	serviceType := corev1.ServiceType("ClusterIP")
 
 	return corev1.ServiceSpec{
-		ClusterIP:             "None",
-		ClusterIPs:            []string{"None"},
 		InternalTrafficPolicy: &serviceInternalTrafficPolicyCluster,
 		IPFamilies:            []corev1.IPFamily{"IPv4"},
 		IPFamilyPolicy:        &ipFamilyPolicyType,
