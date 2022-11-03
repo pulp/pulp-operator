@@ -36,6 +36,13 @@ import (
 	"github.com/pulp/pulp-operator/controllers"
 )
 
+//puResource contains the fields to update the .status.conditions from pulp instance
+type pulpResource struct {
+	Type          string
+	Name          string
+	ConditionType string
+}
+
 // pulpStatus will cheeck the READY state of the pods before considering the component status as ready
 func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
@@ -46,57 +53,64 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 	// the controller.
 	time.Sleep(time.Millisecond * 200)
 
-	// check if Content pods are READY
-	contentDeployment := &appsv1.Deployment{}
-	if err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-content", Namespace: pulp.Namespace}, contentDeployment); err == nil {
-		contentConditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Content-Ready"
-		if !isDeploymentReady(contentDeployment) {
-			log.Info(pulp.Spec.DeploymentType + " content not ready yet ...")
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, contentConditionType, "UpdatingContentDeployment", "Content deployment not ready yet")
-			return ctrl.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
-		} else if v1.IsStatusConditionFalse(pulp.Status.Conditions, contentConditionType) {
-			r.updateStatus(ctx, pulp, metav1.ConditionTrue, contentConditionType, "ContentTasksFinished", "All Content tasks ran successfully")
-			r.recorder.Event(pulp, corev1.EventTypeNormal, "ContentReady", "All Content tasks ran successfully")
-		}
-	} else {
-		log.Error(err, "Failed to get Pulp Content Deployment")
-		return ctrl.Result{Requeue: true, RequeueAfter: 10 * time.Second}, nil
-	}
-
-	// check if API pods are READY
-	apiDeployment := &appsv1.Deployment{}
-	if err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, apiDeployment); err == nil {
-		apiConditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-API-Ready"
-		if !isDeploymentReady(apiDeployment) {
-			log.Info(pulp.Spec.DeploymentType + " api not ready yet ...")
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, apiConditionType, "UpdatingAPIDeployment", "API deployment not ready yet")
-			return ctrl.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
-		} else if v1.IsStatusConditionFalse(pulp.Status.Conditions, apiConditionType) {
-			r.updateStatus(ctx, pulp, metav1.ConditionTrue, apiConditionType, "ApiTasksFinished", "All API tasks ran successfully")
-			r.recorder.Event(pulp, corev1.EventTypeNormal, "APIReady", "All API tasks ran successfully")
-		}
-	} else {
-		log.Error(err, "Failed to get Pulp API Deployment")
-		return ctrl.Result{Requeue: true, RequeueAfter: 10 * time.Second}, nil
-	}
-
-	// check web pods are READY
 	isNginxIngress := strings.ToLower(pulp.Spec.IngressType) == "ingress" && controllers.IsNginxIngressSupported(r)
-	if strings.ToLower(pulp.Spec.IngressType) != "route" && !isNginxIngress {
-		webConditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Web-Ready"
-		webDeployment := &appsv1.Deployment{}
-		if err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web", Namespace: pulp.Namespace}, webDeployment); err == nil {
-			if !isDeploymentReady(webDeployment) {
-				log.Info(pulp.Spec.DeploymentType + " web not ready yet ...")
-				r.updateStatus(ctx, pulp, metav1.ConditionFalse, webConditionType, "UpdatingWebDeployment", "Web deployment not ready yet")
-				return ctrl.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
-			} else if v1.IsStatusConditionFalse(pulp.Status.Conditions, webConditionType) {
-				r.updateStatus(ctx, pulp, metav1.ConditionTrue, webConditionType, "WebTasksFinished", "All Web tasks ran successfully")
-				r.recorder.Event(pulp, corev1.EventTypeNormal, "WebReady", "All Web tasks ran successfully")
+	pulpResources := []pulpResource{
+		{
+			Type:          "content",
+			Name:          pulp.Name + "-content",
+			ConditionType: cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Content-Ready",
+		},
+		{
+			Type:          "api",
+			Name:          pulp.Name + "-api",
+			ConditionType: cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-API-Ready",
+		},
+		{
+			Type:          "worker",
+			Name:          pulp.Name + "-worker",
+			ConditionType: cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Worker-Ready",
+		},
+		{
+			Type:          "web",
+			Name:          pulp.Name + "-web",
+			ConditionType: cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Web-Ready",
+		},
+	}
+
+	// each pulpcore status resource (content,worker,api) will be checked in a different go-routine to avoid
+	// an issue with one of the status resource not getting updated until the previous one finishes
+	for _, resource := range pulpResources {
+
+		// if route or ingress we should do nothing
+		if resource.Type == "web" {
+			if strings.ToLower(pulp.Spec.IngressType) == "route" || isNginxIngress {
+				continue
 			}
-		} else {
-			log.Error(err, "Failed to get Pulp Web Deployment")
-			return ctrl.Result{Requeue: true, RequeueAfter: 10 * time.Second}, nil
+		}
+
+		go func(resource pulpResource) {
+			deployment := &appsv1.Deployment{}
+			typeCapitalized := cases.Title(language.English, cases.Compact).String(resource.Type)
+			if err := r.Get(ctx, types.NamespacedName{Name: resource.Name, Namespace: pulp.Namespace}, deployment); err == nil {
+				if !isDeploymentReady(deployment) {
+					log.Info(pulp.Spec.DeploymentType + " " + resource.Type + " not ready yet ...")
+					r.updateStatus(ctx, pulp, metav1.ConditionFalse, resource.ConditionType, "Updating"+typeCapitalized+"Deployment", typeCapitalized+" deployment not ready yet")
+				} else if v1.IsStatusConditionFalse(pulp.Status.Conditions, resource.ConditionType) {
+					r.updateStatus(ctx, pulp, metav1.ConditionTrue, resource.ConditionType, typeCapitalized+"TasksFinished", "All "+typeCapitalized+" tasks ran successfully")
+					r.recorder.Event(pulp, corev1.EventTypeNormal, typeCapitalized+"Ready", "All "+typeCapitalized+" tasks ran successfully")
+				}
+			} else {
+				log.Error(err, "Failed to get Pulp "+typeCapitalized+" Deployment")
+			}
+		}(resource)
+	}
+
+	// requeue until all deployments get READY
+	for _, resource := range pulpResources {
+		deployment := &appsv1.Deployment{}
+		r.Get(ctx, types.NamespacedName{Name: resource.Name, Namespace: pulp.Namespace}, deployment)
+		if !isDeploymentReady(deployment) {
+			return ctrl.Result{RequeueAfter: time.Second * 30}, nil
 		}
 	}
 

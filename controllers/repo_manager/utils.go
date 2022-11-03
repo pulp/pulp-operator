@@ -42,6 +42,12 @@ type immutableField struct {
 	FieldPath interface{}
 }
 
+// statusReturn is used to control goroutines execution
+type statusReturn struct {
+	ctrl.Result
+	error
+}
+
 // Generate a random string with length pwdSize
 func createPwd(pwdSize int) string {
 	const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"

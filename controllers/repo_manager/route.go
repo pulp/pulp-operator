@@ -39,12 +39,6 @@ import (
 	"github.com/pulp/pulp-operator/controllers"
 )
 
-// pluginReturn is used to control goroutines execution
-type pluginReturn struct {
-	ctrl.Result
-	error
-}
-
 // pulpRouteController creates the routes based on snippets defined in pulp-worker pod
 func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
@@ -130,7 +124,7 @@ func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *r
 	pulpPlugins = append(defaultPlugins, pulpPlugins...)
 
 	// channel used to receive the return value from each goroutine
-	c := make(chan pluginReturn)
+	c := make(chan statusReturn)
 
 	for _, plugin := range pulpPlugins {
 
@@ -150,28 +144,28 @@ func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *r
 					log.Error(err, "Failed to create new route", "Route.Namespace", expectedRoute.Namespace, "Route.Name", expectedRoute.Name)
 					r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingRoute", "Failed to create "+pulp.Name+"-route: "+err.Error())
 					r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new route")
-					c <- pluginReturn{ctrl.Result{}, err}
+					c <- statusReturn{ctrl.Result{}, err}
 					return
 				}
-				c <- pluginReturn{ctrl.Result{}, nil}
+				c <- statusReturn{ctrl.Result{}, nil}
 				return
 			} else if err != nil {
 				log.Error(err, "Failed to get route")
-				c <- pluginReturn{ctrl.Result{}, err}
+				c <- statusReturn{ctrl.Result{}, err}
 				return
 			}
 
 			// Ensure route specs are as expected
 			if err := r.reconcileObject(ctx, pulp, expectedRoute, currentRoute, conditionType, log); err != nil {
 				log.Error(err, "Failed to update route spec")
-				c <- pluginReturn{ctrl.Result{}, err}
+				c <- statusReturn{ctrl.Result{}, err}
 				return
 			}
 
 			// Ensure route labels and annotations are as expected
 			if err := r.reconcileMetadata(ctx, pulp, expectedRoute, currentRoute, conditionType, log); err != nil {
 				log.Error(err, "Failed to update route labels")
-				c <- pluginReturn{ctrl.Result{}, err}
+				c <- statusReturn{ctrl.Result{}, err}
 				return
 			}
 

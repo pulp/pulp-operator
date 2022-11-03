@@ -36,7 +36,9 @@ import (
 	"k8s.io/client-go/tools/record"
 
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -132,7 +134,9 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			LastTransitionTime: metav1.Now(),
 			Message:            pulp.Name + " operator tasks running",
 		})
+		r.Status().Update(ctx, pulp)
 	}
+
 	needsPulpWeb := strings.ToLower(pulp.Spec.IngressType) != "route" && !controllers.IsNginxIngressSupported(r)
 	if needsPulpWeb && pulp.Spec.ImageVersion != pulp.Spec.ImageWebVersion {
 		err := fmt.Errorf("image version and image web version should be equal ")
@@ -321,6 +325,8 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	pulpController, err = r.pulpStatus(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
+	} else if pulpController.RequeueAfter > 0 {
+		return pulpController, nil
 	} else if pulpController.Requeue {
 		return pulpController, nil
 	}
@@ -328,7 +334,7 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// If we get into here it means that there is no reconciliation
 	// nor controller tasks pending
 	log.Info("Operator tasks synced")
-	return pulpController, nil
+	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -336,8 +342,9 @@ func (r *RepoManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	// creates a new eventRecorder to be able to interact with events
 	r.recorder = mgr.GetEventRecorderFor("Pulp")
+
 	controller := ctrl.NewControllerManagedBy(mgr).
-		For(&repomanagerv1alpha1.Pulp{}).
+		For(&repomanagerv1alpha1.Pulp{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&appsv1.StatefulSet{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.Service{}).
