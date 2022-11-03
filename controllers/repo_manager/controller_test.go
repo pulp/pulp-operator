@@ -1158,9 +1158,11 @@ var _ = Describe("Pulp controller", Ordered, func() {
 })
 
 // waitPulpOperatorFinish waits until find "Pulp-Operator-Finished-Execution" pulp.Status.Condition
-// or 60 seconds timeout
+// or 5 seconds timeout
 func waitPulpOperatorFinish(ctx context.Context, createdPulp *repomanagerv1alpha1.Pulp) {
-	for timeout := 0; timeout < 60; timeout++ {
+	time.Sleep(time.Second)
+
+	for timeout := 0; timeout < 5; timeout++ {
 		objectGet(ctx, createdPulp, PulpName)
 		//a, _ := json.MarshalIndent(createdPulp.Status.Conditions, "", "  ")
 		//fmt.Println(string(a))
