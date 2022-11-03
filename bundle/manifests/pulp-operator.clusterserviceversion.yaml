@@ -214,7 +214,7 @@ metadata:
     operators.operatorframework.io/builder: operator-sdk-v1.25.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/pulp/pulp-operator
-  name: pulp-operator.v1.0.0-alpha
+  name: pulp-operator.v1.0.0-alpha.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -352,26 +352,29 @@ spec:
       kind: Pulp
       name: pulps.repo-manager.pulpproject.org
       specDescriptors:
-      - description: Secret where the administrator password can be found
+      - description: 'Secret where the administrator password can be found. Default:
+          <operator''s name> + "-admin-password"'
         displayName: Admin Password Secret
         path: admin_password_secret
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Api
+      - description: Api defines desired state of pulpcore-api resources
+        displayName: Api
         path: api
       - description: Affinity is a group of affinity scheduling rules.
         displayName: Affinity
         path: api.affinity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: The timeout for the gunicorn process.
+      - description: 'The timeout for the gunicorn process. Default: 90'
         displayName: Gunicorn Timeout
         path: api.gunicorn_timeout
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:number
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: The number of gunicorn workers to use for the api.
+      - description: 'The number of gunicorn workers to use for the api. Default:
+          2'
         displayName: Gunicorn Workers
         path: api.gunicorn_workers
         x-descriptors:
@@ -402,7 +405,7 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Probe
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Size is the size of number of pulp-api replicas.
+      - description: 'Size is the size of number of pulp-api replicas. Default: 1'
         displayName: Replicas
         path: api.replicas
         x-descriptors:
@@ -430,7 +433,8 @@ spec:
         path: api.topology_spread_constraints
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Cache
+      - description: Cache defines desired state of redis resources
+        displayName: Cache
         path: cache
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
@@ -439,7 +443,7 @@ spec:
         path: cache.affinity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Defines if cache should be enabled.
+      - description: 'Defines if cache should be enabled. Default: true'
         displayName: Enabled
         path: cache.enabled
         x-descriptors:
@@ -477,7 +481,7 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Probe
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: 'The image name for the redis image. [default: "redis:latest"]'
+      - description: 'The image name for the redis image. Default: "redis:latest"'
         displayName: Redis Image
         path: cache.redis_image
         x-descriptors:
@@ -512,34 +516,41 @@ spec:
         path: cache.tolerations
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Container Auth Private Key
+      - description: 'Private Key name from `<operator''s name> + "-container-auth-certs"`
+          Secret. Default: "container_auth_private_key.pem"'
+        displayName: Container Auth Private Key
         path: container_auth_private_key_name
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Container Auth Public Key
+      - description: 'Public Key name from `<operator''s name> + "-container-auth-certs"`
+          Secret. Default: "container_auth_public_key.pem"'
+        displayName: Container Auth Public Key
         path: container_auth_public_key_name
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Secret where the container token certificates are stored.
+      - description: 'Secret where the container token certificates are stored. Default:
+          <operator''s name> + "-container-auth"'
         displayName: Container Token Secret
         path: container_token_secret
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Content
+      - description: Content defines desired state of pulpcore-content resources
+        displayName: Content
         path: content
       - description: Affinity is a group of affinity scheduling rules.
         displayName: Affinity
         path: content.affinity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: The timeout for the gunicorn process.
+      - description: 'The timeout for the gunicorn process. Default: 90'
         displayName: Gunicorn Timeout
         path: content.gunicorn_timeout
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:number
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: The number of gunicorn workers to use for the api.
+      - description: 'The number of gunicorn workers to use for the api. Default:
+          2'
         displayName: Gunicorn Workers
         path: content.gunicorn_workers
         x-descriptors:
@@ -570,7 +581,8 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Probe
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Size is the size of number of pulp-content replicas
+      - description: 'Size is the size of number of pulp-content replicas. Default:
+          2'
         displayName: Replicas
         path: content.replicas
         x-descriptors:
@@ -598,7 +610,8 @@ spec:
         path: content.topology_spread_constraints
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Database
+      - description: Database defines desired state of postgres resources
+        displayName: Database
         path: database
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
@@ -624,22 +637,23 @@ spec:
         path: database.node_selector
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: 'Registry path to the PostgreSQL container to use [default: "/var/lib/postgresql/data/pgdata"]'
+      - description: 'Registry path to the PostgreSQL container to use. Default: "/var/lib/postgresql/data/pgdata"'
         displayName: Postgres Data Path
         path: database.postgres_data_path
-      - displayName: Postgres Extra Args
+      - description: Arguments to pass to postgres process
+        displayName: Postgres Extra Args
         path: database.postgres_extra_args
-      - description: 'PostgreSQL host authentication method [default: "scram-sha-256"]'
+      - description: 'PostgreSQL host authentication method. Default: "scram-sha-256"'
         displayName: Postgres Host Auth Method
         path: database.postgres_host_auth_method
-      - description: 'PostgreSQL container image [default: "postgres:13"]'
+      - description: 'PostgreSQL container image. Default: "postgres:13"'
         displayName: Postgres Image
         path: database.postgres_image
       - description: 'Arguments to pass to PostgreSQL initdb command when creating
-          a new cluster. [default: "--auth-host=scram-sha-256"]'
+          a new cluster. Default: "--auth-host=scram-sha-256"'
         displayName: Postgres Initdb Args
         path: database.postgres_initdb_args
-      - description: 'PostgreSQL port [default: 5432]'
+      - description: 'PostgreSQL port. Default: 5432'
         displayName: Postgres Port
         path: database.postgres_port
         x-descriptors:
@@ -650,7 +664,7 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: 'Configure PostgreSQL connection sslmode option [default: "prefer"]'
+      - description: 'Configure PostgreSQL connection sslmode option. Default: "prefer"'
         displayName: Postgres SSLMode
         path: database.postgres_ssl_mode
       - description: Name of the StorageClass required by the claim.
@@ -689,13 +703,14 @@ spec:
       - description: 'PostgreSQL version [default: "13"]'
         displayName: Postgres Version
         path: database.version
-      - description: Secret where the Fernet symmetric encryption key is stored.
+      - description: 'Secret where the Fernet symmetric encryption key is stored.
+          Default: <operators''s name>-"-db-fields-encryption"'
         displayName: Database encryption
         path: db_fields_encryption_secret
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Name of the deployment type.
+      - description: 'Name of the deployment type. Default: "pulp"'
         displayName: Deployment Type
         path: deployment_type
         x-descriptors:
@@ -719,38 +734,39 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File
         - urn:alm:descriptor:io.kubernetes:StorageClass
-      - description: The timeout for HAProxy.
+      - description: 'The timeout for HAProxy. Default: "180s"'
         displayName: HAProxy Timeout
         path: haproxy_timeout
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: The image name (repo name) for the pulp image.
+      - description: 'The image name (repo name) for the pulp image. Default: "quay.io/pulp/pulp-minimal:stable"'
         displayName: Image
         path: image
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Image pull policy for container image
+      - description: 'Image pull policy for container image. Default: "IfNotPresent"'
         displayName: Image Pull Policy
         path: image_pull_policy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
-      - description: Image pull secrets for container images
+      - description: 'Image pull secrets for container images. Default: []'
         displayName: Image Pull Secrets
         path: image_pull_secrets
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: The image version for the pulp image.
+      - description: 'The image version for the pulp image. Default: "stable"'
         displayName: Image Version
         path: image_version
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: The image name (repo name) for the pulp webserver image.
+      - description: 'The image name (repo name) for the pulp webserver image. Default:
+          "quay.io/pulp/pulp-web"'
         displayName: Image Web
         path: image_web
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - description: The image version for the pulp webserver image.
+      - description: 'The image version for the pulp webserver image. Default: "stable"'
         displayName: Image Web Version
         path: image_web_version
         x-descriptors:
@@ -767,7 +783,8 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
-      - description: The ingress type to use to reach the deployed instance
+      - description: 'The ingress type to use to reach the deployed instance. Default:
+          none (will not expose the service)'
         displayName: Ingress Type
         path: ingress_type
         x-descriptors:
@@ -775,37 +792,38 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:select:Ingress
         - urn:alm:descriptor:com.tectonic.ui:select:LoadBalancer
         - urn:alm:descriptor:com.tectonic.ui:select:NodePort
-      - description: Define if the operator should or should not mount the custom
-          CA certificates added to the cluster via cluster-wide proxy config
+      - description: 'Define if the operator should or should not mount the custom
+          CA certificates added to the cluster via cluster-wide proxy config. Default:
+          false'
         displayName: Trusted Ca
         path: mount_trusted_ca
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - description: The client max body size for Nginx Ingress
+      - description: 'The client max body size for Nginx Ingress. Default: "10m"'
         displayName: Nginx Max Body Size
         path: nginx_client_max_body_size
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
-      - description: The proxy body size for Nginx Ingress
+      - description: 'The proxy body size for Nginx Ingress. Default: "0"'
         displayName: Nginx Proxy Body Size
         path: nginx_proxy_body_size
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
-      - description: The proxy connect timeout for Nginx Ingress
+      - description: 'The proxy connect timeout for Nginx Ingress. Default: "120s"'
         displayName: Nginx Proxy Connect Timeout
         path: nginx_proxy_connect_timeout
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
-      - description: The proxy read timeout for Nginx Ingress
+      - description: 'The proxy read timeout for Nginx Ingress. Default: "120s"'
         displayName: Nginx Proxy Read Timeout
         path: nginx_proxy_read_timeout
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
-      - description: The proxy send timeout for Nginx Ingress
+      - description: 'The proxy send timeout for Nginx Ingress. Default: "120s"'
         displayName: Nginx Proxy Send Timeout
         path: nginx_proxy_send_timeout
         x-descriptors:
@@ -828,38 +846,41 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:S3
-      - description: The pulp settings.
+      - description: Definition of /etc/pulp/settings.py config file.
         displayName: Pulp Settings
         path: pulp_settings
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: PersistenVolumeClaim name that will be used by Pulp pods If defined,
-          the PVC must be provisioned by the user and the operator will only configure
-          the deployment to use it
+      - description: PersistenVolumeClaim name that will be used by Pulp pods. If
+          defined, the PVC must be provisioned by the user and the operator will only
+          configure the deployment to use it
         displayName: PVC
         path: pvc
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Route DNS host
+      - description: 'Route DNS host. Default: <operator''s name> + "." + ingress.Spec.Domain'
         displayName: Route Host
         path: route_host
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route
-      - description: RouteLabels will append custom label(s) into routes (used by
-          router shard routeSelector).
+      - description: 'RouteLabels will append custom label(s) into routes (used by
+          router shard routeSelector). Default: {"pulp_cr": "<operator''s name>",
+          "owner": "pulp-dev" }'
         displayName: Route Labels
         path: route_labels
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: ConfigMap where the signing scripts are stored.
+      - description: 'ConfigMap where the signing scripts are stored. Default: <operators''s
+          name>-"-signing-scripts"'
         displayName: Signing Scripts Configmap
         path: signing_scripts_configmap
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:ConfigMap
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Secret where the signing certificates are stored.
+      - description: 'Secret where the signing certificates are stored. Default: <operators''s
+          name>-"-signing-scripts"'
         displayName: Signing Secret
         path: signing_secret
         x-descriptors:
@@ -878,7 +899,15 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:select:File
         - urn:alm:descriptor:com.tectonic.ui:select:S3
         - urn:alm:descriptor:com.tectonic.ui:select:Azure
-      - displayName: Web
+      - description: 'Define if the operator should stop managing Pulp resources.
+          If set to true, the operator will not execute any task (it will be "disabled").
+          Default: false'
+        displayName: Unmanaged
+        path: unmanaged
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: Web defines desired state of pulpcore-web (reverse-proxy) resources
+        displayName: Web
         path: web
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
@@ -907,7 +936,7 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Probe
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Size is the size of number of pulp-web replicas
+      - description: 'Size is the size of number of pulp-web replicas. Default: 1'
         displayName: Replicas
         path: web.replicas
         x-descriptors:
@@ -918,7 +947,8 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Worker
+      - description: Worker defines desired state of pulpcore-worker resources
+        displayName: Worker
         path: worker
       - description: Affinity is a group of affinity scheduling rules.
         displayName: Affinity
@@ -950,7 +980,8 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Probe
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Size is the size of number of pulp-worker replicas
+      - description: 'Size is the size of number of pulp-worker replicas. Default:
+          2'
         displayName: Replicas
         path: worker.replicas
         x-descriptors:
@@ -1145,7 +1176,7 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.annotations['olm.targetNamespaces']
-                image: quay.io/pulp/pulp-operator:v1.0.0-alpha
+                image: quay.io/pulp/pulp-operator:v1.0.0-alpha.1
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -1438,4 +1469,4 @@ spec:
     name: pulp-redis
   - image: postgres:13
     name: pulp-postgres
-  version: 1.0.0-alpha
+  version: 1.0.0-alpha.1
