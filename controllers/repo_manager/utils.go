@@ -23,6 +23,7 @@ import (
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	k8s_errors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
@@ -352,6 +353,31 @@ func (r *RepoManagerReconciler) updateIngressType(ctx context.Context, pulp *rep
 		return
 	}
 
+	// if pulp CR was defined with ingress and user modified it to anything else
+	// delete all ingresss with operator's labels
+	// remove ingress .status.conditions
+	if strings.ToLower(pulp.Status.IngressType) == "ingress" && strings.ToLower(pulp.Spec.IngressType) != "ingress" {
+
+		ingress := &netv1.Ingress{}
+		ingresssLabelSelector := map[string]string{
+			"pulp_cr": pulp.Name,
+			"owner":   "pulp-dev",
+		}
+		listOpts := []client.DeleteAllOfOption{
+			client.InNamespace(pulp.Namespace),
+			client.MatchingLabels(ingresssLabelSelector),
+		}
+		r.DeleteAllOf(ctx, ingress, listOpts...)
+		ingressConditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Ingress-Ready"
+		v1.RemoveStatusCondition(&pulp.Status.Conditions, ingressConditionType)
+
+		pulp.Status.IngressType = pulp.Spec.IngressType
+		r.Status().Update(ctx, pulp)
+
+		// nothing else to do (the controller will be responsible for setting up the other resources)
+		return
+	}
+
 	// if pulp CR was defined with nodeport and user modified it to anything else
 	// delete all pulp-web resources
 	// remove pulp-web .status.conditions
@@ -392,6 +418,22 @@ func (r *RepoManagerReconciler) reconcileObject(ctx context.Context, pulp *repom
 		objKind := "route"
 		objName := expectedState.Name
 		currentState := currentState.(*routev1.Route)
+		// Ensure objects are as expected
+		if !equality.Semantic.DeepDerivative(expectedState.Spec, currentState.Spec) {
+			log.Info("The " + objKind + " " + objName + " has been modified! Reconciling ...")
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "Updating"+objKind, "Reconciling "+objName+" "+objKind)
+			expectedState.SetResourceVersion(currentState.GetResourceVersion())
+			if err := r.Update(ctx, expectedState); err != nil {
+				log.Error(err, "Error trying to update "+objName+" "+objKind+" ...")
+				r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdating"+objKind, "Failed to reconcile "+objName+" "+objKind+": "+err.Error())
+				return err
+			}
+			r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Reconciled "+objName+" "+objKind)
+		}
+	case *netv1.Ingress:
+		objKind := "ingress"
+		objName := expectedState.Name
+		currentState := currentState.(*netv1.Ingress)
 		// Ensure objects are as expected
 		if !equality.Semantic.DeepDerivative(expectedState.Spec, currentState.Spec) {
 			log.Info("The " + objKind + " " + objName + " has been modified! Reconciling ...")
@@ -454,6 +496,30 @@ func (r *RepoManagerReconciler) reconcileMetadata(ctx context.Context, pulp *rep
 				log.Info("The " + objKind + " " + objName + " has been modified! Reconciling ...")
 				r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "Updating"+objKind, "Reconciling "+objName+" "+objKind)
 				expectedState.(*routev1.Route).SetResourceVersion(currentState.(*routev1.Route).GetResourceVersion())
+				if err := r.Update(ctx, expectedState.(*routev1.Route)); err != nil {
+					log.Error(err, "Error trying to update "+objName+" "+objKind+" ...")
+					r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdating"+objKind, "Failed to reconcile "+objName+" "+objKind+": "+err.Error())
+					return err
+				}
+				r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Reconciled "+objName+" "+objKind)
+			}
+		}
+	case *netv1.Ingress:
+		objKind := "ingress"
+		objName := expectedState.(*netv1.Ingress).Name
+
+		// metadata fields
+		metadataFields := []string{"Labels", "Annotations"}
+
+		for _, field := range metadataFields {
+			currentField := reflect.ValueOf(currentState.(*netv1.Ingress).ObjectMeta).FieldByName(field).Interface()
+			expectedField := reflect.ValueOf(expectedState.(*netv1.Ingress).ObjectMeta).FieldByName(field).Interface()
+			if !equality.Semantic.DeepDerivative(currentField, expectedField) ||
+				!equality.Semantic.DeepDerivative(expectedField, currentField) {
+
+				log.Info("The " + objKind + " " + objName + " has been modified! Reconciling ...")
+				r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "Updating"+objKind, "Reconciling "+objName+" "+objKind)
+				expectedState.(*netv1.Ingress).SetResourceVersion(currentState.(*netv1.Ingress).GetResourceVersion())
 				if err := r.Update(ctx, expectedState.(*routev1.Route)); err != nil {
 					log.Error(err, "Error trying to update "+objName+" "+objKind+" ...")
 					r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdating"+objKind, "Failed to reconcile "+objName+" "+objKind+": "+err.Error())
