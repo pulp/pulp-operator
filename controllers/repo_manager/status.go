@@ -123,7 +123,10 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 			LastTransitionTime: metav1.Now(),
 			Message:            "All tasks ran successfully",
 		})
-		r.Status().Update(ctx, pulp)
+		if err := r.Status().Update(ctx, pulp); err != nil {
+			log.Error(err, "Failed to update pulp status")
+			return ctrl.Result{}, err
+		}
 		log.Info(pulp.Spec.DeploymentType + " operator finished execution ...")
 	}
 
