@@ -336,23 +336,7 @@ func (r *RepoManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	// creates a new eventRecorder to be able to interact with events
 	r.recorder = mgr.GetEventRecorderFor("Pulp")
-
-	if IsOpenShift, _ := controllers.IsOpenShift(); IsOpenShift {
-		return ctrl.NewControllerManagedBy(mgr).
-			For(&repomanagerv1alpha1.Pulp{}).
-			Owns(&appsv1.StatefulSet{}).
-			Owns(&appsv1.Deployment{}).
-			Owns(&corev1.Service{}).
-			Owns(&corev1.Secret{}).
-			Owns(&corev1.ConfigMap{}).
-			Owns(&policy.PodDisruptionBudget{}).
-			Owns(&routev1.Route{}).
-			Owns(&corev1.ServiceAccount{}).
-			Owns(&netv1.Ingress{}).
-			Complete(r)
-	}
-
-	return ctrl.NewControllerManagedBy(mgr).
+	controller := ctrl.NewControllerManagedBy(mgr).
 		For(&repomanagerv1alpha1.Pulp{}).
 		Owns(&appsv1.StatefulSet{}).
 		Owns(&appsv1.Deployment{}).
@@ -361,5 +345,13 @@ func (r *RepoManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.ConfigMap{}).
 		Owns(&policy.PodDisruptionBudget{}).
 		Owns(&corev1.ServiceAccount{}).
-		Complete(r)
+		Owns(&netv1.Ingress{})
+
+	if IsOpenShift, _ := controllers.IsOpenShift(); IsOpenShift {
+		return controller.
+			Owns(&routev1.Route{}).
+			Complete(r)
+	}
+
+	return controller.Complete(r)
 }

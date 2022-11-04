@@ -275,6 +275,8 @@ func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repoma
 		"app.kubernetes.io/component":  "ingress",
 		"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
 		"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
+		"pulp_cr":                      m.Name,
+		"owner":                        "pulp-dev",
 	}
 	return &netv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
