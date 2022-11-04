@@ -186,9 +186,9 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		pulpController, err = r.createEmptyConfigMap(ctx, pulp, log)
 		if err != nil {
 			return pulpController, err
-		} else if pulpController.Requeue {
-			return pulpController, nil
 		} else if pulpController.RequeueAfter > 0 {
+			return pulpController, nil
+		} else if pulpController.Requeue {
 			return pulpController, nil
 		}
 	}
@@ -197,9 +197,9 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	pulpController, err = r.CreateServiceAccount(ctx, pulp)
 	if err != nil {
 		return pulpController, err
-	} else if pulpController.Requeue {
-		return pulpController, nil
 	} else if pulpController.RequeueAfter > 0 {
+		return pulpController, nil
+	} else if pulpController.Requeue {
 		return pulpController, nil
 	}
 
@@ -209,9 +209,9 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		pulpController, err = r.databaseController(ctx, pulp, log)
 		if err != nil {
 			return pulpController, err
-		} else if pulpController.Requeue {
-			return pulpController, nil
 		} else if pulpController.RequeueAfter > 0 {
+			return pulpController, nil
+		} else if pulpController.Requeue {
 			return pulpController, nil
 		}
 	}
@@ -224,9 +224,9 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		pulpController, err = r.pulpCacheController(ctx, pulp, log)
 		if err != nil {
 			return pulpController, err
-		} else if pulpController.Requeue {
-			return pulpController, nil
 		} else if pulpController.RequeueAfter > 0 {
+			return pulpController, nil
+		} else if pulpController.Requeue {
 			return pulpController, nil
 		}
 
@@ -235,9 +235,9 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		pulpController, err = r.deprovisionCache(ctx, pulp, log)
 		if err != nil {
 			return pulpController, err
-		} else if pulpController.Requeue {
-			return pulpController, nil
 		} else if pulpController.RequeueAfter > 0 {
+			return pulpController, nil
+		} else if pulpController.Requeue {
 			return pulpController, nil
 		}
 	}
@@ -246,9 +246,9 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	pulpController, err = r.pulpApiController(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
-	} else if pulpController.Requeue {
-		return pulpController, nil
 	} else if pulpController.RequeueAfter > 0 {
+		return pulpController, nil
+	} else if pulpController.Requeue {
 		return pulpController, nil
 	}
 
@@ -256,19 +256,18 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	pulpController, err = r.pulpContentController(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
-	} else if pulpController.Requeue {
-		return pulpController, nil
 	} else if pulpController.RequeueAfter > 0 {
 		return pulpController, nil
+	} else if pulpController.Requeue {
+		return pulpController, nil
 	}
-
 	log.V(1).Info("Running worker tasks")
 	pulpController, err = r.pulpWorkerController(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
-	} else if pulpController.Requeue {
-		return pulpController, nil
 	} else if pulpController.RequeueAfter > 0 {
+		return pulpController, nil
+	} else if pulpController.Requeue {
 		return pulpController, nil
 	}
 
@@ -280,9 +279,9 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			pulpController, err = r.pulpRouteController(ctx, pulp, log)
 			if err != nil {
 				return pulpController, err
-			} else if pulpController.Requeue {
-				return pulpController, nil
 			} else if pulpController.RequeueAfter > 0 {
+				return pulpController, nil
+			} else if pulpController.Requeue {
 				return pulpController, nil
 			}
 		} else if strings.ToLower(pulp.Spec.IngressType) == "ingress" {
@@ -290,9 +289,9 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			pulpController, err = r.pulpIngressController(ctx, pulp, log)
 			if err != nil {
 				return pulpController, err
-			} else if pulpController.Requeue {
-				return pulpController, nil
 			} else if pulpController.RequeueAfter > 0 {
+				return pulpController, nil
+			} else if pulpController.Requeue {
 				return pulpController, nil
 			}
 		} else {
@@ -300,9 +299,9 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			pulpController, err = r.pulpWebController(ctx, pulp, log)
 			if err != nil {
 				return pulpController, err
-			} else if pulpController.Requeue {
-				return pulpController, nil
 			} else if pulpController.RequeueAfter > 0 {
+				return pulpController, nil
+			} else if pulpController.Requeue {
 				return pulpController, nil
 			}
 		}
@@ -315,9 +314,9 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	pulpController, err = r.pdbController(ctx, pulp, log)
 	if err != nil {
 		return pulpController, err
-	} else if pulpController.Requeue {
-		return pulpController, nil
 	} else if pulpController.RequeueAfter > 0 {
+		return pulpController, nil
+	} else if pulpController.Requeue {
 		return pulpController, nil
 	}
 
