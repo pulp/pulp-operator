@@ -13,7 +13,7 @@ WEB_IMAGE ?= quay.io/pulp/pulp-web
 VERSION ?= 1.0.0-alpha.2
 
 # CHANNELS define the bundle channels used in the bundle.
-CHANNELS = "alpha,beta"
+CHANNELS = "beta"
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
 # To re-generate a bundle for other specific channels without changing the standard setup, you can:
 # - use the CHANNELS as arg of the bundle target (e.g make bundle CHANNELS=candidate,fast,stable)
