@@ -25,8 +25,10 @@ import (
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/types"
 
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -106,16 +108,16 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 	}
 
 	// requeue until all deployments get READY
+	r.Get(ctx, types.NamespacedName{Name: pulp.Name, Namespace: pulp.Namespace}, pulp)
 	for _, resource := range pulpResources {
-		deployment := &appsv1.Deployment{}
-		r.Get(ctx, types.NamespacedName{Name: resource.Name, Namespace: pulp.Namespace}, deployment)
-		if !isDeploymentReady(deployment) {
-			return ctrl.Result{RequeueAfter: time.Second * 30}, nil
+		if v1.IsStatusConditionFalse(pulp.Status.Conditions, resource.ConditionType) {
+			return ctrl.Result{RequeueAfter: time.Second * 10}, nil
 		}
 	}
 
 	// if we get into here it means that all components are READY, so operator finished its execution
 	if v1.IsStatusConditionFalse(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Operator-Finished-Execution") {
+		r.Get(ctx, types.NamespacedName{Name: pulp.Name, Namespace: pulp.Namespace}, pulp)
 		v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
 			Type:               cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Operator-Finished-Execution",
 			Status:             metav1.ConditionTrue,
@@ -123,9 +125,10 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 			LastTransitionTime: metav1.Now(),
 			Message:            "All tasks ran successfully",
 		})
-		if err := r.Status().Update(ctx, pulp); err != nil {
-			log.Error(err, "Failed to update pulp status")
-			return ctrl.Result{}, err
+
+		if err := r.Status().Update(context.Background(), pulp); err != nil && errors.IsConflict(err) {
+			log.V(1).Info("Failed to update pulp status", "error", err)
+			return ctrl.Result{Requeue: true}, nil
 		}
 		log.Info(pulp.Spec.DeploymentType + " operator finished execution ...")
 	}
