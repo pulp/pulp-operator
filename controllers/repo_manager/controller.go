@@ -127,6 +127,7 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	// "initialize" operator's .status.condition field
 	if !v1.IsStatusConditionPresentAndEqual(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Operator-Finished-Execution", metav1.ConditionTrue) {
+		log.V(1).Info("Initializing " + cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Operator-Finished-Execution")
 		v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
 			Type:               cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Operator-Finished-Execution",
 			Status:             metav1.ConditionFalse,

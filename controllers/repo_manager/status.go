@@ -53,7 +53,6 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 	// the controller.
 	time.Sleep(time.Millisecond * 200)
 
-	isNginxIngress := strings.ToLower(pulp.Spec.IngressType) == "ingress" && controllers.IsNginxIngressSupported(r)
 	pulpResources := []pulpResource{
 		{
 			Type:          "content",
@@ -83,6 +82,7 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 
 		// if route or ingress we should do nothing
 		if resource.Type == "web" {
+			isNginxIngress := strings.ToLower(pulp.Spec.IngressType) == "ingress" && controllers.IsNginxIngressSupported(r)
 			if strings.ToLower(pulp.Spec.IngressType) == "route" || isNginxIngress {
 				continue
 			}
@@ -110,6 +110,7 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 		deployment := &appsv1.Deployment{}
 		r.Get(ctx, types.NamespacedName{Name: resource.Name, Namespace: pulp.Namespace}, deployment)
 		if !isDeploymentReady(deployment) {
+			log.V(1).Info("requeueing ...")
 			return ctrl.Result{RequeueAfter: time.Second * 30}, nil
 		}
 	}
@@ -128,6 +129,8 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 			return ctrl.Result{}, err
 		}
 		log.Info(pulp.Spec.DeploymentType + " operator finished execution ...")
+	} else {
+		log.V(1).Info(pulp.Spec.DeploymentType + " operator finished execution ...")
 	}
 
 	/*
