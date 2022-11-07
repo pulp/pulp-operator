@@ -526,7 +526,7 @@ func (r *RepoManagerReconciler) reconcileMetadata(ctx context.Context, pulp *rep
 				log.Info("The " + objKind + " " + objName + " has been modified! Reconciling ...")
 				r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "Updating"+objKind, "Reconciling "+objName+" "+objKind)
 				expectedState.(*netv1.Ingress).SetResourceVersion(currentState.(*netv1.Ingress).GetResourceVersion())
-				if err := r.Update(ctx, expectedState.(*routev1.Route)); err != nil {
+				if err := r.Update(ctx, expectedState.(*netv1.Ingress)); err != nil {
 					log.Error(err, "Error trying to update "+objName+" "+objKind+" ...")
 					r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdating"+objKind, "Failed to reconcile "+objName+" "+objKind+": "+err.Error())
 					return err
