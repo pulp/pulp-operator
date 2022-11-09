@@ -309,5 +309,5 @@ jobs:
         run: echo "$QUAY_BOT_PASSWORD" | docker login -u "$QUAY_BOT_USERNAME" --password-stdin quay.io
       - name: Build and Push images
         run: |
-          make docker-build docker-push bundle-build bundle-push catalog-build catalog-push
+          make docker-buildx docker-push bundle-build bundle-push catalog-build catalog-push
         shell: bash
