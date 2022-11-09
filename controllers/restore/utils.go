@@ -13,6 +13,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
+const CMLock = "restore-lock"
+
 // isFileStorage returns true if pulp is deployed with storage type = file
 // this is a workaround to identify if it will be necessary to mount /var/lib/pulp in the backup-manager pod
 // to restore its contents
@@ -199,4 +201,38 @@ func (r *RepoManagerRestoreReconciler) waitPodReady(ctx context.Context, namespa
 		time.Sleep(time.Second)
 	}
 	return &corev1.Pod{}, err
+}
+
+// createLockConfigMap creates a new configmap that is used to control the operator execution.
+// If this configmap is present it means that a restore has been done and the restore-controller
+// should not try a new execution.
+// This is to avoid scenarios in which a restore CR is kept after a restore already finished and
+// a new reconciliation loop run trying to overwrite the resources when it shouldn't.
+// To rerun a restore the user will have to manually delete the lock configmap first.
+func (r *RepoManagerRestoreReconciler) createLockConfigMap(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore) {
+	log := r.RawLogger
+
+	configMap := &corev1.ConfigMap{}
+	r.Get(ctx, types.NamespacedName{Name: CMLock, Namespace: pulpRestore.Namespace}, configMap)
+
+	currentTime := time.Now()
+	lockCM := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      CMLock,
+			Namespace: pulpRestore.Namespace,
+			Labels: map[string]string{
+				"owner":   "pulp-restore",
+				"app":     "pulp-restore",
+				"pulp_cr": pulpRestore.Name,
+			},
+		},
+		Data: map[string]string{
+			"last-restore-execution": currentTime.Format("2006-01-02 15:04:05"),
+		},
+	}
+
+	// create the configmap
+	if err := r.Create(ctx, lockCM); err != nil {
+		log.Error(err, "Failed to create the PulpRestore Lock ConfigMap")
+	}
 }

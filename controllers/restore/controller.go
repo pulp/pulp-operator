@@ -19,8 +19,10 @@ package repo_manager_restore
 import (
 	"context"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -65,6 +67,15 @@ func (r *RepoManagerRestoreReconciler) Reconcile(ctx context.Context, req ctrl.R
 		// Error reading the object - requeue the request.
 		log.Error(err, "Failed to get PulpRestore")
 		return ctrl.Result{}, err
+	}
+
+	// if lock configmap is found it means that the restore already ran, so the controller should stop execution.
+	// To rerun a restore the user will have to manually delete the lock configmap first.
+	lockCM := &corev1.ConfigMap{}
+	if err := r.Get(ctx, types.NamespacedName{Name: CMLock, Namespace: pulpRestore.Namespace}, lockCM); err == nil {
+		controllers.CustomZapLogger().Warn("PulpRestore lock ConfigMap found. No restore procedure will be executed!")
+		controllers.CustomZapLogger().Warn("If you really want to run restore tasks again, just remove the " + CMLock + " ConfigMap")
+		return ctrl.Result{}, nil
 	}
 
 	r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Restore process running ...", "StartingRestoreProcess")
@@ -165,6 +176,8 @@ func (r *RepoManagerRestoreReconciler) Reconcile(ctx context.Context, req ctrl.R
 	r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Cleaning up restore resources ...", "DeletingMgmtPod")
 
 	r.cleanup(ctx, pulpRestore)
+	r.createLockConfigMap(ctx, pulpRestore)
+
 	r.updateStatus(ctx, pulpRestore, metav1.ConditionTrue, "RestoreComplete", "All restore tasks run!", "RestoreTasksFinished")
 	log.Info("Restore tasks finished!")
 	return ctrl.Result{}, nil
