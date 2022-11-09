@@ -62,8 +62,8 @@ spec:
                 fieldPath: metadata.namespace
         securityContext:
           allowPrivilegeEscalation: false
-        capabilities:
-          drop:
+          capabilities:
+            drop:
             - "ALL"
         livenessProbe:
           httpGet:
