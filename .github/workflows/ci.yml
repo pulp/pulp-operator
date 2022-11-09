@@ -55,6 +55,105 @@ jobs:
         run: |
           make fmt vet
         shell: bash
+  containerized:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # by default, it uses a depth of 1
+          # this fetches all history so that we can read each commit
+          fetch-depth: 0
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.8'
+      - name: Setup Go environment
+        uses: actions/setup-go@v3.2.0
+        with:
+          go-version: '1.18.3'
+          cache: true
+      - name: Install httpie
+        run: |
+          echo ::group::HTTPIE
+          sudo apt-get update -yq
+          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
+          echo ::endgroup::
+          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
+          echo "CI_TEST=true" >> $GITHUB_ENV
+          echo "TEST=pulp" >> $GITHUB_ENV
+          echo "INGRESS_TYPE=nodeport" >> $GITHUB_ENV
+        shell: bash
+      - name: Updating registries configuration
+        run: |
+          if [ -f "/etc/docker/daemon.json" ]
+          then
+            echo "INFO:
+            Updating docker configuration
+            "
+
+            echo "$(cat /etc/docker/daemon.json | jq -s '.[0] + {
+            "insecure-registries" : ["ingress.local"]
+            }')" | sudo tee /etc/docker/daemon.json
+            sudo service docker restart || true
+          fi
+
+          if [ -f "/etc/containers/registries.conf" ]
+          then
+            echo "INFO:
+            Updating registries configuration
+            "
+            echo "[registries.insecure]
+            registries = ['ingress.local']
+            " | sudo tee -a /etc/containers/registries.conf
+          fi
+        shell: bash
+      - name: Start minikube
+        run: |
+          minikube start --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
+          minikube addons enable metrics-server
+        # now you can run kubectl to see the pods in the cluster
+      - name: Try the cluster !
+        run: kubectl get pods -A
+      - name: Setup a minikube docker env
+        run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
+      - name: Uninstalling GHA kustomize
+        run: |
+          # hack for uninstalling kustomize from GHA
+          mv /usr/local/bin/kustomize /usr/local/bin/ghakustomize
+          make kustomize
+          mv ./bin/kustomize /usr/local/bin/kustomize
+          kustomize version
+        shell: bash
+      - name: Check code format and generate manifests
+        run: |
+          make test
+        shell: bash
+      - name: Deploy pulp-operator to K8s
+        run: |
+          make docker-build deploy
+          kubectl get namespace
+          kubectl config set-context --current --namespace=pulp-operator-system
+          kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
+          kubectl apply -f config/samples/simple.yaml
+        shell: bash
+      - name: Check and wait pulp-operator deploy
+        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
+        shell: bash
+      - name: KubeLinter
+        if: github.event_name == 'pull_request'
+        run: .ci/scripts/kubelinter.sh
+      - name: Test all components
+        run: |
+          git clone --depth=1 https://github.com/pulp/pulp_ansible.git
+          git clone --depth=1 https://github.com/pulp/pulp_container.git
+          .ci/scripts/pulp_tests.sh -m
+        shell: bash
+        env:
+          PY_COLORS: '1'
+      - name: Logs
+        if: always()
+        run: .github/workflows/scripts/show_logs.sh
   components:
     runs-on: ubuntu-latest
     strategy:
@@ -268,7 +367,7 @@ jobs:
         run: .github/workflows/scripts/show_logs.sh
   deploy:
     runs-on: ubuntu-latest
-    needs: [components, galaxy]
+    needs: [containerized, components, galaxy]
     if: github.event_name != 'pull_request'
     steps:
       - uses: actions/checkout@v2
