@@ -1,1 +1,0 @@
-Added a "retry" in case controller fails to update operator's status.conditions[].
