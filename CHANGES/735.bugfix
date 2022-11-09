@@ -1,1 +1,0 @@
-Fixed an issue with .status.conditions[] not getting updated for pulpcore-workers.

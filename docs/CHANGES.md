@@ -13,6 +13,38 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+1.0.0-alpha.2 (2022-11-09)
+==========================
+
+
+Bugfixes
+--------
+
+- Ensure reconciliation when ingress is modified
+  [#672](https://github.com/pulp/pulp-operator/issues/672)
+- Fixed an issue with .status.conditions[] not getting updated for pulpcore-workers.
+  [#735](https://github.com/pulp/pulp-operator/issues/735)
+- Fixed an issue with .status.conditions[] getting updated in a specific order.
+  [#736](https://github.com/pulp/pulp-operator/issues/736)
+- Fixed an issue in RequeueAfter reconciliation logic.
+  [#747](https://github.com/pulp/pulp-operator/issues/747)
+- Added a "retry" in case controller fails to update operator's status.conditions[].
+  [#751](https://github.com/pulp/pulp-operator/issues/751)
+- Fix ingress type assertion
+  [#755](https://github.com/pulp/pulp-operator/issues/755)
+- Set update error message as DEBUG instead of ERROR.
+  [#756](https://github.com/pulp/pulp-operator/issues/756)
+
+
+Misc
+----
+
+- [#763](https://github.com/pulp/pulp-operator/issues/763)
+
+
+----
+
+
 1.0.0-alpha.1 (2022-11-03)
 ==========================
 

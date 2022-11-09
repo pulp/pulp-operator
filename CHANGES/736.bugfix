@@ -1,1 +1,0 @@
-Fixed an issue with .status.conditions[] getting updated in a specific order.
