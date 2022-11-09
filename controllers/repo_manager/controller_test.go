@@ -38,8 +38,8 @@ const (
 	ContentName   = PulpName + "-content"
 	WorkerName    = PulpName + "-worker"
 
-	timeout  = time.Second
-	interval = time.Millisecond * 250
+	timeout  = time.Minute
+	interval = time.Second
 )
 
 var _ = Describe("Pulp controller", Ordered, func() {
@@ -730,6 +730,9 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		// test should fail if Pulp CR is not found
 		By("Checking Pulp CR being present")
 		objectGet(ctx, createdPulp, PulpName)
+
+		// make sure that there is no tasks running before proceeding
+		//waitPulpOperatorFinish(ctx, createdPulp)
 	})
 
 	Context("When creating a Database statefulset", func() {
@@ -745,7 +748,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				return equality.Semantic.DeepDerivative(expectedSts.Spec.Template, predicate)
 			}
 
-			waitPulpOperatorFinish(ctx, createdPulp)
+			//waitPulpOperatorFinish(ctx, createdPulp)
 
 			// test should fail if sts is not with the desired spec
 			By("Checking sts expected Name")
@@ -766,32 +769,27 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			By("Modifying the number of replicas")
 
 			// make sure that there is no tasks running before proceeding
-			waitPulpOperatorFinish(ctx, createdPulp)
-
+			//waitPulpOperatorFinish(ctx, createdPulp)
 			replicas := int32(3)
 			createdSts.Spec.Replicas = &replicas
 			objectUpdate(ctx, createdSts)
 
-			waitPulpOperatorFinish(ctx, createdPulp)
-
-			// request createdSts state to kube-api
-			objectGet(ctx, createdSts, StsName)
-
 			// we expect that pulp controller rollback createdSts.spec.replicas to 1
-			Expect(createdSts.Spec.Replicas).Should(Equal(expectedSts.Spec.Replicas))
+			Eventually(func() bool {
+				k8sClient.Get(ctx, types.NamespacedName{Name: StsName, Namespace: PulpNamespace}, createdSts)
+				return *createdSts.Spec.Replicas == *expectedSts.Spec.Replicas
+			}, timeout, interval).Should(BeTrue())
 
 			By("Modifying the container image name")
 			newName := "mysql:latest"
 			createdSts.Spec.Template.Spec.Containers[0].Image = newName
 			objectUpdate(ctx, createdSts)
 
-			waitPulpOperatorFinish(ctx, createdPulp)
-
-			// request createdSts state to kube-api
-			objectGet(ctx, createdSts, StsName)
-
 			// we expect that pulp controller rollback the container image
-			Expect(createdSts.Spec.Template.Spec.Containers[0].Image).Should(Equal(expectedSts.Spec.Template.Spec.Containers[0].Image))
+			Eventually(func() bool {
+				k8sClient.Get(ctx, types.NamespacedName{Name: StsName, Namespace: PulpNamespace}, createdSts)
+				return createdSts.Spec.Template.Spec.Containers[0].Image == expectedSts.Spec.Template.Spec.Containers[0].Image
+			}, timeout, interval).Should(BeTrue())
 		})
 	})
 
@@ -800,18 +798,18 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			By("Modifying database image")
 
 			// make sure that there is no tasks running before proceeding
-			waitPulpOperatorFinish(ctx, createdPulp)
+			//waitPulpOperatorFinish(ctx, createdPulp)
+			objectGet(ctx, createdSts, StsName)
+			objectGet(ctx, createdPulp, PulpName)
 
 			createdPulp.Spec.Database.PostgresImage = "postgres:12"
 			objectUpdate(ctx, createdPulp)
 
-			waitPulpOperatorFinish(ctx, createdPulp)
-
-			// request createdSts state to kube-api
-			objectGet(ctx, createdSts, StsName)
-
 			// we expect that pulp controller update sts with the new image defined in pulp CR
-			Expect(createdSts.Spec.Template.Spec.Containers[0].Image).Should(Equal("postgres:12"))
+			Eventually(func() bool {
+				k8sClient.Get(ctx, types.NamespacedName{Name: StsName, Namespace: PulpNamespace}, createdSts)
+				return createdSts.Spec.Template.Spec.Containers[0].Image == "postgres:12"
+			}, timeout, interval).Should(BeTrue())
 
 		})
 	})
@@ -899,23 +897,21 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			By("Modifying the base image")
 
 			// make sure that there is no tasks running before proceeding
-			waitPulpOperatorFinish(ctx, createdPulp)
+			//waitPulpOperatorFinish(ctx, createdPulp)
+			objectGet(ctx, createdPulp, PulpName)
 			createdPulp.Spec.Image = "quay.io/pulp/pulp2"
 			createdPulp.Spec.ImageVersion = "stable"
 			createdPulp.Spec.ImageWebVersion = "stable"
 			objectUpdate(ctx, createdPulp)
 
-			waitPulpOperatorFinish(ctx, createdPulp)
-
-			// request api deployment state to kube-api
-			objectGet(ctx, createdApiDeployment, ApiName)
-
 			// we expect that pulp controller update sts with the new image defined in pulp CR
-			Expect(createdApiDeployment.Spec.Template.Spec.Containers[0].Image).Should(Equal("quay.io/pulp/pulp2:stable"))
+			Eventually(func() bool {
+				k8sClient.Get(ctx, types.NamespacedName{Name: ApiName, Namespace: PulpNamespace}, createdApiDeployment)
+				return createdApiDeployment.Spec.Template.Spec.Containers[0].Image == "quay.io/pulp/pulp2:stable"
+			}, timeout, interval).Should(BeTrue())
 
-			// make sure that there is no tasks running before proceeding
-			waitPulpOperatorFinish(ctx, createdPulp)
 			// rollback the config to not impact other tests
+			objectGet(ctx, createdPulp, PulpName)
 			createdPulp.Spec.Image = "quay.io/pulp/pulp"
 			createdPulp.Spec.ImageVersion = "latest"
 			createdPulp.Spec.ImageWebVersion = "latest"
@@ -928,28 +924,30 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		It("Should reconcile according to pulp CR spec", func() {
 			By("Restoring the config")
 
-			// make sure that there is no tasks running before proceeding
-			waitPulpOperatorFinish(ctx, createdPulp)
+			// not sure why, but for this specific scenario i saw this error once:
+			//   "the object has been modified; please apply your changes to the latest version and try again"
+			// adding this retry to get the newer version of api deployment just in case
+			Eventually(func() bool {
+				k8sClient.Get(ctx, types.NamespacedName{Name: ApiName, Namespace: PulpNamespace}, createdApiDeployment)
+				replicasApi = int32(5)
+				createdApiDeployment.Spec.Replicas = &replicasApi
+				if err := k8sClient.Update(ctx, createdApiDeployment); err != nil {
+					return false
+				}
+				return true
+			}, timeout, interval).Should(BeTrue())
 
-			// get the current deployment api spec
-			objectGet(ctx, createdApiDeployment, ApiName)
-
-			replicasApi = int32(5)
-			createdApiDeployment.Spec.Replicas = &replicasApi
-			objectUpdate(ctx, createdApiDeployment)
-
-			waitPulpOperatorFinish(ctx, createdPulp)
-			objectGet(ctx, createdApiDeployment, ApiName)
-
-			replicasApi = int32(1)
-			Expect(createdApiDeployment.Spec.Replicas).Should(Equal(&replicasApi))
+			Eventually(func() bool {
+				k8sClient.Get(ctx, types.NamespacedName{Name: ApiName, Namespace: PulpNamespace}, createdApiDeployment)
+				return *createdApiDeployment.Spec.Replicas == int32(1)
+			}, timeout, interval).Should(BeTrue())
 		})
 	})
 
 	Context("When creating Content deployment", func() {
 		It("Should follow the spec from pulp CR", func() {
 			By("Checking content deployment being found")
-			waitPulpOperatorFinish(ctx, createdPulp)
+			//waitPulpOperatorFinish(ctx, createdPulp)
 
 			objectGet(ctx, createdContentDeployment, ContentName)
 
@@ -967,7 +965,8 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			By("Modifying the base image")
 
 			// make sure that there is no tasks running before proceeding
-			waitPulpOperatorFinish(ctx, createdPulp)
+			//waitPulpOperatorFinish(ctx, createdPulp)
+			objectGet(ctx, createdPulp, PulpName)
 			createdPulp.Spec.Image = "quay.io/pulp/pulp2"
 			createdPulp.Spec.ImageVersion = "stable"
 			createdPulp.Spec.ImageWebVersion = "stable"
@@ -975,16 +974,15 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			// the issue: "the object has been modified; please apply your changes to the latest version and try again"
 			objectUpdate(ctx, createdPulp)
 
-			waitPulpOperatorFinish(ctx, createdPulp)
-
-			// request content deployment state to kube-api
-			objectGet(ctx, createdContentDeployment, ContentName)
-
 			// we expect that pulp controller update sts with the new image defined in pulp CR
-			Expect(createdContentDeployment.Spec.Template.Spec.Containers[0].Image).Should(Equal("quay.io/pulp/pulp2:stable"))
+			Eventually(func() bool {
+				k8sClient.Get(ctx, types.NamespacedName{Name: ContentName, Namespace: PulpNamespace}, createdContentDeployment)
+				return createdContentDeployment.Spec.Template.Spec.Containers[0].Image == "quay.io/pulp/pulp2:stable"
+			}, timeout, interval).Should(BeTrue())
 
 			// rollback the config to not impact other tests
-			waitPulpOperatorFinish(ctx, createdPulp)
+			//waitPulpOperatorFinish(ctx, createdPulp)
+			objectGet(ctx, createdPulp, PulpName)
 			createdPulp.Spec.Image = "quay.io/pulp/pulp"
 			createdPulp.Spec.ImageVersion = "latest"
 			createdPulp.Spec.ImageWebVersion = "latest"
@@ -996,26 +994,26 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		It("Should reconcile according to pulp CR spec", func() {
 			By("Restoring the config")
 			// make sure that there is no tasks running before proceeding
-			waitPulpOperatorFinish(ctx, createdPulp)
+			//waitPulpOperatorFinish(ctx, createdPulp)
 
 			// get the current deployment content spec
 			objectGet(ctx, createdContentDeployment, ContentName)
-
 			replicasContent = int32(5)
 			createdContentDeployment.Spec.Replicas = &replicasContent
 			objectUpdate(ctx, createdContentDeployment)
 
-			waitPulpOperatorFinish(ctx, createdPulp)
-			objectGet(ctx, createdContentDeployment, ContentName)
-			replicasContent = int32(1)
-			Expect(createdContentDeployment.Spec.Replicas).Should(Equal(&replicasContent))
+			Eventually(func() bool {
+				k8sClient.Get(ctx, types.NamespacedName{Name: ContentName, Namespace: PulpNamespace}, createdContentDeployment)
+				return *createdContentDeployment.Spec.Replicas == int32(1)
+			}, timeout, interval).Should(BeTrue())
+
 		})
 	})
 
 	Context("When creating Worker deployment", func() {
 		It("Should follow the spec from pulp CR", func() {
 			By("Checking worker deployment being found")
-			waitPulpOperatorFinish(ctx, createdPulp)
+			//waitPulpOperatorFinish(ctx, createdPulp)
 			objectGet(ctx, createdWorkerDeployment, WorkerName)
 
 			var isEqual = func(predicate interface{}) bool {
@@ -1031,22 +1029,22 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		It("Should reconcile the worker deployment", func() {
 			By("Modifying the base image")
 			// make sure that there is no tasks running before proceeding
-			waitPulpOperatorFinish(ctx, createdPulp)
-
+			//waitPulpOperatorFinish(ctx, createdPulp)
+			objectGet(ctx, createdPulp, PulpName)
 			createdPulp.Spec.Image = "quay.io/pulp/pulp2"
 			createdPulp.Spec.ImageVersion = "stable"
 			createdPulp.Spec.ImageWebVersion = "stable"
 			objectUpdate(ctx, createdPulp)
-			waitPulpOperatorFinish(ctx, createdPulp)
-
-			// request worker deployment state to kube-api
-			objectGet(ctx, createdWorkerDeployment, WorkerName)
 
 			// we expect that pulp controller update sts with the new image defined in pulp CR
-			Expect(createdWorkerDeployment.Spec.Template.Spec.Containers[0].Image).Should(Equal("quay.io/pulp/pulp2:stable"))
+			Eventually(func() bool {
+				k8sClient.Get(ctx, types.NamespacedName{Name: WorkerName, Namespace: PulpNamespace}, createdWorkerDeployment)
+				return createdWorkerDeployment.Spec.Template.Spec.Containers[0].Image == "quay.io/pulp/pulp2:stable"
+			}, timeout, interval).Should(BeTrue())
 
 			// rollback the config to not impact other tests
-			waitPulpOperatorFinish(ctx, createdPulp)
+			//waitPulpOperatorFinish(ctx, createdPulp)
+			objectGet(ctx, createdPulp, PulpName)
 			createdPulp.Spec.Image = "quay.io/pulp/pulp"
 			createdPulp.Spec.ImageVersion = "latest"
 			createdPulp.Spec.ImageWebVersion = "latest"
@@ -1058,19 +1056,18 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		It("Should reconcile according to pulp CR spec", func() {
 			By("Restoring the config")
 			// make sure that there is no tasks running before proceeding
-			waitPulpOperatorFinish(ctx, createdPulp)
+			//waitPulpOperatorFinish(ctx, createdPulp)
 
 			// get the current deployment worker spec
 			objectGet(ctx, createdWorkerDeployment, WorkerName)
-
 			replicasWorker = int32(5)
 			createdWorkerDeployment.Spec.Replicas = &replicasWorker
 			objectUpdate(ctx, createdWorkerDeployment)
 
-			waitPulpOperatorFinish(ctx, createdPulp)
-			objectGet(ctx, createdWorkerDeployment, WorkerName)
-			replicasWorker = int32(1)
-			Expect(createdWorkerDeployment.Spec.Replicas).Should(Equal(&replicasWorker))
+			Eventually(func() bool {
+				k8sClient.Get(ctx, types.NamespacedName{Name: WorkerName, Namespace: PulpNamespace}, createdWorkerDeployment)
+				return *createdWorkerDeployment.Spec.Replicas == int32(1)
+			}, timeout, interval).Should(BeTrue())
 		})
 	})
 
@@ -1087,7 +1084,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			}
 
 			// make sure that there is no tasks running before proceeding
-			waitPulpOperatorFinish(ctx, createdPulp)
+			//waitPulpOperatorFinish(ctx, createdPulp)
 
 			By("Creating the default root route path")
 
@@ -1157,12 +1154,15 @@ var _ = Describe("Pulp controller", Ordered, func() {
 
 })
 
-// waitPulpOperatorFinish waits until find "Pulp-Operator-Finished-Execution" pulp.Status.Condition
-// or 5 seconds timeout
+// [DEPRECATED]
+// //waitPulpOperatorFinish waits until find "Pulp-Operator-Finished-Execution" pulp.Status.Condition
+// or 60 seconds timeout
+// waitPulpOperatorFinish is now DEPRECATED because we realized that envtest will not update the
+// .status field from deployments, which in turn will not reflect in a real .status.conditions of pulp CR
 func waitPulpOperatorFinish(ctx context.Context, createdPulp *repomanagerv1alpha1.Pulp) {
 	time.Sleep(time.Second)
 
-	for timeout := 0; timeout < 5; timeout++ {
+	for timeout := 0; timeout < 60; timeout++ {
 		objectGet(ctx, createdPulp, PulpName)
 		//a, _ := json.MarshalIndent(createdPulp.Status.Conditions, "", "  ")
 		//fmt.Println(string(a))

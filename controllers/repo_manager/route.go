@@ -83,9 +83,9 @@ func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *r
 	}
 	cmdOutput, err := controllers.ContainerExec(r, &pod, execCmd, "worker", pod.Namespace)
 	if err != nil {
-		log.Error(err, "Failed to get routes from "+pod.Name)
+		controllers.CustomZapLogger().Warn(err.Error() + " Failed to get routes from " + pod.Name)
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "Failed to get routes!", "FailedGet"+pod.Name)
-		return ctrl.Result{}, err
+		return ctrl.Result{Requeue: true}, nil
 	}
 	var pulpPlugins []RoutePlugin
 	json.Unmarshal([]byte(cmdOutput), &pulpPlugins)
