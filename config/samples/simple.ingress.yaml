@@ -37,6 +37,7 @@ spec:
 
   ingress_type: ingress
   ingress_host: ingress.local
+  ingress_class_name: nginx
 
   pulp_settings:
     api_root: "/pulp/"

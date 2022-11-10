@@ -381,6 +381,11 @@ func (r *RepoManagerReconciler) updateIngressType(ctx context.Context, pulp *rep
 		v1.RemoveStatusCondition(&pulp.Status.Conditions, ingressConditionType)
 
 		pulp.Status.IngressType = pulp.Spec.IngressType
+
+		if len(pulp.Status.IngressClassName) > 0 {
+			pulp.Status.IngressClassName = ""
+		}
+
 		r.Status().Update(ctx, pulp)
 
 		// nothing else to do (the controller will be responsible for setting up the other resources)
@@ -414,7 +419,41 @@ func (r *RepoManagerReconciler) updateIngressType(ctx context.Context, pulp *rep
 		// nothing else to do (the controller will be responsible for setting up the other resources)
 		return
 	}
+}
 
+// updateIngressClass will check the current definition of ingress_class_name and will handle the different
+// modification scenarios
+func (r *RepoManagerReconciler) updateIngressClass(ctx context.Context, pulp *repomanagerv1alpha1.Pulp) {
+
+	// if the new one uses nginx controller
+	if r.isNginxIngress(pulp) {
+
+		// remove pulp-web components
+		webDeployment := &appsv1.Deployment{}
+		if err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web", Namespace: pulp.Namespace}, webDeployment); err == nil {
+			r.Delete(ctx, webDeployment)
+		}
+
+		webSvc := &corev1.Service{}
+		if err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web-svc", Namespace: pulp.Namespace}, webSvc); err == nil {
+			r.Delete(ctx, webSvc)
+		}
+		webConditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Web-Ready"
+		v1.RemoveStatusCondition(&pulp.Status.Conditions, webConditionType)
+
+		// or the new one does not use nginx controller anymore
+	} else {
+		// remove ingress resource
+		ingress := &netv1.Ingress{}
+		r.Get(ctx, types.NamespacedName{Name: pulp.Name, Namespace: pulp.Namespace}, ingress)
+		r.Delete(ctx, ingress)
+
+		ingressConditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Ingress-Ready"
+		v1.RemoveStatusCondition(&pulp.Status.Conditions, ingressConditionType)
+	}
+
+	pulp.Status.IngressClassName = pulp.Spec.IngressClassName
+	r.Status().Update(ctx, pulp)
 }
 
 // reconcileObject will check if the definition from Pulp CR is reflecting the current
@@ -504,8 +543,12 @@ func checkDeploymentSpec(expectedState, currentState interface{}) bool {
 // checkMetadataModification returns true if annotations or labels fields are not equal
 // it is used to compare .metadata.annotations and .metadata.labels fields
 // since these are map[string]string types
+// we are using equality.Semantic.DeepEqual for both cases
+//   (currentField, expectedField) and (expectedField, currentField)
+// to evaluate map[string]nil == map[string]""(empty string) and
+// map[string]"" == map[string]nil
 func checkMetadataModification(currentField, expectedField interface{}) bool {
-	return !reflect.DeepEqual(currentField, expectedField)
+	return !equality.Semantic.DeepEqual(currentField, expectedField) || !equality.Semantic.DeepEqual(expectedField, currentField)
 }
 
 // checkSpecModification returns true if .spec fields present on A are equal to
@@ -655,8 +698,15 @@ func createFernetKey() string {
 
 // needsRequeue will return true if the controller should trigger a new reconcile loop
 func needsRequeue(err error, pulpController ctrl.Result) bool {
-	if err != nil || !reflect.DeepEqual(pulpController, ctrl.Result{}) {
-		return true
-	}
-	return false
+	return err != nil || !reflect.DeepEqual(pulpController, ctrl.Result{})
+}
+
+// isNginxIngress will check if ingress_type is defined as "ingress"
+func isIngress(pulp *repomanagerv1alpha1.Pulp) bool {
+	return strings.ToLower(pulp.Spec.IngressType) == "ingress"
+}
+
+// isNginxIngress returns true if pulp is defined with ingress_type==ingress and the controller of the ingresclass provided is a nginx
+func (r *RepoManagerReconciler) isNginxIngress(pulp *repomanagerv1alpha1.Pulp) bool {
+	return isIngress(pulp) && controllers.IsNginxIngressSupported(r, pulp.Spec.IngressClassName)
 }

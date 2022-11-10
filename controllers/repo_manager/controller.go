@@ -136,12 +136,22 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		})
 		r.Status().Update(ctx, pulp)
 	}
-	isNginxIngress := strings.ToLower(pulp.Spec.IngressType) == "ingress" && controllers.IsNginxIngressSupported(r)
-	needsPulpWeb := strings.ToLower(pulp.Spec.IngressType) != "route" && !isNginxIngress
+
+	needsPulpWeb := strings.ToLower(pulp.Spec.IngressType) != "route" && !controllers.IsNginxIngressSupported(r, pulp.Spec.IngressClassName)
 	if needsPulpWeb && pulp.Spec.ImageVersion != pulp.Spec.ImageWebVersion {
 		err := fmt.Errorf("image version and image web version should be equal ")
 		log.Error(err, "ImageVersion should be equal to ImageWebVersion")
 		return ctrl.Result{}, err
+	}
+
+	// If ingress_type==ingress the operator should fail in case no ingress_class provided
+	// To avoid errors with clusters configured without or with multiple default IngressClass we will ask users to pass an ingress_class
+	// in case of ingress_type == ingress.
+	if isIngress(pulp) {
+		if len(pulp.Spec.IngressClassName) == 0 {
+			log.Error(nil, "ingress_type defined as ingress but no ingress_class_name provided.")
+			return ctrl.Result{}, fmt.Errorf("please, define the ingress_class_name field (with the name of the IngressClass that the operator should use to deploy the new Ingress) to avoid unexpected errors with multiple controllers available")
+		}
 	}
 
 	// Checking if there is more than one storage type defined.
@@ -248,7 +258,7 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			if needsRequeue(err, pulpController) {
 				return pulpController, err
 			}
-		} else if strings.ToLower(pulp.Spec.IngressType) == "ingress" {
+		} else if isIngress(pulp) {
 			log.V(1).Info("Running ingress tasks")
 			pulpController, err = r.pulpIngressController(ctx, pulp, log)
 			if needsRequeue(err, pulpController) {
@@ -264,7 +274,14 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		}
 	} else {
 		r.updateIngressType(ctx, pulp)
-		return ctrl.Result{}, nil
+		return ctrl.Result{Requeue: true}, nil
+	}
+
+	// if this is the first reconciliation loop (.status.ingress_class_name == "") OR
+	// if there is no update in ingressType field
+	if !strings.EqualFold(pulp.Status.IngressClassName, pulp.Spec.IngressClassName) {
+		r.updateIngressClass(ctx, pulp)
+		return ctrl.Result{Requeue: true}, nil
 	}
 
 	log.V(1).Info("Running PDB tasks")
