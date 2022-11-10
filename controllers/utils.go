@@ -15,6 +15,7 @@ import (
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
@@ -186,19 +187,15 @@ func ContainerExec[T any](client T, pod *corev1.Pod, command []string, container
 	return result, nil
 }
 
-// isNginxIngressSupported returns true if Nginx Ingress Controller is set
-func IsNginxIngressSupported[T any](resource T) bool {
+// isNginxIngressSupported returns true if the provided class has nginx as controller
+func IsNginxIngressSupported[T any](resource T, ingressClassName string) bool {
 	// get the concrete value of client ({PulpBackup,RepoManagerBackupReconciler,RepoManagerRestoreReconciler})
 	clientConcrete := reflect.ValueOf(resource)
 	restClient := reflect.Indirect(clientConcrete).FieldByName("Client").Elem().Interface().(client.Client)
-	ctx := context.TODO()
-	ingressClassList := &netv1.IngressClassList{}
-	if err := restClient.List(ctx, ingressClassList); err == nil {
-		for _, ic := range ingressClassList.Items {
-			if ic.Spec.Controller == "k8s.io/ingress-nginx" {
-				return true
-			}
-		}
+
+	ic := &netv1.IngressClass{}
+	if err := restClient.Get(context.TODO(), types.NamespacedName{Name: ingressClassName}, ic); err == nil {
+		return ic.Spec.Controller == "k8s.io/ingress-nginx"
 	}
 	return false
 }

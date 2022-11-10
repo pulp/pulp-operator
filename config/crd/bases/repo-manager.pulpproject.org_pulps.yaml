@@ -5837,6 +5837,11 @@ spec:
                   type: string
                 description: Annotations for the Ingress
                 type: object
+              ingress_class_name:
+                description: 'IngressClassName is used to inform the operator which
+                  ingressclass should be used to provision the ingress. Default: ""
+                  (will use the default ingress class)'
+                type: string
               ingress_host:
                 description: Ingress DNS host
                 type: string
@@ -7995,6 +8000,10 @@ spec:
               external_cache_secret:
                 description: Name of the secret with the parameters to connect to
                   an external Redis cluster
+                type: string
+              ingress_class_name:
+                description: IngressClassName is used to inform the operator which
+                  ingressclass should be used to provision the ingress.
                 type: string
               ingress_type:
                 description: The ingress type to use to reach the deployed instance

@@ -19,6 +19,7 @@ package repo_manager
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -117,7 +118,11 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 
 	// get ingress
 	currentIngress := &netv1.Ingress{}
-	expectedIngress := r.pulpIngressObject(ctx, pulp, pulpPlugins)
+	expectedIngress, err := r.pulpIngressObject(ctx, pulp, pulpPlugins)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name, Namespace: pulp.Namespace}, currentIngress)
 
 	// Create the ingress in case it is not found
@@ -155,28 +160,21 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 }
 
 // pulp-ingress
-func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repomanagerv1alpha1.Pulp, plugins []IngressPlugin) *netv1.Ingress {
-	IsNginxIngressSupported := false
-	ingressClassList := &netv1.IngressClassList{}
-	ingressClassName := ""
-	if err := r.List(ctx, ingressClassList); err == nil {
-		for _, ic := range ingressClassList.Items {
-			ingressClassName = ic.Name
-			if ic.Spec.Controller == "k8s.io/ingress-nginx" {
-				IsNginxIngressSupported = true
-				break
-			}
+func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repomanagerv1alpha1.Pulp, plugins []IngressPlugin) (*netv1.Ingress, error) {
+	isNginxIngressSupported := false
+	ingressClassName := m.Spec.IngressClassName
+
+	// check if the IngressClassName defined exists and
+	// if the class provision ingresses with nginx controller
+	if len(ingressClassName) > 0 {
+		ic := &netv1.IngressClass{}
+		if err := r.Get(context.TODO(), types.NamespacedName{Name: ingressClassName}, ic); err != nil {
+			return nil, fmt.Errorf("failed to find provided IngressClassName: %s,%s", m.Spec.IngressClassName, err)
 		}
+		isNginxIngressSupported = controllers.IsNginxIngressSupported(r, m.Spec.IngressClassName)
 	}
 
-	// set HAProxy default values
-	hAProxyTimeout := m.Spec.HAProxyTimeout
-	if len(hAProxyTimeout) == 0 {
-		hAProxyTimeout = "180s"
-	}
-	annotation := map[string]string{
-		"haproxy.router.openshift.io/timeout": hAProxyTimeout,
-	}
+	annotation := map[string]string{}
 	var paths []netv1.HTTPIngressPath
 	var path netv1.HTTPIngressPath
 	pathType := netv1.PathTypePrefix
@@ -204,7 +202,7 @@ func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repoma
 		nginxProxyConnectTimeout = "120s"
 	}
 
-	if IsNginxIngressSupported {
+	if isNginxIngressSupported {
 		annotation["nginx.ingress.kubernetes.io/proxy-body-size"] = nginxProxyBodySize
 		annotation["nginx.org/client-max-body-size"] = nginxMaxBodySize
 		annotation["nginx.ingress.kubernetes.io/proxy-read-timeout"] = nginxProxyReadTimeout
@@ -251,6 +249,7 @@ func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repoma
 	for key, val := range m.Spec.IngressAnnotations {
 		annotation[key] = val
 	}
+
 	ingressSpec := netv1.IngressSpec{
 		Rules: []netv1.IngressRule{
 			{
@@ -285,7 +284,7 @@ func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repoma
 		"owner":                        "pulp-dev",
 	}
 
-	expectedIngress := &netv1.Ingress{
+	ingress := &netv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        m.Name,
 			Namespace:   m.Namespace,
@@ -294,8 +293,8 @@ func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repoma
 		},
 		Spec: ingressSpec,
 	}
-	ctrl.SetControllerReference(m, expectedIngress, r.Scheme)
-	return expectedIngress
+	ctrl.SetControllerReference(m, ingress, r.Scheme)
+	return ingress, nil
 }
 
 // IngressPlugin defines a plugin ingress.

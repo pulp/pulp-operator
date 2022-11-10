@@ -35,7 +35,6 @@ import (
 
 	"github.com/go-logr/logr"
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
-	"github.com/pulp/pulp-operator/controllers"
 )
 
 //puResource contains the fields to update the .status.conditions from pulp instance
@@ -54,8 +53,6 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 	// "old" state. This 0,2 seconds seems to be enough to delay the check and reflect the real state to
 	// the controller.
 	time.Sleep(time.Millisecond * 200)
-
-	isNginxIngress := strings.ToLower(pulp.Spec.IngressType) == "ingress" && controllers.IsNginxIngressSupported(r)
 	pulpResources := []pulpResource{
 		{
 			Type:          "content",
@@ -85,7 +82,7 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 
 		// if route or ingress we should do nothing
 		if resource.Type == "web" {
-			if strings.ToLower(pulp.Spec.IngressType) == "route" || isNginxIngress {
+			if strings.ToLower(pulp.Spec.IngressType) == "route" || r.isNginxIngress(pulp) {
 				continue
 			}
 		}
@@ -206,6 +203,14 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 	// and if .spec.external_cache_secret is defined
 	if len(pulp.Status.ExternalCacheSecret) == 0 && len(pulp.Spec.Cache.ExternalCacheSecret) > 0 {
 		pulp.Status.ExternalCacheSecret = pulp.Spec.Cache.ExternalCacheSecret
+		r.Status().Update(ctx, pulp)
+	}
+
+	// we will only set .status.ingress_nginx:
+	// - in the first execution (len==0)
+	// - and if .spec.ingress_class_name is defined
+	if len(pulp.Status.IngressClassName) == 0 && len(pulp.Spec.IngressClassName) > 0 {
+		pulp.Status.IngressClassName = pulp.Spec.IngressClassName
 		r.Status().Update(ctx, pulp)
 	}
 

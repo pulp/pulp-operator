@@ -113,6 +113,11 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
 	IngressAnnotations map[string]string `json:"ingress_annotations,omitempty"`
 
+	// IngressClassName is used to inform the operator which ingressclass should be used to provision the ingress.
+	// Default: "" (will use the default ingress class)
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
+	IngressClassName string `json:"ingress_class_name,omitempty"`
+
 	// Ingress DNS host
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
 	IngressHost string `json:"ingress_host,omitempty"`
@@ -735,6 +740,8 @@ type PulpStatus struct {
 	DBFieldsEncryptionSecret string `json:"db_fields_encryption_secret,omitempty"`
 	// The ingress type to use to reach the deployed instance
 	IngressType string `json:"ingress_type,omitempty"`
+	// IngressClassName is used to inform the operator which ingressclass should be used to provision the ingress.
+	IngressClassName string `json:"ingress_class_name,omitempty"`
 	// Secret where the container token certificates are stored.
 	ContainerTokenSecret string `json:"container_token_secret,omitempty"`
 	// Secret where the administrator password can be found

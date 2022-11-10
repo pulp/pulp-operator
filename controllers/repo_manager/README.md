@@ -149,6 +149,7 @@ PulpSpec defines the desired state of Pulp
 | storage_type | Configuration for the storage type utilized in the backup | string | false |
 | ingress_type | The ingress type to use to reach the deployed instance. Default: none (will not expose the service) | string | false |
 | ingress_annotations | Annotations for the Ingress | map[string]string | false |
+| ingress_class_name | IngressClassName is used to inform the operator which ingressclass should be used to provision the ingress. Default: \"\" (will use the default ingress class) | string | false |
 | ingress_host | Ingress DNS host | string | false |
 | ingress_tls_secret | Ingress TLS secret | string | false |
 | route_host | Route DNS host. Default: <operator's name> + \".\" + ingress.Spec.Domain | string | false |
@@ -195,6 +196,7 @@ PulpStatus defines the observed state of Pulp
 | object_storage_s3_secret | The secret for S3 compliant object storage configuration. | string | false |
 | db_fields_encryption_secret | Secret where the Fernet symmetric encryption key is stored. | string | false |
 | ingress_type | The ingress type to use to reach the deployed instance | string | false |
+| ingress_class_name | IngressClassName is used to inform the operator which ingressclass should be used to provision the ingress. | string | false |
 | container_token_secret | Secret where the container token certificates are stored. | string | false |
 | admin_password_secret | Secret where the administrator password can be found | string | false |
 | external_cache_secret | Name of the secret with the parameters to connect to an external Redis cluster | string | false |
