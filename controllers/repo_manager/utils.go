@@ -18,6 +18,7 @@ import (
 	"github.com/go-logr/logr"
 	routev1 "github.com/openshift/api/route/v1"
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	"github.com/pulp/pulp-operator/controllers"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -564,4 +565,90 @@ func deploymentModified(expectedState, currentState *appsv1.Deployment) bool {
 		return true
 	}
 	return false
+}
+
+// ResourceDefinition has the attributes of a Pulp Resource
+type ResourceDefinition struct {
+	// A Context carries a deadline, a cancellation signal, and other values across
+	// API boundaries.
+	context.Context
+	// Type is used to define what Kubernetes resource should be provisioned
+	Type interface{}
+	// Name sets the resource name
+	Name string
+	// Alias is used in .status.conditions field
+	Alias string
+	// ConditionType is used to update .status.conditions with the current resource state
+	ConditionType string
+	// Pulp is the Schema for the pulps API
+	*repomanagerv1alpha1.Pulp
+}
+
+// FunctionResources contains the list of arguments passed to create new Pulp resources
+type FunctionResources struct {
+	context.Context
+	*repomanagerv1alpha1.Pulp
+	logr.Logger
+	*RepoManagerReconciler
+}
+
+// createPulpResource executes a set of instructions to provision Pulp resources
+func (r *RepoManagerReconciler) createPulpResource(resource ResourceDefinition, createFunc func(FunctionResources) client.Object) (bool, error) {
+	log := r.RawLogger
+	var object client.Object
+	objKind := ""
+
+	// assert resource type
+	switch resourceType := resource.Type.(type) {
+	case *corev1.Secret:
+		object = resourceType
+		objKind = "Secret"
+	case *appsv1.Deployment:
+		object = resourceType
+		objKind = "Deployment"
+	case *corev1.Service:
+		object = resourceType
+		objKind = "Service"
+	case *corev1.PersistentVolumeClaim:
+		object = resourceType
+		objKind = "PVC"
+	}
+
+	// define the list of parameters to pass to "provisioner" function
+	funcResources := FunctionResources{Context: resource.Context, Pulp: resource.Pulp, Logger: log, RepoManagerReconciler: r}
+
+	// set of instructions to create a resource (the following are almost the same for most of Pulp resources)
+	// - we check if the resource exists
+	// - if not we update Pulp CR status, add a log message and create the resource
+	//   - if the resource provisioning fails we update the status, add an error message and return the error
+	//   - if the resource is provisioned we create an event and return
+	// - for any other error (besides resource not found) we add an error log and return error
+	currentResource := object
+	err := r.Get(resource.Context, types.NamespacedName{Name: resource.Name, Namespace: resource.Pulp.Namespace}, currentResource)
+	if err != nil && k8s_errors.IsNotFound(err) {
+		expectedResource := createFunc(funcResources)
+		r.updateStatus(resource.Context, resource.Pulp, metav1.ConditionFalse, resource.ConditionType, "Creating"+resource.Alias+objKind, "Creating "+resource.Name+" "+objKind)
+		log.Info("Creating a new "+resource.Name+" "+objKind, "Namespace", resource.Pulp.Namespace, "Name", resource.Name)
+		err = r.Create(resource.Context, expectedResource)
+
+		// special condition for api deployments where we need to provide a warning message
+		// in case no storage type is provided
+		if resource.Name == resource.Pulp.Name+"-api" && objKind == "Deployment" {
+			controllers.CheckEmptyDir(resource.Pulp, controllers.PulpResource)
+		}
+
+		if err != nil {
+			log.Error(err, "Failed to create new "+resource.Name+" "+objKind)
+			r.updateStatus(resource.Context, resource.Pulp, metav1.ConditionFalse, resource.ConditionType, "ErrorCreating"+resource.Alias+objKind, "Failed to create "+resource.Name+" "+objKind+": "+err.Error())
+			r.recorder.Event(resource.Pulp, corev1.EventTypeWarning, "Failed", "Failed to create a new "+resource.Name+" "+objKind)
+			return false, err
+		}
+		r.recorder.Event(resource.Pulp, corev1.EventTypeNormal, "Created", resource.Name+" "+objKind+" created")
+		return true, nil
+	} else if err != nil {
+		log.Error(err, "Failed to get "+resource.Name+" "+objKind)
+		return false, err
+	}
+
+	return false, nil
 }

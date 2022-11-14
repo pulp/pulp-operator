@@ -29,7 +29,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -43,42 +42,38 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// ApiResource has the definition and function to provision api objects
+type ApiResource struct {
+	Definition ResourceDefinition
+	Function   func(FunctionResources) client.Object
+}
+
+// pulpApiController provision and reconciles api objects
 func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
+	var err error
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-API-Ready"
 
 	// pulp-file-storage
 	// the PVC will be created only if a StorageClassName is provided
-	if _, storageType := controllers.MultiStorageConfigured(pulp, "Pulp"); storageType[0] == controllers.SCNameType {
-		pvcFound := &corev1.PersistentVolumeClaim{}
-		err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-file-storage", Namespace: pulp.Namespace}, pvcFound)
-		expected_pvc := r.fileStoragePVC(pulp)
-
-		if err != nil && errors.IsNotFound(err) {
-			log.Info("Creating a new Pulp API File Storage PVC", "PVC.Namespace", expected_pvc.Namespace, "PVC.Name", expected_pvc.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingPVC", "Creating "+pulp.Name+"-file-storage PVC resource")
-			err = r.Create(ctx, expected_pvc)
-			if err != nil {
-				log.Error(err, "Failed to create new Pulp File Storage PVC", "PVC.Namespace", expected_pvc.Namespace, "PVC.Name", expected_pvc.Name)
-				r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingPVC", "Failed to create "+pulp.Name+"-file-storage PVC: "+err.Error())
-				r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new file storage PVC")
-				return ctrl.Result{}, err
-			}
-			// PVC created successfully - return and requeue
-			r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "File storage PVC created")
-			return ctrl.Result{Requeue: true}, nil
-		} else if err != nil {
-			log.Error(err, "Failed to get Pulp API File Storage PVC")
+	if storageClassProvided(pulp) {
+		requeue, err := r.createPulpResource(ResourceDefinition{ctx, &corev1.PersistentVolumeClaim{}, pulp.Name + "-file-storage", "FileStorage", conditionType, pulp}, fileStoragePVC)
+		if err != nil {
 			return ctrl.Result{}, err
+		} else if requeue {
+			return ctrl.Result{Requeue: true}, nil
 		}
 
 		// Reconcile PVC
-		if !equality.Semantic.DeepDerivative(expected_pvc.Spec, pvcFound.Spec) {
+		pvcFound := &corev1.PersistentVolumeClaim{}
+		r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-file-storage", Namespace: pulp.Namespace}, pvcFound)
+		expected_pvc := fileStoragePVC(FunctionResources{ctx, pulp, log, r})
+		if !equality.Semantic.DeepDerivative(expected_pvc.(*corev1.PersistentVolumeClaim).Spec, pvcFound.Spec) {
 			log.Info("The PVC has been modified! Reconciling ...")
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingFileStoragePVC", "Reconciling "+pulp.Name+"-file-storage PVC resource")
 			r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling file storage PVC")
-			err = r.Update(ctx, expected_pvc)
+			err = r.Update(ctx, expected_pvc.(*corev1.PersistentVolumeClaim))
 			if err != nil {
 				log.Error(err, "Error trying to update the PVC object ... ")
 				r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingFileStoragePVC", "Failed to reconcile "+pulp.Name+"-file-storage PVC resource")
@@ -90,83 +85,43 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 		}
 	}
 
-	// Create pulp-server secret
-	secret := &corev1.Secret{}
-	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-server", Namespace: pulp.Namespace}, secret)
-
-	// Create pulp-server secret in case it is not found
-	if err != nil && errors.IsNotFound(err) {
-		// retrieve database credentials from postgres-secret only if we are not passing an external database settings
-		sec := r.pulpServerSecret(ctx, pulp, log)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingServerSecret", "Creating "+pulp.Name+"-server secret")
-		log.Info("Creating a new pulp-server secret", "Secret.Namespace", sec.Namespace, "Secret.Name", sec.Name)
-		err = r.Create(ctx, sec)
-		if err != nil {
-			log.Error(err, "Failed to create new pulp-server secret", "Secret.Namespace", sec.Namespace, "Secret.Name", sec.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingServerSecret", "Failed to create "+pulp.Name+"-server secret: "+err.Error())
-			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create a new server secret")
-			return ctrl.Result{}, err
-		}
-		// Deployment created successfully - return and requeue
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "File storage PVC created")
-		return ctrl.Result{Requeue: true}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get pulp-server secret")
-		return ctrl.Result{}, err
-	}
-
-	// Create pulp-db-fields-encryption secret
-	dbFieldsEnc := &corev1.Secret{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-db-fields-encryption", Namespace: pulp.Namespace}, dbFieldsEnc)
-
-	// Create the secret in case it is not found
-	if err != nil && errors.IsNotFound(err) {
-		dbFields := pulpDBFieldsEncryptionSecret(pulp)
-		ctrl.SetControllerReference(pulp, dbFields, r.Scheme)
-		log.Info("Creating a new pulp-db-fields-encryption secret", "Secret.Namespace", dbFields.Namespace, "Secret.Name", dbFields.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingDBFieldsEncryptionSecret", "Creating "+pulp.Name+"-db-fields-encryption secret")
-		err = r.Create(ctx, dbFields)
-		if err != nil {
-			log.Error(err, "Failed to create new pulp-db-fields-encryption secret", "Secret.Namespace", dbFields.Namespace, "Secret.Name", dbFields.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingDBFieldsEncryptionSecret", "Failed to create "+pulp.Name+"-db-fields-encryption secret: "+err.Error())
-			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create a new db-fields-encryption secret")
-			return ctrl.Result{}, err
-		}
-		// Deployment created successfully - return and requeue
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "db-fields-encryption secret created")
-		return ctrl.Result{Requeue: true}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get pulp-db-fields-encryption secret")
-		return ctrl.Result{}, err
-	}
-
-	// Create pulp-admin-password secret
-	adminSecret := &corev1.Secret{}
+	// if .spec.admin_password_secret is not defined, operator will default to pulp-admin-password
 	adminSecretName := pulp.Name + "-admin-password"
 	if len(pulp.Spec.AdminPasswordSecret) > 1 {
 		adminSecretName = pulp.Spec.AdminPasswordSecret
 	}
-	err = r.Get(ctx, types.NamespacedName{Name: adminSecretName, Namespace: pulp.Namespace}, adminSecret)
 
-	// Create the secret in case it is not found
-	if err != nil && errors.IsNotFound(err) {
-		adminPwd := pulpAdminPasswordSecret(pulp)
-		ctrl.SetControllerReference(pulp, adminPwd, r.Scheme)
-		log.Info("Creating a new pulp-admin-password secret", "Secret.Namespace", adminPwd.Namespace, "Secret.Name", adminPwd.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingAdminPasswordSecret", "Creating "+pulp.Name+"-admin-password secret")
-		err = r.Create(ctx, adminPwd)
+	// update pulp CR with container_token_secret secret value
+	if len(pulp.Spec.ContainerTokenSecret) == 0 {
+		patch := client.MergeFrom(pulp.DeepCopy())
+		pulp.Spec.ContainerTokenSecret = pulp.Name + "-container-auth"
+		r.Patch(ctx, pulp, patch)
+	}
+
+	// list of pulp-api resources that should be provisioned
+	resources := []ApiResource{
+		// pulp-server secret
+		{Definition: ResourceDefinition{Context: ctx, Type: &corev1.Secret{}, Name: pulp.Name + "-server", Alias: "Server", ConditionType: conditionType, Pulp: pulp}, Function: pulpServerSecret},
+		// pulp-db-fields-encryption secret
+		{ResourceDefinition{ctx, &corev1.Secret{}, pulp.Name + "-db-fields-encryption", "DBFieldsEncryption", conditionType, pulp}, pulpDBFieldsEncryptionSecret},
+		// pulp-admin-password secret
+		{ResourceDefinition{ctx, &corev1.Secret{}, adminSecretName, "AdminPassword", conditionType, pulp}, pulpAdminPasswordSecret},
+		// pulp-container-auth secret
+		{ResourceDefinition{ctx, &corev1.Secret{}, pulp.Spec.ContainerTokenSecret, "ContainerAuth", conditionType, pulp}, pulpContainerAuth},
+		// pulp-api deployment
+		{ResourceDefinition{ctx, &appsv1.Deployment{}, pulp.Name + "-api", "Api", conditionType, pulp}, deploymentForPulpApi},
+		// pulp-api-svc service
+		{ResourceDefinition{ctx, &corev1.Service{}, pulp.Name + "-api-svc", "Api", conditionType, pulp}, serviceForAPI},
+	}
+
+	// create pulp-api resources
+	for _, resource := range resources {
+		requeue, err := r.createPulpResource(resource.Definition, resource.Function)
 		if err != nil {
-			log.Error(err, "Failed to create new pulp-admin-password secret", "Secret.Namespace", adminPwd.Namespace, "Secret.Name", adminPwd.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingAdminPasswordSecret", "Failed to create "+pulp.Name+"-admin-password secret: "+err.Error())
-			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create a new admin-password secret")
 			return ctrl.Result{}, err
+		} else if requeue {
+			return ctrl.Result{Requeue: true}, nil
 		}
-		// Secret created successfully - return and requeue
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "admin-password secret created")
-		return ctrl.Result{Requeue: true}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get pulp-admin-password secret")
-		return ctrl.Result{}, err
 	}
 
 	// update pulp CR admin-password secret with default name
@@ -174,70 +129,15 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 		return ctrl.Result{}, err
 	}
 
-	// Create pulp-container-auth secret
-	containerAuth := &corev1.Secret{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-container-auth", Namespace: pulp.Namespace}, containerAuth)
-
-	// Create the secret in case it is not found
-	if pulp.Spec.ContainerTokenSecret == "" && err != nil && errors.IsNotFound(err) {
-		authSecret := pulpContainerAuth(pulp)
-		// Following legacy pulp-operator implementation we are not setting ownerReferences to avoid garbage collection
-		//ctrl.SetControllerReference(pulp, adminPwd, r.Scheme)
-		log.Info("Creating a new pulp-container-auth secret", "Secret.Namespace", authSecret.Namespace, "Secret.Name", authSecret.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingContainerAuthSecret", "Creating "+pulp.Name+"-container-auth secret")
-		err = r.Create(ctx, authSecret)
-		if err != nil {
-			log.Error(err, "Failed to create new pulp-container-auth secret", "Secret.Namespace", authSecret.Namespace, "Secret.Name", authSecret.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingContainerAuthSecret", "Failed to create "+pulp.Name+"-container-auth secret: "+err.Error())
-			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create a new container-auth secret")
-			return ctrl.Result{}, err
-		}
-		// Secret created successfully - return and requeue
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "container-auth secret created")
-		return ctrl.Result{Requeue: true}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get pulp-container-auth secret")
-		return ctrl.Result{}, err
-	}
-
-	// update pulp CR with pulp-container-auth secret value
-	if len(pulp.Spec.ContainerTokenSecret) == 0 {
-		patch := client.MergeFrom(pulp.DeepCopy())
-		pulp.Spec.ContainerTokenSecret = pulp.Name + "-container-auth"
-		r.Patch(ctx, pulp, patch)
-	}
-
-	// Create pulp-api deployment
-	found := &appsv1.Deployment{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, found)
-	dep := r.deploymentForPulpApi(pulp)
-
-	if err != nil && errors.IsNotFound(err) {
-		// Define a new deployment
-		log.Info("Creating a new Pulp API Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingApiDeployment", "Creating "+pulp.Name+"-api deployment")
-		controllers.CheckEmptyDir(pulp, controllers.PulpResource)
-		err = r.Create(ctx, dep)
-		if err != nil {
-			log.Error(err, "Failed to create new Pulp API Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingApiDeployment", "Failed to create "+pulp.Name+"-api deployment: "+err.Error())
-			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create a new API deployment")
-			return ctrl.Result{}, err
-		}
-		// Deployment created successfully - return and requeue
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "API deployment created")
-		return ctrl.Result{Requeue: true}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get Pulp API Deployment")
-		return ctrl.Result{}, err
-	}
-
 	// Ensure the deployment spec is as expected
-	if deploymentModified(dep, found) {
+	found := &appsv1.Deployment{}
+	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, found)
+	expected := deploymentForPulpApi(FunctionResources{ctx, pulp, log, r})
+	if deploymentModified(expected.(*appsv1.Deployment), found) {
 		log.Info("The API deployment has been modified! Reconciling ...")
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingApiDeployment", "Reconciling "+pulp.Name+"-api deployment")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling API deployment")
-		err = r.Update(ctx, dep)
+		err = r.Update(ctx, expected.(*appsv1.Deployment))
 		if err != nil {
 			log.Error(err, "Error trying to update the API deployment object ... ")
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingApiDeployment", "Failed to reconcile "+pulp.Name+"-api deployment: "+err.Error())
@@ -255,35 +155,15 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 		r.Patch(ctx, pulp, patch)
 	}
 
-	// SERVICE
-	apiSvc := &corev1.Service{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api-svc", Namespace: pulp.Namespace}, apiSvc)
-	newApiSvc := r.serviceForAPI(pulp)
-
-	if err != nil && errors.IsNotFound(err) {
-		log.Info("Creating a new API Service", "Service.Namespace", newApiSvc.Namespace, "Service.Name", newApiSvc.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingApiService", "Creating "+pulp.Name+"-api-svc service")
-		err = r.Create(ctx, newApiSvc)
-		if err != nil {
-			log.Error(err, "Failed to create new API Service", "Service.Namespace", newApiSvc.Namespace, "Service.Name", newApiSvc.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingApiService", "Failed to create "+pulp.Name+"-api-svc service: "+err.Error())
-			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new API service")
-			return ctrl.Result{}, err
-		}
-		// Service created successfully - return and requeue
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "API service created")
-		return ctrl.Result{Requeue: true}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get API Service")
-		return ctrl.Result{}, err
-	}
-
 	// Ensure the service spec is as expected
-	if !equality.Semantic.DeepDerivative(newApiSvc.Spec, apiSvc.Spec) {
+	apiSvc := &corev1.Service{}
+	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api-svc", Namespace: pulp.Namespace}, apiSvc)
+	expectedSvc := serviceForAPI(FunctionResources{ctx, pulp, log, r})
+	if !equality.Semantic.DeepDerivative(expectedSvc.(*corev1.Service).Spec, apiSvc.Spec) {
 		log.Info("The API service has been modified! Reconciling ...")
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingApiService", "Reconciling "+pulp.Name+"-api-svc service")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling API service")
-		err = r.Update(ctx, newApiSvc)
+		err = r.Update(ctx, expectedSvc.(*corev1.Service))
 		if err != nil {
 			log.Error(err, "Error trying to update the API Service object ... ")
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingApiService", "Failed to reconcile "+pulp.Name+"-api-svc service: "+err.Error())
@@ -298,55 +178,53 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 }
 
 // fileStoragePVC returns a PVC object
-func (r *RepoManagerReconciler) fileStoragePVC(m *repomanagerv1alpha1.Pulp) *corev1.PersistentVolumeClaim {
+func fileStoragePVC(resources FunctionResources) client.Object {
 
 	// Define the new PVC
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name + "-file-storage",
-			Namespace: m.Namespace,
+			Name:      resources.Pulp.Name + "-file-storage",
+			Namespace: resources.Pulp.Namespace,
 			Labels: map[string]string{
-				"app.kubernetes.io/name":       m.Spec.DeploymentType + "-storage",
-				"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-storage-" + m.Name,
+				"app.kubernetes.io/name":       resources.Pulp.Spec.DeploymentType + "-storage",
+				"app.kubernetes.io/instance":   resources.Pulp.Spec.DeploymentType + "-storage-" + resources.Pulp.Name,
 				"app.kubernetes.io/component":  "storage",
-				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
-				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
+				"app.kubernetes.io/part-of":    resources.Pulp.Spec.DeploymentType,
+				"app.kubernetes.io/managed-by": resources.Pulp.Spec.DeploymentType + "-operator",
 			},
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
-					corev1.ResourceName(corev1.ResourceStorage): resource.MustParse(m.Spec.FileStorageSize),
+					corev1.ResourceName(corev1.ResourceStorage): resource.MustParse(resources.Pulp.Spec.FileStorageSize),
 				},
 			},
 			AccessModes: []corev1.PersistentVolumeAccessMode{
-				corev1.PersistentVolumeAccessMode(m.Spec.FileStorageAccessMode),
+				corev1.PersistentVolumeAccessMode(resources.Pulp.Spec.FileStorageAccessMode),
 			},
-			StorageClassName: &m.Spec.FileStorageClass,
+			StorageClassName: &resources.Pulp.Spec.FileStorageClass,
 		},
 	}
 
 	// Set Pulp instance as the owner and controller
-	ctrl.SetControllerReference(m, pvc, r.Scheme)
-
+	ctrl.SetControllerReference(resources.Pulp, pvc, resources.RepoManagerReconciler.Scheme)
 	return pvc
-
 }
 
 // deploymentForPulpApi returns a pulp-api Deployment object
-func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
-	replicas := m.Spec.Api.Replicas
-	ls := labelsForPulpApi(m)
+func deploymentForPulpApi(resources FunctionResources) client.Object {
+	replicas := resources.Pulp.Spec.Api.Replicas
+	ls := labelsForPulpApi(resources.Pulp)
 
 	affinity := &corev1.Affinity{}
-	if m.Spec.Api.Affinity != nil {
-		affinity = m.Spec.Api.Affinity
+	if resources.Pulp.Spec.Api.Affinity != nil {
+		affinity = resources.Pulp.Spec.Api.Affinity
 	}
 
 	// if no strategy is defined in pulp CR we are setting `strategy.Type` with the
 	// default value ("RollingUpdate"), this will be helpful during the reconciliation
 	// when a strategy was previously defined and eventually the field is removed
-	strategy := m.Spec.Api.Strategy
+	strategy := resources.Pulp.Spec.Api.Strategy
 	if strategy.Type == "" {
 		strategy.Type = "RollingUpdate"
 	}
@@ -365,37 +243,37 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 	}
 
 	nodeSelector := map[string]string{}
-	if m.Spec.Api.NodeSelector != nil {
-		nodeSelector = m.Spec.Api.NodeSelector
+	if resources.Pulp.Spec.Api.NodeSelector != nil {
+		nodeSelector = resources.Pulp.Spec.Api.NodeSelector
 	}
 
 	toleration := []corev1.Toleration{}
-	if m.Spec.Api.Tolerations != nil {
-		toleration = m.Spec.Api.Tolerations
+	if resources.Pulp.Spec.Api.Tolerations != nil {
+		toleration = resources.Pulp.Spec.Api.Tolerations
 	}
 
 	topologySpreadConstraint := []corev1.TopologySpreadConstraint{}
-	if m.Spec.Api.TopologySpreadConstraints != nil {
-		topologySpreadConstraint = m.Spec.Api.TopologySpreadConstraints
+	if resources.Pulp.Spec.Api.TopologySpreadConstraints != nil {
+		topologySpreadConstraint = resources.Pulp.Spec.Api.TopologySpreadConstraints
 	}
 
 	envVars := []corev1.EnvVar{
-		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(m.Spec.Api.GunicornTimeout)},
-		{Name: "PULP_API_WORKERS", Value: strconv.Itoa(m.Spec.Api.GunicornWorkers)},
+		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(resources.Pulp.Spec.Api.GunicornTimeout)},
+		{Name: "PULP_API_WORKERS", Value: strconv.Itoa(resources.Pulp.Spec.Api.GunicornWorkers)},
 	}
 
 	var dbHost, dbPort string
 
 	// if there is no ExternalDBSecret defined, we should
 	// use the postgres instance provided by the operator
-	if len(m.Spec.Database.ExternalDBSecret) == 0 {
+	if len(resources.Pulp.Spec.Database.ExternalDBSecret) == 0 {
 		containerPort := 0
-		if m.Spec.Database.PostgresPort == 0 {
+		if resources.Pulp.Spec.Database.PostgresPort == 0 {
 			containerPort = 5432
 		} else {
-			containerPort = m.Spec.Database.PostgresPort
+			containerPort = resources.Pulp.Spec.Database.PostgresPort
 		}
-		dbHost = m.Name + "-database-svc"
+		dbHost = resources.Pulp.Name + "-database-svc"
 		dbPort = strconv.Itoa(containerPort)
 
 		postgresEnvVars := []corev1.EnvVar{
@@ -410,7 +288,7 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: m.Spec.Database.ExternalDBSecret,
+							Name: resources.Pulp.Spec.Database.ExternalDBSecret,
 						},
 						Key: "POSTGRES_HOST",
 					},
@@ -420,7 +298,7 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: m.Spec.Database.ExternalDBSecret,
+							Name: resources.Pulp.Spec.Database.ExternalDBSecret,
 						},
 						Key: "POSTGRES_PORT",
 					},
@@ -431,19 +309,19 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 	}
 
 	// add cache configuration if enabled
-	if m.Spec.Cache.Enabled {
+	if resources.Pulp.Spec.Cache.Enabled {
 
 		// if there is no ExternalCacheSecret defined, we should
 		// use the redis instance provided by the operator
-		if len(m.Spec.Cache.ExternalCacheSecret) == 0 {
+		if len(resources.Pulp.Spec.Cache.ExternalCacheSecret) == 0 {
 			var cacheHost, cachePort string
 
-			if m.Spec.Cache.RedisPort == 0 {
+			if resources.Pulp.Spec.Cache.RedisPort == 0 {
 				cachePort = strconv.Itoa(6379)
 			} else {
-				cachePort = strconv.Itoa(m.Spec.Cache.RedisPort)
+				cachePort = strconv.Itoa(resources.Pulp.Spec.Cache.RedisPort)
 			}
-			cacheHost = m.Name + "-redis-svc." + m.Namespace
+			cacheHost = resources.Pulp.Name + "-redis-svc." + resources.Pulp.Namespace
 
 			redisEnvVars := []corev1.EnvVar{
 				{Name: "REDIS_SERVICE_HOST", Value: cacheHost},
@@ -457,7 +335,7 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 					ValueFrom: &corev1.EnvVarSource{
 						SecretKeyRef: &corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: m.Spec.Cache.ExternalCacheSecret,
+								Name: resources.Pulp.Spec.Cache.ExternalCacheSecret,
 							},
 							Key: "REDIS_HOST",
 						},
@@ -467,7 +345,7 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 					ValueFrom: &corev1.EnvVarSource{
 						SecretKeyRef: &corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: m.Spec.Cache.ExternalCacheSecret,
+								Name: resources.Pulp.Spec.Cache.ExternalCacheSecret,
 							},
 							Key: "REDIS_PORT",
 						},
@@ -477,7 +355,7 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 					ValueFrom: &corev1.EnvVarSource{
 						SecretKeyRef: &corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: m.Spec.Cache.ExternalCacheSecret,
+								Name: resources.Pulp.Spec.Cache.ExternalCacheSecret,
 							},
 							Key: "REDIS_DB",
 						},
@@ -487,7 +365,7 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 					ValueFrom: &corev1.EnvVarSource{
 						SecretKeyRef: &corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: m.Spec.Cache.ExternalCacheSecret,
+								Name: resources.Pulp.Spec.Cache.ExternalCacheSecret,
 							},
 							Key: "REDIS_PASSWORD",
 						},
@@ -498,37 +376,37 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 		}
 	}
 
-	if m.Spec.SigningSecret != "" {
+	if resources.Pulp.Spec.SigningSecret != "" {
 
 		// for now, we are just dumping the error, but we should handle it
-		signingKeyFingerprint, _ := r.getSigningKeyFingerprint(m.Spec.SigningSecret, m.Namespace)
+		signingKeyFingerprint, _ := resources.RepoManagerReconciler.getSigningKeyFingerprint(resources.Pulp.Spec.SigningSecret, resources.Pulp.Namespace)
 
 		signingKeyEnvVars := []corev1.EnvVar{
 			{Name: "PULP_SIGNING_KEY_FINGERPRINT", Value: signingKeyFingerprint},
-			{Name: "COLLECTION_SIGNING_SERVICE", Value: getPulpSetting(m, "galaxy_collection_signing_service")},
-			{Name: "CONTAINER_SIGNING_SERVICE", Value: getPulpSetting(m, "galaxy_container_signing_service")},
+			{Name: "COLLECTION_SIGNING_SERVICE", Value: getPulpSetting(resources.Pulp, "galaxy_collection_signing_service")},
+			{Name: "CONTAINER_SIGNING_SERVICE", Value: getPulpSetting(resources.Pulp, "galaxy_container_signing_service")},
 		}
 		envVars = append(envVars, signingKeyEnvVars...)
 	}
 
 	dbFieldsEncryptionSecret := ""
-	if m.Spec.DBFieldsEncryptionSecret == "" {
-		dbFieldsEncryptionSecret = m.Name + "-db-fields-encryption"
+	if resources.Pulp.Spec.DBFieldsEncryptionSecret == "" {
+		dbFieldsEncryptionSecret = resources.Pulp.Name + "-db-fields-encryption"
 	} else {
-		dbFieldsEncryptionSecret = m.Spec.DBFieldsEncryptionSecret
+		dbFieldsEncryptionSecret = resources.Pulp.Spec.DBFieldsEncryptionSecret
 	}
 
-	adminSecretName := m.Name + "-admin-password"
-	if len(m.Spec.AdminPasswordSecret) > 1 {
-		adminSecretName = m.Spec.AdminPasswordSecret
+	adminSecretName := resources.Pulp.Name + "-admin-password"
+	if len(resources.Pulp.Spec.AdminPasswordSecret) > 1 {
+		adminSecretName = resources.Pulp.Spec.AdminPasswordSecret
 	}
 
 	volumes := []corev1.Volume{
 		{
-			Name: m.Name + "-server",
+			Name: resources.Pulp.Name + "-server",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: m.Name + "-server",
+					SecretName: resources.Pulp.Name + "-server",
 					Items: []corev1.KeyToPath{{
 						Key:  "settings.py",
 						Path: "settings.py",
@@ -549,7 +427,7 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 			},
 		},
 		{
-			Name: m.Name + "-db-fields-encryption",
+			Name: resources.Pulp.Name + "-db-fields-encryption",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
 					SecretName: dbFieldsEncryptionSecret,
@@ -562,7 +440,7 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 		},
 	}
 
-	_, storageType := controllers.MultiStorageConfigured(m, "Pulp")
+	_, storageType := controllers.MultiStorageConfigured(resources.Pulp, "Pulp")
 
 	// if SC defined, we should use the PVC provisioned by the operator
 	if storageType[0] == controllers.SCNameType {
@@ -570,7 +448,7 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 			Name: "file-storage",
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: m.Name + "-file-storage",
+					ClaimName: resources.Pulp.Name + "-file-storage",
 				},
 			},
 		}
@@ -582,7 +460,7 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 			Name: "file-storage",
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: m.Spec.PVC,
+					ClaimName: resources.Pulp.Spec.PVC,
 				},
 			},
 		}
@@ -607,23 +485,23 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 		volumes = append(volumes, emptyDir...)
 	}
 
-	if m.Spec.SigningSecret != "" {
+	if resources.Pulp.Spec.SigningSecret != "" {
 		signingSecretVolume := []corev1.Volume{
 			{
-				Name: m.Name + "-signing-scripts",
+				Name: resources.Pulp.Name + "-signing-scripts",
 				VolumeSource: corev1.VolumeSource{
 					ConfigMap: &corev1.ConfigMapVolumeSource{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: m.Spec.SigningScriptsConfigmap,
+							Name: resources.Pulp.Spec.SigningScriptsConfigmap,
 						},
 					},
 				},
 			},
 			{
-				Name: m.Name + "-signing-galaxy",
+				Name: resources.Pulp.Name + "-signing-galaxy",
 				VolumeSource: corev1.VolumeSource{
 					Secret: &corev1.SecretVolumeSource{
-						SecretName: m.Spec.SigningSecret,
+						SecretName: resources.Pulp.Spec.SigningSecret,
 						Items: []corev1.KeyToPath{
 							{
 								Key:  "signing_service.gpg",
@@ -642,25 +520,25 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 	}
 
 	var containerAuthSecretName string
-	if m.Spec.ContainerTokenSecret != "" {
-		containerAuthSecretName = m.Spec.ContainerTokenSecret
+	if resources.Pulp.Spec.ContainerTokenSecret != "" {
+		containerAuthSecretName = resources.Pulp.Spec.ContainerTokenSecret
 	} else {
-		containerAuthSecretName = m.Name + "-container-auth"
+		containerAuthSecretName = resources.Pulp.Name + "-container-auth"
 	}
 
 	containerTokenSecretVolume := corev1.Volume{
-		Name: m.Name + "-container-auth-certs",
+		Name: resources.Pulp.Name + "-container-auth-certs",
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
 				SecretName: containerAuthSecretName,
 				Items: []corev1.KeyToPath{
 					{
 						Key:  "container_auth_public_key.pem",
-						Path: m.Spec.ContainerAuthPublicKey,
+						Path: resources.Pulp.Spec.ContainerAuthPublicKey,
 					},
 					{
 						Key:  "container_auth_private_key.pem",
-						Path: m.Spec.ContainerAuthPrivateKey,
+						Path: resources.Pulp.Spec.ContainerAuthPrivateKey,
 					},
 				},
 			},
@@ -670,7 +548,7 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 
 	volumeMounts := []corev1.VolumeMount{
 		{
-			Name:      m.Name + "-server",
+			Name:      resources.Pulp.Name + "-server",
 			MountPath: "/etc/pulp/settings.py",
 			SubPath:   "settings.py",
 			ReadOnly:  true,
@@ -682,7 +560,7 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 			ReadOnly:  true,
 		},
 		{
-			Name:      m.Name + "-db-fields-encryption",
+			Name:      resources.Pulp.Name + "-db-fields-encryption",
 			MountPath: "/etc/pulp/keys/database_fields.symmetric.key",
 			SubPath:   "database_fields.symmetric.key",
 			ReadOnly:  true,
@@ -713,22 +591,22 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 		volumeMounts = append(volumeMounts, emptyDir...)
 	}
 
-	if m.Spec.SigningSecret != "" {
+	if resources.Pulp.Spec.SigningSecret != "" {
 		signingSecretMount := []corev1.VolumeMount{
 			{
-				Name:      m.Name + "-signing-scripts",
+				Name:      resources.Pulp.Name + "-signing-scripts",
 				MountPath: "/var/lib/pulp/scripts",
 				SubPath:   "scripts",
 				ReadOnly:  true,
 			},
 			{
-				Name:      m.Name + "-signing-galaxy",
+				Name:      resources.Pulp.Name + "-signing-galaxy",
 				MountPath: "/etc/pulp/keys/signing_service.gpg",
 				SubPath:   "signing_service.gpg",
 				ReadOnly:  true,
 			},
 			{
-				Name:      m.Name + "-signing-galaxy",
+				Name:      resources.Pulp.Name + "-signing-galaxy",
 				MountPath: "/etc/pulp/keys/singing_service.asc",
 				SubPath:   "signing_service.asc",
 				ReadOnly:  true,
@@ -737,16 +615,16 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 		volumeMounts = append(volumeMounts, signingSecretMount...)
 	}
 
-	if m.Spec.ContainerTokenSecret != "" {
+	if resources.Pulp.Spec.ContainerTokenSecret != "" {
 		containerTokenSecretMount := []corev1.VolumeMount{
 			{
-				Name:      m.Name + "-container-auth-certs",
+				Name:      resources.Pulp.Name + "-container-auth-certs",
 				MountPath: "/etc/pulp/keys/container_auth_private_key.pem",
 				SubPath:   "container_auth_private_key.pem",
 				ReadOnly:  true,
 			},
 			{
-				Name:      m.Name + "-container-auth-certs",
+				Name:      resources.Pulp.Name + "-container-auth-certs",
 				MountPath: "/etc/pulp/keys/container_auth_public_key.pem",
 				SubPath:   "container_auth_pulblic_key.pem",
 				ReadOnly:  true,
@@ -757,19 +635,19 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 
 	// mountCASpec adds the trusted-ca bundle into []volume and []volumeMount if pulp.Spec.TrustedCA is true
 	if IsOpenShift {
-		volumes, volumeMounts = mountCASpec(m, volumes, volumeMounts)
+		volumes, volumeMounts = mountCASpec(resources.Pulp, volumes, volumeMounts)
 	}
 
-	resources := m.Spec.Api.ResourceRequirements
+	resourceRequirements := resources.Pulp.Spec.Api.ResourceRequirements
 
-	readinessProbe := m.Spec.Api.ReadinessProbe
+	readinessProbe := resources.Pulp.Spec.Api.ReadinessProbe
 	if readinessProbe == nil {
 		readinessProbe = &corev1.Probe{
 			ProbeHandler: corev1.ProbeHandler{
 				Exec: &corev1.ExecAction{
 					Command: []string{
 						"/usr/bin/readyz.py",
-						getPulpSetting(m, "api_root") + "api/v3/status/",
+						getPulpSetting(resources.Pulp, "api_root") + "api/v3/status/",
 					},
 				},
 			},
@@ -781,13 +659,13 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 		}
 	}
 
-	livenessProbe := m.Spec.Api.LivenessProbe
+	livenessProbe := resources.Pulp.Spec.Api.LivenessProbe
 	if livenessProbe == nil {
 		livenessProbe = &corev1.Probe{
 			FailureThreshold: 5,
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
-					Path: getPulpSetting(m, "api_root") + "api/v3/status/",
+					Path: getPulpSetting(resources.Pulp, "api_root") + "api/v3/status/",
 					Port: intstr.IntOrString{
 						IntVal: 24817,
 					},
@@ -807,8 +685,8 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 	dnsPolicy := corev1.DNSPolicy("ClusterFirst")
 	schedulerName := corev1.DefaultSchedulerName
 	Image := os.Getenv("RELATED_IMAGE_PULP")
-	if len(m.Spec.Image) > 0 && len(m.Spec.ImageVersion) > 0 {
-		Image = m.Spec.Image + ":" + m.Spec.ImageVersion
+	if len(resources.Pulp.Spec.Image) > 0 && len(resources.Pulp.Spec.ImageVersion) > 0 {
+		Image = resources.Pulp.Spec.Image + ":" + resources.Pulp.Spec.ImageVersion
 	} else if Image == "" {
 		Image = "quay.io/pulp/pulp-minimal:stable"
 	}
@@ -816,20 +694,20 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 	// deployment definition
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name + "-api",
-			Namespace: m.Namespace,
+			Name:      resources.Pulp.Name + "-api",
+			Namespace: resources.Pulp.Namespace,
 			Annotations: map[string]string{
 				"email": "pulp-dev@redhat.com",
 				"ignore-check.kube-linter.io/no-node-affinity": "Do not check node affinity",
 			},
 			Labels: map[string]string{
-				"app.kubernetes.io/name":       m.Spec.DeploymentType + "-api",
-				"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-api-" + m.Name,
+				"app.kubernetes.io/name":       resources.Pulp.Spec.DeploymentType + "-api",
+				"app.kubernetes.io/instance":   resources.Pulp.Spec.DeploymentType + "-api-" + resources.Pulp.Name,
 				"app.kubernetes.io/component":  "api",
-				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
-				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
+				"app.kubernetes.io/part-of":    resources.Pulp.Spec.DeploymentType,
+				"app.kubernetes.io/managed-by": resources.Pulp.Spec.DeploymentType + "-operator",
 				"app":                          "pulp-api",
-				"pulp_cr":                      m.Name,
+				"pulp_cr":                      resources.Pulp.Name,
 				"owner":                        "pulp-dev",
 			},
 		},
@@ -849,12 +727,12 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 					NodeSelector:              nodeSelector,
 					Tolerations:               toleration,
 					Volumes:                   volumes,
-					ServiceAccountName:        m.Name,
+					ServiceAccountName:        resources.Pulp.Name,
 					TopologySpreadConstraints: topologySpreadConstraint,
 					Containers: []corev1.Container{{
 						Name:            "api",
 						Image:           Image,
-						ImagePullPolicy: corev1.PullPolicy(m.Spec.ImagePullPolicy),
+						ImagePullPolicy: corev1.PullPolicy(resources.Pulp.Spec.ImagePullPolicy),
 						Args:            []string{"pulp-api"},
 						Env:             envVars,
 						Ports: []corev1.ContainerPort{{
@@ -863,7 +741,7 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 						}},
 						LivenessProbe:  livenessProbe,
 						ReadinessProbe: readinessProbe,
-						Resources:      resources,
+						Resources:      resourceRequirements,
 						VolumeMounts:   volumeMounts,
 					}},
 
@@ -879,7 +757,7 @@ func (r *RepoManagerReconciler) deploymentForPulpApi(m *repomanagerv1alpha1.Pulp
 	}
 
 	// Set Pulp instance as the owner and controller
-	ctrl.SetControllerReference(m, dep, r.Scheme)
+	ctrl.SetControllerReference(resources.Pulp, dep, resources.RepoManagerReconciler.Scheme)
 	return dep
 }
 
@@ -899,30 +777,30 @@ func labelsForPulpApi(m *repomanagerv1alpha1.Pulp) map[string]string {
 
 // pulpServerSecret creates the pulp-server secret object which is used to
 // populate the /etc/pulp/settings.py config file
-func (r *RepoManagerReconciler) pulpServerSecret(ctx context.Context, m *repomanagerv1alpha1.Pulp, log logr.Logger) *corev1.Secret {
+func pulpServerSecret(resources FunctionResources) client.Object {
 
 	var dbHost, dbPort, dbUser, dbPass, dbName, dbSSLMode string
-	_, storageType := controllers.MultiStorageConfigured(m, "Pulp")
+	_, storageType := controllers.MultiStorageConfigured(resources.Pulp, "Pulp")
 
 	// if there is no external database configuration get the databaseconfig from pulp-postgres-configuration secret
-	if len(m.Spec.Database.ExternalDBSecret) == 0 {
-		log.Info("Retrieving Postgres credentials from "+m.Name+"-postgres-configuration secret", "Secret.Namespace", m.Namespace, "Secret.Name", m.Name)
-		pgCredentials, err := r.retrieveSecretData(ctx, m.Name+"-postgres-configuration", m.Namespace, true, "username", "password", "database", "port", "sslmode")
+	if len(resources.Pulp.Spec.Database.ExternalDBSecret) == 0 {
+		resources.Logger.Info("Retrieving Postgres credentials from "+resources.Pulp.Name+"-postgres-configuration secret", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Name)
+		pgCredentials, err := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Name+"-postgres-configuration", resources.Pulp.Namespace, true, "username", "password", "database", "port", "sslmode")
 		if err != nil {
-			log.Error(err, "Secret Not Found!", "Secret.Namespace", m.Namespace, "Secret.Name", m.Name)
+			resources.Logger.Error(err, "Secret Not Found!", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Name)
 		}
-		dbHost = m.Name + "-database-svc"
+		dbHost = resources.Pulp.Name + "-database-svc"
 		dbPort = pgCredentials["port"]
 		dbUser = pgCredentials["username"]
 		dbPass = pgCredentials["password"]
 		dbName = pgCredentials["database"]
 		dbSSLMode = pgCredentials["sslmode"]
 	} else {
-		log.Info("Retrieving Postgres credentials from "+m.Spec.Database.ExternalDBSecret+" secret", "Secret.Namespace", m.Namespace, "Secret.Name", m.Name)
+		resources.Logger.Info("Retrieving Postgres credentials from "+resources.Pulp.Spec.Database.ExternalDBSecret+" secret", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Name)
 		externalPostgresData := []string{"POSTGRES_HOST", "POSTGRES_PORT", "POSTGRES_USERNAME", "POSTGRES_PASSWORD", "POSTGRES_DB_NAME", "POSTGRES_SSLMODE"}
-		pgCredentials, err := r.retrieveSecretData(ctx, m.Spec.Database.ExternalDBSecret, m.Namespace, true, externalPostgresData...)
+		pgCredentials, err := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Spec.Database.ExternalDBSecret, resources.Pulp.Namespace, true, externalPostgresData...)
 		if err != nil {
-			log.Error(err, "Secret Not Found!", "Secret.Namespace", m.Namespace, "Secret.Name", m.Name)
+			resources.Logger.Error(err, "Secret Not Found!", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Name)
 		}
 		dbHost = pgCredentials["POSTGRES_HOST"]
 		dbPort = pgCredentials["POSTGRES_PORT"]
@@ -933,17 +811,17 @@ func (r *RepoManagerReconciler) pulpServerSecret(ctx context.Context, m *repoman
 	}
 
 	// Handling user facing URLs
-	rootUrl := "http://" + m.Name + "-web-svc." + m.Namespace + ".svc.cluster.local:24880"
-	if strings.ToLower(m.Spec.IngressType) == "ingress" {
-		rootUrl = "https://" + m.Spec.IngressHost
+	rootUrl := "http://" + resources.Pulp.Name + "-web-svc." + resources.Pulp.Namespace + ".svc.cluster.local:24880"
+	if strings.ToLower(resources.Pulp.Spec.IngressType) == "ingress" {
+		rootUrl = "https://" + resources.Pulp.Spec.IngressHost
 	}
-	if strings.ToLower(m.Spec.IngressType) == "route" {
-		if len(m.Spec.RouteHost) == 0 {
+	if strings.ToLower(resources.Pulp.Spec.IngressType) == "route" {
+		if len(resources.Pulp.Spec.RouteHost) == 0 {
 			ingress := &configv1.Ingress{}
-			r.Get(ctx, types.NamespacedName{Name: "cluster"}, ingress)
-			rootUrl = "https://" + m.Name + "." + ingress.Spec.Domain
+			resources.RepoManagerReconciler.Get(resources.Context, types.NamespacedName{Name: "cluster"}, ingress)
+			rootUrl = "https://" + resources.Pulp.Name + "." + ingress.Spec.Domain
 		} else {
-			rootUrl = "https://" + m.Spec.RouteHost
+			rootUrl = "https://" + resources.Pulp.Spec.RouteHost
 		}
 	}
 
@@ -973,30 +851,30 @@ PRIVATE_KEY_PATH = "/etc/pulp/keys/container_auth_private_key.pem"
 PUBLIC_KEY_PATH = "/etc/pulp/keys/container_auth_public_key.pem"
 STATIC_ROOT = "/var/lib/operator/static/"
 TOKEN_AUTH_DISABLED = "False"
-TOKEN_SERVER = "http://` + m.Name + `-api-svc.` + m.Namespace + `.svc.cluster.local:24817/token/"
+TOKEN_SERVER = "http://` + resources.Pulp.Name + `-api-svc.` + resources.Pulp.Namespace + `.svc.cluster.local:24817/token/"
 TOKEN_SIGNATURE_ALGORITHM = "ES256"
 `
 
 	pulp_settings = pulp_settings + fmt.Sprintln("API_ROOT = \"/pulp/\"")
 
 	// add cache settings
-	if m.Spec.Cache.Enabled {
+	if resources.Pulp.Spec.Cache.Enabled {
 
 		var cacheHost, cachePort, cachePassword, cacheDB string
 
 		// if there is no ExternalCacheSecret defined, we should
 		// use the redis instance provided by the operator
-		if len(m.Spec.Cache.ExternalCacheSecret) == 0 {
-			if m.Spec.Cache.RedisPort == 0 {
+		if len(resources.Pulp.Spec.Cache.ExternalCacheSecret) == 0 {
+			if resources.Pulp.Spec.Cache.RedisPort == 0 {
 				cachePort = strconv.Itoa(6379)
 			} else {
-				cachePort = strconv.Itoa(m.Spec.Cache.RedisPort)
+				cachePort = strconv.Itoa(resources.Pulp.Spec.Cache.RedisPort)
 			}
-			cacheHost = m.Name + "-redis-svc." + m.Namespace
+			cacheHost = resources.Pulp.Name + "-redis-svc." + resources.Pulp.Namespace
 		} else {
 			// retrieve the connection data from ExternalCacheSecret secret
 			externalCacheData := []string{"REDIS_HOST", "REDIS_PORT", "REDIS_PASSWORD", "REDIS_DB"}
-			externalCacheConfig, _ := r.retrieveSecretData(context.TODO(), m.Spec.Cache.ExternalCacheSecret, m.Namespace, true, externalCacheData...)
+			externalCacheConfig, _ := resources.RepoManagerReconciler.retrieveSecretData(context.TODO(), resources.Pulp.Spec.Cache.ExternalCacheSecret, resources.Pulp.Namespace, true, externalCacheData...)
 			cacheHost = externalCacheConfig["REDIS_HOST"]
 			cachePort = externalCacheConfig["REDIS_PORT"]
 			cachePassword = externalCacheConfig["REDIS_PASSWORD"]
@@ -1015,10 +893,10 @@ REDIS_DB = "` + cacheDB + `"
 	// if an Azure Blob is defined in Pulp CR we should add the
 	// credentials from azure secret into settings.py
 	if storageType[0] == controllers.AzureObjType {
-		log.Info("Retrieving Azure data from " + m.Spec.ObjectStorageAzureSecret)
-		storageData, err := r.retrieveSecretData(ctx, m.Spec.ObjectStorageAzureSecret, m.Namespace, true, "azure-account-name", "azure-account-key", "azure-container", "azure-container-path", "azure-connection-string")
+		resources.Logger.Info("Retrieving Azure data from " + resources.Pulp.Spec.ObjectStorageAzureSecret)
+		storageData, err := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Spec.ObjectStorageAzureSecret, resources.Pulp.Namespace, true, "azure-account-name", "azure-account-key", "azure-container", "azure-container-path", "azure-connection-string")
 		if err != nil {
-			log.Error(err, "Secret Not Found!", "Secret.Namespace", m.Namespace, "Secret.Name", m.Spec.ObjectStorageAzureSecret)
+			resources.Logger.Error(err, "Secret Not Found!", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Spec.ObjectStorageAzureSecret)
 		}
 		pulp_settings = pulp_settings + `AZURE_CONNECTION_STRING = '` + storageData["azure-connection-string"] + `'
 AZURE_LOCATION = '` + storageData["azure-container-path"] + `'
@@ -1034,13 +912,13 @@ DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
 	// if a S3 is defined in Pulp CR we should add the
 	// credentials from aws secret into settings.py
 	if storageType[0] == controllers.S3ObjType {
-		log.Info("Retrieving S3 data from " + m.Spec.ObjectStorageS3Secret)
-		storageData, err := r.retrieveSecretData(ctx, m.Spec.ObjectStorageS3Secret, m.Namespace, true, "s3-access-key-id", "s3-secret-access-key", "s3-bucket-name", "s3-region")
+		resources.Logger.Info("Retrieving S3 data from " + resources.Pulp.Spec.ObjectStorageS3Secret)
+		storageData, err := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Spec.ObjectStorageS3Secret, resources.Pulp.Namespace, true, "s3-access-key-id", "s3-secret-access-key", "s3-bucket-name", "s3-region")
 		if err != nil {
-			log.Error(err, "Secret Not Found!", "Secret.Namespace", m.Namespace, "Secret.Name", m.Spec.ObjectStorageS3Secret)
+			resources.Logger.Error(err, "Secret Not Found!", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Spec.ObjectStorageS3Secret)
 		}
 
-		optionalKey, _ := r.retrieveSecretData(ctx, m.Spec.ObjectStorageS3Secret, m.Namespace, false, "s3-endpoint")
+		optionalKey, _ := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Spec.ObjectStorageS3Secret, resources.Pulp.Namespace, false, "s3-endpoint")
 		if len(optionalKey["s3-endpoint"]) > 0 {
 			pulp_settings = pulp_settings + fmt.Sprintf("AWS_S3_ENDPOINT_URL = \"%v\"\n", optionalKey["s3-endpoint"])
 		}
@@ -1059,16 +937,16 @@ MEDIA_ROOT = ""
 	}
 
 	// configure settings.py with keycloak integration variables
-	if len(m.Spec.SSOSecret) > 0 {
-		r.ssoConfig(ctx, m, &pulp_settings)
+	if len(resources.Pulp.Spec.SSOSecret) > 0 {
+		resources.RepoManagerReconciler.ssoConfig(resources.Context, resources.Pulp, &pulp_settings)
 	}
 
-	pulp_settings = addCustomPulpSettings(m, pulp_settings)
+	pulp_settings = addCustomPulpSettings(resources.Pulp, pulp_settings)
 
 	sec := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name + "-server",
-			Namespace: m.Namespace,
+			Name:      resources.Pulp.Name + "-server",
+			Namespace: resources.Pulp.Namespace,
 		},
 		StringData: map[string]string{
 			"settings.py": pulp_settings,
@@ -1076,45 +954,50 @@ MEDIA_ROOT = ""
 	}
 
 	// Set Pulp instance as the owner and controller
-	ctrl.SetControllerReference(m, sec, r.Scheme)
+	ctrl.SetControllerReference(resources.Pulp, sec, resources.RepoManagerReconciler.Scheme)
 	return sec
 }
 
 // pulp-db-fields-encryption secret
-func pulpDBFieldsEncryptionSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
-	return &corev1.Secret{
+func pulpDBFieldsEncryptionSecret(resources FunctionResources) client.Object {
+	sec := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name + "-db-fields-encryption",
-			Namespace: m.Namespace,
+			Name:      resources.Pulp.Name + "-db-fields-encryption",
+			Namespace: resources.Pulp.Namespace,
 		},
 		StringData: map[string]string{
 			"database_fields.symmetric.key": "81HqDtbqAywKSOumSha3BhWNOdQ26slT6K0YaZeZyPs=",
 		},
 	}
-
+	ctrl.SetControllerReference(resources.Pulp, sec, resources.RepoManagerReconciler.Scheme)
+	return sec
 }
 
 // pulp-admin-passowrd
-func pulpAdminPasswordSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
-	return &corev1.Secret{
+func pulpAdminPasswordSecret(resources FunctionResources) client.Object {
+
+	sec := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name + "-admin-password",
-			Namespace: m.Namespace,
+			Name:      resources.Pulp.Name + "-admin-password",
+			Namespace: resources.Pulp.Namespace,
 		},
 		StringData: map[string]string{
 			"password": createPwd(32),
 		},
 	}
+	ctrl.SetControllerReference(resources.Pulp, sec, resources.RepoManagerReconciler.Scheme)
+
+	return sec
 }
 
 // pulp-container-auth
-func pulpContainerAuth(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
+func pulpContainerAuth(resources FunctionResources) client.Object {
 
 	privKey, pubKey := genTokenAuthKey()
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name + "-container-auth",
-			Namespace: m.Namespace,
+			Name:      resources.Pulp.Name + "-container-auth",
+			Namespace: resources.Pulp.Namespace,
 		},
 		StringData: map[string]string{
 			"container_auth_private_key.pem": privKey,
@@ -1124,12 +1007,12 @@ func pulpContainerAuth(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
 }
 
 // serviceForAPI returns a service object for pulp-api
-func (r *RepoManagerReconciler) serviceForAPI(m *repomanagerv1alpha1.Pulp) *corev1.Service {
+func serviceForAPI(resources FunctionResources) client.Object {
 
-	svc := serviceAPIObject(m.Name, m.Namespace, m.Spec.DeploymentType)
+	svc := serviceAPIObject(resources.Pulp.Name, resources.Pulp.Namespace, resources.Pulp.Spec.DeploymentType)
 
 	// Set Pulp instance as the owner and controller
-	ctrl.SetControllerReference(m, svc, r.Scheme)
+	ctrl.SetControllerReference(resources.Pulp, svc, resources.RepoManagerReconciler.Scheme)
 	return svc
 }
 
@@ -1185,4 +1068,10 @@ func serviceAPISpec(name, namespace, deployment_type string) corev1.ServiceSpec 
 		Type:                     serviceType,
 		PublishNotReadyAddresses: true,
 	}
+}
+
+// storageClassProvided returns true if a StorageClass is provided in Pulp CR
+func storageClassProvided(pulp *repomanagerv1alpha1.Pulp) bool {
+	_, storageType := controllers.MultiStorageConfigured(pulp, "Pulp")
+	return storageType[0] == controllers.SCNameType
 }
