@@ -53,9 +53,9 @@ spec:
           - name: RELATED_IMAGE_PULP_WEB
             value: quay.io/pulp/pulp-web:stable
           - name: RELATED_IMAGE_PULP_REDIS
-            value: redis:latest
+            value: docker.io/library/redis:latest
           - name: RELATED_IMAGE_PULP_POSTGRES
-            value: postgres:13
+            value: docker.io/library/postgres:13
           - name: WATCH_NAMESPACE
             valueFrom:
               fieldRef:

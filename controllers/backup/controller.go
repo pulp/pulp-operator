@@ -168,7 +168,7 @@ func (r *RepoManagerBackupReconciler) createBackupPod(ctx context.Context, pulpB
 	// [TO-DO] define postgres image based on the database implementation type
 	// if external database: we should gather from an user input (pulpbackup CR) postgres version
 	// if provisioned by operator: we should gather, for example, from pulp CR spec or from database deployment spec
-	postgresImage := "postgres:13"
+	postgresImage := "docker.io/library/postgres:13"
 	volumeMounts := []corev1.VolumeMount{{
 		Name:      pulpBackup.Name + "-backup",
 		ReadOnly:  false,
