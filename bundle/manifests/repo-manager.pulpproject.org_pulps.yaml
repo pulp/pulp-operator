@@ -5895,6 +5895,12 @@ spec:
                   If defined, the PVC must be provisioned by the user and the operator
                   will only configure the deployment to use it
                 type: string
+              route_annotations:
+                additionalProperties:
+                  type: string
+                description: RouteAnnotations will append custom annotation(s) into
+                  routes (used by router shard routeSelector).
+                type: object
               route_host:
                 description: 'Route DNS host. Default: <operator''s name> + "." +
                   ingress.Spec.Domain'

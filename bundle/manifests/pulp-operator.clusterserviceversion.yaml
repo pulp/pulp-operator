@@ -859,6 +859,13 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: RouteAnnotations will append custom annotation(s) into routes
+          (used by router shard routeSelector).
+        displayName: Route Annotations
+        path: route_annotations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route
       - description: 'Route DNS host. Default: <operator''s name> + "." + ingress.Spec.Domain'
         displayName: Route Host
         path: route_host
@@ -872,6 +879,7 @@ spec:
         path: route_labels
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route
       - description: 'ConfigMap where the signing scripts are stored. Default: <operators''s
           name>-"-signing-scripts"'
         displayName: Signing Scripts Configmap

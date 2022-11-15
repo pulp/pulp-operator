@@ -152,6 +152,7 @@ PulpSpec defines the desired state of Pulp
 | ingress_host | Ingress DNS host | string | false |
 | route_host | Route DNS host. Default: <operator's name> + \".\" + ingress.Spec.Domain | string | false |
 | route_labels | RouteLabels will append custom label(s) into routes (used by router shard routeSelector). Default: {\"pulp_cr\": \"<operator's name>\", \"owner\": \"pulp-dev\" } | map[string]string | false |
+| route_annotations | RouteAnnotations will append custom annotation(s) into routes (used by router shard routeSelector). | map[string]string | false |
 | nodeport_port | Provide requested port value | int32 | false |
 | haproxy_timeout | The timeout for HAProxy. Default: \"180s\" | string | false |
 | nginx_client_max_body_size | The client max body size for Nginx Ingress. Default: \"10m\" | string | false |
