@@ -320,7 +320,7 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 	if len(m.Spec.Cache.RedisImage) > 0 {
 		RedisImage = m.Spec.Cache.RedisImage
 	} else if RedisImage == "" {
-		RedisImage = "redis:latest"
+		RedisImage = "docker.io/library/redis:latest"
 	}
 
 	// deployment definition

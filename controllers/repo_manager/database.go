@@ -408,7 +408,7 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 	if len(m.Spec.Database.PostgresImage) > 0 {
 		postgresImage = m.Spec.Database.PostgresImage
 	} else if postgresImage == "" {
-		postgresImage = "postgres:13"
+		postgresImage = "docker.io/library/postgres:13"
 	}
 
 	containerPort := int32(0)

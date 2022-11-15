@@ -499,7 +499,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 					Affinity:           &corev1.Affinity{},
 					ServiceAccountName: PulpName,
 					Containers: []corev1.Container{{
-						Image: "postgres:13",
+						Image: "docker.io/library/postgres:13",
 						Name:  "postgres",
 						Env:   envVarsSts,
 						Ports: []corev1.ContainerPort{{

@@ -1321,8 +1321,8 @@ spec:
     name: pulp
   - image: quay.io/pulp/pulp-web:stable
     name: pulp-web
-  - image: redis:latest
+  - image: docker.io/library/redis:latest
     name: pulp-redis
-  - image: postgres:13
+  - image: docker.io/library/postgres:13
     name: pulp-postgres
   version: 1.0.0
