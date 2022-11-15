@@ -214,6 +214,9 @@ func (r *RepoManagerReconciler) pulpRouteObject(m *repomanagerv1alpha1.Pulp, p *
 	for k, v := range m.Spec.RouteLabels {
 		labels[k] = v
 	}
+	for key, val := range m.Spec.RouteAnnotations {
+		annotation[key] = val
+	}
 
 	route := &routev1.Route{
 		ObjectMeta: metav1.ObjectMeta{

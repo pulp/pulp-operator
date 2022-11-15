@@ -126,8 +126,13 @@ type PulpSpec struct {
 	// RouteLabels will append custom label(s) into routes (used by router shard routeSelector).
 	// Default: {"pulp_cr": "<operator's name>", "owner": "pulp-dev" }
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route"}
 	RouteLabels map[string]string `json:"route_labels,omitempty"`
+
+	// RouteAnnotations will append custom annotation(s) into routes (used by router shard routeSelector).
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route"}
+	RouteAnnotations map[string]string `json:"route_annotations,omitempty"`
 
 	// Provide requested port value
 	// +kubebuilder:validation:Optional
@@ -734,8 +739,8 @@ type PulpStatus struct {
 }
 
 // Pulp is the Schema for the pulps API
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 type Pulp struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

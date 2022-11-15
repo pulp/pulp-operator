@@ -513,6 +513,13 @@ func (in *PulpSpec) DeepCopyInto(out *PulpSpec) {
 			(*out)[key] = val
 		}
 	}
+	if in.RouteAnnotations != nil {
+		in, out := &in.RouteAnnotations, &out.RouteAnnotations
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	in.Api.DeepCopyInto(&out.Api)
 	in.Database.DeepCopyInto(&out.Database)
 	in.Content.DeepCopyInto(&out.Content)
