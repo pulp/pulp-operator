@@ -457,6 +457,22 @@ func (r *RepoManagerReconciler) deploymentForPulpWorker(m *repomanagerv1alpha1.P
 	}
 
 	readinessProbe := m.Spec.Worker.ReadinessProbe
+	if readinessProbe == nil {
+		readinessProbe = &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				Exec: &corev1.ExecAction{
+					Command: []string{
+						"/usr/bin/wait_on_postgres.py",
+					},
+				},
+			},
+			FailureThreshold:    10,
+			InitialDelaySeconds: 30,
+			PeriodSeconds:       10,
+			SuccessThreshold:    1,
+			TimeoutSeconds:      10,
+		}
+	}
 	livenessProbe := m.Spec.Worker.LivenessProbe
 
 	dep := &appsv1.Deployment{
