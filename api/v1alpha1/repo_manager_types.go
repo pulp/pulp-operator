@@ -117,6 +117,11 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
 	IngressHost string `json:"ingress_host,omitempty"`
 
+	// Ingress TLS secret
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
+	IngressTLSSecret string `json:"ingress_tls_secret,omitempty"`
+
 	// Route DNS host.
 	// Default: <operator's name> + "." + ingress.Spec.Domain
 	// +kubebuilder:validation:Optional

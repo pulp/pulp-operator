@@ -150,6 +150,7 @@ PulpSpec defines the desired state of Pulp
 | ingress_type | The ingress type to use to reach the deployed instance. Default: none (will not expose the service) | string | false |
 | ingress_annotations | Annotations for the Ingress | map[string]string | false |
 | ingress_host | Ingress DNS host | string | false |
+| ingress_tls_secret | Ingress TLS secret | string | false |
 | route_host | Route DNS host. Default: <operator's name> + \".\" + ingress.Spec.Domain | string | false |
 | route_labels | RouteLabels will append custom label(s) into routes (used by router shard routeSelector). Default: {\"pulp_cr\": \"<operator's name>\", \"owner\": \"pulp-dev\" } | map[string]string | false |
 | route_annotations | RouteAnnotations will append custom annotation(s) into routes (used by router shard routeSelector). | map[string]string | false |

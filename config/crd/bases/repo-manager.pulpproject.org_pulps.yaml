@@ -5840,6 +5840,9 @@ spec:
               ingress_host:
                 description: Ingress DNS host
                 type: string
+              ingress_tls_secret:
+                description: Ingress TLS secret
+                type: string
               ingress_type:
                 description: 'The ingress type to use to reach the deployed instance.
                   Default: none (will not expose the service)'

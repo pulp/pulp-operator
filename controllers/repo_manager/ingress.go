@@ -266,8 +266,17 @@ func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repoma
 			},
 		},
 	}
+
 	if len(ingressClassName) > 0 {
 		ingressSpec.IngressClassName = &ingressClassName
+	}
+	if len(m.Spec.IngressTLSSecret) > 0 {
+		ingressSpec.TLS = []netv1.IngressTLS{
+			{
+				Hosts:      []string{m.Spec.IngressHost},
+				SecretName: m.Spec.IngressTLSSecret,
+			},
+		}
 	}
 	labels := map[string]string{
 		"app.kubernetes.io/name":       "ingress",
