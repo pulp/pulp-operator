@@ -165,6 +165,11 @@ func (r *RepoManagerBackupReconciler) createBackupPod(ctx context.Context, pulpB
 		"app.kubernetes.io/managed-by": pulpBackup.Spec.DeploymentType + "-operator",
 	}
 
+	affinity := &corev1.Affinity{}
+	if pulpBackup.Spec.Affinity != nil {
+		affinity = pulpBackup.Spec.Affinity
+	}
+
 	// [TO-DO] define postgres image based on the database implementation type
 	// if external database: we should gather from an user input (pulpbackup CR) postgres version
 	// if provisioned by operator: we should gather, for example, from pulp CR spec or from database deployment spec
@@ -238,6 +243,7 @@ func (r *RepoManagerBackupReconciler) createBackupPod(ctx context.Context, pulpB
 			Labels:    labels,
 		},
 		Spec: corev1.PodSpec{
+			Affinity: affinity,
 			Containers: []corev1.Container{{
 				Name:            pulpBackup.Name + "-backup-manager",
 				Image:           postgresImage,

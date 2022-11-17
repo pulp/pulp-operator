@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -69,6 +70,11 @@ type PulpBackupSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Database configuration"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret"}
 	PostgresConfigurationSecret string `json:"postgres_configuration_secret"`
+
+	// Affinity is a group of affinity scheduling rules.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 }
 
 // PulpBackupStatus defines the observed state of PulpBackup
