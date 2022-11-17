@@ -6,11 +6,13 @@ import (
 	"crypto/elliptic"
 	crypt_rand "crypto/rand"
 	"crypto/x509"
+	b64 "encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io"
 	"math/rand"
 	"reflect"
 	"strings"
@@ -651,4 +653,11 @@ func (r *RepoManagerReconciler) createPulpResource(resource ResourceDefinition, 
 	}
 
 	return false, nil
+}
+
+// createFernetKey creates a random key that will be used in "database_fields.symmetric.key"
+func createFernetKey() string {
+	key := [32]byte{}
+	io.ReadFull(crypt_rand.Reader, key[:])
+	return b64.StdEncoding.EncodeToString(key[:])
 }

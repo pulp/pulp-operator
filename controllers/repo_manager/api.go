@@ -966,10 +966,9 @@ func pulpDBFieldsEncryptionSecret(resources FunctionResources) client.Object {
 			Namespace: resources.Pulp.Namespace,
 		},
 		StringData: map[string]string{
-			"database_fields.symmetric.key": "81HqDtbqAywKSOumSha3BhWNOdQ26slT6K0YaZeZyPs=",
+			"database_fields.symmetric.key": createFernetKey(),
 		},
 	}
-	ctrl.SetControllerReference(resources.Pulp, sec, resources.RepoManagerReconciler.Scheme)
 	return sec
 }
 
