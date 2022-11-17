@@ -13,6 +13,31 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+1.0.0-alpha.3 (2022-11-17)
+==========================
+
+
+Features
+--------
+
+- Added a configmap to avoid pulprestore controller execution.
+  [#550](https://github.com/pulp/pulp-operator/issues/550)
+- Add Ingress TLS secret
+  [#676](https://github.com/pulp/pulp-operator/issues/676)
+- Added a field to set affinity for bkp-manager pods.
+  [#782](https://github.com/pulp/pulp-operator/issues/782)
+
+
+Bugfixes
+--------
+
+- Make web available when ingress isn't nginx
+  [#770](https://github.com/pulp/pulp-operator/issues/770)
+
+
+----
+
+
 1.0.0-alpha.2 (2022-11-09)
 ==========================
 
