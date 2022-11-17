@@ -136,8 +136,8 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		})
 		r.Status().Update(ctx, pulp)
 	}
-
-	needsPulpWeb := strings.ToLower(pulp.Spec.IngressType) != "route" && !controllers.IsNginxIngressSupported(r)
+	isNginxIngress := strings.ToLower(pulp.Spec.IngressType) == "ingress" && controllers.IsNginxIngressSupported(r)
+	needsPulpWeb := strings.ToLower(pulp.Spec.IngressType) != "route" && !isNginxIngress
 	if needsPulpWeb && pulp.Spec.ImageVersion != pulp.Spec.ImageWebVersion {
 		err := fmt.Errorf("image version and image web version should be equal ")
 		log.Error(err, "ImageVersion should be equal to ImageWebVersion")
@@ -294,7 +294,8 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			} else if pulpController.Requeue {
 				return pulpController, nil
 			}
-		} else {
+		}
+		if needsPulpWeb {
 			log.V(1).Info("Running web tasks")
 			pulpController, err = r.pulpWebController(ctx, pulp, log)
 			if err != nil {
