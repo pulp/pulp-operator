@@ -417,66 +417,50 @@ func (r *RepoManagerReconciler) updateIngressType(ctx context.Context, pulp *rep
 
 }
 
-// [TODO] Find a generic way to assert the object type to avoid these repetitive blocks of code
 // reconcileObject will check if the definition from Pulp CR is reflecting the current
 // object state and if not will synchronize the configuration
-func (r *RepoManagerReconciler) reconcileObject(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, expectedState, currentState interface{}, conditionType string, log logr.Logger) error {
+func (r *RepoManagerReconciler) reconcileObject(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, expectedState, currentState client.Object, conditionType string, log logr.Logger) error {
 
-	switch expectedState := expectedState.(type) {
+	var objKind string
+	switch expectedState.(type) {
 	case *routev1.Route:
-		objKind := "route"
-		objName := expectedState.Name
-		currentState := currentState.(*routev1.Route)
-		// Ensure objects are as expected
-		if !equality.Semantic.DeepDerivative(expectedState.Spec, currentState.Spec) {
-			log.Info("The " + objKind + " " + objName + " has been modified! Reconciling ...")
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "Updating"+objKind, "Reconciling "+objName+" "+objKind)
-			expectedState.SetResourceVersion(currentState.GetResourceVersion())
-			if err := r.Update(ctx, expectedState); err != nil {
-				log.Error(err, "Error trying to update "+objName+" "+objKind+" ...")
-				r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdating"+objKind, "Failed to reconcile "+objName+" "+objKind+": "+err.Error())
-				return err
-			}
-			r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Reconciled "+objName+" "+objKind)
-		}
+		objKind = "Route"
 	case *netv1.Ingress:
-		objKind := "ingress"
-		objName := expectedState.Name
-		currentState := currentState.(*netv1.Ingress)
-		// Ensure objects are as expected
-		if !equality.Semantic.DeepDerivative(expectedState.Spec, currentState.Spec) {
-			log.Info("The " + objKind + " " + objName + " has been modified! Reconciling ...")
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "Updating"+objKind, "Reconciling "+objName+" "+objKind)
-			expectedState.SetResourceVersion(currentState.GetResourceVersion())
-			if err := r.Update(ctx, expectedState); err != nil {
-				log.Error(err, "Error trying to update "+objName+" "+objKind+" ...")
-				r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdating"+objKind, "Failed to reconcile "+objName+" "+objKind+": "+err.Error())
-				return err
-			}
-			r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Reconciled "+objName+" "+objKind)
-		}
+		objKind = "Ingress"
 	case *corev1.Service:
-		objKind := "service"
-		objName := expectedState.Name
-		currentState := currentState.(*corev1.Service)
+		objKind = "Service"
 
 		// if NodePort field is REMOVED we dont need to do anything
 		// kubernetes will define a new nodeport automatically
 		if pulp.Spec.NodePort == 0 {
 			return nil
 		}
+	default:
+		return nil
+	}
 
-		// Ensure objects are as expected
-		if !equality.Semantic.DeepDerivative(expectedState.Spec, currentState.Spec) {
-			log.Info("The " + objKind + " " + objName + " has been modified! Reconciling ...")
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "Updating"+objKind, "Reconciling "+objName+" "+objKind)
-			if err := r.Update(ctx, expectedState); err != nil {
-				log.Error(err, "Error trying to update "+objName+" "+objKind+" ...")
-				r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdating"+objKind, "Failed to reconcile "+objName+" "+objKind+": "+err.Error())
-				return err
-			}
-			r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Reconciled "+objName+" "+objKind)
+	// get the concrete type from expectedState and currentState objects
+	expected := reflect.Indirect(reflect.ValueOf(expectedState))
+	current := reflect.Indirect(reflect.ValueOf(currentState))
+	// get object name
+	objName := expected.FieldByName("Name").Interface().(string)
+
+	// Ensure objects are as expected
+	if !equality.Semantic.DeepDerivative(expected.FieldByName("Spec").Interface(), current.FieldByName("Spec").Interface()) {
+		log.Info("The " + objKind + " " + objName + " has been modified! Reconciling ...")
+		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "Updating"+objKind, "Reconciling "+objName+" "+objKind)
+
+		if objKind != "Service" {
+			// update ResourceVersion for the object with current value
+			reflect.ValueOf(expectedState).MethodByName("SetResourceVersion").Call(reflect.ValueOf(currentState).MethodByName("GetResourceVersion").Call([]reflect.Value{}))
 		}
+
+		if err := r.Update(ctx, expectedState); err != nil {
+			log.Error(err, "Error trying to update "+objName+" "+objKind+" ...")
+			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdating"+objKind, "Failed to reconcile "+objName+" "+objKind+": "+err.Error())
+			return err
+		}
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Reconciled "+objName+" "+objKind)
 	}
 
 	return nil
