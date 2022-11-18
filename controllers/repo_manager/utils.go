@@ -661,3 +661,11 @@ func createFernetKey() string {
 	io.ReadFull(crypt_rand.Reader, key[:])
 	return b64.StdEncoding.EncodeToString(key[:])
 }
+
+// needsRequeue will return true if the controller should trigger a new reconcile loop
+func needsRequeue(err error, pulpController ctrl.Result) bool {
+	if err != nil || !reflect.DeepEqual(pulpController, ctrl.Result{}) {
+		return true
+	}
+	return false
+}
