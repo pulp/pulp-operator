@@ -184,35 +184,23 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// Create an empty ConfigMap in which CNO will inject custom CAs
 	if IsOpenShift && pulp.Spec.TrustedCa {
 		pulpController, err = r.createEmptyConfigMap(ctx, pulp, log)
-		if err != nil {
+		if needsRequeue(err, pulpController) {
 			return pulpController, err
-		} else if pulpController.RequeueAfter > 0 {
-			return pulpController, nil
-		} else if pulpController.Requeue {
-			return pulpController, nil
 		}
 	}
 
 	// Create ServiceAccount
 	pulpController, err = r.CreateServiceAccount(ctx, pulp)
-	if err != nil {
+	if needsRequeue(err, pulpController) {
 		return pulpController, err
-	} else if pulpController.RequeueAfter > 0 {
-		return pulpController, nil
-	} else if pulpController.Requeue {
-		return pulpController, nil
 	}
 
 	// Do not provision postgres resources if using external DB
 	if len(pulp.Spec.Database.ExternalDBSecret) == 0 {
 		log.V(1).Info("Running database tasks")
 		pulpController, err = r.databaseController(ctx, pulp, log)
-		if err != nil {
+		if needsRequeue(err, pulpController) {
 			return pulpController, err
-		} else if pulpController.RequeueAfter > 0 {
-			return pulpController, nil
-		} else if pulpController.Requeue {
-			return pulpController, nil
 		}
 	}
 
@@ -222,53 +210,33 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if len(pulp.Spec.Cache.ExternalCacheSecret) == 0 && pulp.Spec.Cache.Enabled {
 		log.V(1).Info("Running cache tasks")
 		pulpController, err = r.pulpCacheController(ctx, pulp, log)
-		if err != nil {
+		if needsRequeue(err, pulpController) {
 			return pulpController, err
-		} else if pulpController.RequeueAfter > 0 {
-			return pulpController, nil
-		} else if pulpController.Requeue {
-			return pulpController, nil
 		}
 
 		// remove redis resources if cache is not enabled
 	} else {
 		pulpController, err = r.deprovisionCache(ctx, pulp, log)
-		if err != nil {
+		if needsRequeue(err, pulpController) {
 			return pulpController, err
-		} else if pulpController.RequeueAfter > 0 {
-			return pulpController, nil
-		} else if pulpController.Requeue {
-			return pulpController, nil
 		}
 	}
 
 	log.V(1).Info("Running API tasks")
 	pulpController, err = r.pulpApiController(ctx, pulp, log)
-	if err != nil {
+	if needsRequeue(err, pulpController) {
 		return pulpController, err
-	} else if pulpController.RequeueAfter > 0 {
-		return pulpController, nil
-	} else if pulpController.Requeue {
-		return pulpController, nil
 	}
 
 	log.V(1).Info("Running content tasks")
 	pulpController, err = r.pulpContentController(ctx, pulp, log)
-	if err != nil {
+	if needsRequeue(err, pulpController) {
 		return pulpController, err
-	} else if pulpController.RequeueAfter > 0 {
-		return pulpController, nil
-	} else if pulpController.Requeue {
-		return pulpController, nil
 	}
 	log.V(1).Info("Running worker tasks")
 	pulpController, err = r.pulpWorkerController(ctx, pulp, log)
-	if err != nil {
+	if needsRequeue(err, pulpController) {
 		return pulpController, err
-	} else if pulpController.RequeueAfter > 0 {
-		return pulpController, nil
-	} else if pulpController.Requeue {
-		return pulpController, nil
 	}
 
 	// if this is the first reconciliation loop (.status.ingress_type == "") OR
@@ -277,33 +245,21 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		if strings.ToLower(pulp.Spec.IngressType) == "route" {
 			log.V(1).Info("Running route tasks")
 			pulpController, err = r.pulpRouteController(ctx, pulp, log)
-			if err != nil {
+			if needsRequeue(err, pulpController) {
 				return pulpController, err
-			} else if pulpController.RequeueAfter > 0 {
-				return pulpController, nil
-			} else if pulpController.Requeue {
-				return pulpController, nil
 			}
 		} else if strings.ToLower(pulp.Spec.IngressType) == "ingress" {
 			log.V(1).Info("Running ingress tasks")
 			pulpController, err = r.pulpIngressController(ctx, pulp, log)
-			if err != nil {
+			if needsRequeue(err, pulpController) {
 				return pulpController, err
-			} else if pulpController.RequeueAfter > 0 {
-				return pulpController, nil
-			} else if pulpController.Requeue {
-				return pulpController, nil
 			}
 		}
 		if needsPulpWeb {
 			log.V(1).Info("Running web tasks")
 			pulpController, err = r.pulpWebController(ctx, pulp, log)
-			if err != nil {
+			if needsRequeue(err, pulpController) {
 				return pulpController, err
-			} else if pulpController.RequeueAfter > 0 {
-				return pulpController, nil
-			} else if pulpController.Requeue {
-				return pulpController, nil
 			}
 		}
 	} else {
@@ -313,22 +269,14 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	log.V(1).Info("Running PDB tasks")
 	pulpController, err = r.pdbController(ctx, pulp, log)
-	if err != nil {
+	if needsRequeue(err, pulpController) {
 		return pulpController, err
-	} else if pulpController.RequeueAfter > 0 {
-		return pulpController, nil
-	} else if pulpController.Requeue {
-		return pulpController, nil
 	}
 
 	log.V(1).Info("Running status tasks")
 	pulpController, err = r.pulpStatus(ctx, pulp, log)
-	if err != nil {
+	if needsRequeue(err, pulpController) {
 		return pulpController, err
-	} else if pulpController.RequeueAfter > 0 {
-		return pulpController, nil
-	} else if pulpController.Requeue {
-		return pulpController, nil
 	}
 
 	// If we get into here it means that there is no reconciliation
