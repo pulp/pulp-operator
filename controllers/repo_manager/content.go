@@ -73,19 +73,8 @@ func (r *RepoManagerReconciler) pulpContentController(ctx context.Context, pulp 
 	deployment := &appsv1.Deployment{}
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-content", Namespace: pulp.Namespace}, deployment)
 	expected := deploymentForPulpContent(FunctionResources{ctx, pulp, log, r})
-	if deploymentModified(expected.(*appsv1.Deployment), deployment) {
-		log.Info("The Content Deployment has been modified! Reconciling ...")
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingContentDeployment", "Reconciling "+pulp.Name+"-content deployment resource")
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling content deployment")
-		err = r.Update(ctx, expected.(*appsv1.Deployment))
-		if err != nil {
-			log.Error(err, "Error trying to update the Content Deployment object ... ")
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingContentDeployment", "Failed to reconcile "+pulp.Name+"-content deployment resource: "+err.Error())
-			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile content deployment")
-			return ctrl.Result{}, err
-		}
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Content deployment reconciled")
-		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
+	if requeue, err := reconcileObject(FunctionResources{ctx, pulp, log, r}, expected, deployment, conditionType); err != nil || requeue {
+		return ctrl.Result{Requeue: requeue}, err
 	}
 
 	// Reconcile Service

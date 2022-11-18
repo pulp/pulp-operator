@@ -20,7 +20,6 @@ import (
 	"context"
 	"os"
 	"strconv"
-	"time"
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -43,31 +42,17 @@ func (r *RepoManagerReconciler) pulpWorkerController(ctx context.Context, pulp *
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Worker-Ready"
 
-	// Worker Deployment
-	requeue, err := r.createPulpResource(ResourceDefinition{ctx, &appsv1.Deployment{}, pulp.Name + "-worker", "Worker", conditionType, pulp}, deploymentForPulpWorker)
-	if err != nil {
-		return ctrl.Result{}, err
-	} else if requeue {
-		return ctrl.Result{Requeue: true}, nil
+	// Create Worker Deployment
+	if requeue, err := r.createPulpResource(ResourceDefinition{ctx, &appsv1.Deployment{}, pulp.Name + "-worker", "Worker", conditionType, pulp}, deploymentForPulpWorker); err != nil || requeue {
+		return ctrl.Result{Requeue: requeue}, err
 	}
 
 	// Reconcile Deployment
 	workerDeployment := &appsv1.Deployment{}
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-worker", Namespace: pulp.Namespace}, workerDeployment)
 	newWorkerDeployment := deploymentForPulpWorker(FunctionResources{ctx, pulp, log, r}).(*appsv1.Deployment)
-	if deploymentModified(newWorkerDeployment, workerDeployment) {
-		log.Info("The Worker Deployment has been modified! Reconciling ...")
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingWorkerDeployment", "Reconciling "+pulp.Name+"-worker deployment resource")
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling Worker Deployment")
-		err = r.Update(ctx, newWorkerDeployment)
-		if err != nil {
-			log.Error(err, "Error trying to update the Worker Deployment object ... ")
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingWorkerDeployment", "Failed to reconcile "+pulp.Name+"-worker deployment resource: "+err.Error())
-			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile Worker Deployment")
-			return ctrl.Result{}, err
-		}
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Worker Deployment reconciled")
-		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
+	if requeue, err := reconcileObject(FunctionResources{ctx, pulp, log, r}, newWorkerDeployment, workerDeployment, conditionType); err != nil || requeue {
+		return ctrl.Result{Requeue: requeue}, err
 	}
 
 	// we should only update the status when Worker-Ready==false

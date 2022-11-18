@@ -87,7 +87,7 @@ func (r *RepoManagerReconciler) pulpWebController(ctx context.Context, pulp *rep
 	}
 
 	// Reconcile Deployment
-	if deploymentModified(newWebDeployment, webDeployment) {
+	if checkDeploymentSpec(newWebDeployment.Spec, webDeployment.Spec) {
 		log.Info("The Web Deployment has been modified! Reconciling ...")
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingWebDeployment", "Reconciling "+pulp.Name+"-web deployment resource")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling Web Deployment")
@@ -126,9 +126,8 @@ func (r *RepoManagerReconciler) pulpWebController(ctx context.Context, pulp *rep
 	}
 
 	// Reconcile Service
-	if err := r.reconcileObject(ctx, pulp, newWebSvc, webSvc, conditionType, log); err != nil {
-		log.Error(err, "Failed to update "+pulp.Name+"-web-svc service")
-		return ctrl.Result{}, err
+	if requeue, err := reconcileObject(FunctionResources{ctx, pulp, log, r}, newWebSvc, webSvc, conditionType); err != nil || requeue {
+		return ctrl.Result{Requeue: requeue}, err
 	}
 
 	return ctrl.Result{}, nil

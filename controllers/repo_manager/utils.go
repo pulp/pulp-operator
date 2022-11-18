@@ -419,9 +419,12 @@ func (r *RepoManagerReconciler) updateIngressType(ctx context.Context, pulp *rep
 
 // reconcileObject will check if the definition from Pulp CR is reflecting the current
 // object state and if not will synchronize the configuration
-func (r *RepoManagerReconciler) reconcileObject(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, expectedState, currentState client.Object, conditionType string, log logr.Logger) error {
+func reconcileObject(funcResources FunctionResources, expectedState, currentState client.Object, conditionType string) (bool, error) {
 
 	var objKind string
+
+	// checkFunction is the function to check if resource is equal to expected
+	checkFunction := checkSpecModification
 	switch expectedState.(type) {
 	case *routev1.Route:
 		objKind = "Route"
@@ -432,103 +435,51 @@ func (r *RepoManagerReconciler) reconcileObject(ctx context.Context, pulp *repom
 
 		// if NodePort field is REMOVED we dont need to do anything
 		// kubernetes will define a new nodeport automatically
-		if pulp.Spec.NodePort == 0 {
-			return nil
+		if funcResources.Pulp.Spec.NodePort == 0 {
+			return false, nil
 		}
+	case *appsv1.Deployment:
+		objKind = "Deployment"
+		checkFunction = checkDeploymentSpec
 	default:
-		return nil
+		return false, nil
 	}
 
-	// get the concrete type from expectedState and currentState objects
-	expected := reflect.Indirect(reflect.ValueOf(expectedState))
-	current := reflect.Indirect(reflect.ValueOf(currentState))
-	// get object name
-	objName := expected.FieldByName("Name").Interface().(string)
-
-	// Ensure objects are as expected
-	if !equality.Semantic.DeepDerivative(expected.FieldByName("Spec").Interface(), current.FieldByName("Spec").Interface()) {
-		log.Info("The " + objKind + " " + objName + " has been modified! Reconciling ...")
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "Updating"+objKind, "Reconciling "+objName+" "+objKind)
-
-		if objKind != "Service" {
-			// update ResourceVersion for the object with current value
-			reflect.ValueOf(expectedState).MethodByName("SetResourceVersion").Call(reflect.ValueOf(currentState).MethodByName("GetResourceVersion").Call([]reflect.Value{}))
-		}
-
-		if err := r.Update(ctx, expectedState); err != nil {
-			log.Error(err, "Error trying to update "+objName+" "+objKind+" ...")
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdating"+objKind, "Failed to reconcile "+objName+" "+objKind+": "+err.Error())
-			return err
-		}
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Reconciled "+objName+" "+objKind)
-	}
-
-	return nil
+	return updateObject(funcResources, checkFunction, objKind, conditionType, "Spec", expectedState, currentState)
 }
 
 // reconcileMetadata is a method to handle only .metadata.{labels,annotations} reconciliation
 // for some reason, if we try to use DeepDerivative like
 //    if !equality.Semantic.DeepDerivative(expectedState.(*routev1.Route), currentState.(*routev1.Route)) ...
 // it will get into an infinite loop
-func (r *RepoManagerReconciler) reconcileMetadata(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, expectedState, currentState interface{}, conditionType string, log logr.Logger) error {
+func reconcileMetadata(funcResources FunctionResources, expectedState, currentState client.Object, conditionType string) (bool, error) {
 
+	objKind := ""
 	switch expectedState.(type) {
 	case *routev1.Route:
-		objKind := "route"
-		objName := expectedState.(*routev1.Route).Name
-
-		// metadata fields
-		metadataFields := []string{"Labels", "Annotations"}
-
-		for _, field := range metadataFields {
-			currentField := reflect.ValueOf(currentState.(*routev1.Route).ObjectMeta).FieldByName(field).Interface()
-			expectedField := reflect.ValueOf(expectedState.(*routev1.Route).ObjectMeta).FieldByName(field).Interface()
-			if !equality.Semantic.DeepDerivative(currentField, expectedField) ||
-				!equality.Semantic.DeepDerivative(expectedField, currentField) {
-
-				log.Info("The " + objKind + " " + objName + " has been modified! Reconciling ...")
-				r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "Updating"+objKind, "Reconciling "+objName+" "+objKind)
-				expectedState.(*routev1.Route).SetResourceVersion(currentState.(*routev1.Route).GetResourceVersion())
-				if err := r.Update(ctx, expectedState.(*routev1.Route)); err != nil {
-					log.Error(err, "Error trying to update "+objName+" "+objKind+" ...")
-					r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdating"+objKind, "Failed to reconcile "+objName+" "+objKind+": "+err.Error())
-					return err
-				}
-				r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Reconciled "+objName+" "+objKind)
-			}
-		}
+		objKind = "Route"
 	case *netv1.Ingress:
-		objKind := "ingress"
-		objName := expectedState.(*netv1.Ingress).Name
+		objKind = "Ingress"
+	default:
+		return false, nil
+	}
 
-		// metadata fields
-		metadataFields := []string{"Labels", "Annotations"}
-
-		for _, field := range metadataFields {
-			currentField := reflect.ValueOf(currentState.(*netv1.Ingress).ObjectMeta).FieldByName(field).Interface()
-			expectedField := reflect.ValueOf(expectedState.(*netv1.Ingress).ObjectMeta).FieldByName(field).Interface()
-			if !equality.Semantic.DeepDerivative(currentField, expectedField) ||
-				!equality.Semantic.DeepDerivative(expectedField, currentField) {
-
-				log.Info("The " + objKind + " " + objName + " has been modified! Reconciling ...")
-				r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "Updating"+objKind, "Reconciling "+objName+" "+objKind)
-				expectedState.(*netv1.Ingress).SetResourceVersion(currentState.(*netv1.Ingress).GetResourceVersion())
-				if err := r.Update(ctx, expectedState.(*netv1.Ingress)); err != nil {
-					log.Error(err, "Error trying to update "+objName+" "+objKind+" ...")
-					r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdating"+objKind, "Failed to reconcile "+objName+" "+objKind+": "+err.Error())
-					return err
-				}
-				r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Reconciled "+objName+" "+objKind)
-			}
+	metadataFields := []string{"Labels", "Annotations"}
+	for _, field := range metadataFields {
+		if requeue, err := updateObject(funcResources, checkMetadataModification, objKind, conditionType, field, expectedState, currentState); err != nil || requeue {
+			return requeue, err
 		}
 	}
 
-	return nil
+	return false, nil
 }
 
-// deploymentModified returns true if a spec from deployment is not
+// checkDeployment returns true if a spec from deployment is not
 // with the expected contents defined in Pulp CR
-func deploymentModified(expectedState, currentState *appsv1.Deployment) bool {
+func checkDeploymentSpec(expectedState, currentState interface{}) bool {
+
+	expectedSpec := expectedState.(appsv1.DeploymentSpec)
+	currentSpec := currentState.(appsv1.DeploymentSpec)
 
 	// Ensure the deployment template spec is as expected
 	// https://github.com/kubernetes-sigs/kubebuilder/issues/592
@@ -541,16 +492,72 @@ func deploymentModified(expectedState, currentState *appsv1.Deployment) bool {
 	//     we are checking through Semantic.DeepEqual(expectedState.NodeSelector,currentState.NodeSelector) because the
 	//     DeepDerivative(expectedState.Spec, currentState.Spec) only checks if {labels,tolerations,constraints} defined in expectedState are in currentState, but not
 	//     if what is in the currentState is also in expectedState and we are not using reflect.DeepEqual because it will consider [] != nil
-	if !equality.Semantic.DeepDerivative(expectedState.Spec, currentState.Spec) ||
-		!reflect.DeepEqual(expectedState.Spec.Template.Spec.Containers[0].VolumeMounts, currentState.Spec.Template.Spec.Containers[0].VolumeMounts) ||
-		!equality.Semantic.DeepEqual(expectedState.Spec.Template.Spec.NodeSelector, currentState.Spec.Template.Spec.NodeSelector) ||
-		!equality.Semantic.DeepEqual(expectedState.Spec.Template.Spec.Tolerations, currentState.Spec.Template.Spec.Tolerations) ||
-		!equality.Semantic.DeepEqual(expectedState.Spec.Template.Spec.TopologySpreadConstraints, currentState.Spec.Template.Spec.TopologySpreadConstraints) ||
-		!equality.Semantic.DeepEqual(expectedState.Spec.Template.Spec.Containers[0].Resources, currentState.Spec.Template.Spec.Containers[0].Resources) ||
-		!equality.Semantic.DeepEqual(expectedState.Spec.Template.Spec.Affinity, currentState.Spec.Template.Spec.Affinity) {
-		return true
+	return !equality.Semantic.DeepDerivative(expectedSpec, currentSpec) ||
+		!reflect.DeepEqual(expectedSpec.Template.Spec.Containers[0].VolumeMounts, currentSpec.Template.Spec.Containers[0].VolumeMounts) ||
+		!equality.Semantic.DeepEqual(expectedSpec.Template.Spec.NodeSelector, currentSpec.Template.Spec.NodeSelector) ||
+		!equality.Semantic.DeepEqual(expectedSpec.Template.Spec.Tolerations, currentSpec.Template.Spec.Tolerations) ||
+		!equality.Semantic.DeepEqual(expectedSpec.Template.Spec.TopologySpreadConstraints, currentSpec.Template.Spec.TopologySpreadConstraints) ||
+		!equality.Semantic.DeepEqual(expectedSpec.Template.Spec.Containers[0].Resources, currentSpec.Template.Spec.Containers[0].Resources) ||
+		!equality.Semantic.DeepEqual(expectedSpec.Template.Spec.Affinity, currentSpec.Template.Spec.Affinity)
+}
+
+// checkMetadataModification returns true if annotations or labels fields are not equal
+// it is used to compare .metadata.annotations and .metadata.labels fields
+// since these are map[string]string types
+func checkMetadataModification(currentField, expectedField interface{}) bool {
+	return !reflect.DeepEqual(currentField, expectedField)
+}
+
+// checkSpecModification returns true if .spec fields present on A are equal to
+// what is in B
+func checkSpecModification(currentField, expectedField interface{}) bool {
+	return !equality.Semantic.DeepDerivative(currentField, expectedField)
+}
+
+// updateObject is a function that verifies if an object has been modified
+// and update, if necessary, with the expected config
+func updateObject(funcResources FunctionResources, modified func(interface{}, interface{}) bool, objKind, conditionType, field string, expectedState, currentState client.Object) (bool, error) {
+
+	// get object name
+	objName := reflect.Indirect(reflect.ValueOf(expectedState)).FieldByName("Name").Interface().(string)
+	var currentField, expectedField interface{}
+
+	// Get the interface value based on "field" parameter
+	if field == "Annotations" || field == "Labels" {
+		currentField = reflect.Indirect(reflect.ValueOf(currentState)).FieldByName("ObjectMeta").FieldByName(field).Interface()
+		expectedField = reflect.Indirect(reflect.ValueOf(expectedState)).FieldByName("ObjectMeta").FieldByName(field).Interface()
+	} else if field == "Spec" {
+		currentField = reflect.Indirect(reflect.ValueOf(currentState)).FieldByName(field).Interface()
+		expectedField = reflect.Indirect(reflect.ValueOf(expectedState)).FieldByName(field).Interface()
 	}
-	return false
+
+	if modified(expectedField, currentField) {
+		funcResources.Logger.Info("The " + objKind + " " + objName + " has been modified! Reconciling ...")
+		funcResources.RepoManagerReconciler.updateStatus(funcResources.Context, funcResources.Pulp, metav1.ConditionFalse, conditionType, "Updating"+objKind, "Reconciling "+objName+" "+objKind)
+
+		// for ingress and/or routes we need to "manually" update ResourceVersion fields
+		// to avoid the issue
+		//    "the object has been modified; please apply your changes to the latest version and try again"
+		if isRouteOrIngress(expectedState) {
+			reflect.ValueOf(expectedState).MethodByName("SetResourceVersion").Call(reflect.ValueOf(currentState).MethodByName("GetResourceVersion").Call([]reflect.Value{}))
+		}
+		funcResources.RepoManagerReconciler.recorder.Event(funcResources.Pulp, corev1.EventTypeNormal, "Updating", "Reconciling "+objName+" "+objKind)
+		if err := funcResources.RepoManagerReconciler.Update(funcResources.Context, expectedState); err != nil {
+			funcResources.Logger.Error(err, "Error trying to update "+objName+" "+objKind+" ...")
+			funcResources.RepoManagerReconciler.updateStatus(funcResources.Context, funcResources.Pulp, metav1.ConditionFalse, conditionType, "ErrorUpdating"+objKind, "Failed to reconcile "+objName+" "+objKind+": "+err.Error())
+			return false, err
+		}
+		funcResources.RepoManagerReconciler.recorder.Event(funcResources.Pulp, corev1.EventTypeNormal, "Updated", "Reconciled "+objName+" "+objKind)
+		return true, nil
+	}
+	return false, nil
+}
+
+// isRouteOrIngress is used to assert if the provided resource is an ingress or a route
+func isRouteOrIngress(resource interface{}) bool {
+	_, route := resource.(*routev1.Route)
+	_, ingress := resource.(*netv1.Ingress)
+	return route || ingress
 }
 
 // ResourceDefinition has the attributes of a Pulp Resource

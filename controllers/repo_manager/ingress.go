@@ -122,7 +122,6 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 
 	// Create the ingress in case it is not found
 	if err != nil && errors.IsNotFound(err) {
-		ctrl.SetControllerReference(pulp, expectedIngress, r.Scheme)
 		log.Info("Creating a new ingress", "Ingress.Namespace", expectedIngress.Namespace, "Ingress.Name", expectedIngress.Name)
 		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingIngress", "Creating "+pulp.Name+"-ingress")
 		err = r.Create(ctx, expectedIngress)
@@ -138,15 +137,13 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 	}
 
 	// Ensure ingress specs are as expected
-	if err := r.reconcileObject(ctx, pulp, expectedIngress, currentIngress, conditionType, log); err != nil {
-		log.Error(err, "Failed to update ingress spec")
-		return ctrl.Result{}, err
+	if requeue, err := reconcileObject(FunctionResources{ctx, pulp, log, r}, expectedIngress, currentIngress, conditionType); err != nil || requeue {
+		return ctrl.Result{Requeue: requeue}, err
 	}
 
 	// Ensure ingress labels and annotations are as expected
-	if err := r.reconcileMetadata(ctx, pulp, expectedIngress, currentIngress, conditionType, log); err != nil {
-		log.Error(err, "Failed to update ingress labels")
-		return ctrl.Result{}, err
+	if requeue, err := reconcileMetadata(FunctionResources{ctx, pulp, log, r}, expectedIngress, currentIngress, conditionType); err != nil || requeue {
+		return ctrl.Result{Requeue: requeue}, err
 	}
 
 	// we should only update the status when Ingress-Ready==false
@@ -287,7 +284,8 @@ func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repoma
 		"pulp_cr":                      m.Name,
 		"owner":                        "pulp-dev",
 	}
-	return &netv1.Ingress{
+
+	expectedIngress := &netv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        m.Name,
 			Namespace:   m.Namespace,
@@ -296,6 +294,8 @@ func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repoma
 		},
 		Spec: ingressSpec,
 	}
+	ctrl.SetControllerReference(m, expectedIngress, r.Scheme)
+	return expectedIngress
 }
 
 // IngressPlugin defines a plugin ingress.

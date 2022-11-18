@@ -133,19 +133,8 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 	found := &appsv1.Deployment{}
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, found)
 	expected := deploymentForPulpApi(FunctionResources{ctx, pulp, log, r})
-	if deploymentModified(expected.(*appsv1.Deployment), found) {
-		log.Info("The API deployment has been modified! Reconciling ...")
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingApiDeployment", "Reconciling "+pulp.Name+"-api deployment")
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling API deployment")
-		err = r.Update(ctx, expected.(*appsv1.Deployment))
-		if err != nil {
-			log.Error(err, "Error trying to update the API deployment object ... ")
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingApiDeployment", "Failed to reconcile "+pulp.Name+"-api deployment: "+err.Error())
-			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to update API deployment")
-			return ctrl.Result{}, err
-		}
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Reconciled API deployment")
-		return ctrl.Result{Requeue: true}, nil
+	if requeue, err := reconcileObject(FunctionResources{ctx, pulp, log, r}, expected, found, conditionType); err != nil || requeue {
+		return ctrl.Result{Requeue: requeue}, err
 	}
 
 	// update pulp CR with default values
