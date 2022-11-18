@@ -118,7 +118,7 @@ func (r *RepoManagerReconciler) pulpCacheController(ctx context.Context, pulp *r
 	}
 
 	// Reconcile Deployment
-	if deploymentModified(dep, deploymentFound) {
+	if checkDeploymentSpec(dep.Spec, deploymentFound.Spec) {
 		log.Info("The Redis Deployment has been modified! Reconciling ...")
 		ctrl.SetControllerReference(pulp, dep, r.Scheme)
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling Redis Deployment")

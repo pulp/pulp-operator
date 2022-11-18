@@ -156,16 +156,14 @@ func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *r
 			}
 
 			// Ensure route specs are as expected
-			if err := r.reconcileObject(ctx, pulp, expectedRoute, currentRoute, conditionType, log); err != nil {
-				log.Error(err, "Failed to update route spec")
-				c <- statusReturn{ctrl.Result{}, err}
+			if requeue, err := reconcileObject(FunctionResources{ctx, pulp, log, r}, expectedRoute, currentRoute, conditionType); err != nil || requeue {
+				c <- statusReturn{ctrl.Result{Requeue: requeue}, err}
 				return
 			}
 
 			// Ensure route labels and annotations are as expected
-			if err := r.reconcileMetadata(ctx, pulp, expectedRoute, currentRoute, conditionType, log); err != nil {
-				log.Error(err, "Failed to update route labels")
-				c <- statusReturn{ctrl.Result{}, err}
+			if requeue, err := reconcileMetadata(FunctionResources{ctx, pulp, log, r}, expectedRoute, currentRoute, conditionType); err != nil || requeue {
+				c <- statusReturn{ctrl.Result{Requeue: requeue}, err}
 				return
 			}
 
