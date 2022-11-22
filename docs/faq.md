@@ -15,3 +15,34 @@ The `Multi-Attach` error happens when the deployment is configured to mount a RW
 Another common scenario that this issue happens is if a node lose communication with the cluster and the controller tries to provision a new pod. Since the communication of the failing node with the cluster is lost, it is not possible to dettach the volume before trying to attach it again to the new pod.
 
 To avoid this issue, it is recommended to use RWX volumes. If it is not possible, modify the `strategy` type from Pulp CR as `Recreate`.
+
+
+### **Which resources are managed by the Operator?**
+
+The Operator manages almost all resources it provisions, which are:
+
+* **Deployments**
+    * `pulp-api`, `pulp-content`, `pulp-worker`, *`pulp-web`(optional)*, *`pulp-redis`(optional)*
+* **Services**
+    * `pulp-api-svc`, `pulp-content-svc`, *`pulp-web-svc`(optional)*,*`pulp-redis-svc`(optional)*
+* ***Routes(optional)***
+    * *pulp, pulp-content, pulp-api, pulp-auth, pulp-container-v2, ...*
+* ***Ingresses(optional)***
+    * *pulp*
+
+
+
+Some resources are provisioned by the Operator, but [**no reconciliation**](/pulp_operator/configuring/secrets/#pulp-operator-secrets) is made (even in managed state):
+
+* **ConfigMaps**
+* **Secrets**
+
+
+!!! note
+    Keep in mind that this list is constantly changing (sometimes we are adding more resources,
+    sometimes we identify that a resource is not needed anymore).
+
+
+### **Which fields are reconciled when the Operator is set as `managed`?**
+
+All fields from `Spec` *should* be reconciled on *Deployments*, *Services*, *Routes* and *Ingresses* objects.
