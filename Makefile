@@ -278,7 +278,7 @@ ifeq (,$(shell which operator-sdk 2>/dev/null))
 	set -e ;\
 	mkdir -p $(dir $(SDK_BIN)) ;\
 	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(SDK_BIN) https://github.com/operator-framework/operator-sdk/releases/download/v1.25.0/operator-sdk_$${OS}_$${ARCH} ;\
+	curl -sSLo $(SDK_BIN) https://github.com/operator-framework/operator-sdk/releases/download/v1.25.2/operator-sdk_$${OS}_$${ARCH} ;\
 	chmod +x $(SDK_BIN) ;\
 	}
 else
