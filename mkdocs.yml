@@ -45,6 +45,7 @@ nav:
       - Routes: configuring/routes.md
       - Pod Disruption Budget: configuring/pdb.md
       - Secrets: configuring/secrets.md
+      - Disabling Reconciliation: configuring/unmanaged.md
   - Changelog: CHANGES.md
   - FAQ: faq.md
   - Troubleshooting:
