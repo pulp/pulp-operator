@@ -73,7 +73,7 @@ func (r *RepoManagerReconciler) retrieveSecretData(ctx context.Context, secretNa
 	for _, key := range keys {
 		// all provided keys should be present on secret, if not return error
 		if required && found.Data[key] == nil {
-			return nil, fmt.Errorf("could not find %v key in %v secret", key, secretName)
+			return nil, fmt.Errorf("could not find \"%v\" key in %v secret", key, secretName)
 		}
 
 		// if the keys provided are not mandatory and are also not defined, just skip them

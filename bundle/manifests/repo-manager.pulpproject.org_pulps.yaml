@@ -5915,6 +5915,10 @@ spec:
                   (used by router shard routeSelector). Default: {"pulp_cr": "<operator''s
                   name>", "owner": "pulp-dev" }'
                 type: object
+              route_tls_secret:
+                description: Name of the secret with the certificates/keys used by
+                  route encryption
+                type: string
               signing_scripts_configmap:
                 description: 'ConfigMap where the signing scripts are stored. Default:
                   <operators''s name>-"-signing-scripts"'
