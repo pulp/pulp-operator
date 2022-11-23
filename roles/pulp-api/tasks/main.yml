@@ -1,9 +1,5 @@
 ---
 - set_fact:
-    secret_key: "{{ lookup('password', '/dev/null length=50 chars=ascii_letters') }}"
-  no_log: "{{ no_log }}"
-
-- set_fact:
     object_storage_secret: "{{ object_storage_s3_secret }}"
   when:
     - object_storage_s3_secret is defined
