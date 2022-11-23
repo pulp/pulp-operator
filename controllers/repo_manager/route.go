@@ -133,7 +133,7 @@ func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *r
 
 			// get route
 			currentRoute := &routev1.Route{}
-			expectedRoute := r.pulpRouteObject(pulp, &plugin, routeHost)
+			expectedRoute := pulpRouteObject(FunctionResources{ctx, pulp, log, r}, &plugin, routeHost)
 			err := r.Get(ctx, types.NamespacedName{Name: plugin.Name, Namespace: pulp.Namespace}, currentRoute)
 
 			// Create the route in case it is not found
@@ -189,12 +189,12 @@ func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *r
 }
 
 // pulpRouteObject returns the route object with the specs defined in pulp CR
-func (r *RepoManagerReconciler) pulpRouteObject(m *repomanagerv1alpha1.Pulp, p *RoutePlugin, routeHost string) *routev1.Route {
+func pulpRouteObject(resources FunctionResources, p *RoutePlugin, routeHost string) *routev1.Route {
 
 	weight := int32(100)
 
 	// set HAProxy default values
-	hAProxyTimeout := m.Spec.HAProxyTimeout
+	hAProxyTimeout := resources.Pulp.Spec.HAProxyTimeout
 	if len(hAProxyTimeout) == 0 {
 		hAProxyTimeout = "180s"
 	}
@@ -207,19 +207,34 @@ func (r *RepoManagerReconciler) pulpRouteObject(m *repomanagerv1alpha1.Pulp, p *
 	}
 
 	labels := map[string]string{}
-	labels["pulp_cr"] = m.Name
+	labels["pulp_cr"] = resources.Pulp.Name
 	labels["owner"] = "pulp-dev"
-	for k, v := range m.Spec.RouteLabels {
+	for k, v := range resources.Pulp.Spec.RouteLabels {
 		labels[k] = v
 	}
-	for key, val := range m.Spec.RouteAnnotations {
+	for key, val := range resources.Pulp.Spec.RouteAnnotations {
 		annotation[key] = val
+	}
+
+	certTLSConfig := routev1.TLSConfig{}
+	if len(resources.Pulp.Spec.RouteTLSSecret) > 0 {
+		certData, err := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Spec.RouteTLSSecret, resources.Pulp.Namespace, true, "key", "certificate")
+		if err != nil {
+			resources.Logger.Error(err, "Failed to retrieve secret data.")
+		} else {
+			certTLSConfig.Certificate = certData["certificate"]
+			certTLSConfig.Key = certData["key"]
+
+			// caCertificate is optional
+			certData, _ = resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Spec.RouteTLSSecret, resources.Pulp.Namespace, false, "caCertificate")
+			certTLSConfig.CACertificate = certData["caCertificate"]
+		}
 	}
 
 	route := &routev1.Route{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        p.Name,
-			Namespace:   m.Namespace,
+			Namespace:   resources.Pulp.Namespace,
 			Annotations: annotation,
 			Labels:      labels,
 		},
@@ -232,6 +247,9 @@ func (r *RepoManagerReconciler) pulpRouteObject(m *repomanagerv1alpha1.Pulp, p *
 			TLS: &routev1.TLSConfig{
 				Termination:                   routev1.TLSTerminationEdge,
 				InsecureEdgeTerminationPolicy: routev1.InsecureEdgeTerminationPolicyRedirect,
+				Certificate:                   certTLSConfig.Certificate,
+				Key:                           certTLSConfig.Key,
+				CACertificate:                 certTLSConfig.CACertificate,
 			},
 			To: routev1.RouteTargetReference{
 				Kind:   "Service",
@@ -243,7 +261,7 @@ func (r *RepoManagerReconciler) pulpRouteObject(m *repomanagerv1alpha1.Pulp, p *
 	}
 
 	// Set Pulp instance as the owner and controller
-	ctrl.SetControllerReference(m, route, r.Scheme)
+	ctrl.SetControllerReference(resources.Pulp, route, resources.RepoManagerReconciler.Scheme)
 	return route
 }
 
