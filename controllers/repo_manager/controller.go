@@ -126,7 +126,8 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	// "initialize" operator's .status.condition field
-	if !v1.IsStatusConditionPresentAndEqual(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Operator-Finished-Execution", metav1.ConditionTrue) {
+	if v1.FindStatusCondition(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Operator-Finished-Execution") == nil {
+		log.V(1).Info("Creating operator's .status.conditions[] field ...")
 		v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
 			Type:               cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Operator-Finished-Execution",
 			Status:             metav1.ConditionFalse,
@@ -134,7 +135,10 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			LastTransitionTime: metav1.Now(),
 			Message:            pulp.Name + " operator tasks running",
 		})
-		r.Status().Update(ctx, pulp)
+		if err := r.Status().Update(ctx, pulp); err != nil {
+			log.Error(err, "Failed to update operator's .status.conditions[] field!")
+			return ctrl.Result{}, err
+		}
 	}
 
 	needsPulpWeb := strings.ToLower(pulp.Spec.IngressType) != "route" && !controllers.IsNginxIngressSupported(r, pulp.Spec.IngressClassName)
