@@ -19,6 +19,7 @@ package repo_manager
 import (
 	"context"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/text/cases"
@@ -76,18 +77,23 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 		},
 	}
 
+	var wg sync.WaitGroup
+
 	// each pulpcore status resource (content,worker,api) will be checked in a different go-routine to avoid
 	// an issue with one of the status resource not getting updated until the previous one finishes
 	for _, resource := range pulpResources {
+		wg.Add(1)
 
 		// if route or ingress we should do nothing
 		if resource.Type == "web" {
 			if strings.ToLower(pulp.Spec.IngressType) == "route" || r.isNginxIngress(pulp) {
+				wg.Done()
 				continue
 			}
 		}
 
 		go func(resource pulpResource) {
+			defer wg.Done()
 			deployment := &appsv1.Deployment{}
 			typeCapitalized := cases.Title(language.English, cases.Compact).String(resource.Type)
 			if err := r.Get(ctx, types.NamespacedName{Name: resource.Name, Namespace: pulp.Namespace}, deployment); err == nil {
@@ -103,6 +109,7 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 			}
 		}(resource)
 	}
+	wg.Wait()
 
 	// requeue until all deployments get READY
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name, Namespace: pulp.Namespace}, pulp)
