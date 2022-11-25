@@ -782,6 +782,14 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
+      - description: 'IngressClassName is used to inform the operator which ingressclass
+          should be used to provision the ingress. Default: "" (will use the default
+          ingress class)'
+        displayName: Ingress Class Name
+        path: ingress_class_name
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
       - description: Ingress DNS host
         displayName: Ingress Host
         path: ingress_host
