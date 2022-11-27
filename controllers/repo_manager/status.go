@@ -25,6 +25,7 @@ import (
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,7 +38,7 @@ import (
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 )
 
-//puResource contains the fields to update the .status.conditions from pulp instance
+// pulpResource contains the fields to update the .status.conditions from pulp instance
 type pulpResource struct {
 	Type          string
 	Name          string
@@ -84,6 +85,13 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 		if resource.Type == "web" {
 			if strings.ToLower(pulp.Spec.IngressType) == "route" || r.isNginxIngress(pulp) {
 				continue
+			}
+			if strings.ToLower(pulp.Spec.IngressType) == "ingress" {
+				currentIngress := &netv1.Ingress{}
+				r.Get(ctx, types.NamespacedName{Name: pulp.Name, Namespace: pulp.Namespace}, currentIngress)
+				if currentIngress.Annotations["web"] == "false" {
+					continue
+				}
 			}
 		}
 

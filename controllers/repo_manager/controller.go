@@ -268,8 +268,7 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			if needsRequeue(err, pulpController) {
 				return pulpController, err
 			}
-		}
-		if needsPulpWeb {
+		} else {
 			log.V(1).Info("Running web tasks")
 			pulpController, err = r.pulpWebController(ctx, pulp, log)
 			if needsRequeue(err, pulpController) {
