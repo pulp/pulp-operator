@@ -156,6 +156,14 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 		r.updateStatus(ctx, pulp, metav1.ConditionTrue, conditionType, "IngressTasksFinished", "All Ingress tasks ran successfully")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "IngressReady", "All Ingress tasks ran successfully")
 	}
+
+	if expectedIngress.Annotations["web"] == "true" {
+		log.V(1).Info("Running web tasks")
+		pulpController, err := r.pulpWebController(ctx, pulp, log)
+		if needsRequeue(err, pulpController) {
+			return pulpController, err
+		}
+	}
 	return ctrl.Result{}, nil
 }
 
@@ -174,8 +182,12 @@ func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repoma
 		isNginxIngressSupported = controllers.IsNginxIngressSupported(r, m.Spec.IngressClassName)
 	}
 
-	annotation := map[string]string{}
+	annotation := map[string]string{
+		"web": "false",
+	}
+	redirectAnnotation := map[string]string{}
 	var paths []netv1.HTTPIngressPath
+	var redirectPaths []netv1.HTTPIngressPath
 	var path netv1.HTTPIngressPath
 	pathType := netv1.PathTypePrefix
 	rewrite := ""
@@ -201,6 +213,69 @@ func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repoma
 	if len(nginxProxyConnectTimeout) == 0 {
 		nginxProxyConnectTimeout = "120s"
 	}
+	isOpenShift, _ := controllers.IsOpenShift()
+	hAProxyTimeout := m.Spec.HAProxyTimeout
+	if len(hAProxyTimeout) == 0 {
+		hAProxyTimeout = "180s"
+	}
+
+	for _, plugin := range plugins {
+		if len(plugin.Rewrite) > 0 {
+			if isNginxIngressSupported {
+				rewrite = "rewrite ^" + strings.TrimRight(plugin.Path, "/") + "* " + plugin.Rewrite + ";"
+				if strings.Contains(annotation["nginx.ingress.kubernetes.io/configuration-snippet"], rewrite) {
+					continue
+				}
+				annotation["nginx.ingress.kubernetes.io/configuration-snippet"] = rewrite
+				continue
+
+			} else if isOpenShift {
+				redirectAnnotation["haproxy.router.openshift.io/rewrite-target"] = plugin.Rewrite
+				path := netv1.HTTPIngressPath{
+					Path:     plugin.Path,
+					PathType: &pathType,
+					Backend: netv1.IngressBackend{
+						Service: &netv1.IngressServiceBackend{
+							Name: plugin.ServiceName,
+							Port: netv1.ServiceBackendPort{
+								Name: plugin.TargetPort,
+							},
+						},
+					},
+				}
+				redirectPaths = append(redirectPaths, path)
+			} else {
+				annotation["web"] = "true"
+				path = netv1.HTTPIngressPath{
+					Path:     "/",
+					PathType: &pathType,
+					Backend: netv1.IngressBackend{
+						Service: &netv1.IngressServiceBackend{
+							Name: m.Name + "-web-svc",
+							Port: netv1.ServiceBackendPort{
+								Number: 24880,
+							},
+						},
+					},
+				}
+				paths = append(paths, path)
+				break
+			}
+		}
+		path = netv1.HTTPIngressPath{
+			Path:     plugin.Path,
+			PathType: &pathType,
+			Backend: netv1.IngressBackend{
+				Service: &netv1.IngressServiceBackend{
+					Name: plugin.ServiceName,
+					Port: netv1.ServiceBackendPort{
+						Name: plugin.TargetPort,
+					},
+				},
+			},
+		}
+		paths = append(paths, path)
+	}
 
 	if isNginxIngressSupported {
 		annotation["nginx.ingress.kubernetes.io/proxy-body-size"] = nginxProxyBodySize
@@ -208,43 +283,8 @@ func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repoma
 		annotation["nginx.ingress.kubernetes.io/proxy-read-timeout"] = nginxProxyReadTimeout
 		annotation["nginx.ingress.kubernetes.io/proxy-connect-timeout"] = nginxProxyConnectTimeout
 		annotation["nginx.ingress.kubernetes.io/proxy-send-timeout"] = nginxProxySendTimeout
-		for _, plugin := range plugins {
-			if len(plugin.Rewrite) > 0 {
-				rewrite = "rewrite ^" + strings.TrimRight(plugin.Path, "/") + "* " + plugin.Rewrite + ";"
-				if strings.Contains(annotation["nginx.ingress.kubernetes.io/configuration-snippet"], rewrite) {
-					continue
-				}
-				annotation["nginx.ingress.kubernetes.io/configuration-snippet"] = rewrite
-				continue
-			}
-			path = netv1.HTTPIngressPath{
-				Path:     plugin.Path,
-				PathType: &pathType,
-				Backend: netv1.IngressBackend{
-					Service: &netv1.IngressServiceBackend{
-						Name: plugin.ServiceName,
-						Port: netv1.ServiceBackendPort{
-							Name: plugin.TargetPort,
-						},
-					},
-				},
-			}
-			paths = append(paths, path)
-		}
-	} else {
-		path = netv1.HTTPIngressPath{
-			Path:     "/",
-			PathType: &pathType,
-			Backend: netv1.IngressBackend{
-				Service: &netv1.IngressServiceBackend{
-					Name: m.Name + "-web-svc",
-					Port: netv1.ServiceBackendPort{
-						Number: 24880,
-					},
-				},
-			},
-		}
-		paths = append(paths, path)
+	} else if isOpenShift {
+		annotation["haproxy.router.openshift.io/timeout"] = hAProxyTimeout
 	}
 	for key, val := range m.Spec.IngressAnnotations {
 		annotation[key] = val
@@ -282,6 +322,37 @@ func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repoma
 		"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
 		"pulp_cr":                      m.Name,
 		"owner":                        "pulp-dev",
+	}
+
+	if isOpenShift {
+		for key, val := range annotation {
+			redirectAnnotation[key] = val
+		}
+		redirectIngressSpec := netv1.IngressSpec{
+			Rules: []netv1.IngressRule{
+				{
+					Host: m.Spec.IngressHost,
+					IngressRuleValue: netv1.IngressRuleValue{
+						HTTP: &netv1.HTTPIngressRuleValue{
+							Paths: redirectPaths,
+						},
+					},
+				},
+			},
+		}
+		redirectIngressSpec.IngressClassName = ingressSpec.IngressClassName
+		redirectIngressSpec.TLS = ingressSpec.TLS
+		redirectIngress := &netv1.Ingress{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        m.Name + "-redirect",
+				Namespace:   m.Namespace,
+				Labels:      labels,
+				Annotations: redirectAnnotation,
+			},
+			Spec: redirectIngressSpec,
+		}
+		ctrl.SetControllerReference(m, redirectIngress, r.Scheme)
+		r.Create(ctx, redirectIngress)
 	}
 
 	ingress := &netv1.Ingress{
