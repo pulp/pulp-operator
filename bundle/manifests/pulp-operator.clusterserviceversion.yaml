@@ -214,7 +214,7 @@ metadata:
     operators.operatorframework.io/builder: operator-sdk-v1.25.2
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/pulp/pulp-operator
-  name: pulp-operator.v1.0.0-alpha.4
+  name: pulp-operator.v1.0.0-alpha.5
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -1209,7 +1209,7 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.annotations['olm.targetNamespaces']
-                image: quay.io/pulp/pulp-operator:v1.0.0-alpha.4
+                image: quay.io/pulp/pulp-operator:v1.0.0-alpha.5
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -1505,4 +1505,4 @@ spec:
     name: pulp-redis
   - image: docker.io/library/postgres:13
     name: pulp-postgres
-  version: 1.0.0-alpha.4
+  version: 1.0.0-alpha.5
