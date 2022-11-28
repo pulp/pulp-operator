@@ -13,6 +13,42 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+1.0.0-alpha.4 (2022-11-28)
+==========================
+
+
+Features
+--------
+
+- Added a field to set IngressClass name.
+  [#674](https://github.com/pulp/pulp-operator/issues/674)
+- Added a field to pass a secret name to configure route custom certificates.
+  [#800](https://github.com/pulp/pulp-operator/issues/800)
+
+
+Bugfixes
+--------
+
+- Fixed an issue with envtest failing because of an assessment with old value.
+  [#807](https://github.com/pulp/pulp-operator/issues/807)
+
+
+Improved Documentation
+----------------------
+
+- Described the Operator unmanaged state.
+  [#792](https://github.com/pulp/pulp-operator/issues/792)
+
+
+Misc
+----
+
+- [#796](https://github.com/pulp/pulp-operator/issues/796)
+
+
+----
+
+
 1.0.0-alpha.3 (2022-11-17)
 ==========================
 
