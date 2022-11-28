@@ -798,12 +798,13 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			By("Modifying database image")
 
 			// make sure that there is no tasks running before proceeding
-			//waitPulpOperatorFinish(ctx, createdPulp)
 			objectGet(ctx, createdSts, StsName)
-			objectGet(ctx, createdPulp, PulpName)
-
-			createdPulp.Spec.Database.PostgresImage = "postgres:12"
-			objectUpdate(ctx, createdPulp)
+			Eventually(func() bool {
+				k8sClient.Get(ctx, types.NamespacedName{Name: PulpName, Namespace: PulpNamespace}, createdPulp)
+				createdPulp.Spec.Database.PostgresImage = "postgres:12"
+				objectUpdate(ctx, createdPulp)
+				return createdPulp.Spec.Database.PostgresImage == "postgres:12"
+			}, timeout, interval).Should(BeTrue())
 
 			// we expect that pulp controller update sts with the new image defined in pulp CR
 			Eventually(func() bool {
@@ -947,16 +948,10 @@ var _ = Describe("Pulp controller", Ordered, func() {
 	Context("When creating Content deployment", func() {
 		It("Should follow the spec from pulp CR", func() {
 			By("Checking content deployment being found")
-			//waitPulpOperatorFinish(ctx, createdPulp)
-
-			objectGet(ctx, createdContentDeployment, ContentName)
-
-			var isEqual = func(predicate interface{}) bool {
-				return equality.Semantic.DeepDerivative(expectedContentDeployment.Spec.Template, predicate)
-			}
-
-			By("Checking content deployment expected Template")
-			Expect(createdContentDeployment.Spec.Template).Should(Satisfy(isEqual))
+			Eventually(func() bool {
+				k8sClient.Get(ctx, types.NamespacedName{Name: ContentName, Namespace: PulpNamespace}, createdContentDeployment)
+				return equality.Semantic.DeepDerivative(expectedContentDeployment.Spec.Template, createdContentDeployment.Spec.Template)
+			}, timeout, interval).Should(BeTrue())
 		})
 	})
 
@@ -1013,15 +1008,10 @@ var _ = Describe("Pulp controller", Ordered, func() {
 	Context("When creating Worker deployment", func() {
 		It("Should follow the spec from pulp CR", func() {
 			By("Checking worker deployment being found")
-			//waitPulpOperatorFinish(ctx, createdPulp)
-			objectGet(ctx, createdWorkerDeployment, WorkerName)
-
-			var isEqual = func(predicate interface{}) bool {
-				return equality.Semantic.DeepDerivative(expectedWorkerDeployment.Spec.Template, predicate)
-			}
-
-			By("Checking content deployment expected Template")
-			Expect(createdWorkerDeployment.Spec.Template).Should(Satisfy(isEqual))
+			Eventually(func() bool {
+				k8sClient.Get(ctx, types.NamespacedName{Name: WorkerName, Namespace: PulpNamespace}, createdWorkerDeployment)
+				return equality.Semantic.DeepDerivative(expectedWorkerDeployment.Spec.Template, createdWorkerDeployment.Spec.Template)
+			}, timeout, interval).Should(BeTrue())
 		})
 	})
 
