@@ -30,6 +30,9 @@ staleLabel: stale
 # Limit the number of actions per hour, from 1-30. Default is 30
 limitPerRun: 30
 
+# Limit to only `issues` or `pulls`
+only: pulls
+
 pulls:
   markComment: |-
     This pull request has been marked 'stale' due to lack of recent activity. If there is no further activity, the PR will be closed in another 30 days. Thank you for your contribution!
