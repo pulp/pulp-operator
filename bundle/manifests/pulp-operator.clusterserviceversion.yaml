@@ -1006,6 +1006,17 @@ spec:
     mediatype: image/svg+xml
   install:
     spec:
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - config.openshift.io
+          resourceNames:
+          - cluster
+          resources:
+          - ingresses
+          verbs:
+          - get
+        serviceAccountName: pulp-operator-sa
       deployments:
       - label:
           app.kubernetes.io/component: operator
@@ -1146,16 +1157,6 @@ spec:
           - subjectaccessreviews
           verbs:
           - create
-        - apiGroups:
-          - config.openshift.io
-          resourceNames:
-          - cluster
-          resources:
-          - ingresses
-          verbs:
-          - get
-          - list
-          - watch
         - apiGroups:
           - route.openshift.io
           resources:
