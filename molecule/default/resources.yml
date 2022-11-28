@@ -7,5 +7,7 @@
   with_items:
     - service_account.yaml
     - role.yaml
+    - cluster_role.yaml
     - role_binding.yaml
+    - cluster_role_binding.yaml
     - operator.yaml

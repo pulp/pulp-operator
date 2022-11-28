@@ -8,16 +8,6 @@ rules:
   ## Base operator rules
   ##
   - apiGroups:
-      - config.openshift.io
-    resourceNames:
-      - cluster
-    resources:
-      - ingresses
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
       - route.openshift.io
     resources:
       - routes
