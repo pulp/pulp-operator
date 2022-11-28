@@ -32,7 +32,7 @@ func (r *RepoManagerBackupReconciler) backupPulpDir(ctx context.Context, pulpBac
 		}
 
 		execCmd = []string{
-			"bash", "-c", "cp -fr /var/lib/pulp/. " + backupDir + "/pulp",
+			"bash", "-c", "cp -fa /var/lib/pulp/. " + backupDir + "/pulp",
 		}
 		_, err = controllers.ContainerExec(r, pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
 		if err != nil {
