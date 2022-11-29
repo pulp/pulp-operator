@@ -474,7 +474,9 @@ func reconcileObject(funcResources FunctionResources, expectedState, currentStat
 
 		// if NodePort field is REMOVED we dont need to do anything
 		// kubernetes will define a new nodeport automatically
-		if funcResources.Pulp.Spec.NodePort == 0 {
+		// we need to do this check only for pulp-web-svc service because it is
+		// the only nodePort svc
+		if expectedState.GetName() == funcResources.Pulp.Name+"-web-svc" && funcResources.Pulp.Spec.NodePort == 0 {
 			return false, nil
 		}
 	case *appsv1.Deployment:
