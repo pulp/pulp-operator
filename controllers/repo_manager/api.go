@@ -51,9 +51,9 @@ type ApiResource struct {
 // pulpApiController provision and reconciles api objects
 func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
-	var err error
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-API-Ready"
+	funcResources := FunctionResources{ctx, pulp, log, r}
 
 	// pulp-file-storage
 	// the PVC will be created only if a StorageClassName is provided
@@ -68,7 +68,7 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 		// Reconcile PVC
 		pvcFound := &corev1.PersistentVolumeClaim{}
 		r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-file-storage", Namespace: pulp.Namespace}, pvcFound)
-		expected_pvc := fileStoragePVC(FunctionResources{ctx, pulp, log, r})
+		expected_pvc := fileStoragePVC(funcResources)
 		if !equality.Semantic.DeepDerivative(expected_pvc.(*corev1.PersistentVolumeClaim).Spec, pvcFound.Spec) {
 			log.Info("The PVC has been modified! Reconciling ...")
 			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingFileStoragePVC", "Reconciling "+pulp.Name+"-file-storage PVC resource")
@@ -132,8 +132,8 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 	// Ensure the deployment spec is as expected
 	found := &appsv1.Deployment{}
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, found)
-	expected := deploymentForPulpApi(FunctionResources{ctx, pulp, log, r})
-	if requeue, err := reconcileObject(FunctionResources{ctx, pulp, log, r}, expected, found, conditionType); err != nil || requeue {
+	expected := deploymentForPulpApi(funcResources)
+	if requeue, err := reconcileObject(funcResources, expected, found, conditionType); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
@@ -147,20 +147,9 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 	// Ensure the service spec is as expected
 	apiSvc := &corev1.Service{}
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api-svc", Namespace: pulp.Namespace}, apiSvc)
-	expectedSvc := serviceForAPI(FunctionResources{ctx, pulp, log, r})
-	if !equality.Semantic.DeepDerivative(expectedSvc.(*corev1.Service).Spec, apiSvc.Spec) {
-		log.Info("The API service has been modified! Reconciling ...")
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingApiService", "Reconciling "+pulp.Name+"-api-svc service")
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling API service")
-		err = r.Update(ctx, expectedSvc.(*corev1.Service))
-		if err != nil {
-			log.Error(err, "Error trying to update the API Service object ... ")
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingApiService", "Failed to reconcile "+pulp.Name+"-api-svc service: "+err.Error())
-			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to update API service")
-			return ctrl.Result{}, err
-		}
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Reconciled API service")
-		return ctrl.Result{Requeue: true}, nil
+	expectedSvc := serviceForAPI(funcResources)
+	if requeue, err := reconcileObject(funcResources, expectedSvc, apiSvc, conditionType); err != nil || requeue {
+		return ctrl.Result{Requeue: requeue}, err
 	}
 
 	return ctrl.Result{}, nil

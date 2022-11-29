@@ -20,13 +20,11 @@ import (
 	"context"
 	"os"
 	"strconv"
-	"time"
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -47,9 +45,9 @@ type ContentResource struct {
 
 func (r *RepoManagerReconciler) pulpContentController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
-	var err error
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Content-Ready"
+	funcResources := FunctionResources{ctx, pulp, log, r}
 
 	// list of pulp-content resources that should be provisioned
 	resources := []ContentResource{
@@ -72,28 +70,17 @@ func (r *RepoManagerReconciler) pulpContentController(ctx context.Context, pulp 
 	// Reconcile Deployment
 	deployment := &appsv1.Deployment{}
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-content", Namespace: pulp.Namespace}, deployment)
-	expected := deploymentForPulpContent(FunctionResources{ctx, pulp, log, r})
-	if requeue, err := reconcileObject(FunctionResources{ctx, pulp, log, r}, expected, deployment, conditionType); err != nil || requeue {
+	expected := deploymentForPulpContent(funcResources)
+	if requeue, err := reconcileObject(funcResources, expected, deployment, conditionType); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
 	// Reconcile Service
 	cntSvc := &corev1.Service{}
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-content-svc", Namespace: pulp.Namespace}, cntSvc)
-	newCntSvc := serviceForContent(FunctionResources{ctx, pulp, log, r})
-	if !equality.Semantic.DeepDerivative(newCntSvc.(*corev1.Service).Spec, cntSvc.Spec) {
-		log.Info("The Content Service has been modified! Reconciling ...")
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingContentService", "Reconciling "+pulp.Name+"-content-svc service")
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling content service")
-		err = r.Update(ctx, newCntSvc.(*corev1.Service))
-		if err != nil {
-			log.Error(err, "Error trying to update the Content Service object ... ")
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingContentService", "Failed to reconcile "+pulp.Name+"-content-svc service: "+err.Error())
-			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile content service")
-			return ctrl.Result{}, err
-		}
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Content service reconciled")
-		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
+	newCntSvc := serviceForContent(funcResources)
+	if requeue, err := reconcileObject(funcResources, newCntSvc, cntSvc, conditionType); err != nil || requeue {
+		return ctrl.Result{Requeue: requeue}, err
 	}
 
 	return ctrl.Result{}, nil
