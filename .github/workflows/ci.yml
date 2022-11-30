@@ -362,6 +362,26 @@ jobs:
         shell: bash
         env:
           PY_COLORS: '1'
+      - name: Send Build details to Slack
+        id: slack
+        uses: slackapi/slack-github-action@v1.18.0
+        if: failure() && github.event_name != 'pull_request'
+        with:
+          payload: |
+            {
+              "text": "Galaxy Operator CI ${{ job.status }}\nhttps://github.com/pulp/pulp-operator/actions/runs/${{ github.run_id }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "Galaxy Operator CI ${{ job.status }}\nhttps://github.com/pulp/pulp-operator/actions/runs/${{ github.run_id }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_PULP_CHANNEL }}
       - name: Logs
         if: always()
         run: .github/workflows/scripts/show_logs.sh
