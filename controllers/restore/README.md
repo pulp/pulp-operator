@@ -38,7 +38,7 @@ PulpRestoreSpec defines the desired state of PulpRestore
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| deployment_type |  | string | true |
+| deployment_type | Name of the deployment type. Can be one of {galaxy,pulp}. | string | true |
 | backup_source | backup source | string | true |
 | deployment_name | Name of the deployment to be restored to | string | true |
 | backup_name | Name of the backup custom resource | string | true |

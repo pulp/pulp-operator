@@ -22,6 +22,8 @@ import (
 
 // PulpRestoreSpec defines the desired state of PulpRestore
 type PulpRestoreSpec struct {
+
+	// Name of the deployment type. Can be one of {galaxy,pulp}.
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Enum:=galaxy;pulp
 	// +kubebuilder:default:="pulp"

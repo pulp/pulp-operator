@@ -38,7 +38,7 @@ PulpBackupSpec defines the desired state of PulpBackup
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| deployment_type |  | string | true |
+| deployment_type | Name of the deployment type. Can be one of {galaxy,pulp}. | string | true |
 | deployment_name | Name of the deployment to be backed up | string | true |
 | instance_name |  | string | true |
 | backup_pvc | Name of the PVC to be used for storing the backup | string | true |
