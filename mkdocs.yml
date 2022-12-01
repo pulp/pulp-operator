@@ -46,6 +46,9 @@ nav:
       - Pod Disruption Budget: configuring/pdb.md
       - Secrets: configuring/secrets.md
       - Disabling Reconciliation: configuring/unmanaged.md
+  - Backup and Restore:
+      - Overview: backup_and_restore/overview.md
+      - Configuring and Running: backup_and_restore/config_running.md
   - Changelog: CHANGES.md
   - FAQ: faq.md
   - Troubleshooting:

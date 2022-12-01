@@ -46,3 +46,9 @@ Some resources are provisioned by the Operator, but [**no reconciliation**](/pul
 ### **Which fields are reconciled when the Operator is set as `managed`?**
 
 All fields from `Spec` *should* be reconciled on *Deployments*, *Services*, *Routes* and *Ingresses* objects.
+
+
+### **I created a new PulpRestore CR, but the restore procedure is not running again. Checking the operator logs I found the message "*PulpRestore lock ConfigMap found. No restore procedure will be executed!*"**
+
+After the Operator finishes executing a restore procedure it creates a `ConfigMap` called *`restore-lock`*. This `ConfigMap` is used to control the restore reconciliation loop and avoid it ovewriting all files or `Secrets` with data from an old backup.  
+If you still want to run the restore, just delete the *`restore-lock`* `ConfigMap` and recreate the PulpRestore CR.

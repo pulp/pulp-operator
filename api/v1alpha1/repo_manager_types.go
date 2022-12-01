@@ -38,6 +38,7 @@ type PulpSpec struct {
 	// Name of the deployment type.
 	// Default: "pulp"
 	// +kubebuilder:default:="pulp"
+	// +kubebuilder:validation:Enum:=pulp;galaxy
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	DeploymentType string `json:"deployment_type,omitempty"`
 

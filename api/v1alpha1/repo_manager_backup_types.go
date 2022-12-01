@@ -23,6 +23,9 @@ import (
 
 // PulpBackupSpec defines the desired state of PulpBackup
 type PulpBackupSpec struct {
+
+	// Name of the deployment type. Can be one of {galaxy,pulp}.
+	// +kubebuilder:validation:Enum:=pulp;galaxy
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	DeploymentType string `json:"deployment_type"`
 
@@ -32,6 +35,7 @@ type PulpBackupSpec struct {
 	DeploymentName string `json:"deployment_name"`
 
 	// +kubebuilder:default:="pulp"
+	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	InstanceName string `json:"instance_name"`
 
