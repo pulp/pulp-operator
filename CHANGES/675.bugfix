@@ -1,0 +1,1 @@
+Added a check for `ingress_host` being null when `ingress_type` defined as "ingress".
