@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
+	configv1 "github.com/openshift/api/config/v1"
 	routev1 "github.com/openshift/api/route/v1"
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 	"github.com/pulp/pulp-operator/controllers"
@@ -25,6 +26,7 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -34,6 +36,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 const (
@@ -650,6 +654,12 @@ func (r *RepoManagerReconciler) createPulpResource(resource ResourceDefinition, 
 	case *corev1.PersistentVolumeClaim:
 		object = resourceType
 		objKind = "PVC"
+	case *corev1.ConfigMap:
+		object = resourceType
+		objKind = "ConfigMap"
+	case *batchv1.CronJob:
+		object = resourceType
+		objKind = "CronJob"
 	}
 
 	// define the list of parameters to pass to "provisioner" function
@@ -711,4 +721,36 @@ func isIngress(pulp *repomanagerv1alpha1.Pulp) bool {
 // isNginxIngress returns true if pulp is defined with ingress_type==ingress and the controller of the ingresclass provided is a nginx
 func (r *RepoManagerReconciler) isNginxIngress(pulp *repomanagerv1alpha1.Pulp) bool {
 	return isIngress(pulp) && controllers.IsNginxIngressSupported(r, pulp.Spec.IngressClassName)
+}
+
+// getRootURL handles user facing URLs
+func getRootURL(resource FunctionResources) string {
+	if strings.ToLower(resource.Pulp.Spec.IngressType) == "ingress" {
+		return "https://" + resource.Pulp.Spec.IngressHost
+	}
+	if strings.ToLower(resource.Pulp.Spec.IngressType) == "route" {
+		if len(resource.Pulp.Spec.RouteHost) == 0 {
+			ingress := &configv1.Ingress{}
+			resource.RepoManagerReconciler.Get(resource.Context, types.NamespacedName{Name: "cluster"}, ingress)
+			return "https://" + resource.Pulp.Name + "." + ingress.Spec.Domain
+		} else {
+			return "https://" + resource.Pulp.Spec.RouteHost
+		}
+	}
+
+	return "http://" + resource.Pulp.Name + "-web-svc." + resource.Pulp.Namespace + ".svc.cluster.local:24880"
+}
+
+// ignoreUpdateCRStatusPredicate filters update events on pulpbackup CR status
+func ignoreCronjobStatus() predicate.Predicate {
+	return predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			oldObject := e.ObjectOld.(*batchv1.CronJob)
+			newObject := e.ObjectNew.(*batchv1.CronJob)
+
+			// if old cronjob.status != new cronjob.status return false, which will instruct
+			// the controller to do nothing on this update event
+			return reflect.DeepEqual(oldObject.Status, newObject.Status)
+		},
+	}
 }

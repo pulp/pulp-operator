@@ -305,6 +305,18 @@ type PulpSpec struct {
 	// +kubebuilder:default:=false
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	TrustedCa bool `json:"mount_trusted_ca,omitempty"`
+
+	// Define if the operator should or should not deploy the default Execution Environments.
+	// Default: false
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	DeployEEDefaults bool `json:"deploy_ee_defaults,omitempty"`
+
+	// Name of the ConfigMap with the list of Execution Environments that should be synchronized.
+	// Default: ee-default-images
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	EEDefaults string `json:"ee_defaults,omitempty"`
 }
 
 // Api defines desired state of pulpcore-api resources

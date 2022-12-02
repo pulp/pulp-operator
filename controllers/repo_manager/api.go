@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"golang.org/x/text/cases"
@@ -35,7 +34,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/go-logr/logr"
-	configv1 "github.com/openshift/api/config/v1"
 	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
 	"github.com/pulp/pulp-operator/controllers"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -789,19 +787,7 @@ func pulpServerSecret(resources FunctionResources) client.Object {
 	}
 
 	// Handling user facing URLs
-	rootUrl := "http://" + resources.Pulp.Name + "-web-svc." + resources.Pulp.Namespace + ".svc.cluster.local:24880"
-	if strings.ToLower(resources.Pulp.Spec.IngressType) == "ingress" {
-		rootUrl = "https://" + resources.Pulp.Spec.IngressHost
-	}
-	if strings.ToLower(resources.Pulp.Spec.IngressType) == "route" {
-		if len(resources.Pulp.Spec.RouteHost) == 0 {
-			ingress := &configv1.Ingress{}
-			resources.RepoManagerReconciler.Get(resources.Context, types.NamespacedName{Name: "cluster"}, ingress)
-			rootUrl = "https://" + resources.Pulp.Name + "." + ingress.Spec.Domain
-		} else {
-			rootUrl = "https://" + resources.Pulp.Spec.RouteHost
-		}
-	}
+	rootUrl := getRootURL(resources)
 
 	// default settings.py configuration
 	var pulp_settings = `DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
