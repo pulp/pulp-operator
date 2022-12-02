@@ -182,6 +182,8 @@ PulpSpec defines the desired state of Pulp
 | image_pull_secrets | Image pull secrets for container images. Default: [] | []string | false |
 | sso_secret | Secret where Single Sign-on configuration can be found | string | false |
 | mount_trusted_ca | Define if the operator should or should not mount the custom CA certificates added to the cluster via cluster-wide proxy config. Default: false | bool | false |
+| deploy_ee_defaults | Define if the operator should or should not deploy the default Execution Environments. Default: false | bool | false |
+| ee_defaults | Name of the ConfigMap with the list of Execution Environments that should be synchronized. Default: ee-default-images | string | false |
 
 [Back to Custom Resources](#custom-resources)
 

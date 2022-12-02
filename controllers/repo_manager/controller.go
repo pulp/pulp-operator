@@ -24,6 +24,7 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	policy "k8s.io/api/policy/v1"
@@ -70,6 +71,7 @@ type RepoManagerReconciler struct {
 //+kubebuilder:rbac:groups=core,namespace=pulp-operator-system,resources=configmaps;secrets;services;persistentvolumeclaims,verbs=create;update;patch;delete;watch;get;list;
 //+kubebuilder:rbac:groups="",namespace=pulp-operator-system,resources=events,verbs=create;patch
 //+kubebuilder:rbac:groups=policy,namespace=pulp-operator-system,resources=poddisruptionbudgets,verbs=get;list;create;delete;patch;update;watch
+//+kubebuilder:rbac:groups=batch,namespace=pulp-operator-system,resources=cronjobs,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -305,6 +307,10 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return pulpController, err
 	}
 
+	if pulpController, err := galaxy(FunctionResources{ctx, pulp, log, r}); needsRequeue(err, pulpController) {
+		return pulpController, err
+	}
+
 	log.V(1).Info("Running status tasks")
 	pulpController, err = r.pulpStatus(ctx, pulp, log)
 	if needsRequeue(err, pulpController) {
@@ -332,6 +338,7 @@ func (r *RepoManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.ConfigMap{}).
 		Owns(&policy.PodDisruptionBudget{}).
 		Owns(&corev1.ServiceAccount{}).
+		Owns(&batchv1.CronJob{}, builder.WithPredicates(ignoreCronjobStatus())).
 		Owns(&netv1.Ingress{})
 
 	if IsOpenShift, _ := controllers.IsOpenShift(); IsOpenShift {
