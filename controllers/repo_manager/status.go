@@ -95,6 +95,7 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 				currentIngress := &netv1.Ingress{}
 				r.Get(ctx, types.NamespacedName{Name: pulp.Name, Namespace: pulp.Namespace}, currentIngress)
 				if currentIngress.Annotations["web"] == "false" {
+					wg.Done()
 					continue
 				}
 			}
