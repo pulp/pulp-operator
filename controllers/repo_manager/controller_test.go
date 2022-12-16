@@ -802,7 +802,10 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			Eventually(func() bool {
 				k8sClient.Get(ctx, types.NamespacedName{Name: PulpName, Namespace: PulpNamespace}, createdPulp)
 				createdPulp.Spec.Database.PostgresImage = "postgres:12"
-				objectUpdate(ctx, createdPulp)
+				if err := k8sClient.Update(ctx, createdPulp); err != nil {
+					fmt.Println("Error trying to update object: ", err)
+					return false
+				}
 				return createdPulp.Spec.Database.PostgresImage == "postgres:12"
 			}, timeout, interval).Should(BeTrue())
 
