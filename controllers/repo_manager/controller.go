@@ -156,8 +156,8 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		// If ingress_type==ingress the operator should fail in case no ingress_class provided
 		// To avoid errors with clusters configured without or with multiple default IngressClass we will ask users to pass an ingress_class
 		if len(pulp.Spec.IngressClassName) == 0 {
-			log.Error(nil, "ingress_type defined as ingress but no ingress_class_name provided.")
-			return ctrl.Result{}, fmt.Errorf("please, define the ingress_class_name field (with the name of the IngressClass that the operator should use to deploy the new Ingress) to avoid unexpected errors with multiple controllers available")
+			log.Error(nil, "ingress_type defined as ingress but no ingress_class_name provided. Please, define the ingress_class_name field (with the name of the IngressClass that the operator should use to deploy the new Ingress) to avoid unexpected errors with multiple controllers available")
+			return ctrl.Result{}, nil
 		}
 
 		// the operator should also fail in case no ingress_host is provided
@@ -166,8 +166,8 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		//   "A required string containing the protocol, fqdn, and port where the content app is reachable by users.
 		//   This is used by pulpcore and various plugins when referring users to the content app."
 		if len(pulp.Spec.IngressHost) == 0 {
-			log.Error(nil, "ingress_type defined as ingress but no ingress_host provided.")
-			return ctrl.Result{}, fmt.Errorf("please, define the ingress_host field with the fqdn where " + pulp.Spec.DeploymentType + " should be accessed. This field is required to access API and also redirect " + pulp.Spec.DeploymentType + " CONTENT requests")
+			log.Error(nil, "ingress_type defined as ingress but no ingress_host provided. Please, define the ingress_host field with the fqdn where "+pulp.Spec.DeploymentType+" should be accessed. This field is required to access API and also redirect "+pulp.Spec.DeploymentType+" CONTENT requests")
+			return ctrl.Result{}, nil
 		}
 
 	}
@@ -177,17 +177,15 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// determine which one should be used.
 	for _, resource := range []string{controllers.PulpResource, controllers.CacheResource, controllers.DatabaseResource} {
 		if foundMultiStorage, storageType := controllers.MultiStorageConfigured(pulp, resource); foundMultiStorage {
-			err := fmt.Errorf("found more than one storage type (%s) for %s", storageType, resource)
-			log.Error(err, "Please choose only one storage type or do not define any to use emptyDir")
-			return ctrl.Result{}, err
+			log.Error(nil, "found more than one storage type \""+strings.Join(storageType, `", "`)+"\" for "+resource+". Please, choose only one storage type or do not define any to use emptyDir")
+			return ctrl.Result{}, nil
 		}
 	}
 
 	// Check if this is an OCP cluster and "ingress_type: route".
 	if !IsOpenShift && strings.ToLower(pulp.Spec.IngressType) == "route" {
-		err := fmt.Errorf("ingress_type is configured with route in a non-ocp environment")
-		log.Error(err, "Please choose another ingress_type (options: [ingress,nodeport]). Route resources are specific to OpenShift installations.")
-		return ctrl.Result{}, err
+		log.Error(nil, "ingress_type is configured with route in a non-ocp environment. Please, choose another ingress_type (options: [ingress,nodeport]). Route resources are specific to OpenShift installations.")
+		return ctrl.Result{}, nil
 	}
 
 	// Checking immutable fields update
