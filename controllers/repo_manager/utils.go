@@ -158,6 +158,9 @@ func addCustomPulpSettings(pulp *repomanagerv1alpha1.Pulp, current_settings stri
 		case map[string]interface{}:
 			rawMapping, _ := json.Marshal(v)
 			convertedSettings = convertedSettings + fmt.Sprintln(strings.ToUpper(k), "=", strings.Replace(string(rawMapping), "\"", "'", -1))
+		case []interface{}:
+			rawMapping, _ := json.Marshal(v)
+			convertedSettings = convertedSettings + fmt.Sprintln(strings.ToUpper(k), "=", string(rawMapping))
 		default:
 			convertedSettings = convertedSettings + fmt.Sprintf("%v = \"%v\"\n", strings.ToUpper(k), v)
 		}
