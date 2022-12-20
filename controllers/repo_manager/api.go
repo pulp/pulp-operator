@@ -602,7 +602,7 @@ func deploymentForPulpApi(resources FunctionResources) client.Object {
 			{
 				Name:      resources.Pulp.Name + "-container-auth-certs",
 				MountPath: "/etc/pulp/keys/container_auth_public_key.pem",
-				SubPath:   "container_auth_pulblic_key.pem",
+				SubPath:   "container_auth_public_key.pem",
 				ReadOnly:  true,
 			},
 		}
