@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"time"
 
-	configv1 "github.com/openshift/api/config/v1"
 	routev1 "github.com/openshift/api/route/v1"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -115,12 +114,7 @@ func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *r
 			ServiceName: pulp.Name + "-api-svc",
 		},
 	}
-	routeHost := pulp.Spec.RouteHost
-	if len(pulp.Spec.RouteHost) == 0 {
-		ingress := &configv1.Ingress{}
-		r.Get(ctx, types.NamespacedName{Name: "cluster"}, ingress)
-		routeHost = pulp.Name + "." + ingress.Spec.Domain
-	}
+	routeHost := getRouteHost(FunctionResources{ctx, pulp, log, r})
 	pulpPlugins = append(defaultPlugins, pulpPlugins...)
 
 	// channel used to receive the return value from each goroutine
