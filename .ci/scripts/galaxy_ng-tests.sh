@@ -10,7 +10,11 @@ if [[ "$1" == "--minikube" ]] || [[ "$1" == "-m" ]]; then
   if [[ "$CI_TEST" == "true" ]]; then
     SVC_NAME="galaxy-example-web-svc"
     WEB_PORT="24880"
+    API_SVC="galaxy-example-api-svc"
+    API_PORT="24817"
     kubectl port-forward service/$SVC_NAME $WEB_PORT:$WEB_PORT &
+    kubectl port-forward service/$API_SVC $API_PORT:$API_PORT &
+    echo 127.0.0.1   galaxy-example-api-svc.pulp-operator-system.svc.cluster.local| sudo tee -a /etc/hosts
   fi
 fi
 

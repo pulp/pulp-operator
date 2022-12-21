@@ -757,3 +757,14 @@ func ignoreCronjobStatus() predicate.Predicate {
 		},
 	}
 }
+
+// define route host based on ingress default cluster domain if no .spec.route_host defined
+func getRouteHost(resource FunctionResources) string {
+	routeHost := resource.Pulp.Spec.RouteHost
+	if len(resource.Pulp.Spec.RouteHost) == 0 {
+		ingress := &configv1.Ingress{}
+		resource.RepoManagerReconciler.Get(resource.Context, types.NamespacedName{Name: "cluster"}, ingress)
+		routeHost = resource.Pulp.Name + "." + ingress.Spec.Domain
+	}
+	return routeHost
+}

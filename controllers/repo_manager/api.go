@@ -814,8 +814,7 @@ GALAXY_FEATURE_FLAGS = {
 PRIVATE_KEY_PATH = "/etc/pulp/keys/container_auth_private_key.pem"
 PUBLIC_KEY_PATH = "/etc/pulp/keys/container_auth_public_key.pem"
 STATIC_ROOT = "/var/lib/operator/static/"
-TOKEN_AUTH_DISABLED = "False"
-TOKEN_SERVER = "http://` + resources.Pulp.Name + `-api-svc.` + resources.Pulp.Namespace + `.svc.cluster.local:24817/token/"
+TOKEN_AUTH_DISABLED = False
 TOKEN_SIGNATURE_ALGORITHM = "ES256"
 `
 
@@ -905,6 +904,20 @@ MEDIA_ROOT = ""
 		resources.RepoManagerReconciler.ssoConfig(resources.Context, resources.Pulp, &pulp_settings)
 	}
 
+	// configure TOKEN_SERVER based on ingress_type
+	tokenServer := "http://" + resources.Pulp.Name + "-api-svc." + resources.Pulp.Namespace + ".svc.cluster.local:24817/token/"
+	if resources.Pulp.Spec.IngressType == "route" {
+		tokenServer = "https://" + getRouteHost(resources) + "/token/"
+	} else if resources.Pulp.Spec.IngressType == "ingress" {
+		proto := "http"
+		if len(resources.Pulp.Spec.IngressTLSSecret) > 0 {
+			proto = "https"
+		}
+		tokenServer = proto + "://" + resources.Pulp.Spec.IngressHost + "/token/"
+	}
+	pulp_settings = pulp_settings + fmt.Sprintln("TOKEN_SERVER = \""+tokenServer+"\"")
+
+	// add custom settings to the secret
 	pulp_settings = addCustomPulpSettings(resources.Pulp, pulp_settings)
 
 	sec := &corev1.Secret{
