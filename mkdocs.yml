@@ -34,6 +34,8 @@ nav:
       - Pulp: pulp.md
       - Pulp Backup: backup.md
       - Pulp Restore: restore.md
+  - Installing:
+      - Allowing non-cluster administrators to install Pulp Operator in OpenShift: install/install.md
   - Configuring:
       - Database: configuring/database.md
       - Storage: configuring/storage.md
