@@ -352,11 +352,12 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 		volumes = append(volumes, emptyDir...)
 	}
 
+	pgDataMountPath := filepath.Dir(postgresDataPath)
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      "postgres",
-			MountPath: filepath.Dir(postgresDataPath),
-			SubPath:   filepath.Base(postgresDataPath),
+			MountPath: pgDataMountPath,
+			SubPath:   filepath.Base(pgDataMountPath),
 		},
 	}
 

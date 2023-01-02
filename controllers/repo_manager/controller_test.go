@@ -3,7 +3,6 @@ package repo_manager_test
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -193,8 +192,8 @@ var _ = Describe("Pulp controller", Ordered, func() {
 	volumeMountsSts := []corev1.VolumeMount{
 		{
 			Name:      "postgres",
-			MountPath: filepath.Dir("/var/lib/postgresql/data/pgdata"),
-			SubPath:   filepath.Base("/var/lib/postgresql/data/pgdata"),
+			MountPath: "/var/lib/postgresql/data",
+			SubPath:   "data",
 		},
 	}
 
