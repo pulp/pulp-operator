@@ -1,1 +1,0 @@
-Fixed an issue with default values for TOKEN_SERVER and TOKEN_AUTH_DISABLED in settings.py.
