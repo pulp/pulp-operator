@@ -252,7 +252,8 @@ spec:
       - description: Name of the deployment to be backed up
         displayName: Deployment Name
         path: deployment_name
-      - displayName: Deployment Type
+      - description: Name of the deployment type. Can be one of {galaxy,pulp}.
+        displayName: Deployment Type
         path: deployment_type
       - displayName: Instance Name
         path: instance_name
@@ -327,7 +328,8 @@ spec:
       - description: Name of the deployment to be restored to
         displayName: Deployment Name
         path: deployment_name
-      - displayName: Deployment Type
+      - description: Name of the deployment type. Can be one of {galaxy,pulp}.
+        displayName: Deployment Type
         path: deployment_type
       - description: KeepBackupReplicasCount allows to define if the restore controller
           should restore the components with the same number of replicas from backup
@@ -715,9 +717,21 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: 'Define if the operator should or should not deploy the default
+          Execution Environments. Default: false'
+        displayName: Deploy EEDefaults
+        path: deploy_ee_defaults
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: 'Name of the deployment type. Default: "pulp"'
         displayName: Deployment Type
         path: deployment_type
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: 'Name of the ConfigMap with the list of Execution Environments
+          that should be synchronized. Default: ee-default-images'
+        displayName: EEDefaults
+        path: ee_defaults
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: The file storage access mode. This field should be used only
@@ -1288,6 +1302,18 @@ spec:
           - deployments
           - ingresses
           - statefulsets
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - batch
+          resources:
+          - cronjobs
           verbs:
           - create
           - delete

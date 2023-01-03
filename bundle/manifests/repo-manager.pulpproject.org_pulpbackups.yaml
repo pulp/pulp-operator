@@ -882,6 +882,10 @@ spec:
                 description: Name of the deployment to be backed up
                 type: string
               deployment_type:
+                description: Name of the deployment type. Can be one of {galaxy,pulp}.
+                enum:
+                - pulp
+                - galaxy
                 type: string
               instance_name:
                 default: pulp
@@ -896,7 +900,6 @@ spec:
                 type: string
             required:
             - deployment_type
-            - instance_name
             - postgres_configuration_secret
             type: object
           status:

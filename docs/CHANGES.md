@@ -13,6 +13,50 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+1.0.0-alpha.5 (2023-01-03)
+==========================
+
+
+Features
+--------
+
+- Added a feature to deploy and sync Galaxy execution environments.
+  [#821](https://github.com/pulp/pulp-operator/issues/821)
+- Modified postgres mount point to keep compatibility with ansible-based operator version.
+  [#848](https://github.com/pulp/pulp-operator/issues/848)
+
+
+Bugfixes
+--------
+
+- Added a check for `ingress_host` being null when `ingress_type` defined as "ingress".
+  [#675](https://github.com/pulp/pulp-operator/issues/675)
+- Fixed a permission/ownership error during bkp/restore procedure.
+  [#808](https://github.com/pulp/pulp-operator/issues/808)
+- Fixed a deadlock on status update.
+  [#829](https://github.com/pulp/pulp-operator/issues/829)
+- Fixed an issue on rendering Pulp settings wrongly.
+  [#830](https://github.com/pulp/pulp-operator/issues/830)
+- Fixed an issue with container token pub key mount point.
+  [#834](https://github.com/pulp/pulp-operator/issues/834)
+- Fixed an issue with default values for TOKEN_SERVER and TOKEN_AUTH_DISABLED in settings.py.
+  [#836](https://github.com/pulp/pulp-operator/issues/836)
+
+
+Improved Documentation
+----------------------
+
+- Added steps to configure and run backup/restore procedure.
+  [#765](https://github.com/pulp/pulp-operator/issues/765)
+- Added steps to manually configure ingress.
+  [#771](https://github.com/pulp/pulp-operator/issues/771)
+- Document how to install multiple instances of Pulp operator.
+  [#827](https://github.com/pulp/pulp-operator/issues/827)
+
+
+----
+
+
 1.0.0-alpha.4 (2022-11-28)
 ==========================
 

@@ -5778,9 +5778,20 @@ spec:
                 description: 'Secret where the Fernet symmetric encryption key is
                   stored. Default: <operators''s name>-"-db-fields-encryption"'
                 type: string
+              deploy_ee_defaults:
+                description: 'Define if the operator should or should not deploy the
+                  default Execution Environments. Default: false'
+                type: boolean
               deployment_type:
                 default: pulp
                 description: 'Name of the deployment type. Default: "pulp"'
+                enum:
+                - pulp
+                - galaxy
+                type: string
+              ee_defaults:
+                description: 'Name of the ConfigMap with the list of Execution Environments
+                  that should be synchronized. Default: ee-default-images'
                 type: string
               file_storage_access_mode:
                 description: The file storage access mode. This field should be used
