@@ -197,6 +197,10 @@ func deploymentForPulpApi(resources FunctionResources) client.Object {
 		affinity = resources.Pulp.Spec.Api.Affinity
 	}
 
+	if resources.Pulp.Spec.Affinity != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		affinity.NodeAffinity = resources.Pulp.Spec.Affinity
+	}
+
 	// if no strategy is defined in pulp CR we are setting `strategy.Type` with the
 	// default value ("RollingUpdate"), this will be helpful during the reconciliation
 	// when a strategy was previously defined and eventually the field is removed
@@ -221,28 +225,67 @@ func deploymentForPulpApi(resources FunctionResources) client.Object {
 	nodeSelector := map[string]string{}
 	if resources.Pulp.Spec.Api.NodeSelector != nil {
 		nodeSelector = resources.Pulp.Spec.Api.NodeSelector
+	} else if resources.Pulp.Spec.NodeSelector != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		nodeSelector = resources.Pulp.Spec.NodeSelector
 	}
 
 	toleration := []corev1.Toleration{}
 	if resources.Pulp.Spec.Api.Tolerations != nil {
 		toleration = resources.Pulp.Spec.Api.Tolerations
+	} else if resources.Pulp.Spec.Tolerations != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		toleration = resources.Pulp.Spec.Tolerations
 	}
 
 	topologySpreadConstraint := []corev1.TopologySpreadConstraint{}
 	if resources.Pulp.Spec.Api.TopologySpreadConstraints != nil {
 		topologySpreadConstraint = resources.Pulp.Spec.Api.TopologySpreadConstraints
+	} else if resources.Pulp.Spec.TopologySpreadConstraints != nil {
+		topologySpreadConstraint = resources.Pulp.Spec.TopologySpreadConstraints
 	}
 
+	gunicornWorkers := strconv.Itoa(resources.Pulp.Spec.Api.GunicornWorkers)
+	if resources.Pulp.Spec.GunicornAPIWorkers > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		gunicornWorkers = strconv.Itoa(resources.Pulp.Spec.GunicornAPIWorkers)
+	}
+	gunicornTimeout := strconv.Itoa(resources.Pulp.Spec.Api.GunicornTimeout)
+	if resources.Pulp.Spec.GunicornTimeout > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		gunicornWorkers = strconv.Itoa(resources.Pulp.Spec.GunicornTimeout)
+	}
 	envVars := []corev1.EnvVar{
-		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(resources.Pulp.Spec.Api.GunicornTimeout)},
-		{Name: "PULP_API_WORKERS", Value: strconv.Itoa(resources.Pulp.Spec.Api.GunicornWorkers)},
+		{Name: "PULP_GUNICORN_TIMEOUT", Value: gunicornTimeout},
+		{Name: "PULP_API_WORKERS", Value: gunicornWorkers},
 	}
 
 	var dbHost, dbPort string
 
 	// if there is no ExternalDBSecret defined, we should
 	// use the postgres instance provided by the operator
-	if len(resources.Pulp.Spec.Database.ExternalDBSecret) == 0 {
+	if len(resources.Pulp.Spec.PostgresConfigurationSecret) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		postgresEnvVars := []corev1.EnvVar{
+			{
+				Name: "POSTGRES_SERVICE_HOST",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: resources.Pulp.Spec.PostgresConfigurationSecret,
+						},
+						Key: "POSTGRES_HOST",
+					},
+				},
+			}, {
+				Name: "POSTGRES_SERVICE_PORT",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: resources.Pulp.Spec.PostgresConfigurationSecret,
+						},
+						Key: "POSTGRES_PORT",
+					},
+				},
+			},
+		}
+		envVars = append(envVars, postgresEnvVars...)
+	} else if len(resources.Pulp.Spec.Database.ExternalDBSecret) == 0 {
 		containerPort := 0
 		if resources.Pulp.Spec.Database.PostgresPort == 0 {
 			containerPort = 5432
@@ -760,8 +803,13 @@ func pulpServerSecret(resources FunctionResources) client.Object {
 
 	// if there is no external database configuration get the databaseconfig from pulp-postgres-configuration secret
 	if len(resources.Pulp.Spec.Database.ExternalDBSecret) == 0 {
-		resources.Logger.Info("Retrieving Postgres credentials from "+resources.Pulp.Name+"-postgres-configuration secret", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Name)
-		pgCredentials, err := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Name+"-postgres-configuration", resources.Pulp.Namespace, true, "username", "password", "database", "port", "sslmode")
+		postgresConfigurationSecret := resources.Pulp.Name + "-postgres-configuration"
+		if len(resources.Pulp.Spec.PostgresConfigurationSecret) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+			postgresConfigurationSecret = resources.Pulp.Spec.PostgresConfigurationSecret
+		}
+
+		resources.Logger.Info("Retrieving Postgres credentials from "+postgresConfigurationSecret+" secret", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Name)
+		pgCredentials, err := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, postgresConfigurationSecret, resources.Pulp.Namespace, true, "username", "password", "database", "port", "sslmode")
 		if err != nil {
 			resources.Logger.Error(err, "Secret Not Found!", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Name)
 		}
@@ -915,7 +963,11 @@ MEDIA_ROOT = ""
 		if len(resources.Pulp.Spec.IngressTLSSecret) > 0 {
 			proto = "https"
 		}
-		tokenServer = proto + "://" + resources.Pulp.Spec.IngressHost + "/token/"
+		hostname := resources.Pulp.Spec.IngressHost
+		if len(resources.Pulp.Spec.Hostname) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+			hostname = resources.Pulp.Spec.Hostname
+		}
+		tokenServer = proto + "://" + hostname + "/token/"
 	}
 	pulp_settings = pulp_settings + fmt.Sprintln("TOKEN_SERVER = \""+tokenServer+"\"")
 

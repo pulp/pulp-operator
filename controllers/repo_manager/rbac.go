@@ -135,6 +135,10 @@ func (r *RepoManagerReconciler) pulpSA(m *repomanagerv1alpha1.Pulp) *corev1.Serv
 		imagePullSecrets = append(imagePullSecrets, corev1.LocalObjectReference{Name: pullSecret})
 	}
 
+	if len(m.Spec.ImagePullSecret) > 0 {
+		imagePullSecrets = append(imagePullSecrets, corev1.LocalObjectReference{Name: m.Spec.ImagePullSecret})
+	}
+
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name,

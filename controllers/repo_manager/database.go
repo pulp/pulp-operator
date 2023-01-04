@@ -182,40 +182,62 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 		affinity = m.Spec.Database.Affinity
 	}
 
+	if m.Spec.Affinity != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		affinity.NodeAffinity = m.Spec.Affinity
+	}
+
 	nodeSelector := map[string]string{}
 	if m.Spec.Database.NodeSelector != nil {
 		nodeSelector = m.Spec.Database.NodeSelector
+	} else if m.Spec.PostgresSelector != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		nodeSelector = m.Spec.PostgresSelector
 	}
 
 	toleration := []corev1.Toleration{}
 	if m.Spec.Database.Tolerations != nil {
 		toleration = m.Spec.Database.Tolerations
+	} else if m.Spec.PostgresTolerations != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		toleration = m.Spec.PostgresTolerations
 	}
 
 	args := []string{}
 	if len(m.Spec.Database.PostgresExtraArgs) > 0 {
 		args = m.Spec.Database.PostgresExtraArgs
+	} else if len(m.Spec.PostgresExtraArgs) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		args = m.Spec.PostgresExtraArgs
 	}
 
 	postgresDataPath := ""
-	if m.Spec.Database.PostgresDataPath == "" {
-		postgresDataPath = "/var/lib/postgresql/data/pgdata"
-	} else {
+	if m.Spec.Database.PostgresDataPath != "" {
 		postgresDataPath = m.Spec.Database.PostgresDataPath
+	} else if m.Spec.PostgresDataPath != "" { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		postgresDataPath = m.Spec.PostgresDataPath
+	} else {
+		postgresDataPath = "/var/lib/postgresql/data/pgdata"
 	}
 
 	postgresInitdbArgs := ""
-	if m.Spec.Database.PostgresInitdbArgs == "" {
-		postgresInitdbArgs = "--auth-host=scram-sha-256"
-	} else {
+	if m.Spec.Database.PostgresInitdbArgs != "" {
 		postgresInitdbArgs = m.Spec.Database.PostgresInitdbArgs
+	} else if m.Spec.PostgresInitdbArgs != "" { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		postgresInitdbArgs = m.Spec.PostgresInitdbArgs
+	} else {
+		postgresInitdbArgs = "--auth-host=scram-sha-256"
 	}
 
 	postgresHostAuthMethod := ""
-	if m.Spec.Database.PostgresHostAuthMethod == "" {
-		postgresHostAuthMethod = "scram-sha-256"
-	} else {
+	if m.Spec.Database.PostgresHostAuthMethod != "" {
 		postgresHostAuthMethod = m.Spec.Database.PostgresHostAuthMethod
+	} else if m.Spec.PostgresHostAuthMethod != "" { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		postgresHostAuthMethod = m.Spec.PostgresHostAuthMethod
+
+	} else {
+		postgresHostAuthMethod = "scram-sha-256"
+	}
+
+	postgresConfigurationSecret := m.Name + "-postgres-configuration"
+	if len(m.Spec.PostgresConfigurationSecret) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		postgresConfigurationSecret = m.Name + "-postgres-configuration"
 	}
 
 	envVars := []corev1.EnvVar{
@@ -224,7 +246,7 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
 					LocalObjectReference: corev1.LocalObjectReference{
-						Name: m.Name + "-postgres-configuration",
+						Name: postgresConfigurationSecret,
 					},
 					Key: "database",
 				},
@@ -235,7 +257,7 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
 					LocalObjectReference: corev1.LocalObjectReference{
-						Name: m.Name + "-postgres-configuration",
+						Name: postgresConfigurationSecret,
 					},
 					Key: "username",
 				},
@@ -246,7 +268,7 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
 					LocalObjectReference: corev1.LocalObjectReference{
-						Name: m.Name + "-postgres-configuration",
+						Name: postgresConfigurationSecret,
 					},
 					Key: "password",
 				},
@@ -257,7 +279,7 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
 					LocalObjectReference: corev1.LocalObjectReference{
-						Name: m.Name + "-postgres-configuration",
+						Name: postgresConfigurationSecret,
 					},
 					Key: "database",
 				},
@@ -268,7 +290,7 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
 					LocalObjectReference: corev1.LocalObjectReference{
-						Name: m.Name + "-postgres-configuration",
+						Name: postgresConfigurationSecret,
 					},
 					Key: "username",
 				},
@@ -279,7 +301,7 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
 					LocalObjectReference: corev1.LocalObjectReference{
-						Name: m.Name + "-postgres-configuration",
+						Name: postgresConfigurationSecret,
 					},
 					Key: "password",
 				},
@@ -309,20 +331,30 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 	volumes := []corev1.Volume{}
 	_, storageType := controllers.MultiStorageConfigured(m, "Database")
 
+	storageClass := m.Spec.Database.PostgresStorageClass
+	if m.Spec.PostgresStorageClass != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		storageClass = m.Spec.PostgresStorageClass
+	}
+
 	// if SC defined, we should use the PVC claimed by STS
 	if storageType[0] == controllers.SCNameType {
+
+		storageRequirements := corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceName(corev1.ResourceStorage): postgresStorageSize,
+			},
+		}
+		if m.Spec.PostgresStorageRequirements != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+			storageRequirements = *m.Spec.PostgresStorageRequirements
+		}
 		pvc := corev1.PersistentVolumeClaim{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "postgres",
 			},
 			Spec: corev1.PersistentVolumeClaimSpec{
-				AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-				Resources: corev1.ResourceRequirements{
-					Requests: corev1.ResourceList{
-						corev1.ResourceName(corev1.ResourceStorage): postgresStorageSize,
-					},
-				},
-				StorageClassName: m.Spec.Database.PostgresStorageClass,
+				AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+				Resources:        storageRequirements,
+				StorageClassName: storageClass,
 			},
 		}
 		volumeClaimTemplate = append(volumeClaimTemplate, pvc)
@@ -362,6 +394,9 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 	}
 
 	resources := m.Spec.Database.ResourceRequirements
+	if m.Spec.PostgresResourceRequirements != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		resources = *m.Spec.PostgresResourceRequirements
+	}
 
 	livenessProbe := m.Spec.Database.LivenessProbe
 	if livenessProbe == nil {
@@ -408,6 +443,8 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 	postgresImage := os.Getenv("RELATED_IMAGE_PULP_POSTGRES")
 	if len(m.Spec.Database.PostgresImage) > 0 {
 		postgresImage = m.Spec.Database.PostgresImage
+	} else if len(m.Spec.PostgresImage) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		postgresImage = m.Spec.PostgresImage
 	} else if postgresImage == "" {
 		postgresImage = "docker.io/library/postgres:13"
 	}

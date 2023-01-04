@@ -163,7 +163,8 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		// https://docs.pulpproject.org/pulpcore/configuration/settings.html#content-origin
 		//   "A required string containing the protocol, fqdn, and port where the content app is reachable by users.
 		//   This is used by pulpcore and various plugins when referring users to the content app."
-		if len(pulp.Spec.IngressHost) == 0 {
+		// pulp.Spec.Hostname is DEPRECATED! Temporarily adding it to keep compatibility with ansible version.
+		if len(pulp.Spec.IngressHost) == 0 && len(pulp.Spec.Hostname) == 0 {
 			log.Error(nil, "ingress_type defined as ingress but no ingress_host provided. Please, define the ingress_host field with the fqdn where "+pulp.Spec.DeploymentType+" should be accessed. This field is required to access API and also redirect "+pulp.Spec.DeploymentType+" CONTENT requests")
 			return ctrl.Result{}, nil
 		}

@@ -301,6 +301,12 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. Affinity is a group of affinity scheduling rules.'
+        displayName: Affinity
+        path: affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Api defines desired state of pulpcore-api resources
         displayName: Api
         path: api
@@ -688,12 +694,40 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File
         - urn:alm:descriptor:io.kubernetes:StorageClass
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. The number of gunicorn workers to use for the api.'
+        displayName: Gunicorn APIWorkers
+        path: gunicorn_api_workers
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. The number of gunicorn workers to use for the api.'
+        displayName: Gunicorn Content Workers
+        path: gunicorn_content_workers
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. The timeout for the gunicorn process.'
+        displayName: Gunicorn Timeout
+        path: gunicorn_timeout
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'The timeout for HAProxy. Default: "180s"'
         displayName: HAProxy Timeout
         path: haproxy_timeout
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. Ingress DNS host'
+        displayName: Hostname
+        path: hostname
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
       - description: 'The image name (repo name) for the pulp image. Default: "quay.io/pulp/pulp-minimal:stable"'
         displayName: Image
         path: image
@@ -704,6 +738,12 @@ spec:
         path: image_pull_policy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. Image pull secret for container images. Default: ""'
+        displayName: Image Pull Secret
+        path: image_pull_secret
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'Image pull secrets for container images. Default: []'
         displayName: Image Pull Secrets
         path: image_pull_secrets
@@ -797,6 +837,12 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. NodeSelector for the Pulp pods.'
+        displayName: Node Selector
+        path: node_selector
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Provide requested port value
         displayName: Node Port
         path: nodeport_port
@@ -814,6 +860,68 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:S3
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. Custom configuration secret of database pods'
+        displayName: Postgres Configuration Secret
+        path: postgres_configuration_secret
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. Registry path to the PostgreSQL container to use. Default: "/var/lib/postgresql/data/pgdata"'
+        displayName: Postgres Data Path
+        path: postgres_data_path
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. Arguments to pass to postgres process'
+        displayName: Postgres Extra Args
+        path: postgres_extra_args
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. PostgreSQL host authentication method. Default: "scram-sha-256"'
+        displayName: Postgres Host Auth Method
+        path: postgres_host_auth_method
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. PostgreSQL container image. Default: "postgres:13"'
+        displayName: Postgres Image
+        path: postgres_image
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. Arguments to pass to PostgreSQL initdb command when creating a
+          new cluster. Default: "--auth-host=scram-sha-256"'
+        displayName: Postgres Initdb Args
+        path: postgres_initdb_args
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. Resource requirements for the database container.'
+        displayName: Postgres Resource Requirements
+        path: postgres_resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. NodeSelector for the database pod.'
+        displayName: Postgres Selector
+        path: postgres_selector
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. Name of the StorageClass required by the claim.'
+        displayName: Postgres Storage Class
+        path: postgres_storage_class
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:StorageClass
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: '[TODO] Convert this into database.postgres_storage_requirements
+          IN ANSIBLE THIS WASN''T A STRING .... NEED TO ADAPT TO THE RIGHT TYPE Temporarily
+          modifying it as a string to avoid an issue with backup and json.Unmarshal
+          when set as resource.Quantity and no value passed on pulp CR, during backup
+          steps json.Unmarshal is settings it with "0"'
+        displayName: Postgres Storage Requirements
+        path: postgres_storage_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. Node tolerations for the Database pods.'
+        displayName: Postgres Tolerations
+        path: postgres_tolerations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Definition of /etc/pulp/settings.py config file.
         displayName: Pulp Settings
         path: pulp_settings
@@ -826,6 +934,23 @@ spec:
         path: pvc
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. Redis defines desired state of cache resources'
+        displayName: Redis
+        path: redis
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. The image name for the redis image. Default: "redis:latest"'
+        displayName: Redis Image
+        path: redis_image
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. Storage class to use for the Redis PVC'
+        displayName: Redis Storage Class
+        path: redis_storage_class
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:StorageClass
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: RouteAnnotations will append custom annotation(s) into routes
           (used by router shard routeSelector).
@@ -854,6 +979,12 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. pulp-web service annotations'
+        displayName: Service Annotations
+        path: service_annotations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'ConfigMap where the signing scripts are stored. Default: <operators''s
           name>-"-signing-scripts"'
         displayName: Signing Scripts Configmap
@@ -881,6 +1012,18 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:select:File
         - urn:alm:descriptor:com.tectonic.ui:select:S3
         - urn:alm:descriptor:com.tectonic.ui:select:Azure
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. Node tolerations for the Pulp pods.'
+        displayName: Tolerations
+        path: tolerations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. Topology rule(s) for the pods.'
+        displayName: Topology Spread Constraints
+        path: topology_spread_constraints
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'Define if the operator should stop managing Pulp resources.
           If set to true, the operator will not execute any task (it will be "disabled").
           Default: false'
@@ -928,6 +1071,18 @@ spec:
         path: web.resource_requirements
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Annotations for the service
+        displayName: Service Annotations
+        path: web.service_annotations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: The deployment strategy to use to replace existing pods with
+          new ones.
+        displayName: Strategy
+        path: web.strategy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:updateStrategy
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Worker defines desired state of pulpcore-worker resources
         displayName: Worker

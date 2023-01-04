@@ -146,6 +146,14 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp
 		ImageWeb = "quay.io/pulp/pulp-web:stable"
 	}
 
+	// if no strategy is defined in pulp CR we are setting `strategy.Type` with the
+	// default value ("RollingUpdate"), this will be helpful during the reconciliation
+	// when a strategy was previously defined and eventually the field is removed
+	strategy := m.Spec.Web.Strategy
+	if strategy.Type == "" {
+		strategy.Type = "RollingUpdate"
+	}
+
 	readinessProbe := m.Spec.Web.ReadinessProbe
 	if readinessProbe == nil {
 		readinessProbe = &corev1.Probe{
@@ -171,6 +179,8 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp
 	nodeSelector := map[string]string{}
 	if m.Spec.Web.NodeSelector != nil {
 		nodeSelector = m.Spec.Web.NodeSelector
+	} else if m.Spec.NodeSelector != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		nodeSelector = m.Spec.NodeSelector
 	}
 
 	dep := &appsv1.Deployment{
@@ -188,6 +198,7 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerv1alpha1.Pulp
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
+			Strategy: strategy,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: ls,
 			},
@@ -267,15 +278,58 @@ func labelsForPulpWeb(m *repomanagerv1alpha1.Pulp) map[string]string {
 
 // serviceForPulpWeb returns a service object for pulp-web
 func serviceForPulpWeb(m *repomanagerv1alpha1.Pulp) *corev1.Service {
-	var serviceType corev1.ServiceType
-	servicePort := []corev1.ServicePort{{
-		Port:       24880,
-		Protocol:   corev1.ProtocolTCP,
-		TargetPort: intstr.IntOrString{IntVal: 8080},
-		Name:       "web-8080",
-	}}
+	annotations := m.Spec.Web.ServiceAnnotations
+	if len(m.Spec.ServiceAnnotations) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		annotations = convertStringToMap(m.Spec.ServiceAnnotations)
+	}
 
-	if strings.ToLower(m.Spec.IngressType) == "nodeport" {
+	var serviceType corev1.ServiceType
+	servicePort := []corev1.ServicePort{}
+
+	lbPort := int32(80)
+	lbProtocol := "http"
+	if len(m.Spec.LoadbalancerProtocol) > 0 {
+		lbProtocol = strings.ToLower(m.Spec.LoadbalancerProtocol)
+	}
+
+	ingressType := strings.ToLower(m.Spec.IngressType)
+	if ingressType != "loadbalancer" && lbProtocol != "https" {
+		port := corev1.ServicePort{
+			Port:       24880,
+			Protocol:   corev1.ProtocolTCP,
+			TargetPort: intstr.IntOrString{IntVal: 8080},
+			Name:       "web-8080",
+		}
+		servicePort = append(servicePort, port)
+	}
+	if ingressType == "loadbalancer" && lbProtocol == "https" {
+		lbPort = int32(443)
+		if m.Spec.LoadbalancerPort != 0 {
+			lbPort = m.Spec.LoadbalancerPort
+		}
+		port := corev1.ServicePort{
+			Port:       lbPort,
+			Protocol:   corev1.ProtocolTCP,
+			TargetPort: intstr.IntOrString{IntVal: 8080},
+			Name:       "web-8443",
+		}
+		servicePort = append(servicePort, port)
+	} else if ingressType == "loadbalancer" && lbProtocol != "https" {
+		if m.Spec.LoadbalancerPort != 0 {
+			lbPort = m.Spec.LoadbalancerPort
+		}
+		port := corev1.ServicePort{
+			Port:       lbPort,
+			Protocol:   corev1.ProtocolTCP,
+			TargetPort: intstr.IntOrString{IntVal: 8080},
+			Name:       "web-8080",
+		}
+		servicePort = append(servicePort, port)
+	}
+
+	if strings.ToLower(m.Spec.IngressType) == "loadbalancer" {
+		serviceType = corev1.ServiceType(corev1.ServiceTypeLoadBalancer)
+	} else if strings.ToLower(m.Spec.IngressType) == "nodeport" {
 		serviceType = corev1.ServiceType(corev1.ServiceTypeNodePort)
 		if m.Spec.NodePort > 0 {
 			servicePort[0].NodePort = m.Spec.NodePort
@@ -286,9 +340,10 @@ func serviceForPulpWeb(m *repomanagerv1alpha1.Pulp) *corev1.Service {
 
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name + "-web-svc",
-			Namespace: m.Namespace,
-			Labels:    labelsForPulpWeb(m),
+			Name:        m.Name + "-web-svc",
+			Namespace:   m.Namespace,
+			Labels:      labelsForPulpWeb(m),
+			Annotations: annotations,
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: labelsForPulpWeb(m),
@@ -300,109 +355,176 @@ func serviceForPulpWeb(m *repomanagerv1alpha1.Pulp) *corev1.Service {
 
 // wouldn't it be better to handle the configmap content by loading it from a file?
 func (r *RepoManagerReconciler) pulpWebConfigMap(m *repomanagerv1alpha1.Pulp) *corev1.ConfigMap {
+
+	// Nginx default values
+	nginxProxyReadTimeout := m.Spec.NginxProxyReadTimeout
+	if len(nginxProxyReadTimeout) == 0 {
+		nginxProxyReadTimeout = "120s"
+	}
+	nginxProxyConnectTimeout := m.Spec.NginxProxyConnectTimeout
+	if len(nginxProxyConnectTimeout) == 0 {
+		nginxProxyConnectTimeout = "120s"
+	}
+	nginxProxySendTimeout := m.Spec.NginxProxySendTimeout
+	if len(nginxProxySendTimeout) == 0 {
+		nginxProxySendTimeout = "120s"
+	}
+	nginxMaxBodySize := m.Spec.NginxMaxBodySize
+	if len(nginxMaxBodySize) == 0 {
+		nginxMaxBodySize = "10m"
+	}
+
+	serverConfig := ""
+	tlsTerminationMechanism := "edge"
+	if len(m.Spec.RouteTLSTerminationMechanism) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		tlsTerminationMechanism = strings.ToLower(m.Spec.RouteTLSTerminationMechanism)
+	} else if len(m.Spec.Web.TLSTerminationMechanism) > 0 {
+		tlsTerminationMechanism = strings.ToLower(m.Spec.Web.TLSTerminationMechanism)
+	}
+
+	if tlsTerminationMechanism == "passthrough" {
+		serverConfig = `
+
+    server {
+        listen 8080 default_server;
+        listen [::]:8080 default_server;
+        server_name _;
+
+        proxy_read_timeout ` + nginxProxyReadTimeout + `;
+        proxy_connect_timeout ` + nginxProxyConnectTimeout + `;
+        proxy_send_timeout ` + nginxProxySendTimeout + `;
+
+        client_max_body_size ` + nginxMaxBodySize + `;
+
+        # Redirect all HTTP links to the matching HTTPS page
+        return 301 https://$host$request_uri;
+    }
+
+    server {
+        listen 8443 default_server deferred ssl;
+        listen [::]:8443 default_server deferred ssl;
+
+        ssl_certificate /etc/nginx/pki/web.crt;
+        ssl_certificate_key /etc/nginx/pki/web.key;
+        ssl_session_cache shared:SSL:50m;
+        ssl_session_timeout 1d;
+        ssl_session_tickets off;
+
+        # intermediate configuration
+        ssl_protocols TLSv1.2;
+        ssl_ciphers'ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDS-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDH-RSA-AES128-SHA256';
+        ssl_prefer_server_ciphers on;
+`
+	} else {
+		serverConfig = `
+
+    server {
+    	# Gunicorn docs suggest the use of the "deferred" directive on Linux.
+    	listen 8080 default_server deferred;
+    	listen [::]:8080 default_server deferred;
+`
+	}
+
+	data := map[string]string{
+		"nginx.conf": `
+	error_log /dev/stdout info;
+	worker_processes 1;
+	events {
+		worker_connections 1024;  # increase if you have lots of clients
+		accept_mutex off;  # set to 'on' if nginx worker_processes > 1
+	}
+
+	http {
+		access_log /dev/stdout;
+		include mime.types;
+		# fallback in case we can't determine a type
+		default_type application/octet-stream;
+		sendfile on;
+
+		# If left at the default of 1024, nginx emits a warning about being unable
+		# to build optimal hash types.
+		types_hash_max_size 4096;
+
+		upstream pulp-content {
+			server ` + m.Name + `-content-svc:24816;
+		}
+
+		upstream pulp-api {
+			server ` + m.Name + `-api-svc:24817;
+		}
+` + serverConfig + `
+
+			# If you have a domain name, this is where to add it
+			server_name $hostname;
+
+			proxy_read_timeout ` + nginxProxyReadTimeout + `;
+			proxy_connect_timeout ` + nginxProxyConnectTimeout + `;
+			proxy_send_timeout ` + nginxProxySendTimeout + `;
+
+			# The default client_max_body_size is 1m. Clients uploading
+			# files larger than this will need to chunk said files.
+			client_max_body_size ` + nginxMaxBodySize + `;
+
+			# Gunicorn docs suggest this value.
+			keepalive_timeout 5;
+
+			# static files that can change dynamically, or are needed for TLS
+			# purposes are served through the webserver.
+			root "/opt/app-root/src";
+
+			location /pulp/content/ {
+				proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+				proxy_set_header X-Forwarded-Proto $scheme;
+				proxy_set_header Host $http_host;
+				# we don't want nginx trying to do something clever with
+				# redirects, we set the Host: header above already.
+				proxy_redirect off;
+				proxy_pass http://pulp-content;
+			}
+
+			location ` + getPulpSetting(m, "api_root") + `api/v3/ {
+				proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+				proxy_set_header X-Forwarded-Proto $scheme;
+				proxy_set_header Host $http_host;
+				# we don't want nginx trying to do something clever with
+				# redirects, we set the Host: header above already.
+				proxy_redirect off;
+				proxy_pass http://pulp-api;
+			}
+
+			location /auth/login/ {
+				proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+				proxy_set_header X-Forwarded-Proto $scheme;
+				proxy_set_header Host $http_host;
+				# we don't want nginx trying to do something clever with
+				# redirects, we set the Host: header above already.
+				proxy_redirect off;
+				proxy_pass http://pulp-api;
+			}
+
+			include /opt/app-root/etc/nginx.default.d/*.conf;
+
+			location / {
+				proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+				proxy_set_header X-Forwarded-Proto $scheme;
+				proxy_set_header Host $http_host;
+				# we don't want nginx trying to do something clever with
+				# redirects, we set the Host: header above already.
+				proxy_redirect off;
+				proxy_pass http://pulp-api;
+				# static files are served through whitenoise - http://whitenoise.evans.io/en/stable/
+			}
+		}
+	}
+`,
+	}
+
 	sec := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-configmap",
 			Namespace: m.Namespace,
 		},
-		Data: map[string]string{
-			"nginx.conf": `
-error_log /dev/stdout info;
-worker_processes 1;
-events {
-	worker_connections 1024;  # increase if you have lots of clients
-	accept_mutex off;  # set to 'on' if nginx worker_processes > 1
-}
-
-http {
-	access_log /dev/stdout;
-	include mime.types;
-	# fallback in case we can't determine a type
-	default_type application/octet-stream;
-	sendfile on;
-
-	# If left at the default of 1024, nginx emits a warning about being unable
-	# to build optimal hash types.
-	types_hash_max_size 4096;
-
-	upstream pulp-content {
-		server ` + m.Name + `-content-svc:24816;
-	}
-
-	upstream pulp-api {
-		server ` + m.Name + `-api-svc:24817;
-	}
-
-	server {
-
-		# Gunicorn docs suggest the use of the "deferred" directive on Linux.
-		listen 8080 default_server deferred;
-		listen [::]:8080 default_server deferred;
-
-		# If you have a domain name, this is where to add it
-		server_name $hostname;
-
-		proxy_read_timeout 120s;
-		proxy_connect_timeout 120s;
-		proxy_send_timeout 120s;
-
-		# The default client_max_body_size is 1m. Clients uploading
-		# files larger than this will need to chunk said files.
-		client_max_body_size 10m;
-
-		# Gunicorn docs suggest this value.
-		keepalive_timeout 5;
-
-		# static files that can change dynamically, or are needed for TLS
-		# purposes are served through the webserver.
-		root "/opt/app-root/src";
-
-		location /pulp/content/ {
-			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-			proxy_set_header X-Forwarded-Proto $scheme;
-			proxy_set_header Host $http_host;
-			# we don't want nginx trying to do something clever with
-			# redirects, we set the Host: header above already.
-			proxy_redirect off;
-			proxy_pass http://pulp-content;
-		}
-
-		location ` + getPulpSetting(m, "api_root") + `api/v3/ {
-			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-			proxy_set_header X-Forwarded-Proto $scheme;
-			proxy_set_header Host $http_host;
-			# we don't want nginx trying to do something clever with
-			# redirects, we set the Host: header above already.
-			proxy_redirect off;
-			proxy_pass http://pulp-api;
-		}
-
-		location /auth/login/ {
-			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-			proxy_set_header X-Forwarded-Proto $scheme;
-			proxy_set_header Host $http_host;
-			# we don't want nginx trying to do something clever with
-			# redirects, we set the Host: header above already.
-			proxy_redirect off;
-			proxy_pass http://pulp-api;
-		}
-
-		include /opt/app-root/etc/nginx.default.d/*.conf;
-
-		location / {
-			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-			proxy_set_header X-Forwarded-Proto $scheme;
-			proxy_set_header Host $http_host;
-			# we don't want nginx trying to do something clever with
-			# redirects, we set the Host: header above already.
-			proxy_redirect off;
-			proxy_pass http://pulp-api;
-			# static files are served through whitenoise - http://whitenoise.evans.io/en/stable/
-		}
-	}
-}
-			`,
-		},
+		Data: data,
 	}
 
 	// Set Pulp instance as the owner and controller
