@@ -1,6 +1,7 @@
 package repo_manager
 
 import (
+	"bufio"
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -399,12 +400,13 @@ func (r *RepoManagerReconciler) updateIngressType(ctx context.Context, pulp *rep
 		return
 	}
 
-	// if pulp CR was defined with nodeport and user modified it to anything else
+	// if pulp CR was defined with nodeport or loadbalancer and user modified it to anything else
 	// delete all pulp-web resources
 	// remove pulp-web .status.conditions
-	// update .status.ingress_type = route
+	// update .status.ingress_type
 	// we will not remove configmap to avoid losing resources that are potentially unrecoverable
-	if strings.ToLower(pulp.Status.IngressType) == "nodeport" && strings.ToLower(pulp.Spec.IngressType) != "nodeport" {
+	if (strings.ToLower(pulp.Status.IngressType) == "nodeport" && strings.ToLower(pulp.Spec.IngressType) != "nodeport") ||
+		(strings.ToLower(pulp.Status.IngressType) == "loadbalancer" && strings.ToLower(pulp.Spec.IngressType) != "loadbalancer") {
 		webDeployment := &appsv1.Deployment{}
 		if err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web", Namespace: pulp.Namespace}, webDeployment); err != nil {
 			return
@@ -426,6 +428,7 @@ func (r *RepoManagerReconciler) updateIngressType(ctx context.Context, pulp *rep
 		// nothing else to do (the controller will be responsible for setting up the other resources)
 		return
 	}
+
 }
 
 // updateIngressClass will check the current definition of ingress_class_name and will handle the different
@@ -729,7 +732,11 @@ func (r *RepoManagerReconciler) isNginxIngress(pulp *repomanagerv1alpha1.Pulp) b
 // getRootURL handles user facing URLs
 func getRootURL(resource FunctionResources) string {
 	if strings.ToLower(resource.Pulp.Spec.IngressType) == "ingress" {
-		return "https://" + resource.Pulp.Spec.IngressHost
+		hostname := resource.Pulp.Spec.IngressHost
+		if len(resource.Pulp.Spec.Hostname) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+			hostname = resource.Pulp.Spec.Hostname
+		}
+		return "https://" + hostname
 	}
 	if strings.ToLower(resource.Pulp.Spec.IngressType) == "route" {
 		if len(resource.Pulp.Spec.RouteHost) == 0 {
@@ -767,4 +774,23 @@ func getRouteHost(resource FunctionResources) string {
 		routeHost = resource.Pulp.Name + "." + ingress.Spec.Domain
 	}
 	return routeHost
+}
+
+// convertStringToMap is used to convert old ansible string fields (specifically annotations) into maps
+// An example of usage is the service_annotation field, which is defined as string in ansible version,
+// but the metadata.annotations is expecting map[string]string
+func convertStringToMap(field string) map[string]string {
+	convertedMap := map[string]string{}
+
+	// using a bufio scanner to read the string line by line
+	scanner := bufio.NewScanner(strings.NewReader(field))
+	for scanner.Scan() {
+		split := strings.Split(strings.TrimSpace(scanner.Text()), ":")
+		// ignore empty fields
+		if len(split) == 2 {
+			convertedMap[split[0]] = split[1]
+		}
+	}
+
+	return convertedMap
 }

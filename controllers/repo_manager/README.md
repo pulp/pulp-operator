@@ -12,6 +12,7 @@
 * [PulpList](#pulplist)
 * [PulpSpec](#pulpspec)
 * [PulpStatus](#pulpstatus)
+* [Redis](#redis)
 * [Web](#web)
 * [Worker](#worker)
 
@@ -33,6 +34,7 @@ Api defines desired state of pulpcore-api resources
 | livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
 | pdb | PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods | *policy.PodDisruptionBudgetSpec | false |
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
+| log_level | [TODO] I couldnt find a reference for this var in ansible [DEPRECATED?] Temporarily adding to keep compatibility with ansible version. | string | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -76,6 +78,7 @@ Content defines desired state of pulpcore-content resources
 | livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
 | pdb | PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods | *policy.PodDisruptionBudgetSpec | false |
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
+| log_level | [TODO] Implement this like in ansible version [DEPRECATED?] Temporarily adding to keep compatibility with ansible version. | string | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -184,6 +187,33 @@ PulpSpec defines the desired state of Pulp
 | mount_trusted_ca | Define if the operator should or should not mount the custom CA certificates added to the cluster via cluster-wide proxy config. Default: false | bool | false |
 | deploy_ee_defaults | Define if the operator should or should not deploy the default Execution Environments. Default: false | bool | false |
 | ee_defaults | Name of the ConfigMap with the list of Execution Environments that should be synchronized. Default: ee-default-images | string | false |
+| image_pull_secret | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Image pull secret for container images. Default: \"\" | string | false |
+| affinity | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Affinity is a group of affinity scheduling rules. | *corev1.NodeAffinity | false |
+| redis_image | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. The image name for the redis image. Default: \"redis:latest\" | string | false |
+| redis_storage_class | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Storage class to use for the Redis PVC | string | false |
+| redis | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Redis defines desired state of cache resources | [Redis](#redis) | false |
+| postgres_initdb_args | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Arguments to pass to PostgreSQL initdb command when creating a new cluster. Default: \"--auth-host=scram-sha-256\" | string | false |
+| postgres_host_auth_method | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. PostgreSQL host authentication method. Default: \"scram-sha-256\" | string | false |
+| postgres_image | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. PostgreSQL container image. Default: \"postgres:13\" | string | false |
+| postgres_storage_requirements | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Storage resource requirements for the database container. | *corev1.ResourceRequirements | false |
+| postgres_resource_requirements | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Resource requirements for the database container. | *corev1.ResourceRequirements | false |
+| postgres_storage_class | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Name of the StorageClass required by the claim. | *string | false |
+| postgres_data_path | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Registry path to the PostgreSQL container to use. Default: \"/var/lib/postgresql/data/pgdata\" | string | false |
+| postgres_extra_args | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Arguments to pass to postgres process | []string | false |
+| gunicorn_api_workers | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. The number of gunicorn workers to use for the api. | int | false |
+| gunicorn_content_workers | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. The number of gunicorn workers to use for the api. | int | false |
+| gunicorn_timeout | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. The timeout for the gunicorn process. | int | false |
+| node_selector | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. NodeSelector for the Pulp pods. | map[string]string | false |
+| tolerations | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Node tolerations for the Pulp pods. | []corev1.Toleration | false |
+| postgres_tolerations | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Node tolerations for the Database pods. | []corev1.Toleration | false |
+| topology_spread_constraints | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Topology rule(s) for the pods. | []corev1.TopologySpreadConstraint | false |
+| postgres_configuration_secret | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Custom configuration secret of database pods | string | false |
+| postgres_selector | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. NodeSelector for the database pod. | map[string]string | false |
+| hostname | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Ingress DNS host | string | false |
+| service_annotations | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. pulp-web service annotations | string | false |
+| route_tls_termination_mechanism | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. The secure TLS termination mechanism to use in pulp-web pods. Default: \"edge\" | string | false |
+| loadbalancer_protocol | Protocol used by pulp-web service when ingress_type==loadbalancer | string | false |
+| loadbalancer_port | Port exposed by pulp-web service when ingress_type==loadbalancer | int32 | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -206,6 +236,20 @@ PulpStatus defines the observed state of Pulp
 
 [Back to Custom Resources](#custom-resources)
 
+#### Redis
+
+[DEPRECATED] Temporarily adding to keep compatibility with ansible version
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| log_level | [TODO] Implement this like in ansible version [DEPRECATED?] Temporarily adding to keep compatibility with ansible version. | string | false |
+| replicas | [TODO] THIS SHOULD BE REMOVED SINCE WE WILL NOT SUPPORT REDIS CLUSTER Keeping it just as a matter of compatibility | int32 | true |
+| redis_resource_requirements |  | *corev1.ResourceRequirements | false |
+| resource_requirements |  | *corev1.ResourceRequirements | false |
+| strategy |  | *appsv1.DeploymentStrategy | false |
+
+[Back to Custom Resources](#custom-resources)
+
 #### Web
 
 Web defines desired state of pulpcore-web (reverse-proxy) resources
@@ -218,6 +262,9 @@ Web defines desired state of pulpcore-web (reverse-proxy) resources
 | livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
 | node_selector | NodeSelector for the Web pods. | map[string]string | false |
 | pdb | PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods | *policy.PodDisruptionBudgetSpec | false |
+| strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
+| service_annotations | Annotations for the service | map[string]string | false |
+| tls_termination_mechanism | The secure TLS termination mechanism to use Default: \"edge\" | string | false |
 
 [Back to Custom Resources](#custom-resources)
 

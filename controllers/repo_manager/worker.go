@@ -81,6 +81,10 @@ func deploymentForPulpWorker(resources FunctionResources) client.Object {
 		affinity = resources.Pulp.Spec.Worker.Affinity
 	}
 
+	if resources.Pulp.Spec.Affinity != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		affinity.NodeAffinity = resources.Pulp.Spec.Affinity
+	}
+
 	// if no strategy is defined in pulp CR we are setting `strategy.Type` with the
 	// default value ("RollingUpdate"), this will be helpful during the reconciliation
 	// when a strategy was previously defined and eventually the field is removed
@@ -105,11 +109,15 @@ func deploymentForPulpWorker(resources FunctionResources) client.Object {
 	nodeSelector := map[string]string{}
 	if resources.Pulp.Spec.Worker.NodeSelector != nil {
 		nodeSelector = resources.Pulp.Spec.Worker.NodeSelector
+	} else if resources.Pulp.Spec.NodeSelector != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		nodeSelector = resources.Pulp.Spec.NodeSelector
 	}
 
 	toleration := []corev1.Toleration{}
 	if resources.Pulp.Spec.Worker.Tolerations != nil {
 		toleration = resources.Pulp.Spec.Worker.Tolerations
+	} else if resources.Pulp.Spec.Tolerations != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		toleration = resources.Pulp.Spec.Tolerations
 	}
 
 	dbFieldsEncryptionSecret := ""
@@ -228,6 +236,8 @@ func deploymentForPulpWorker(resources FunctionResources) client.Object {
 	topologySpreadConstraint := []corev1.TopologySpreadConstraint{}
 	if resources.Pulp.Spec.Worker.TopologySpreadConstraints != nil {
 		topologySpreadConstraint = resources.Pulp.Spec.Worker.TopologySpreadConstraints
+	} else if resources.Pulp.Spec.TopologySpreadConstraints != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		topologySpreadConstraint = resources.Pulp.Spec.TopologySpreadConstraints
 	}
 
 	envVars := []corev1.EnvVar{}
@@ -235,7 +245,32 @@ func deploymentForPulpWorker(resources FunctionResources) client.Object {
 
 	// if there is no ExternalDBSecret defined, we should
 	// use the postgres instance provided by the operator
-	if len(resources.Pulp.Spec.Database.ExternalDBSecret) == 0 {
+	if len(resources.Pulp.Spec.PostgresConfigurationSecret) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		postgresEnvVars := []corev1.EnvVar{
+			{
+				Name: "POSTGRES_SERVICE_HOST",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: resources.Pulp.Spec.PostgresConfigurationSecret,
+						},
+						Key: "POSTGRES_HOST",
+					},
+				},
+			}, {
+				Name: "POSTGRES_SERVICE_PORT",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: resources.Pulp.Spec.PostgresConfigurationSecret,
+						},
+						Key: "POSTGRES_PORT",
+					},
+				},
+			},
+		}
+		envVars = append(envVars, postgresEnvVars...)
+	} else if len(resources.Pulp.Spec.Database.ExternalDBSecret) == 0 {
 		containerPort := 0
 		if resources.Pulp.Spec.Database.PostgresPort == 0 {
 			containerPort = 5432

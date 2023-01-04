@@ -108,6 +108,10 @@ func deploymentForPulpContent(resources FunctionResources) client.Object {
 		affinity = resources.Pulp.Spec.Content.Affinity
 	}
 
+	if resources.Pulp.Spec.Affinity != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		affinity.NodeAffinity = resources.Pulp.Spec.Affinity
+	}
+
 	// if no strategy is defined in pulp CR we are setting `strategy.Type` with the
 	// default value ("RollingUpdate"), this will be helpful during the reconciliation
 	// when a strategy was previously defined and eventually the field is removed
@@ -132,11 +136,15 @@ func deploymentForPulpContent(resources FunctionResources) client.Object {
 	nodeSelector := map[string]string{}
 	if resources.Pulp.Spec.Content.NodeSelector != nil {
 		nodeSelector = resources.Pulp.Spec.Content.NodeSelector
+	} else if resources.Pulp.Spec.NodeSelector != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		nodeSelector = resources.Pulp.Spec.NodeSelector
 	}
 
 	toleration := []corev1.Toleration{}
 	if resources.Pulp.Spec.Content.Tolerations != nil {
 		toleration = resources.Pulp.Spec.Content.Tolerations
+	} else if resources.Pulp.Spec.Tolerations != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		toleration = resources.Pulp.Spec.Tolerations
 	}
 
 	dbFieldsEncryptionSecret := ""
@@ -249,20 +257,55 @@ func deploymentForPulpContent(resources FunctionResources) client.Object {
 	topologySpreadConstraint := []corev1.TopologySpreadConstraint{}
 	if resources.Pulp.Spec.Content.TopologySpreadConstraints != nil {
 		topologySpreadConstraint = resources.Pulp.Spec.Content.TopologySpreadConstraints
+	} else if resources.Pulp.Spec.TopologySpreadConstraints != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		topologySpreadConstraint = resources.Pulp.Spec.TopologySpreadConstraints
 	}
 
 	resourceRequirments := resources.Pulp.Spec.Content.ResourceRequirements
 
+	gunicornWorkers := strconv.Itoa(resources.Pulp.Spec.Content.GunicornWorkers)
+	if resources.Pulp.Spec.GunicornContentWorkers > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		gunicornWorkers = strconv.Itoa(resources.Pulp.Spec.GunicornContentWorkers)
+	}
+	gunicornTimeout := strconv.Itoa(resources.Pulp.Spec.Content.GunicornTimeout)
+	if resources.Pulp.Spec.GunicornTimeout > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		gunicornWorkers = strconv.Itoa(resources.Pulp.Spec.GunicornTimeout)
+	}
 	envVars := []corev1.EnvVar{
-		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(resources.Pulp.Spec.Content.GunicornTimeout)},
-		{Name: "PULP_CONTENT_WORKERS", Value: strconv.Itoa(resources.Pulp.Spec.Content.GunicornWorkers)},
+		{Name: "PULP_GUNICORN_TIMEOUT", Value: gunicornTimeout},
+		{Name: "PULP_CONTENT_WORKERS", Value: gunicornWorkers},
 	}
 
 	var dbHost, dbPort string
 
 	// if there is no ExternalDBSecret defined, we should
 	// use the postgres instance provided by the operator
-	if len(resources.Pulp.Spec.Database.ExternalDBSecret) == 0 {
+	if len(resources.Pulp.Spec.PostgresConfigurationSecret) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		postgresEnvVars := []corev1.EnvVar{
+			{
+				Name: "POSTGRES_SERVICE_HOST",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: resources.Pulp.Spec.PostgresConfigurationSecret,
+						},
+						Key: "POSTGRES_HOST",
+					},
+				},
+			}, {
+				Name: "POSTGRES_SERVICE_PORT",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: resources.Pulp.Spec.PostgresConfigurationSecret,
+						},
+						Key: "POSTGRES_PORT",
+					},
+				},
+			},
+		}
+		envVars = append(envVars, postgresEnvVars...)
+	} else if len(resources.Pulp.Spec.Database.ExternalDBSecret) == 0 {
 		containerPort := 0
 		if resources.Pulp.Spec.Database.PostgresPort == 0 {
 			containerPort = 5432

@@ -290,10 +290,14 @@ func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repoma
 		annotation[key] = val
 	}
 
+	hostname := m.Spec.IngressHost
+	if len(m.Spec.Hostname) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		hostname = m.Spec.Hostname
+	}
 	ingressSpec := netv1.IngressSpec{
 		Rules: []netv1.IngressRule{
 			{
-				Host: m.Spec.IngressHost,
+				Host: hostname,
 				IngressRuleValue: netv1.IngressRuleValue{
 					HTTP: &netv1.HTTPIngressRuleValue{
 						Paths: paths,
@@ -309,7 +313,7 @@ func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repoma
 	if len(m.Spec.IngressTLSSecret) > 0 {
 		ingressSpec.TLS = []netv1.IngressTLS{
 			{
-				Hosts:      []string{m.Spec.IngressHost},
+				Hosts:      []string{hostname},
 				SecretName: m.Spec.IngressTLSSecret,
 			},
 		}
@@ -331,7 +335,7 @@ func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repoma
 		redirectIngressSpec := netv1.IngressSpec{
 			Rules: []netv1.IngressRule{
 				{
-					Host: m.Spec.IngressHost,
+					Host: hostname,
 					IngressRuleValue: netv1.IngressRuleValue{
 						HTTP: &netv1.HTTPIngressRuleValue{
 							Paths: redirectPaths,
