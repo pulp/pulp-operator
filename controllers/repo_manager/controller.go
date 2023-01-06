@@ -18,7 +18,6 @@ package repo_manager
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"golang.org/x/text/cases"
@@ -145,9 +144,8 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	needsPulpWeb := strings.ToLower(pulp.Spec.IngressType) != "route" && !controllers.IsNginxIngressSupported(r, pulp.Spec.IngressClassName)
 	if needsPulpWeb && pulp.Spec.ImageVersion != pulp.Spec.ImageWebVersion {
-		err := fmt.Errorf("image version and image web version should be equal ")
-		log.Error(err, "ImageVersion should be equal to ImageWebVersion")
-		return ctrl.Result{}, err
+		log.Error(nil, "imageVersion should be equal to ImageWebVersion. Please, define image_version and image_web_version with the same value")
+		return ctrl.Result{}, nil
 	}
 
 	// in case of ingress_type == ingress.
