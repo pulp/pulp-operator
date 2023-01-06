@@ -860,6 +860,7 @@ REDIS_DB = "` + cacheDB + `"
 		storageData, err := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Spec.ObjectStorageAzureSecret, resources.Pulp.Namespace, true, "azure-account-name", "azure-account-key", "azure-container", "azure-container-path", "azure-connection-string")
 		if err != nil {
 			resources.Logger.Error(err, "Secret Not Found!", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Spec.ObjectStorageAzureSecret)
+			return &corev1.Secret{}
 		}
 		pulp_settings = pulp_settings + `AZURE_CONNECTION_STRING = '` + storageData["azure-connection-string"] + `'
 AZURE_LOCATION = '` + storageData["azure-container-path"] + `'
@@ -879,6 +880,7 @@ DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
 		storageData, err := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Spec.ObjectStorageS3Secret, resources.Pulp.Namespace, true, "s3-access-key-id", "s3-secret-access-key", "s3-bucket-name", "s3-region")
 		if err != nil {
 			resources.Logger.Error(err, "Secret Not Found!", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Spec.ObjectStorageS3Secret)
+			return &corev1.Secret{}
 		}
 
 		optionalKey, _ := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Spec.ObjectStorageS3Secret, resources.Pulp.Namespace, false, "s3-endpoint")
@@ -972,7 +974,7 @@ func pulpContainerAuth(resources FunctionResources) client.Object {
 	privKey, pubKey := genTokenAuthKey()
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      resources.Pulp.Name + "-container-auth",
+			Name:      resources.Pulp.Spec.ContainerTokenSecret,
 			Namespace: resources.Pulp.Namespace,
 		},
 		StringData: map[string]string{

@@ -1,0 +1,1 @@
+The container_token_secret was not getting its name from Pulp CR.
