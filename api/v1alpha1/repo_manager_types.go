@@ -234,8 +234,9 @@ type PulpSpec struct {
 	ImagePullPolicy string `json:"image_pull_policy,omitempty"`
 
 	// Api defines desired state of pulpcore-api resources
+	// +kubebuilder:default:={replicas:1}
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	Api Api `json:"api,omitempty"`
+	Api Api `json:"api"`
 
 	// Database defines desired state of postgres resources
 	//+kubebuilder:validation:Optional
@@ -972,6 +973,7 @@ type Redis struct {
 
 	// [TODO] THIS SHOULD BE REMOVED SINCE WE WILL NOT SUPPORT REDIS CLUSTER
 	// Keeping it just as a matter of compatibility
+	// +kubebuilder:default:=1
 	Replicas int32 `json:"replicas"`
 
 	RedisResourceRequirements *corev1.ResourceRequirements `json:"redis_resource_requirements,omitempty"`

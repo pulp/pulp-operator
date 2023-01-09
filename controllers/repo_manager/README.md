@@ -183,7 +183,7 @@ PulpSpec defines the desired state of Pulp
 | image | The image name (repo name) for the pulp image. Default: \"quay.io/pulp/pulp-minimal:stable\" | string | false |
 | image_version | The image version for the pulp image. Default: \"stable\" | string | false |
 | image_pull_policy | Image pull policy for container image. Default: \"IfNotPresent\" | string | false |
-| api | Api defines desired state of pulpcore-api resources | [Api](#api) | false |
+| api | Api defines desired state of pulpcore-api resources | [Api](#api) | true |
 | database | Database defines desired state of postgres resources | [Database](#database) | false |
 | content | Content defines desired state of pulpcore-content resources | [Content](#content) | false |
 | worker | Worker defines desired state of pulpcore-worker resources | [Worker](#worker) | false |
