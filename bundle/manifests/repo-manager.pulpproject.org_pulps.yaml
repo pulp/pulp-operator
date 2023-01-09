@@ -252,6 +252,8 @@ spec:
                     type: object
                 type: object
               api:
+                default:
+                  replicas: 1
                 description: Api defines desired state of pulpcore-api resources
                 properties:
                   affinity:
@@ -6346,6 +6348,7 @@ spec:
                         type: object
                     type: object
                   replicas:
+                    default: 1
                     description: '[TODO] THIS SHOULD BE REMOVED SINCE WE WILL NOT
                       SUPPORT REDIS CLUSTER Keeping it just as a matter of compatibility'
                     format: int32
@@ -8742,6 +8745,8 @@ spec:
                       type: object
                     type: array
                 type: object
+            required:
+            - api
             type: object
           status:
             description: PulpStatus defines the observed state of Pulp
