@@ -865,6 +865,16 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:select:Ingress
         - urn:alm:descriptor:com.tectonic.ui:select:LoadBalancer
         - urn:alm:descriptor:com.tectonic.ui:select:NodePort
+      - description: Port exposed by pulp-web service when ingress_type==loadbalancer
+        displayName: Loadbalancer Port
+        path: loadbalancer_port
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Protocol used by pulp-web service when ingress_type==loadbalancer
+        displayName: Loadbalancer Protocol
+        path: loadbalancer_protocol
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'Define if the operator should or should not mount the custom
           CA certificates added to the cluster via cluster-wide proxy config. Default:
           false'
@@ -972,14 +982,12 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:StorageClass
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: '[TODO] Convert this into database.postgres_storage_requirements
-          IN ANSIBLE THIS WASN''T A STRING .... NEED TO ADAPT TO THE RIGHT TYPE Temporarily
-          modifying it as a string to avoid an issue with backup and json.Unmarshal
-          when set as resource.Quantity and no value passed on pulp CR, during backup
-          steps json.Unmarshal is settings it with "0"'
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. Storage resource requirements for the database container.'
         displayName: Postgres Storage Requirements
         path: postgres_storage_requirements
         x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
           version. Node tolerations for the Database pods.'
@@ -1044,6 +1052,13 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route
+      - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
+          version. The secure TLS termination mechanism to use in pulp-web pods. Default:
+          "edge"'
+        displayName: Route TLSTermination Mechanism
+        path: route_tls_termination_mechanism
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
           version. pulp-web service annotations'
         displayName: Service Annotations
@@ -1148,6 +1163,11 @@ spec:
         path: web.strategy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:updateStrategy
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: 'The secure TLS termination mechanism to use Default: "edge"'
+        displayName: TLSTermination Mechanism
+        path: web.tls_termination_mechanism
+        x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Worker defines desired state of pulpcore-worker resources
         displayName: Worker

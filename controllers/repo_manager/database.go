@@ -183,7 +183,7 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 	}
 
 	if m.Spec.Affinity != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		affinity.NodeAffinity = m.Spec.Affinity
+		affinity.NodeAffinity = m.Spec.Affinity.NodeAffinity
 	}
 
 	nodeSelector := map[string]string{}

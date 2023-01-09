@@ -5,6 +5,7 @@
 
 ### Sub Resources
 
+* [Affinity](#affinity)
 * [Api](#api)
 * [Cache](#cache)
 * [Content](#content)
@@ -15,6 +16,16 @@
 * [Redis](#redis)
 * [Web](#web)
 * [Worker](#worker)
+
+#### Affinity
+
+[DEPRECATED] Temporarily adding to keep compatibility with ansible version
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| node_affinity |  | *corev1.NodeAffinity | false |
+
+[Back to Custom Resources](#custom-resources)
 
 #### Api
 
@@ -188,7 +199,7 @@ PulpSpec defines the desired state of Pulp
 | deploy_ee_defaults | Define if the operator should or should not deploy the default Execution Environments. Default: false | bool | false |
 | ee_defaults | Name of the ConfigMap with the list of Execution Environments that should be synchronized. Default: ee-default-images | string | false |
 | image_pull_secret | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Image pull secret for container images. Default: \"\" | string | false |
-| affinity | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Affinity is a group of affinity scheduling rules. | *corev1.NodeAffinity | false |
+| affinity | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Affinity is a group of affinity scheduling rules. | *[Affinity](#affinity) | false |
 | redis_image | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. The image name for the redis image. Default: \"redis:latest\" | string | false |
 | redis_storage_class | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Storage class to use for the Redis PVC | string | false |
 | redis | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Redis defines desired state of cache resources | [Redis](#redis) | false |
