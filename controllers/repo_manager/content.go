@@ -109,7 +109,7 @@ func deploymentForPulpContent(resources FunctionResources) client.Object {
 	}
 
 	if resources.Pulp.Spec.Affinity != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		affinity.NodeAffinity = resources.Pulp.Spec.Affinity
+		affinity.NodeAffinity = resources.Pulp.Spec.Affinity.NodeAffinity
 	}
 
 	// if no strategy is defined in pulp CR we are setting `strategy.Type` with the

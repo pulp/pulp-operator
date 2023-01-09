@@ -223,7 +223,7 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 	}
 
 	if m.Spec.Affinity != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		affinity.NodeAffinity = m.Spec.Affinity
+		affinity.NodeAffinity = m.Spec.Affinity.NodeAffinity
 	}
 
 	// if no strategy is defined in pulp CR we are setting `strategy.Type` with the

@@ -333,7 +333,7 @@ type PulpSpec struct {
 	// Affinity is a group of affinity scheduling rules.
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	Affinity *corev1.NodeAffinity `json:"affinity,omitempty"`
+	Affinity *Affinity `json:"affinity,omitempty"`
 
 	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
 	// The image name for the redis image.
@@ -957,6 +957,11 @@ type Cache struct {
 	// +optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:updateStrategy","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	Strategy appsv1.DeploymentStrategy `json:"strategy,omitempty"`
+}
+
+// [DEPRECATED] Temporarily adding to keep compatibility with ansible version
+type Affinity struct {
+	NodeAffinity *corev1.NodeAffinity `json:"node_affinity,omitempty"`
 }
 
 // [DEPRECATED] Temporarily adding to keep compatibility with ansible version

@@ -1281,7 +1281,9 @@ spec:
                         type: integer
                     type: object
                   log_level:
-                    description: '[TODO] Implement this like in ansible version'
+                    description: '[TODO] I couldnt find a reference for this var in
+                      ansible [DEPRECATED?] Temporarily adding to keep compatibility
+                      with ansible version.'
                     type: string
                   node_selector:
                     additionalProperties:
@@ -4172,7 +4174,8 @@ spec:
                         type: integer
                     type: object
                   log_level:
-                    description: '[TODO] Implement this like in ansible version'
+                    description: '[TODO] Implement this like in ansible version [DEPRECATED?]
+                      Temporarily adding to keep compatibility with ansible version.'
                     type: string
                   node_selector:
                     additionalProperties:
@@ -6114,6 +6117,16 @@ spec:
                 - NodePort
                 - nodeport
                 type: string
+              loadbalancer_port:
+                description: Port exposed by pulp-web service when ingress_type==loadbalancer
+                format: int32
+                type: integer
+              loadbalancer_protocol:
+                description: Protocol used by pulp-web service when ingress_type==loadbalancer
+                enum:
+                - http
+                - https
+                type: string
               mount_trusted_ca:
                 default: false
                 description: 'Define if the operator should or should not mount the
@@ -6220,13 +6233,33 @@ spec:
                   with ansible version. Name of the StorageClass required by the claim.'
                 type: string
               postgres_storage_requirements:
-                description: '[TODO] Convert this into database.postgres_storage_requirements
-                  IN ANSIBLE THIS WASN''T A STRING .... NEED TO ADAPT TO THE RIGHT
-                  TYPE Temporarily modifying it as a string to avoid an issue with
-                  backup and json.Unmarshal when set as resource.Quantity and no value
-                  passed on pulp CR, during backup steps json.Unmarshal is settings
-                  it with "0"'
-                type: string
+                description: '[DEPRECATED] Temporarily adding to keep compatibility
+                  with ansible version. Storage resource requirements for the database
+                  container.'
+                properties:
+                  limits:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: 'Limits describes the maximum amount of compute resources
+                      allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                    type: object
+                  requests:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: 'Requests describes the minimum amount of compute
+                      resources required. If Requests is omitted for a container,
+                      it defaults to Limits if that is explicitly specified, otherwise
+                      to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                    type: object
+                type: object
               postgres_tolerations:
                 description: '[DEPRECATED] Temporarily adding to keep compatibility
                   with ansible version. Node tolerations for the Database pods.'
@@ -6282,7 +6315,8 @@ spec:
                   with ansible version. Redis defines desired state of cache resources'
                 properties:
                   log_level:
-                    description: '[TODO] Implement this like in ansible version'
+                    description: '[TODO] Implement this like in ansible version [DEPRECATED?]
+                      Temporarily adding to keep compatibility with ansible version.'
                     type: string
                   redis_resource_requirements:
                     description: ResourceRequirements describes the compute resource
@@ -6426,6 +6460,16 @@ spec:
               route_tls_secret:
                 description: Name of the secret with the certificates/keys used by
                   route encryption
+                type: string
+              route_tls_termination_mechanism:
+                description: '[DEPRECATED] Temporarily adding to keep compatibility
+                  with ansible version. The secure TLS termination mechanism to use
+                  in pulp-web pods. Default: "edge"'
+                enum:
+                - edge
+                - Edge
+                - passthrough
+                - Passthrough
                 type: string
               service_annotations:
                 description: '[DEPRECATED] Temporarily adding to keep compatibility
@@ -7139,6 +7183,15 @@ spec:
                           Default is RollingUpdate.
                         type: string
                     type: object
+                  tls_termination_mechanism:
+                    description: 'The secure TLS termination mechanism to use Default:
+                      "edge"'
+                    enum:
+                    - edge
+                    - Edge
+                    - passthrough
+                    - Passthrough
+                    type: string
                 type: object
               worker:
                 description: Worker defines desired state of pulpcore-worker resources
