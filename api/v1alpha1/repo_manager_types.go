@@ -1003,6 +1003,19 @@ type PulpStatus struct {
 	AdminPasswordSecret string `json:"admin_password_secret,omitempty"`
 	// Name of the secret with the parameters to connect to an external Redis cluster
 	ExternalCacheSecret string `json:"external_cache_secret,omitempty"`
+
+	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+	StoragePersistentVolumeClaim       string `json:"storagePersistentVolumeClaim,omitempty"`
+	WebURL                             string `json:"webURL,omitempty"`
+	DatabaseConfigurationSecret        string `json:"databaseConfigurationSecret,omitempty"`
+	StorageType                        string `json:"storageType,omitempty"`
+	StorageSecret                      string `json:"storageSecret,omitempty"`
+	DeployedVersion                    string `json:"deployedVersion,omitempty"`
+	DeployedImage                      string `json:"deployedImage,omitempty"`
+	MigrantDatabaseConfigurationSecret string `json:"migrantDatabaseConfigurationSecret,omitempty"`
+	DbFieldsEncryptionSecret           string `json:"dbFieldsEncryptionSecret,omitempty"`
+	UpgradedPostgresVersion            string `json:"upgradedPostgresVersion,omitempty"`
+	MigrationDone                      bool   `json:"migration_done,omitempty"`
 }
 
 // Pulp is the Schema for the pulps API

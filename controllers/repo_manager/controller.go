@@ -171,6 +171,11 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	}
 
+	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+	if requeue, err := ansibleMigrationTasks(FunctionResources{ctx, pulp, log, r}); needsRequeue(err, requeue) {
+		return ctrl.Result{Requeue: true}, err
+	}
+
 	// Checking if there is more than one storage type defined.
 	// Only a single type should be provided, if more the operator will not be able to
 	// determine which one should be used.

@@ -8826,8 +8826,16 @@ spec:
               container_token_secret:
                 description: Secret where the container token certificates are stored.
                 type: string
+              databaseConfigurationSecret:
+                type: string
               db_fields_encryption_secret:
                 description: Secret where the Fernet symmetric encryption key is stored.
+                type: string
+              dbFieldsEncryptionSecret:
+                type: string
+              deployedImage:
+                type: string
+              deployedVersion:
                 type: string
               deployment_type:
                 description: Name of the deployment type.
@@ -8843,11 +8851,27 @@ spec:
               ingress_type:
                 description: The ingress type to use to reach the deployed instance
                 type: string
+              migrantDatabaseConfigurationSecret:
+                type: string
+              migration_done:
+                type: boolean
               object_storage_azure_secret:
                 description: The secret for Azure compliant object storage configuration.
                 type: string
               object_storage_s3_secret:
                 description: The secret for S3 compliant object storage configuration.
+                type: string
+              storagePersistentVolumeClaim:
+                description: '[DEPRECATED] Temporarily adding to keep compatibility
+                  with ansible version.'
+                type: string
+              storageSecret:
+                type: string
+              storageType:
+                type: string
+              upgradedPostgresVersion:
+                type: string
+              webURL:
                 type: string
             required:
             - conditions
