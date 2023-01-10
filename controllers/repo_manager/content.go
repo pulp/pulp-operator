@@ -269,7 +269,7 @@ func deploymentForPulpContent(resources FunctionResources) client.Object {
 	}
 	gunicornTimeout := strconv.Itoa(resources.Pulp.Spec.Content.GunicornTimeout)
 	if resources.Pulp.Spec.GunicornTimeout > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		gunicornWorkers = strconv.Itoa(resources.Pulp.Spec.GunicornTimeout)
+		gunicornTimeout = strconv.Itoa(resources.Pulp.Spec.GunicornTimeout)
 	}
 	envVars := []corev1.EnvVar{
 		{Name: "PULP_GUNICORN_TIMEOUT", Value: gunicornTimeout},

@@ -74,6 +74,21 @@ func IsOpenShift() (bool, error) {
 func MultiStorageConfigured(pulp *repomanagerv1alpha1.Pulp, resource string) (bool, []string) {
 	var names []string
 
+	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+	// for ansible migration we are ignoring the multistorage check
+	if pulp.Status.MigrationDone {
+		if resource == DatabaseResource {
+			return false, []string{PVCType}
+		}
+		if len(pulp.Spec.ObjectStorageAzureSecret) > 0 {
+			return false, []string{AzureObjType}
+		}
+		if len(pulp.Spec.ObjectStorageS3Secret) > 0 {
+			return false, []string{S3ObjType}
+		}
+		return false, []string{PVCType}
+	}
+
 	switch resource {
 	case PulpResource:
 		if len(pulp.Spec.ObjectStorageAzureSecret) > 0 {

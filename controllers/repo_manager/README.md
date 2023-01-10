@@ -244,6 +244,17 @@ PulpStatus defines the observed state of Pulp
 | container_token_secret | Secret where the container token certificates are stored. | string | false |
 | admin_password_secret | Secret where the administrator password can be found | string | false |
 | external_cache_secret | Name of the secret with the parameters to connect to an external Redis cluster | string | false |
+| storagePersistentVolumeClaim | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. | string | false |
+| webURL |  | string | false |
+| databaseConfigurationSecret |  | string | false |
+| storageType |  | string | false |
+| storageSecret |  | string | false |
+| deployedVersion |  | string | false |
+| deployedImage |  | string | false |
+| migrantDatabaseConfigurationSecret |  | string | false |
+| dbFieldsEncryptionSecret |  | string | false |
+| upgradedPostgresVersion |  | string | false |
+| migration_done |  | bool | false |
 
 [Back to Custom Resources](#custom-resources)
 
