@@ -167,6 +167,17 @@ func (r *RepoManagerReconciler) databaseController(ctx context.Context, pulp *re
 		r.updateStatus(ctx, pulp, metav1.ConditionTrue, conditionType, "DatabaseTasksFinished", "All Database tasks ran successfully")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "DatabaseReady", "All Database tasks ran successfully")
 	}
+
+	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+	// Golang version will also manage the old service provisioned with ansible-based operator because
+	// we decided that it will be better to keep it to avoid having to update the secrets and configurations that
+	// depend on the old service address.
+	if pulp.Status.MigrationDone {
+		if err := reconcileOldService(FunctionResources{ctx, pulp, log, r}); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -581,5 +592,65 @@ func databaseConfigSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
 			"type":     "managed",
 		},
 	}
+}
 
+// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+// reconcileOldService will ensure the old (from ansible) postgresql svc is present
+func reconcileOldService(m FunctionResources) error {
+	// retrieve the old service name from postgres secret
+	oldSvcName, err := m.RepoManagerReconciler.retrieveSecretData(m.Context, m.Pulp.Name+"-postgres-configuration", m.Pulp.Namespace, true, "host")
+	if err != nil {
+		return err
+	}
+
+	// old svc definition
+	serviceInternalTrafficPolicyCluster := corev1.ServiceInternalTrafficPolicyType("Cluster")
+	ipFamilyPolicyType := corev1.IPFamilyPolicyType("SingleStack")
+	serviceAffinity := corev1.ServiceAffinity("None")
+	servicePortProto := corev1.Protocol("TCP")
+	targetPort := intstr.IntOrString{IntVal: 5432}
+	serviceType := corev1.ServiceType("ClusterIP")
+	oldService := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      oldSvcName["host"],
+			Namespace: m.Namespace,
+		},
+		Spec: corev1.ServiceSpec{
+			ClusterIP:             "None",
+			ClusterIPs:            []string{"None"},
+			InternalTrafficPolicy: &serviceInternalTrafficPolicyCluster,
+			IPFamilies:            []corev1.IPFamily{"IPv4"},
+			IPFamilyPolicy:        &ipFamilyPolicyType,
+			Ports: []corev1.ServicePort{{
+				Port:       5432,
+				Protocol:   servicePortProto,
+				TargetPort: targetPort,
+			}},
+			Selector: map[string]string{
+				"app":     "postgresql",
+				"pulp_cr": m.Name,
+			},
+			SessionAffinity: serviceAffinity,
+			Type:            serviceType,
+		},
+	}
+	ctrl.SetControllerReference(m.Pulp, oldService, m.RepoManagerReconciler.Scheme)
+
+	// Create the old svc if it is not found
+	dbSvc := &corev1.Service{}
+	if err := m.RepoManagerReconciler.Get(m.Context, types.NamespacedName{Name: oldSvcName["host"], Namespace: m.Pulp.Namespace}, dbSvc); err != nil && errors.IsNotFound(err) {
+		m.Logger.Info("Recreating the old Database service has been modified! Reconciling ...")
+		if err := m.RepoManagerReconciler.Create(m.Context, oldService); err != nil {
+			return err
+		}
+	}
+
+	// Reconcile it
+	if !equality.Semantic.DeepDerivative(oldService.Spec, dbSvc.Spec) {
+		m.Logger.Info("The old Database service has been modified! Reconciling ...")
+		if err := m.RepoManagerReconciler.Update(m.Context, oldService); err != nil {
+			return err
+		}
+	}
+	return nil
 }
