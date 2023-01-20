@@ -27,7 +27,7 @@
             message: "Creating {{ deployment_type|capitalize }}-api PVC resource"
             reason: CreatingPVC
             status: "False"
-            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+            lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
     - name: pulp-file-storage persistent volume claim
       k8s:
@@ -47,7 +47,7 @@
             message: "Removing ownerReferences from {{ ansible_operator_meta.name}}-file-storage PVC"
             reason: RemovingPVCOwnerReferences
             status: "False"
-            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+            lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
     - name: Remove ownerReferences from pulp-file-storage pvc to avoid garbage collection
       k8s:
@@ -130,7 +130,7 @@
         message: "Creating {{ ansible_operator_meta.name }}-server Secret resource"
         reason: CreatingServerSecret
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: pulp-server secret
   k8s:
@@ -159,7 +159,7 @@
         message: "Creating {{ ansible_operator_meta.name }}-api-svc Service resource"
         reason: CreatingService
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: pulp-api service
   k8s:
@@ -198,7 +198,7 @@
           message: Cannot determine what type of cluster we are in
           reason: FailedToIdentifyClusterType
           status: "False"
-          lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+          lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
   - fail:
       msg: "Cannot determine what type of cluster we are in"
@@ -262,7 +262,7 @@
         message: "Creating {{ ansible_operator_meta.name }}-api Deployment resource"
         reason: CreatingDeployment
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: pulp-api deployment
   k8s:
@@ -281,4 +281,4 @@
         message: All API tasks ran successfully
         reason: ApiTasksFinished
         status: "True"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"

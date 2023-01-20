@@ -911,6 +911,8 @@ spec:
                       type: string
                     lastTransitionTime:
                       type: string
+                    message:
+                      type: string
                   type: object
                 type: array
             type: object

@@ -873,6 +873,8 @@ spec:
                   properties:
                     lastTransitionTime:
                       type: string
+                    message:
+                      type: string
                     reason:
                       type: string
                     status:

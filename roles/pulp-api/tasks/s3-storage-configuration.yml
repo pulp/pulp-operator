@@ -10,7 +10,7 @@
         message: Checking s3 storage configurations
         reason: CheckingStorageConfig
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Check for specified s3 storage configuration
   k8s_info:
@@ -41,7 +41,7 @@
           message: Unexpected format in s3 Secret
           reason: UnexpectedS3SecretFormat
           status: "False"
-          lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+          lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
   - name: Fail if s3 secret object is an unexpected format
     fail:
@@ -102,7 +102,7 @@
           message: Missing s3 fields in Secret
           reason: MissingS3Fields
           status: "False"
-          lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+          lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
   - name: Fail if required s3 secret items are not present
     fail:

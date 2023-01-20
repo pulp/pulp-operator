@@ -14,7 +14,7 @@
         message: "{{ deployment_type | capitalize }} operator tasks running"
         reason: OperatorRunning
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Set node affinity
   set_fact:
@@ -76,7 +76,7 @@
         message: Creating database Secret resource
         reason: CreatingSecret
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - block:
 
@@ -167,7 +167,7 @@
             message: Creating database StatefulSet resource
             reason: CreatingStatefulSet
             status: "False"
-            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+            lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
     - name: Create Database if no database is specified
       k8s:
@@ -236,5 +236,5 @@
         message: All Postgres tasks ran successfully
         reason: DatabaseTasksFinished
         status: "True"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 #  when: _pg_sts_status['resources'][0]['status']['availableReplicas'] == _pg_sts_status['resources'][0]['status']['replicas']

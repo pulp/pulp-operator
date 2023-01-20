@@ -41,7 +41,7 @@
         message: Scaling down Deployments (api, content, worker, web, resource-manager) for migration of old_pg_config
         reason: ScalingDownDeploymentForMigration
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - include: scale_down.yml deployment_name={{ item }}
   with_items:
@@ -61,7 +61,7 @@
         message: Dumping database for migration
         reason: DumpingDatabaseForMigration
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Set pg_dump command
   set_fact:
@@ -84,7 +84,7 @@
         message: Restoring database for migration
         reason: RestoringDatabaseForMigration
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Set pg_restore command
   set_fact:
@@ -104,7 +104,7 @@
         message: Streaming backup from pg_dump to the new container (migration task)
         reason: StreamingBackupToNewContainer
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Stream backup from pg_dump to the new postgresql container
   k8s_exec:
@@ -134,7 +134,7 @@
         message: All Postgres migrations tasks ran successfully
         reason: DatabaseTasksFinished
         status: "True"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Migration succesful from previous database
   debug:

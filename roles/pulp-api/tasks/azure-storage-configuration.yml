@@ -9,7 +9,7 @@
         message: Checking Azure storage configurations
         reason: CheckingAzureStorageConfigs
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Check for specified azure storage configuration
   k8s_info:
@@ -39,7 +39,7 @@
          message: Unexpected format in Azure Secret
          reason: UnexpectedAzureSecretFormat
          status: "False"
-         lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+         lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
   - name: Fail if azure secret object is an unexpected format
     fail:
@@ -83,7 +83,7 @@
           message: Missing Azure fields on Secret
           reason: MissingAzureFields
           status: "False"
-          lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+          lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
   - name: Fail if required azure secret items are not present
     fail:
