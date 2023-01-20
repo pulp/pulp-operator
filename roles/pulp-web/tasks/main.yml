@@ -25,7 +25,7 @@
         message: "API root should start and end with '/'"
         reason: ApiRootFormatInvalid
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Validade API root
   fail:
@@ -44,7 +44,7 @@
         message: "Creating {{ ansible_operator_meta.name }}-{{ deployment_type }}-configmap ConfigMap resource"
         reason: CreatingConfigMap
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: pulp-web configmap
   k8s:
@@ -83,7 +83,7 @@
         message: "Creating {{ ansible_operator_meta.name }}-web Deployment resource"
         reason: CreatingDeployment
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: pulp-web deployment
   k8s:
@@ -102,7 +102,7 @@
         message: "Creating {{ ansible_operator_meta.name }}-web-svc Service resource"
         reason: CreatingService
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: pulp-web service
   k8s:
@@ -121,4 +121,4 @@
         message: "All {{ deployment_type|capitalize }}-web tasks ran successfully"
         reason: WebTasksFinished
         status: "True"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"

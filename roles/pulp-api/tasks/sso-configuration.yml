@@ -9,7 +9,7 @@
         message: Checking SSO Secret configurations
         reason: CheckingSSOSecret
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Check for specified sso configuration secret
   k8s_info:
@@ -140,7 +140,7 @@
           message: Missing SSO fields on Secret
           reason: MissingSSOFields
           status: "False"
-          lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+          lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
   - name: Fail if required sso secret items are not present
     fail:

@@ -9,7 +9,7 @@
         message: Configuring DB fields encryption Secret name
         reason: ConfiguringDBFieldsEncryption
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Set default DB fields encryption secret name
   set_fact:
@@ -36,7 +36,7 @@
             message: Creating DB fields encryption Secret
             reason: CreatingDBSecret
             status: "False"
-            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+            lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
     - name: Generate Pulp Database Encryption Key
       shell: |

@@ -16,7 +16,7 @@
         message: Scaling down Deployment for Postgres upgrade
         reason: ScalingDownDeploymentForPostgresUpgrade
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Scale down Deployment for migration
   include_tasks: scale_down_deployment.yml
@@ -40,7 +40,7 @@
         message: "Creating the new database configuration for postgres-{{ postgres_version }}"
         reason: "CreatingNewSecretForPostgres{{ postgres_version }}"
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Create Database configuration with new -postgres-{{ postgres_version }} hostname
   k8s:
@@ -63,7 +63,7 @@
         message: Recreating database StatefulSet resource after upgrading Postgres
         reason: RecreatingStatefulSetUpgradeTask
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Create Database if no database is specified
   k8s:
@@ -110,7 +110,7 @@
             message: "{{ error_msg }}"
             reason: UpgradePostgresError
             status: "False"
-            lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+            lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
     - name: Handle error
       import_tasks: error_handling.yml
@@ -139,7 +139,7 @@
         message: Dumping database for Postgres upgrade task
         reason: DumpingDatabaseUpgradeTask
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Set pg_dump command
   set_fact:
@@ -162,7 +162,7 @@
         message: Restoring database for Postgres upgrade task
         reason: RestoringDatabaseUpgradeTask
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Set pg_restore command
   set_fact:
@@ -182,7 +182,7 @@
         message: Streaming backup from pg_dump to the new container (upgrade task)
         reason: StreamingBackupToNewContainer
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Stream backup from pg_dump to the new postgresql container
   k8s_exec:
@@ -212,7 +212,7 @@
         message: Removing old Postgres StatefulSet
         reason: RemovingOldPostgresStatefulSet
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 # Cleanup old Postgres resources
 - name: Remove old Postgres StatefulSet
@@ -234,7 +234,7 @@
         message: Removing old Postgres Service
         reason: RemovingOldPostgresService
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Remove old Postgres Service
   k8s:
@@ -254,7 +254,7 @@
         message: Removing old Postgres PVC
         reason: RemovingOldPostgresPVC
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Remove old persistent volume claim
   k8s:
@@ -277,4 +277,4 @@
         message: All Postgres upgrade tasks ran successfully
         reason: DatabaseTasksFinished
         status: "True"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"

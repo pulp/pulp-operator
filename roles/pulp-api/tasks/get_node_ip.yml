@@ -9,7 +9,7 @@
         message: Checking Ingress configurations
         reason: CheckingIngressConfigs
         status: "False"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
 - name: Set web protocol
   set_fact:
@@ -38,7 +38,7 @@
           message: Hostname is not defined when ingress is specified
           reason: HostnameNotDefined
           status: "False"
-          lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+          lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
   - name: Fail if hostname is not defined when ingress is specified
     fail:

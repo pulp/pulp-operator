@@ -25,4 +25,4 @@
         status: "True"
         reason: Successful
         message: "The Restore has been completed"
-        lastTransitionTime: "{{ lookup('pipe', 'date --rfc-3339 seconds') }}"
+        lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
