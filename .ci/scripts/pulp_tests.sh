@@ -24,10 +24,12 @@ password password\
 export BASE_ADDR="http://$SERVER:$WEB_PORT"
 echo $BASE_ADDR
 
-if [ -z "$(pip3 freeze | grep pulp-cli)" ]; then
-  echo "Installing pulp-cli"
-  pip3 install --user pulp-cli[pygments]
-fi
+# Install pulp-cli the same way we do in pulp_ansible repo (to avoid tests with version mismatch, for example)
+# https://github.com/pulp/pulp_ansible/blob/5778d86ae51738578f7c5f00214b5ccb8aa1ee45/.github/workflows/scripts/before_install.sh#L96-L102
+git clone --depth=1 https://github.com/pulp/pulp-cli.git
+pushd pulp-cli
+pip install .
+popd
 
 if [ ! -f ~/.config/pulp/settings.toml ]; then
   echo "Configuring pulp-cli"
