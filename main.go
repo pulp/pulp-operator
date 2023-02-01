@@ -39,12 +39,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	routev1 "github.com/openshift/api/route/v1"
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+
+	repomanagerv1alpha1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1alpha1"
 	repo_manager_backup "github.com/pulp/pulp-operator/controllers/backup"
 	repo_manager "github.com/pulp/pulp-operator/controllers/repo_manager"
 	repo_manager_restore "github.com/pulp/pulp-operator/controllers/restore"
 
 	uzap "go.uber.org/zap"
+
+	repomanagerpulpprojectorgv1beta1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta1"
+	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	repomanagerpulpprojectorgv1beta3 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta3"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -60,6 +65,9 @@ func init() {
 	utilruntime.Must(routev1.AddToScheme(scheme))
 
 	utilruntime.Must(repomanagerv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(repomanagerpulpprojectorgv1beta1.AddToScheme(scheme))
+	utilruntime.Must(repomanagerpulpprojectorgv1beta2.AddToScheme(scheme))
+	utilruntime.Must(repomanagerpulpprojectorgv1beta3.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

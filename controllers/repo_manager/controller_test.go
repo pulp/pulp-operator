@@ -18,7 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	routev1 "github.com/openshift/api/route/v1"
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	repomanagerpulpprojectorgv1beta3 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta3"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
@@ -669,7 +669,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		},
 	}
 
-	createdPulp := &repomanagerv1alpha1.Pulp{}
+	createdPulp := &repomanagerpulpprojectorgv1beta3.Pulp{}
 	createdSts := &appsv1.StatefulSet{}
 	createdApiDeployment := &appsv1.Deployment{}
 	createdContentDeployment := &appsv1.Deployment{}
@@ -686,32 +686,32 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		// use the samples from config/samples/ folder during each
 		// pipeline workflow execution
 		// this is the example pulp CR
-		pulp := &repomanagerv1alpha1.Pulp{
+		pulp := &repomanagerpulpprojectorgv1beta3.Pulp{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      PulpName,
 				Namespace: PulpNamespace,
 			},
-			Spec: repomanagerv1alpha1.PulpSpec{
+			Spec: repomanagerpulpprojectorgv1beta3.PulpSpec{
 				DeploymentType: OperatorType,
-				Cache: repomanagerv1alpha1.Cache{
+				Cache: repomanagerpulpprojectorgv1beta3.Cache{
 					Enabled:           true,
 					RedisStorageClass: "standard",
 				},
 				ImageVersion:    "latest",
 				ImageWebVersion: "latest",
-				Api: repomanagerv1alpha1.Api{
+				Api: repomanagerpulpprojectorgv1beta3.Api{
 					Replicas: 1,
 				},
-				Content: repomanagerv1alpha1.Content{
+				Content: repomanagerpulpprojectorgv1beta3.Content{
 					Replicas: 1,
 				},
-				Worker: repomanagerv1alpha1.Worker{
+				Worker: repomanagerpulpprojectorgv1beta3.Worker{
 					Replicas: 1,
 				},
-				Web: repomanagerv1alpha1.Web{
+				Web: repomanagerpulpprojectorgv1beta3.Web{
 					Replicas: 1,
 				},
-				Database: repomanagerv1alpha1.Database{
+				Database: repomanagerpulpprojectorgv1beta3.Database{
 					PostgresStorageRequirements: "5Gi",
 				},
 				FileStorageAccessMode: "ReadWriteOnce",
@@ -1151,7 +1151,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 // or 60 seconds timeout
 // waitPulpOperatorFinish is now DEPRECATED because we realized that envtest will not update the
 // .status field from deployments, which in turn will not reflect in a real .status.conditions of pulp CR
-func waitPulpOperatorFinish(ctx context.Context, createdPulp *repomanagerv1alpha1.Pulp) {
+func waitPulpOperatorFinish(ctx context.Context, createdPulp *repomanagerpulpprojectorgv1beta3.Pulp) {
 	time.Sleep(time.Second)
 
 	for timeout := 0; timeout < 60; timeout++ {

@@ -5,7 +5,37 @@ metadata:
     alm-examples: |-
       [
         {
-          "apiVersion": "repo-manager.pulpproject.org/v1alpha1",
+          "apiVersion": "repo-manager.pulpproject.org/v1beta1",
+          "kind": "Pulp",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/created-by": "pulp-operator",
+              "app.kubernetes.io/instance": "pulp-sample",
+              "app.kubernetes.io/managed-by": "kustomize",
+              "app.kubernetes.io/name": "pulp",
+              "app.kubernetes.io/part-of": "pulp-operator"
+            },
+            "name": "pulp-sample"
+          },
+          "spec": null
+        },
+        {
+          "apiVersion": "repo-manager.pulpproject.org/v1beta2",
+          "kind": "Pulp",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/created-by": "pulp-operator",
+              "app.kubernetes.io/instance": "pulp-sample",
+              "app.kubernetes.io/managed-by": "kustomize",
+              "app.kubernetes.io/name": "pulp",
+              "app.kubernetes.io/part-of": "pulp-operator"
+            },
+            "name": "pulp-sample"
+          },
+          "spec": null
+        },
+        {
+          "apiVersion": "repo-manager.pulpproject.org/v1beta3",
           "kind": "Pulp",
           "metadata": {
             "name": "example"
@@ -57,7 +87,7 @@ metadata:
           }
         },
         {
-          "apiVersion": "repo-manager.pulpproject.org/v1alpha1",
+          "apiVersion": "repo-manager.pulpproject.org/v1beta3",
           "kind": "Pulp",
           "metadata": {
             "name": "example-pulp"
@@ -102,7 +132,7 @@ metadata:
           }
         },
         {
-          "apiVersion": "repo-manager.pulpproject.org/v1alpha1",
+          "apiVersion": "repo-manager.pulpproject.org/v1beta3",
           "kind": "Pulp",
           "metadata": {
             "name": "galaxy-example"
@@ -179,7 +209,22 @@ metadata:
           }
         },
         {
-          "apiVersion": "repo-manager.pulpproject.org/v1alpha1",
+          "apiVersion": "repo-manager.pulpproject.org/v1beta3",
+          "kind": "Pulp",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/created-by": "pulp-operator",
+              "app.kubernetes.io/instance": "pulp-sample",
+              "app.kubernetes.io/managed-by": "kustomize",
+              "app.kubernetes.io/name": "pulp",
+              "app.kubernetes.io/part-of": "pulp-operator"
+            },
+            "name": "pulp-sample"
+          },
+          "spec": null
+        },
+        {
+          "apiVersion": "repo-manager.pulpproject.org/v1beta3",
           "kind": "PulpBackup",
           "metadata": {
             "name": "pulpbackup-sample"
@@ -194,7 +239,7 @@ metadata:
           }
         },
         {
-          "apiVersion": "repo-manager.pulpproject.org/v1alpha1",
+          "apiVersion": "repo-manager.pulpproject.org/v1beta3",
           "kind": "PulpRestore",
           "metadata": {
             "name": "ci-pulprestore"
@@ -301,6 +346,15 @@ spec:
         displayName: Storage Secret
         path: storageSecret
       version: v1alpha1
+    - kind: PulpBackup
+      name: pulpbackups.repo-manager.pulpproject.org
+      version: v1beta1
+    - kind: PulpBackup
+      name: pulpbackups.repo-manager.pulpproject.org
+      version: v1beta2
+    - kind: PulpBackup
+      name: pulpbackups.repo-manager.pulpproject.org
+      version: v1beta3
     - description: PulpRestore is the Schema for the pulprestores API
       displayName: Pulp Restore
       kind: PulpRestore
@@ -354,6 +408,15 @@ spec:
       - displayName: Postgres Secret
         path: postgres_secret
       version: v1alpha1
+    - kind: PulpRestore
+      name: pulprestores.repo-manager.pulpproject.org
+      version: v1beta1
+    - kind: PulpRestore
+      name: pulprestores.repo-manager.pulpproject.org
+      version: v1beta2
+    - kind: PulpRestore
+      name: pulprestores.repo-manager.pulpproject.org
+      version: v1beta3
     - description: Pulp is the Schema for the pulps API
       displayName: Pulp
       kind: Pulp
@@ -1237,6 +1300,15 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes.conditions
       version: v1alpha1
+    - kind: Pulp
+      name: pulps.repo-manager.pulpproject.org
+      version: v1beta1
+    - kind: Pulp
+      name: pulps.repo-manager.pulpproject.org
+      version: v1beta2
+    - kind: Pulp
+      name: pulps.repo-manager.pulpproject.org
+      version: v1beta3
   description: |-
     [Pulp](https://pulpproject.org/) is a platform for managing repositories of content, such as software packages, and making them available to a large number of consumers.
 

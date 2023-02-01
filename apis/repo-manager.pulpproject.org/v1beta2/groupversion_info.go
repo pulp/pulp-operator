@@ -14,10 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package v1alpha1 contains API Schema definitions for the repo-manager v1alpha1 API group
-//+kubebuilder:object:generate=true
-//+groupName=repo-manager.pulpproject.org
-package v1alpha1
+// Package v1beta2 contains API Schema definitions for the repo-manager.pulpproject.org v1beta2 API group
+// +kubebuilder:object:generate=true
+// +groupName=repo-manager.pulpproject.org
+package v1beta2
 
 import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -26,7 +26,7 @@ import (
 
 var (
 	// GroupVersion is group version used to register these objects
-	GroupVersion = schema.GroupVersion{Group: "repo-manager.pulpproject.org", Version: "v1alpha1"}
+	GroupVersion = schema.GroupVersion{Group: "repo-manager.pulpproject.org", Version: "v1beta2"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}

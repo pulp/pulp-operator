@@ -1,0 +1,27 @@
+# permissions for end users to view pulps.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: pulp-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: pulp-operator
+    app.kubernetes.io/part-of: pulp-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: pulp-viewer-role
+rules:
+- apiGroups:
+  - repo-manager.pulpproject.org
+  resources:
+  - pulps
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - repo-manager.pulpproject.org
+  resources:
+  - pulps/status
+  verbs:
+  - get

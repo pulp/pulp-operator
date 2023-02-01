@@ -34,12 +34,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/go-logr/logr"
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	repomanagerpulpprojectorgv1beta3 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta3"
 	"github.com/pulp/pulp-operator/controllers"
 )
 
 // pulpRouteController creates the routes based on snippets defined in pulp-worker pod
-func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta3.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Route-Ready"

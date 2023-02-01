@@ -1,5 +1,5 @@
 ---
-apiVersion: repo-manager.pulpproject.org/v1alpha1
+apiVersion: repo-manager.pulpproject.org/v1beta3
 kind: PulpBackup
 metadata:
   name: pulpbackup-sample

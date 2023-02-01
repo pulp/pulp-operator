@@ -38,11 +38,11 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/go-logr/logr"
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	repomanagerpulpprojectorgv1beta3 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta3"
 	"github.com/pulp/pulp-operator/controllers"
 )
 
-func (r *RepoManagerReconciler) databaseController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) databaseController(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta3.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Database-Ready"
@@ -182,7 +182,7 @@ func (r *RepoManagerReconciler) databaseController(ctx context.Context, pulp *re
 }
 
 // statefulSetForDatabase returns a postgresql Deployment object
-func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
+func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta3.Pulp) *appsv1.StatefulSet {
 
 	ls := labelsForDatabase(m)
 	//replicas := m.Spec.Database.Replicas
@@ -518,7 +518,7 @@ func statefulSetForDatabase(m *repomanagerv1alpha1.Pulp) *appsv1.StatefulSet {
 
 // labelsForDatabase returns the labels for selecting the resources
 // belonging to the given pulp CR name.
-func labelsForDatabase(m *repomanagerv1alpha1.Pulp) map[string]string {
+func labelsForDatabase(m *repomanagerpulpprojectorgv1beta3.Pulp) map[string]string {
 	return map[string]string{
 		"app.kubernetes.io/name":       "postgres",
 		"app.kubernetes.io/instance":   "postgres-" + m.Name,
@@ -532,7 +532,7 @@ func labelsForDatabase(m *repomanagerv1alpha1.Pulp) map[string]string {
 }
 
 // serviceForDatabase returns a service object for postgres pods
-func serviceForDatabase(m *repomanagerv1alpha1.Pulp) *corev1.Service {
+func serviceForDatabase(m *repomanagerpulpprojectorgv1beta3.Pulp) *corev1.Service {
 	serviceInternalTrafficPolicyCluster := corev1.ServiceInternalTrafficPolicyType("Cluster")
 	ipFamilyPolicyType := corev1.IPFamilyPolicyType("SingleStack")
 	serviceAffinity := corev1.ServiceAffinity("None")
@@ -568,7 +568,7 @@ func serviceForDatabase(m *repomanagerv1alpha1.Pulp) *corev1.Service {
 }
 
 // pulp-postgres-configuration secret
-func databaseConfigSecret(m *repomanagerv1alpha1.Pulp) *corev1.Secret {
+func databaseConfigSecret(m *repomanagerpulpprojectorgv1beta3.Pulp) *corev1.Secret {
 
 	sslMode := ""
 	if m.Spec.Database.PostgresSSLMode == "" {

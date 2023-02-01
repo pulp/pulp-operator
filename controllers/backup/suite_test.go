@@ -55,7 +55,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	err = repomanagerv1alpha1.AddToScheme(scheme.Scheme)
+	err = repomanagerpulpprojectorgv1beta3.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:scheme

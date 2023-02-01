@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	repomanagerpulpprojectorgv1beta3 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta3"
 	"github.com/pulp/pulp-operator/controllers"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -20,8 +20,8 @@ type PodReplicas struct {
 }
 
 // restorePulpCR recreates the pulp CR with the content from backup
-func (r *RepoManagerRestoreReconciler) restorePulpCR(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupDir string, pod *corev1.Pod) (PodReplicas, error) {
-	pulp := &repomanagerv1alpha1.Pulp{}
+func (r *RepoManagerRestoreReconciler) restorePulpCR(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta3.PulpRestore, backupDir string, pod *corev1.Pod) (PodReplicas, error) {
+	pulp := &repomanagerpulpprojectorgv1beta3.Pulp{}
 	podReplicas := PodReplicas{}
 
 	// we'll recreate pulp instance only if it was not found
@@ -41,7 +41,7 @@ func (r *RepoManagerRestoreReconciler) restorePulpCR(ctx context.Context, pulpRe
 			return PodReplicas{}, err
 		}
 
-		pulp := repomanagerv1alpha1.Pulp{
+		pulp := repomanagerpulpprojectorgv1beta3.Pulp{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      pulpRestore.Spec.DeploymentName,
 				Namespace: pulpRestore.Namespace,
@@ -77,9 +77,9 @@ func (r *RepoManagerRestoreReconciler) restorePulpCR(ctx context.Context, pulpRe
 // scaleDeployments will rescale the deployments with:
 // - if KeepBackupReplicasCount = true  - it will keep the same amount of replicas from backup
 // - if KeepBackupReplicasCount = false - it will deploy 1 replica for each component
-func (r *RepoManagerRestoreReconciler) scaleDeployments(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, podReplicas PodReplicas) error {
+func (r *RepoManagerRestoreReconciler) scaleDeployments(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta3.PulpRestore, podReplicas PodReplicas) error {
 	log := r.RawLogger
-	pulp := &repomanagerv1alpha1.Pulp{}
+	pulp := &repomanagerpulpprojectorgv1beta3.Pulp{}
 
 	if err := r.Get(ctx, types.NamespacedName{Name: pulpRestore.Spec.DeploymentName, Namespace: pulpRestore.Namespace}, pulp); err != nil && errors.IsNotFound(err) {
 		// Error reading the object - requeue the request.

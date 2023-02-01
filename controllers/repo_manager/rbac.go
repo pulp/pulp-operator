@@ -21,7 +21,7 @@ import (
 	"reflect"
 	"regexp"
 
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	repomanagerpulpprojectorgv1beta3 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta3"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	corev1 "k8s.io/api/core/v1"
@@ -32,7 +32,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *RepoManagerReconciler) CreateServiceAccount(ctx context.Context, pulp *repomanagerv1alpha1.Pulp) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) CreateServiceAccount(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta3.Pulp) (ctrl.Result, error) {
 	log := r.RawLogger
 	conditionType := getApiConditionType(pulp)
 	sa := &corev1.ServiceAccount{}
@@ -76,7 +76,7 @@ func (r *RepoManagerReconciler) CreateServiceAccount(ctx context.Context, pulp *
 	return r.CreateRole(ctx, pulp)
 }
 
-func (r *RepoManagerReconciler) CreateRole(ctx context.Context, pulp *repomanagerv1alpha1.Pulp) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) CreateRole(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta3.Pulp) (ctrl.Result, error) {
 	log := r.RawLogger
 	conditionType := getApiConditionType(pulp)
 	role := &rbacv1.Role{}
@@ -102,7 +102,7 @@ func (r *RepoManagerReconciler) CreateRole(ctx context.Context, pulp *repomanage
 	return r.CreateRoleBinding(ctx, pulp)
 }
 
-func (r *RepoManagerReconciler) CreateRoleBinding(ctx context.Context, pulp *repomanagerv1alpha1.Pulp) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) CreateRoleBinding(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta3.Pulp) (ctrl.Result, error) {
 	log := r.RawLogger
 	conditionType := getApiConditionType(pulp)
 	rolebinding := &rbacv1.RoleBinding{}
@@ -128,7 +128,7 @@ func (r *RepoManagerReconciler) CreateRoleBinding(ctx context.Context, pulp *rep
 	return ctrl.Result{}, nil
 }
 
-func (r *RepoManagerReconciler) pulpSA(m *repomanagerv1alpha1.Pulp) *corev1.ServiceAccount {
+func (r *RepoManagerReconciler) pulpSA(m *repomanagerpulpprojectorgv1beta3.Pulp) *corev1.ServiceAccount {
 	var imagePullSecrets []corev1.LocalObjectReference
 
 	for _, pullSecret := range m.Spec.ImagePullSecrets {
@@ -158,7 +158,8 @@ func (r *RepoManagerReconciler) pulpSA(m *repomanagerv1alpha1.Pulp) *corev1.Serv
 
 // getInternalRegistrySecret gets the imagePullSecret for the internal registry that is created
 // and added to the SA in OCP environments based on pattern:
-//  <operator_instance_name>-dockercfg-<hash>
+//
+//	<operator_instance_name>-dockercfg-<hash>
 func (r *RepoManagerReconciler) getInternalRegistrySecret(ctx context.Context, saName, saNamespace string) string {
 	sa := &corev1.ServiceAccount{}
 	r.Get(ctx, types.NamespacedName{Name: saName, Namespace: saNamespace}, sa)
@@ -171,7 +172,7 @@ func (r *RepoManagerReconciler) getInternalRegistrySecret(ctx context.Context, s
 	return ""
 }
 
-func (r *RepoManagerReconciler) pulpRole(m *repomanagerv1alpha1.Pulp) *rbacv1.Role {
+func (r *RepoManagerReconciler) pulpRole(m *repomanagerpulpprojectorgv1beta3.Pulp) *rbacv1.Role {
 	return &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name,
@@ -201,7 +202,7 @@ func (r *RepoManagerReconciler) pulpRole(m *repomanagerv1alpha1.Pulp) *rbacv1.Ro
 	}
 }
 
-func (r *RepoManagerReconciler) pulpRoleBinding(m *repomanagerv1alpha1.Pulp) *rbacv1.RoleBinding {
+func (r *RepoManagerReconciler) pulpRoleBinding(m *repomanagerpulpprojectorgv1beta3.Pulp) *rbacv1.RoleBinding {
 	return &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name,
@@ -226,6 +227,6 @@ func (r *RepoManagerReconciler) pulpRoleBinding(m *repomanagerv1alpha1.Pulp) *rb
 }
 
 // getConditionType returns a string with the .status.conditions.type from API resource
-func getApiConditionType(m *repomanagerv1alpha1.Pulp) string {
+func getApiConditionType(m *repomanagerpulpprojectorgv1beta3.Pulp) string {
 	return cases.Title(language.English, cases.Compact).String(m.Spec.DeploymentType) + "-API-Ready"
 }

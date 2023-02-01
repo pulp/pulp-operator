@@ -3,13 +3,13 @@ package repo_manager_restore
 import (
 	"context"
 
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	repomanagerpulpprojectorgv1beta3 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta3"
 	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 )
 
 // backupPulpDir copies the content of /var/lib/pulp into the backup PVC
-func (r *RepoManagerRestoreReconciler) restorePulpDir(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupPVCName, backupDir string, pod *corev1.Pod) error {
+func (r *RepoManagerRestoreReconciler) restorePulpDir(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta3.PulpRestore, backupPVCName, backupDir string, pod *corev1.Pod) error {
 
 	// if file-storage PVC is not provisioned it means that pulp is deployed with object storage
 	// in this case, we should just return without action

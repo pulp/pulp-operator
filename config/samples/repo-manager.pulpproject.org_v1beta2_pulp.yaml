@@ -1,0 +1,12 @@
+apiVersion: repo-manager.pulpproject.org/v1beta2
+kind: Pulp
+metadata:
+  labels:
+    app.kubernetes.io/name: pulp
+    app.kubernetes.io/instance: pulp-sample
+    app.kubernetes.io/part-of: pulp-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: pulp-operator
+  name: pulp-sample
+spec:
+  # TODO(user): Add fields here

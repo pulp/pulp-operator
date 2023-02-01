@@ -33,11 +33,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/go-logr/logr"
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	repomanagerpulpprojectorgv1beta3 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta3"
 	"github.com/pulp/pulp-operator/controllers"
 )
 
-func (r *RepoManagerReconciler) pulpWorkerController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) pulpWorkerController(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta3.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Worker-Ready"
@@ -530,7 +530,7 @@ func deploymentForPulpWorker(resources FunctionResources) client.Object {
 
 // labelsForPulpWorker returns the labels for selecting the resources
 // belonging to the given pulp CR name.
-func labelsForPulpWorker(m *repomanagerv1alpha1.Pulp) map[string]string {
+func labelsForPulpWorker(m *repomanagerpulpprojectorgv1beta3.Pulp) map[string]string {
 	return map[string]string{
 		"app.kubernetes.io/name":       m.Spec.DeploymentType + "-worker",
 		"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-worker-" + m.Name,

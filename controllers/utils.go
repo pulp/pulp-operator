@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	repomanagerpulpprojectorgv1beta3 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta3"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -71,7 +71,7 @@ func IsOpenShift() (bool, error) {
 // multiStorageConfigured returns true if Pulp CR is configured with more than one "storage type"
 // for example, if ObjectStorageAzureSecret and FileStorageClass are defined we can't determine
 // which one the operator should use.
-func MultiStorageConfigured(pulp *repomanagerv1alpha1.Pulp, resource string) (bool, []string) {
+func MultiStorageConfigured(pulp *repomanagerpulpprojectorgv1beta3.Pulp, resource string) (bool, []string) {
 	var names []string
 
 	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
@@ -252,7 +252,7 @@ func CustomZapLogger() *zap.Logger {
 
 // CheckEmptyDir creates a log warn message in case no persistent storage is provided
 // for the given resource
-func CheckEmptyDir(pulp *repomanagerv1alpha1.Pulp, resource string) {
+func CheckEmptyDir(pulp *repomanagerpulpprojectorgv1beta3.Pulp, resource string) {
 	_, storageType := MultiStorageConfigured(pulp, resource)
 	if storageType[0] == EmptyDirType {
 		logger := CustomZapLogger()

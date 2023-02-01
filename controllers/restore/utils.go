@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	repomanagerpulpprojectorgv1beta3 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta3"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
@@ -18,7 +18,7 @@ const CMLock = "restore-lock"
 // isFileStorage returns true if pulp is deployed with storage type = file
 // this is a workaround to identify if it will be necessary to mount /var/lib/pulp in the backup-manager pod
 // to restore its contents
-func (r *RepoManagerRestoreReconciler) isFileStorage(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore) bool {
+func (r *RepoManagerRestoreReconciler) isFileStorage(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta3.PulpRestore) bool {
 	// if file-storage PVC is not provisioned it means that pulp is deployed with object storage
 	// in this case, we should just return restorePulpDir without action
 	fileStoragePVC := &corev1.PersistentVolumeClaim{}
@@ -30,7 +30,7 @@ func (r *RepoManagerRestoreReconciler) isFileStorage(ctx context.Context, pulpRe
 }
 
 // backupPVCFound returns the name of PVC and true if backup-claim PVC is found else return nil,false
-func (r *RepoManagerRestoreReconciler) backupPVCFound(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore) (string, bool) {
+func (r *RepoManagerRestoreReconciler) backupPVCFound(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta3.PulpRestore) (string, bool) {
 
 	backupPVCName := ""
 	if pulpRestore.Spec.BackupPVC == "" {
@@ -48,7 +48,7 @@ func (r *RepoManagerRestoreReconciler) backupPVCFound(ctx context.Context, pulpR
 
 // [TODO] refactor updateStatus so that it can be used by pulp, pulpRestore, and pulpBackup controllers
 // updateStatus modifies a .status.condition from pulpbackup CR
-func (r *RepoManagerRestoreReconciler) updateStatus(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, conditionStatus metav1.ConditionStatus, conditionType, conditionMessage, conditionReason string) {
+func (r *RepoManagerRestoreReconciler) updateStatus(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta3.PulpRestore, conditionStatus metav1.ConditionStatus, conditionType, conditionMessage, conditionReason string) {
 	v1.SetStatusCondition(&pulpRestore.Status.Conditions, metav1.Condition{
 		Type:               conditionType,
 		Status:             conditionStatus,
@@ -61,7 +61,7 @@ func (r *RepoManagerRestoreReconciler) updateStatus(ctx context.Context, pulpRes
 
 // [TODO] refactor cleanup so that it can be used by pulpRestore and pulpBackup controllers
 // cleanup deletes the backup-manager pod
-func (r *RepoManagerRestoreReconciler) cleanup(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore) error {
+func (r *RepoManagerRestoreReconciler) cleanup(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta3.PulpRestore) error {
 	restorePod := &corev1.Pod{}
 	r.Get(ctx, types.NamespacedName{Name: pulpRestore.Name + "-backup-manager", Namespace: pulpRestore.Namespace}, restorePod)
 	r.Delete(ctx, restorePod)
@@ -81,7 +81,7 @@ func (r *RepoManagerRestoreReconciler) cleanup(ctx context.Context, pulpRestore 
 
 // [TODO] refactor createBackupPod so that it can be used by pulpRestore and pulpBackup controllers
 // createBackupPod provisions the backup-manager pod where the restore steps will run
-func (r *RepoManagerRestoreReconciler) createRestorePod(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore, backupPVCName, backupDir string) (*corev1.Pod, error) {
+func (r *RepoManagerRestoreReconciler) createRestorePod(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta3.PulpRestore, backupPVCName, backupDir string) (*corev1.Pod, error) {
 	log := r.RawLogger
 
 	labels := map[string]string{
@@ -209,7 +209,7 @@ func (r *RepoManagerRestoreReconciler) waitPodReady(ctx context.Context, namespa
 // This is to avoid scenarios in which a restore CR is kept after a restore already finished and
 // a new reconciliation loop run trying to overwrite the resources when it shouldn't.
 // To rerun a restore the user will have to manually delete the lock configmap first.
-func (r *RepoManagerRestoreReconciler) createLockConfigMap(ctx context.Context, pulpRestore *repomanagerv1alpha1.PulpRestore) {
+func (r *RepoManagerRestoreReconciler) createLockConfigMap(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta3.PulpRestore) {
 	log := r.RawLogger
 
 	configMap := &corev1.ConfigMap{}
