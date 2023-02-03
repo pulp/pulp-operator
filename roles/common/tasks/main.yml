@@ -46,3 +46,12 @@
     set_fact:
       web_url: "https://{{ route_host }}"
   when: ingress_type | lower == 'route'
+
+- name: Fail when ingress_type==ingress but ingress_class_name is not defined
+  fail:
+    msg: |
+         ingress_type is defined as "ingress", but no ingress_class_name provided!
+         Please, define which IngressClass the operator should use, or use a different ingress_type ["nodeport","route","loadbalancer","ingress"].
+  when:
+  - ingress_type | lower == 'ingress'
+  - (ingress_class_name is not defined) or (ingress_class_name|length == 0)

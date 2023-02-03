@@ -1,6 +1,6 @@
 ---
 # Use the 'create api' subcommand to add watches to this file.
-- version: v1beta1
+- version: v1beta2
   group: pulp.pulpproject.org
   kind: Pulp
   playbook: playbooks/pulp.yml
