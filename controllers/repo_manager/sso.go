@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"strings"
 
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
 // ssoConfig sets the configurations needed to authenticate pulp through keycloak
-func (r *RepoManagerReconciler) ssoConfig(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, pulpSettings *string) error {
+func (r *RepoManagerReconciler) ssoConfig(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, pulpSettings *string) error {
 	log := r.RawLogger
 
 	// Check for specified sso configuration secret

@@ -44,7 +44,7 @@ import (
 
 	"github.com/go-logr/logr"
 	routev1 "github.com/openshift/api/route/v1"
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
 )
 
@@ -103,7 +103,7 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
-	pulp := &repomanagerv1alpha1.Pulp{}
+	pulp := &repomanagerpulpprojectorgv1beta2.Pulp{}
 	err = r.Get(ctx, req.NamespacedName, pulp)
 
 	if err != nil {
@@ -194,13 +194,13 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	// Checking immutable fields update
 	immutableFields := []immutableField{
-		{FieldName: "DeploymentType", FieldPath: repomanagerv1alpha1.PulpSpec{}},
-		{FieldName: "ObjectStorageAzureSecret", FieldPath: repomanagerv1alpha1.PulpSpec{}},
-		{FieldName: "ObjectStorageS3Secret", FieldPath: repomanagerv1alpha1.PulpSpec{}},
-		{FieldName: "DBFieldsEncryptionSecret", FieldPath: repomanagerv1alpha1.PulpSpec{}},
-		{FieldName: "ContainerTokenSecret", FieldPath: repomanagerv1alpha1.PulpSpec{}},
-		{FieldName: "AdminPasswordSecret", FieldPath: repomanagerv1alpha1.PulpSpec{}},
-		{FieldName: "ExternalCacheSecret", FieldPath: repomanagerv1alpha1.Cache{}},
+		{FieldName: "DeploymentType", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
+		{FieldName: "ObjectStorageAzureSecret", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
+		{FieldName: "ObjectStorageS3Secret", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
+		{FieldName: "DBFieldsEncryptionSecret", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
+		{FieldName: "ContainerTokenSecret", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
+		{FieldName: "AdminPasswordSecret", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
+		{FieldName: "ExternalCacheSecret", FieldPath: repomanagerpulpprojectorgv1beta2.Cache{}},
 	}
 	for _, field := range immutableFields {
 		// if tried to modify an immutable field we should trigger a reconcile loop
@@ -332,7 +332,7 @@ func (r *RepoManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.recorder = mgr.GetEventRecorderFor("Pulp")
 
 	controller := ctrl.NewControllerManagedBy(mgr).
-		For(&repomanagerv1alpha1.Pulp{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		For(&repomanagerpulpprojectorgv1beta2.Pulp{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&appsv1.StatefulSet{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.Service{}).

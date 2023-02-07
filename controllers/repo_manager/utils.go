@@ -21,7 +21,7 @@ import (
 	"github.com/go-logr/logr"
 	configv1 "github.com/openshift/api/config/v1"
 	routev1 "github.com/openshift/api/route/v1"
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/exp/maps"
@@ -115,7 +115,7 @@ func (r *RepoManagerReconciler) getSigningKeyFingerprint(secretName, secretNames
 
 }
 
-func getPulpSetting(pulp *repomanagerv1alpha1.Pulp, key string) string {
+func getPulpSetting(pulp *repomanagerpulpprojectorgv1beta2.Pulp, key string) string {
 	settings := pulp.Spec.PulpSettings.Raw
 	var settingsJson map[string]interface{}
 	json.Unmarshal(settings, &settingsJson)
@@ -145,7 +145,7 @@ func getPulpSetting(pulp *repomanagerv1alpha1.Pulp, key string) string {
 }
 
 // addCustomPulpSettings appends custom settings defined in Pulp CR to settings.py
-func addCustomPulpSettings(pulp *repomanagerv1alpha1.Pulp, current_settings string) string {
+func addCustomPulpSettings(pulp *repomanagerpulpprojectorgv1beta2.Pulp, current_settings string) string {
 	settings := pulp.Spec.PulpSettings.Raw
 	var settingsJson map[string]interface{}
 	json.Unmarshal(settings, &settingsJson)
@@ -184,7 +184,7 @@ func genTokenAuthKey() (string, string) {
 
 // updateStatus will set the new condition value for a .status.conditions[]
 // it will also set Pulp-Operator-Finished-Execution to false
-func (r *RepoManagerReconciler) updateStatus(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, conditionStatus metav1.ConditionStatus, conditionType, conditionReason, conditionMessage string) {
+func (r *RepoManagerReconciler) updateStatus(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, conditionStatus metav1.ConditionStatus, conditionType, conditionReason, conditionMessage string) {
 
 	// if we are updating a status it means that operator didn't finish its execution
 	// set Pulp-Operator-Finished-Execution to false
@@ -214,7 +214,7 @@ func (r *RepoManagerReconciler) updateStatus(ctx context.Context, pulp *repomana
 }
 
 // updatCRField patches fieldName in Pulp CR with fieldValue
-func (r *RepoManagerReconciler) updateCRField(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, fieldName, fieldValue string) error {
+func (r *RepoManagerReconciler) updateCRField(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, fieldName, fieldValue string) error {
 	field := reflect.Indirect(reflect.ValueOf(&pulp.Spec)).FieldByName(fieldName)
 
 	// we will only set the field (with default values) if there is nothing defined yet
@@ -231,7 +231,7 @@ func (r *RepoManagerReconciler) updateCRField(ctx context.Context, pulp *repoman
 
 // createEmptyConfigMap creates an empty ConfigMap that is used by CNO (Cluster Network Operator) to
 // inject custom CA into containers
-func (r *RepoManagerReconciler) createEmptyConfigMap(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) createEmptyConfigMap(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	configMap := &corev1.ConfigMap{}
 	err := r.Get(ctx, types.NamespacedName{Name: caConfigMapName, Namespace: pulp.Namespace}, configMap)
@@ -266,7 +266,7 @@ func (r *RepoManagerReconciler) createEmptyConfigMap(ctx context.Context, pulp *
 }
 
 // mountCASpec adds the trusted-ca bundle into []volume and []volumeMount if pulp.Spec.TrustedCA is true
-func mountCASpec(pulp *repomanagerv1alpha1.Pulp, volumes []corev1.Volume, volumeMounts []corev1.VolumeMount) ([]corev1.Volume, []corev1.VolumeMount) {
+func mountCASpec(pulp *repomanagerpulpprojectorgv1beta2.Pulp, volumes []corev1.Volume, volumeMounts []corev1.VolumeMount) ([]corev1.Volume, []corev1.VolumeMount) {
 
 	if pulp.Spec.TrustedCa {
 
@@ -301,7 +301,7 @@ func mountCASpec(pulp *repomanagerv1alpha1.Pulp, volumes []corev1.Volume, volume
 
 // checkImmutableFields verifies if a user tried to modify an immutable field and rollback
 // the change if so
-func (r *RepoManagerReconciler) checkImmutableFields(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, field immutableField, log logr.Logger) bool {
+func (r *RepoManagerReconciler) checkImmutableFields(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, field immutableField, log logr.Logger) bool {
 
 	fieldSpec := reflect.Value{}
 
@@ -309,9 +309,9 @@ func (r *RepoManagerReconciler) checkImmutableFields(ctx context.Context, pulp *
 	// for fieldSpec we need to pass it as a reference because we will need to change
 	// its value back in case of immutable field
 	switch field.FieldPath.(type) {
-	case repomanagerv1alpha1.PulpSpec:
+	case repomanagerpulpprojectorgv1beta2.PulpSpec:
 		fieldSpec = reflect.Indirect(reflect.ValueOf(&pulp.Spec)).FieldByName(field.FieldName)
-	case repomanagerv1alpha1.Cache:
+	case repomanagerpulpprojectorgv1beta2.Cache:
 		fieldSpec = reflect.Indirect(reflect.ValueOf(&pulp.Spec.Cache)).FieldByName(field.FieldName)
 	}
 
@@ -343,7 +343,7 @@ func (r *RepoManagerReconciler) checkImmutableFields(ctx context.Context, pulp *
 
 // updateIngressType will check the current definition of ingress_type and will handle the different
 // modification scenarios
-func (r *RepoManagerReconciler) updateIngressType(ctx context.Context, pulp *repomanagerv1alpha1.Pulp) {
+func (r *RepoManagerReconciler) updateIngressType(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) {
 
 	// if pulp CR was defined with route and user modified it to anything else
 	// delete all routes with operator's labels
@@ -434,7 +434,7 @@ func (r *RepoManagerReconciler) updateIngressType(ctx context.Context, pulp *rep
 
 // updateIngressClass will check the current definition of ingress_class_name and will handle the different
 // modification scenarios
-func (r *RepoManagerReconciler) updateIngressClass(ctx context.Context, pulp *repomanagerv1alpha1.Pulp) {
+func (r *RepoManagerReconciler) updateIngressClass(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) {
 
 	// if the new one uses nginx controller
 	if r.isNginxIngress(pulp) {
@@ -634,13 +634,13 @@ type ResourceDefinition struct {
 	// ConditionType is used to update .status.conditions with the current resource state
 	ConditionType string
 	// Pulp is the Schema for the pulps API
-	*repomanagerv1alpha1.Pulp
+	*repomanagerpulpprojectorgv1beta2.Pulp
 }
 
 // FunctionResources contains the list of arguments passed to create new Pulp resources
 type FunctionResources struct {
 	context.Context
-	*repomanagerv1alpha1.Pulp
+	*repomanagerpulpprojectorgv1beta2.Pulp
 	logr.Logger
 	*RepoManagerReconciler
 }
@@ -725,12 +725,12 @@ func needsRequeue(err error, pulpController ctrl.Result) bool {
 }
 
 // isNginxIngress will check if ingress_type is defined as "ingress"
-func isIngress(pulp *repomanagerv1alpha1.Pulp) bool {
+func isIngress(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
 	return strings.ToLower(pulp.Spec.IngressType) == "ingress"
 }
 
 // isNginxIngress returns true if pulp is defined with ingress_type==ingress and the controller of the ingresclass provided is a nginx
-func (r *RepoManagerReconciler) isNginxIngress(pulp *repomanagerv1alpha1.Pulp) bool {
+func (r *RepoManagerReconciler) isNginxIngress(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
 	return isIngress(pulp) && controllers.IsNginxIngressSupported(r, pulp.Spec.IngressClassName)
 }
 

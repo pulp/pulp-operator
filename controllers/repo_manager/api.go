@@ -34,7 +34,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/go-logr/logr"
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -47,7 +47,7 @@ type ApiResource struct {
 }
 
 // pulpApiController provision and reconciles api objects
-func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-API-Ready"
@@ -782,7 +782,7 @@ func deploymentForPulpApi(resources FunctionResources) client.Object {
 
 // labelsForPulpApi returns the labels for selecting the resources
 // belonging to the given pulp CR name.
-func labelsForPulpApi(m *repomanagerv1alpha1.Pulp) map[string]string {
+func labelsForPulpApi(m *repomanagerpulpprojectorgv1beta2.Pulp) map[string]string {
 	return map[string]string{
 		"app.kubernetes.io/name":       m.Spec.DeploymentType + "-api",
 		"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-api-" + m.Name,
@@ -1106,7 +1106,7 @@ func serviceAPISpec(name, namespace, deployment_type string) corev1.ServiceSpec 
 }
 
 // storageClassProvided returns true if a StorageClass is provided in Pulp CR
-func storageClassProvided(pulp *repomanagerv1alpha1.Pulp) bool {
+func storageClassProvided(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
 	_, storageType := controllers.MultiStorageConfigured(pulp, "Pulp")
 	return storageType[0] == controllers.SCNameType
 }

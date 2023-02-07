@@ -14,6 +14,7 @@
 * [PulpSpec](#pulpspec)
 * [PulpStatus](#pulpstatus)
 * [Redis](#redis)
+* [ResourceManager](#resourcemanager)
 * [Web](#web)
 * [Worker](#worker)
 
@@ -122,7 +123,7 @@ Database defines desired state of postgres
 
 #### Pulp
 
-Pulp is the Schema for the pulps API
+
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
@@ -225,6 +226,11 @@ PulpSpec defines the desired state of Pulp
 | route_tls_termination_mechanism | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. The secure TLS termination mechanism to use in pulp-web pods. Default: \"edge\" | string | false |
 | loadbalancer_protocol | Protocol used by pulp-web service when ingress_type==loadbalancer | string | false |
 | loadbalancer_port | Port exposed by pulp-web service when ingress_type==loadbalancer | int32 | false |
+| postgres_migrant_configuration_secret | [TODO] Pending implementation, added just to keep compatibility [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Secret where the old database configuration can be found for data migration | string | false |
+| postgres_label_selector | [TODO] Pending implementation, added just to keep compatibility [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Label selector used to identify postgres pod for executing migration | string | false |
+| postgres_keep_pvc_after_upgrade | [TODO] Pending implementation, added just to keep compatibility [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Specify whether or not to keep the old PVC after PostgreSQL upgrades | bool | false |
+| no_log | Configure no_log for no_log tasks | bool | false |
+| resource_manager |  | [ResourceManager](#resourcemanager) | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -269,6 +275,18 @@ PulpStatus defines the observed state of Pulp
 | redis_resource_requirements |  | *corev1.ResourceRequirements | false |
 | resource_requirements |  | *corev1.ResourceRequirements | false |
 | strategy |  | *appsv1.DeploymentStrategy | false |
+
+[Back to Custom Resources](#custom-resources)
+
+#### ResourceManager
+
+[DEPRECATED] Temporarily adding to keep compatibility with ansible version
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| replicas |  | int32 | true |
+| strategy |  | *appsv1.DeploymentStrategy | false |
+| resource_requirements |  | *corev1.ResourceRequirements | false |
 
 [Back to Custom Resources](#custom-resources)
 

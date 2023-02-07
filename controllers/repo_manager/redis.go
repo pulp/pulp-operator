@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -19,7 +19,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *RepoManagerReconciler) pulpCacheController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) pulpCacheController(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// pulp-redis-data PVC
 	// the PVC will be created only if a StorageClassName is provided
@@ -138,7 +138,7 @@ func (r *RepoManagerReconciler) pulpCacheController(ctx context.Context, pulp *r
 }
 
 // pulp-redis-data PVC
-func redisDataPVC(m *repomanagerv1alpha1.Pulp) *corev1.PersistentVolumeClaim {
+func redisDataPVC(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.PersistentVolumeClaim {
 
 	storageClass := &m.Spec.Cache.RedisStorageClass
 	if len(m.Spec.RedisStorageClass) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
@@ -174,7 +174,7 @@ func redisDataPVC(m *repomanagerv1alpha1.Pulp) *corev1.PersistentVolumeClaim {
 }
 
 // redis-svc Service
-func redisSvc(m *repomanagerv1alpha1.Pulp) *corev1.Service {
+func redisSvc(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Service {
 	servicePortProto := corev1.Protocol("TCP")
 	targetPort := intstr.IntOrString{IntVal: 6379}
 	port := m.Spec.Cache.RedisPort
@@ -213,7 +213,7 @@ func redisSvc(m *repomanagerv1alpha1.Pulp) *corev1.Service {
 }
 
 // redisDeployment returns a Redis Deployment object
-func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
+func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.Deployment {
 
 	replicas := int32(1)
 
@@ -418,7 +418,7 @@ func redisDeployment(m *repomanagerv1alpha1.Pulp) *appsv1.Deployment {
 
 // deprovisionCache removes Redis resources in case cache is not enabled anymore
 // or in case of a new definition with an external Redis instance
-func (r *RepoManagerReconciler) deprovisionCache(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) deprovisionCache(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, log logr.Logger) (ctrl.Result, error) {
 	// redis-svc Service
 	svcFound := &corev1.Service{}
 	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-redis-svc", Namespace: pulp.Namespace}, svcFound)

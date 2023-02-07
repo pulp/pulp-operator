@@ -5,4 +5,6 @@ resources:
 - galaxy.yaml
 - repo-manager_v1alpha1_pulpbackup.yaml
 - repo-manager_v1alpha1_pulprestore.yaml
+- repo-manager.pulpproject.org_v1beta1_pulp.yaml
+- repo-manager.pulpproject.org_v1beta2_pulp.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

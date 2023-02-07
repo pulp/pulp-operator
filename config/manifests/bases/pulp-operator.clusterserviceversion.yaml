@@ -235,7 +235,275 @@ spec:
       - description: Objectstorage configuration secret used by the deployed instance
         displayName: Storage Secret
         path: storageSecret
+      version: v1beta2
+    - description: PulpBackup is the Schema for the pulpbackups API
+      displayName: Pulp Backup
+      kind: PulpBackup
+      name: pulpbackups.repo-manager.pulpproject.org
+      specDescriptors:
+      - description: Secret where the administrator password can be found
+        displayName: Admin Password Secret
+        path: admin_password_secret
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+      - description: Affinity is a group of affinity scheduling rules.
+        displayName: Affinity
+        path: affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Name of the PVC to be used for storing the backup
+        displayName: Backup PVC
+        path: backup_pvc
+      - description: Namespace PVC is in
+        displayName: Backup PVCNamespace
+        path: backup_pvc_namespace
+      - description: Storage class to use when creating PVC for backup
+        displayName: Backup SC
+        path: backup_storage_class
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:StorageClass
+      - description: Storage requirements for the backup
+        displayName: Backup Storage Req
+        path: backup_storage_requirements
+      - description: Name of the deployment to be backed up
+        displayName: Deployment Name
+        path: deployment_name
+      - description: Name of the deployment type. Can be one of {galaxy,pulp}.
+        displayName: Deployment Type
+        path: deployment_type
+      - displayName: Instance Name
+        path: instance_name
+      - description: Secret where the database configuration can be found
+        displayName: Database configuration
+        path: postgres_configuration_secret
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+      - description: Label selector used to identify postgres pod for executing migration
+        displayName: Postgres Label Selector
+        path: postgres_label_selector
+      statusDescriptors:
+      - description: Administrator password secret used by the deployed instance
+        displayName: Admin Password Secret
+        path: adminPasswordSecret
+      - description: The PVC name used for the backup
+        displayName: Backup Claim
+        path: backupClaim
+      - description: The directory data is backed up to on the PVC
+        displayName: Backup Directory
+        path: backupDirectory
+      - description: The namespace used for the backup claim
+        displayName: Backup Namespace
+        path: backupNamespace
+      - displayName: Conditions
+        path: conditions
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes.conditions
+      - description: Container token configuration secret used by the deployed instance
+        displayName: Container Token Secret
+        path: containerTokenSecret
+      - description: Database configuration secret used by the deployed instance
+        displayName: Database Config Secret
+        path: databaseConfigurationSecret
+      - description: DB fields encryption configuration secret used by deployed instance
+        displayName: DBFields Encryption Secret
+        path: dbFieldsEncryptionSecret
+      - description: Name of the deployment backed up
+        displayName: Deployment Name
+        path: deploymentName
+      - description: The deployment storage type
+        displayName: Deployment Storage Type
+        path: deploymentStorageType
+      - description: Objectstorage configuration secret used by the deployed instance
+        displayName: Storage Secret
+        path: storageSecret
+      version: v1beta1
+    - description: PulpBackup is the Schema for the pulpbackups API
+      displayName: Pulp Backup
+      kind: PulpBackup
+      name: pulpbackups.repo-manager.pulpproject.org
+      specDescriptors:
+      - description: Secret where the administrator password can be found
+        displayName: Admin Password Secret
+        path: admin_password_secret
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+      - description: Affinity is a group of affinity scheduling rules.
+        displayName: Affinity
+        path: affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Name of the PVC to be used for storing the backup
+        displayName: Backup PVC
+        path: backup_pvc
+      - description: Namespace PVC is in
+        displayName: Backup PVCNamespace
+        path: backup_pvc_namespace
+      - description: Storage class to use when creating PVC for backup
+        displayName: Backup SC
+        path: backup_storage_class
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:StorageClass
+      - description: Storage requirements for the backup
+        displayName: Backup Storage Req
+        path: backup_storage_requirements
+      - description: Name of the deployment to be backed up
+        displayName: Deployment Name
+        path: deployment_name
+      - description: Name of the deployment type. Can be one of {galaxy,pulp}.
+        displayName: Deployment Type
+        path: deployment_type
+      - displayName: Instance Name
+        path: instance_name
+      - description: Secret where the database configuration can be found
+        displayName: Database configuration
+        path: postgres_configuration_secret
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+      - description: Label selector used to identify postgres pod for executing migration
+        displayName: Postgres Label Selector
+        path: postgres_label_selector
+      statusDescriptors:
+      - description: Administrator password secret used by the deployed instance
+        displayName: Admin Password Secret
+        path: adminPasswordSecret
+      - description: The PVC name used for the backup
+        displayName: Backup Claim
+        path: backupClaim
+      - description: The directory data is backed up to on the PVC
+        displayName: Backup Directory
+        path: backupDirectory
+      - description: The namespace used for the backup claim
+        displayName: Backup Namespace
+        path: backupNamespace
+      - displayName: Conditions
+        path: conditions
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes.conditions
+      - description: Container token configuration secret used by the deployed instance
+        displayName: Container Token Secret
+        path: containerTokenSecret
+      - description: Database configuration secret used by the deployed instance
+        displayName: Database Config Secret
+        path: databaseConfigurationSecret
+      - description: DB fields encryption configuration secret used by deployed instance
+        displayName: DBFields Encryption Secret
+        path: dbFieldsEncryptionSecret
+      - description: Name of the deployment backed up
+        displayName: Deployment Name
+        path: deploymentName
+      - description: The deployment storage type
+        displayName: Deployment Storage Type
+        path: deploymentStorageType
+      - description: Objectstorage configuration secret used by the deployed instance
+        displayName: Storage Secret
+        path: storageSecret
       version: v1alpha1
+    - description: PulpRestore is the Schema for the pulprestores API
+      displayName: Pulp Restore
+      kind: PulpRestore
+      name: pulprestores.repo-manager.pulpproject.org
+      specDescriptors:
+      - description: Backup directory name, set as a status found on the backup object
+          (backupDirectory)
+        displayName: Backup Dir
+        path: backup_dir
+      - description: Name of the backup custom resource
+        displayName: Backup Name
+        path: backup_name
+      - description: Name of the PVC to be restored from, set as a status found on
+          the backup object (backupClaim)
+        displayName: Backup PVC
+        path: backup_pvc
+      - description: Namespace the PVC is in
+        displayName: Backup PVCNamespace
+        path: backup_pvc_namespace
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Namespace
+      - description: backup source
+        displayName: Backup Source
+        path: backup_source
+      - description: Name of the deployment to be restored to
+        displayName: Deployment Name
+        path: deployment_name
+      - description: Name of the deployment type. Can be one of {galaxy,pulp}.
+        displayName: Deployment Type
+        path: deployment_type
+      - description: KeepBackupReplicasCount allows to define if the restore controller
+          should restore the components with the same number of replicas from backup
+          or restore only a single replica each.
+        displayName: Keep Backup Replicas Count
+        path: keep_replicas
+      - description: Label selector used to identify postgres pod for executing migration
+        displayName: Postgres Label Selector
+        path: postgres_label_selector
+      - description: Configuration for the storage type utilized in the backup
+        displayName: Storage Type
+        path: storage_type
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:select:File
+        - urn:alm:descriptor:com.tectonic.ui:select:S3
+        - urn:alm:descriptor:com.tectonic.ui:select:Azure
+      statusDescriptors:
+      - displayName: Conditions
+        path: conditions
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes.conditions
+      - displayName: Postgres Secret
+        path: postgres_secret
+      version: v1beta2
+    - description: PulpRestore is the Schema for the pulprestores API
+      displayName: Pulp Restore
+      kind: PulpRestore
+      name: pulprestores.repo-manager.pulpproject.org
+      specDescriptors:
+      - description: Backup directory name, set as a status found on the backup object
+          (backupDirectory)
+        displayName: Backup Dir
+        path: backup_dir
+      - description: Name of the backup custom resource
+        displayName: Backup Name
+        path: backup_name
+      - description: Name of the PVC to be restored from, set as a status found on
+          the backup object (backupClaim)
+        displayName: Backup PVC
+        path: backup_pvc
+      - description: Namespace the PVC is in
+        displayName: Backup PVCNamespace
+        path: backup_pvc_namespace
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Namespace
+      - description: backup source
+        displayName: Backup Source
+        path: backup_source
+      - description: Name of the deployment to be restored to
+        displayName: Deployment Name
+        path: deployment_name
+      - description: Name of the deployment type. Can be one of {galaxy,pulp}.
+        displayName: Deployment Type
+        path: deployment_type
+      - description: KeepBackupReplicasCount allows to define if the restore controller
+          should restore the components with the same number of replicas from backup
+          or restore only a single replica each.
+        displayName: Keep Backup Replicas Count
+        path: keep_replicas
+      - description: Label selector used to identify postgres pod for executing migration
+        displayName: Postgres Label Selector
+        path: postgres_label_selector
+      - description: Configuration for the storage type utilized in the backup
+        displayName: Storage Type
+        path: storage_type
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:select:File
+        - urn:alm:descriptor:com.tectonic.ui:select:S3
+        - urn:alm:descriptor:com.tectonic.ui:select:Azure
+      statusDescriptors:
+      - displayName: Conditions
+        path: conditions
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes.conditions
+      - displayName: Postgres Secret
+        path: postgres_secret
+      version: v1beta1
     - description: PulpRestore is the Schema for the pulprestores API
       displayName: Pulp Restore
       kind: PulpRestore

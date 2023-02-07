@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/go-logr/logr"
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
 )
 
@@ -43,7 +43,7 @@ type ContentResource struct {
 	Function   func(FunctionResources) client.Object
 }
 
-func (r *RepoManagerReconciler) pulpContentController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) pulpContentController(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Content-Ready"
@@ -565,7 +565,7 @@ func deploymentForPulpContent(resources FunctionResources) client.Object {
 
 // labelsForPulpContent returns the labels for selecting the resources
 // belonging to the given pulp CR name.
-func labelsForPulpContent(m *repomanagerv1alpha1.Pulp) map[string]string {
+func labelsForPulpContent(m *repomanagerpulpprojectorgv1beta2.Pulp) map[string]string {
 	return map[string]string{
 		"app.kubernetes.io/name":       m.Spec.DeploymentType + "-content",
 		"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-content-" + m.Name,
