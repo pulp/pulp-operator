@@ -113,9 +113,9 @@ help: ## Display this help.
 .PHONY: manifests
 manifests: controller-gen crd-to-markdown ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-	$(CRD_MARKDOWN) -f api/v1alpha1/repo_manager_types.go -n $(CR_KIND) > controllers/repo_manager/README.md
-	$(CRD_MARKDOWN) -f api/v1alpha1/repo_manager_backup_types.go -n $(CR_KIND)Backup > controllers/backup/README.md
-	$(CRD_MARKDOWN) -f api/v1alpha1/repo_manager_restore_types.go -n $(CR_KIND)Restore > controllers/restore/README.md
+	$(CRD_MARKDOWN) -f apis/repo-manager.$(CR_DOMAIN)/v1beta2/pulp_types.go -n $(CR_KIND) > controllers/repo_manager/README.md
+	$(CRD_MARKDOWN) -f apis/repo-manager.$(CR_DOMAIN)/v1beta2/pulp_backup_types.go -n $(CR_KIND)Backup > controllers/backup/README.md
+	$(CRD_MARKDOWN) -f apis/repo-manager.$(CR_DOMAIN)/v1beta2/pulp_restore_types.go -n $(CR_KIND)Restore > controllers/restore/README.md
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -159,13 +159,13 @@ build: generate fmt vet ## Build manager binary.
 
 .PHONY: rename
 rename: ## Replace Custom Resource name
-	find api/v1alpha1/*_types.go -exec sed -i "s/Pulp/${CR_KIND}/g" {} \;
+	find apis/repo-manager.pulpproject.org/*/*_types.go -exec sed -i "s/Pulp/${CR_KIND}/g" {} \;
 	find controllers/*.go -exec sed -i "s/Pulp/${CR_KIND}/g" {} \;
 	find controllers/*/*.go -exec sed -i "s/Pulp/${CR_KIND}/g" {} \;
 	find config/samples/*.yaml -exec sed -i "s/Pulp/${CR_KIND}/g" {} \;
 	sed -i "s/Pulp/${CR_KIND}/g" PROJECT
 	sed -i "s/pulpproject.org/${CR_DOMAIN}/g" PROJECT main.go
-	find api/v1alpha1/* -exec sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" {} \;
+	find apis/repo-manager.pulpproject.org/*/* -exec sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" {} \;
 	find bundle/manifests/* -exec sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" {} \;
 	find config/*/* -exec sed -i "s/pulps/${CR_PLURAL}/g" {} \;
 	find config/*/* -exec sed -i "s/pulprestores/${LOWER_CR_KIND}restores/g" {} \;
@@ -177,9 +177,9 @@ rename: ## Replace Custom Resource name
 	find controllers/*/*.go -exec sed -i "s/pulps/${CR_PLURAL}/g" {} \;
 	find controllers/*/*.go -exec sed -i "s/pulpbackup/${LOWER_CR_KIND}backup/g" {} \;
 	find controllers/*/*.go -exec sed -i "s/pulprestore/${LOWER_CR_KIND}restore/g" {} \;
-	sed -i "s/default:=\"pulp\"/default:=\"${LOWER_CR_KIND}\"/" api/v1alpha1/repo_manager_types.go
-	sed -i "s|quay.io/pulp/pulp-minimal|${APP_IMAGE}|g" api/v1alpha1/repo_manager_types.go
-	sed -i "s|quay.io/pulp/pulp-web|${WEB_IMAGE}|g" api/v1alpha1/repo_manager_types.go
+	sed -i "s/default:=\"pulp\"/default:=\"${LOWER_CR_KIND}\"/" apis/repo-manager.pulpproject.org/v1beta2/pulp_types.go
+	sed -i "s|quay.io/pulp/pulp-minimal|${APP_IMAGE}|g" apis/repo-manager.pulpproject.org/v1beta2/pulp_types.go
+	sed -i "s|quay.io/pulp/pulp-web|${WEB_IMAGE}|g" apis/repo-manager.pulpproject.org/v1beta2/pulp_types.go
 	sed -i '0,/OperatorType/s/OperatorType.*/OperatorType  = "${LOWER_CR_KIND}"/' controllers/repo_manager/controller_test.go
 	sed -i "s|quay.io/pulp/pulp-minimal|${APP_IMAGE}|g" controllers/repo_manager/controller_test.go
 	mv config/crd/bases/repo-manager.pulpproject.org_pulps.yaml config/crd/bases/repo-manager.${CR_DOMAIN}_${CR_PLURAL}.yaml
@@ -188,6 +188,10 @@ rename: ## Replace Custom Resource name
 	mv bundle/manifests/repo-manager.pulpproject.org_pulps.yaml bundle/manifests/repo-manager.${CR_DOMAIN}_${CR_PLURAL}.yaml
 	mv bundle/manifests/repo-manager.pulpproject.org_pulpbackups.yaml bundle/manifests/repo-manager.${CR_DOMAIN}_${LOWER_CR_KIND}backups.yaml
 	mv bundle/manifests/repo-manager.pulpproject.org_pulprestores.yaml bundle/manifests/repo-manager.${CR_DOMAIN}_${LOWER_CR_KIND}restores.yaml
+	mv apis/repo-manager.pulpproject.org apis/repo-manager.${CR_DOMAIN}
+	sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" controllers/utils.go
+	mv config/samples/repo-manager.pulpproject.org_v1beta1_pulp.yaml config/samples/repo-manager.${CR_DOMAIN}_v1beta1_pulp.yaml
+	mv config/samples/repo-manager.pulpproject.org_v1beta2_pulp.yaml config/samples/repo-manager.${CR_DOMAIN}_v1beta2_pulp.yaml
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.

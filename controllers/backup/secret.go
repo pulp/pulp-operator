@@ -5,7 +5,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -18,7 +18,7 @@ type secretType struct {
 	name string
 
 	// PulpBackup instance
-	pulpBackup *repomanagerv1alpha1.PulpBackup
+	pulpBackup *repomanagerpulpprojectorgv1beta2.PulpBackup
 
 	// path of where the backup will be stored (PVC mount point)
 	backupDir string
@@ -34,13 +34,13 @@ type secretType struct {
 }
 
 // backupSecrets makes a copy of the Secrets used by Pulp components
-func (r *RepoManagerBackupReconciler) backupSecret(ctx context.Context, pulpBackup *repomanagerv1alpha1.PulpBackup, backupDir string, pod *corev1.Pod) error {
+func (r *RepoManagerBackupReconciler) backupSecret(ctx context.Context, pulpBackup *repomanagerpulpprojectorgv1beta2.PulpBackup, backupDir string, pod *corev1.Pod) error {
 	log := r.RawLogger
 
 	// we are considering that pulp CR instance is running in the same namespace as pulpbackup and
 	// that there is only a single instance of pulp CR available
 	// we could also let users pass the name of pulp instance
-	pulp := &repomanagerv1alpha1.Pulp{}
+	pulp := &repomanagerpulpprojectorgv1beta2.Pulp{}
 	err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.DeploymentName, Namespace: pulpBackup.Namespace}, pulp)
 	if err != nil {
 		log.Error(err, "Failed to get Pulp")

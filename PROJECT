@@ -1,6 +1,7 @@
 domain: pulpproject.org
 layout:
 - go.kubebuilder.io/v3
+multigroup: true
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
@@ -14,7 +15,7 @@ resources:
   domain: pulpproject.org
   group: repo-manager
   kind: Pulp
-  path: github.com/pulp/pulp-operator/api/v1alpha1
+  path: github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1alpha1
   version: v1alpha1
 - api:
     crdVersion: v1
@@ -23,7 +24,7 @@ resources:
   domain: pulpproject.org
   group: repo-manager
   kind: PulpBackup
-  path: github.com/pulp/pulp-operator/api/v1alpha1
+  path: github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1alpha1
   version: v1alpha1
 - api:
     crdVersion: v1
@@ -32,6 +33,58 @@ resources:
   domain: pulpproject.org
   group: repo-manager
   kind: PulpRestore
-  path: github.com/pulp/pulp-operator/api/v1alpha1
+  path: github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: pulpproject.org
+  group: repo-manager.pulpproject.org
+  kind: Pulp
+  path: github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta1
+  version: v1beta1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: pulpproject.org
+  group: repo-manager
+  kind: PulpBackup
+  path: github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta1
+  version: v1beta1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: pulpproject.org
+  group: repo-manager
+  kind: PulpRestore
+  path: github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta1
+  version: v1beta1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: pulpproject.org
+  group: repo-manager.pulpproject.org
+  kind: Pulp
+  path: github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2
+  version: v1beta2
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: pulpproject.org
+  group: repo-manager
+  kind: PulpBackup
+  path: github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2
+  version: v1beta2
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: pulpproject.org
+  group: repo-manager
+  kind: PulpRestore
+  path: github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2
+  version: v1beta2
 version: "3"

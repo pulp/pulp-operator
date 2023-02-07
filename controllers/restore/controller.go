@@ -28,7 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/go-logr/logr"
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -53,7 +53,7 @@ func (r *RepoManagerRestoreReconciler) Reconcile(ctx context.Context, req ctrl.R
 	log := r.RawLogger
 	backupDir := "/backup"
 
-	pulpRestore := &repomanagerv1alpha1.PulpRestore{}
+	pulpRestore := &repomanagerpulpprojectorgv1beta2.PulpRestore{}
 	err := r.Get(ctx, req.NamespacedName, pulpRestore)
 
 	if err != nil {
@@ -89,7 +89,7 @@ func (r *RepoManagerRestoreReconciler) Reconcile(ctx context.Context, req ctrl.R
 	// the problem with this approach is that users will need to know (or manually retrieve from the backup) the name of the bkp secrets,
 	// the name of the files, and manually configure pulpRestore CR with them
 	/* 	// Look up details for the backup
-	   	pulpBackup := &repomanagerv1alpha1.PulpBackup{}
+	   	pulpBackup := &repomanagerpulpprojectorgv1beta2.PulpBackup{}
 	   	err = r.Get(ctx, types.NamespacedName{Name: pulpRestore.Spec.BackupName, Namespace: pulpRestore.Namespace}, pulpBackup)
 
 	   	// Surface error to user
@@ -186,7 +186,7 @@ func (r *RepoManagerRestoreReconciler) Reconcile(ctx context.Context, req ctrl.R
 // SetupWithManager sets up the controller with the Manager.
 func (r *RepoManagerRestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&repomanagerv1alpha1.PulpRestore{}).
+		For(&repomanagerpulpprojectorgv1beta2.PulpRestore{}).
 		WithEventFilter(controllers.IgnoreUpdateCRStatusPredicate()).
 		Complete(r)
 }

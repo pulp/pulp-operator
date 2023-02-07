@@ -35,11 +35,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/go-logr/logr"
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/api/v1alpha1"
+	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
 )
 
-func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp *repomanagerv1alpha1.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Ingress-Ready"
@@ -168,7 +168,7 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 }
 
 // pulp-ingress
-func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repomanagerv1alpha1.Pulp, plugins []IngressPlugin) (*netv1.Ingress, error) {
+func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repomanagerpulpprojectorgv1beta2.Pulp, plugins []IngressPlugin) (*netv1.Ingress, error) {
 	isNginxIngressSupported := false
 	ingressClassName := m.Spec.IngressClassName
 
