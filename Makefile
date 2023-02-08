@@ -64,6 +64,10 @@ WATCH_NAMESPACE ?= $(NAMESPACE)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.24.2
 
+GOLANG_VERSION=1.19
+GOLANG_ARCH=linux-amd64
+GOLANG_INSTALL_PATH=/tmp
+
 export CONTAINER_TOOL ?= docker
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
@@ -72,6 +76,11 @@ GOBIN=$(shell go env GOPATH)/bin
 else
 GOBIN=$(shell go env GOBIN)
 endif
+
+ifeq ($(shell go env GOROOT 2>/dev/null),)
+PATH=$(shell echo $$PATH:$(GOLANG_INSTALL_PATH)/go/bin)
+endif
+
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
@@ -133,6 +142,13 @@ else
 	curl -sSLo envtest-bins.tar.gz "https://go.kubebuilder.io/test-tools/$(ENVTEST_K8S_VERSION)/$(shell go env GOOS)/$(shell go env GOARCH)"
 	sudo mkdir -p /usr/local/kubebuilder
 	sudo tar -C /usr/local/kubebuilder --strip-components=1 -zvxf envtest-bins.tar.gz
+endif
+
+.PHONY: golang
+golang: ## Ensure golang is installed
+ifeq ($(shell which go 2>/dev/null), )
+	curl -sSLo golang.tar.gz "https://go.dev/dl/go$(GOLANG_VERSION).$(GOLANG_ARCH).tar.gz"
+	tar -C $(GOLANG_INSTALL_PATH) -xzf golang.tar.gz
 endif
 
 ##@ Build
@@ -256,7 +272,7 @@ $(KUSTOMIZE): $(LOCALBIN)
 	test -s $(LOCALBIN)/kustomize || { curl -s $(KUSTOMIZE_INSTALL_SCRIPT) | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN); }
 
 .PHONY: controller-gen
-controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
+controller-gen: golang $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
 $(CONTROLLER_GEN): $(LOCALBIN)
 	test -s $(LOCALBIN)/controller-gen || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
 
