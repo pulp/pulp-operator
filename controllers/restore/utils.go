@@ -5,6 +5,7 @@ import (
 	"time"
 
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
@@ -231,8 +232,44 @@ func (r *RepoManagerRestoreReconciler) createLockConfigMap(ctx context.Context, 
 		},
 	}
 
+	ctrl.SetControllerReference(pulpRestore, lockCM, r.Scheme)
+
 	// create the configmap
 	if err := r.Create(ctx, lockCM); err != nil {
 		log.Error(err, "Failed to create the PulpRestore Lock ConfigMap")
 	}
+}
+
+// getBackupDir return the name of backup folder
+// if pulpRestore.Spec.BackupDir is not defined it will get the name from pulpBackup status
+// if pulpRestore.Spec.BackupDir is not defined and pulpBackup is not found it will return error
+func (r *RepoManagerRestoreReconciler) getBackupDir(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore) (string, error) {
+	log := r.RawLogger
+
+	backupDir := pulpRestore.Spec.BackupDir
+	if len(pulpRestore.Spec.BackupDir) == 0 {
+		pulpBackup := &repomanagerpulpprojectorgv1beta2.PulpBackup{}
+		if err := r.Get(ctx, types.NamespacedName{Name: pulpRestore.Spec.BackupName, Namespace: pulpRestore.Namespace}, pulpBackup); err != nil {
+			log.Error(err, "Failed to get pulpBackup and no backup_dir provided!")
+			return "", err
+		}
+		return pulpBackup.Status.BackupDirectory, nil
+	}
+	return backupDir, nil
+}
+
+// isAnsibleBackup returns true if secrets.yaml file exists (a file generated only in ansible version)
+func (r *RepoManagerRestoreReconciler) isAnsibleBackup(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore, backupDir string, pod *corev1.Pod) (bool, error) {
+	execCmd := []string{
+		"stat", backupDir + "/secrets.yaml",
+	}
+	if _, err := controllers.ContainerExec(r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// getDeploymentName returns the deployment_name
+func getDeploymentName(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore) string {
+	return pulpRestore.Spec.DeploymentName
 }

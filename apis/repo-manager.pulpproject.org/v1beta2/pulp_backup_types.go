@@ -25,7 +25,7 @@ import (
 type PulpBackupSpec struct {
 
 	// Name of the deployment type. Can be one of {galaxy,pulp}.
-	// +kubebuilder:validation:Enum:=pulp;galaxy
+	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	DeploymentType string `json:"deployment_type"`
 
@@ -65,12 +65,12 @@ type PulpBackupSpec struct {
 	PostgresLabelSelector string `json:"postgres_label_selector"`
 
 	// Secret where the administrator password can be found
-	// +kubebuilder:default:="pulp-admin-password"
+	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret"}
 	AdminPasswordSecret string `json:"admin_password_secret,omitempty"`
 
 	// Secret where the database configuration can be found
-	// +kubebuilder:default:="pulp-postgres-configuration"
+	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Database configuration"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret"}
 	PostgresConfigurationSecret string `json:"postgres_configuration_secret"`

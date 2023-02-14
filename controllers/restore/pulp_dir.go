@@ -5,11 +5,10 @@ import (
 
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
-	corev1 "k8s.io/api/core/v1"
 )
 
 // backupPulpDir copies the content of /var/lib/pulp into the backup PVC
-func (r *RepoManagerRestoreReconciler) restorePulpDir(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore, backupPVCName, backupDir string, pod *corev1.Pod) error {
+func (r *RepoManagerRestoreReconciler) restorePulpDir(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore, backupPVCName, backupDir string) error {
 
 	// if file-storage PVC is not provisioned it means that pulp is deployed with object storage
 	// in this case, we should just return without action
@@ -22,8 +21,10 @@ func (r *RepoManagerRestoreReconciler) restorePulpDir(ctx context.Context, pulpR
 	// redeploy manager pod to remount the file-storage pvc which
 	// has been reprovisioned after restoring pulp CR
 	r.cleanup(ctx, pulpRestore)
-	r.createRestorePod(ctx, pulpRestore, backupPVCName, backupDir)
-
+	pod, err := r.createRestorePod(ctx, pulpRestore, backupPVCName, "/backups")
+	if err != nil {
+		return err
+	}
 	log.Info("Starting pulp dir restore ...")
 	execCmd := []string{
 		"bash", "-c", "cp -fa " + backupDir + "/pulp/. /var/lib/pulp",

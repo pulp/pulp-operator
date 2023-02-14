@@ -13,24 +13,26 @@ import (
 func (r *RepoManagerBackupReconciler) backupDatabase(ctx context.Context, pulpBackup *repomanagerpulpprojectorgv1beta2.PulpBackup, backupDir string, pod *corev1.Pod) error {
 	log := r.RawLogger
 	backupFile := "pulp.db"
+	postgresConfigurationSecret := getPostgresCfgSecret(ctx, pulpBackup)
+	backupPod := pulpBackup.Name + "-backup-manager"
 
 	log.Info("Starting database backup process ...")
 	execCmd := []string{"touch", backupDir + "/" + backupFile}
-	_, err := controllers.ContainerExec(r, pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
+	_, err := controllers.ContainerExec(r, pod, execCmd, backupPod, pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to create pulp.db backup file")
 		return err
 	}
 
 	execCmd = []string{"chmod", "0600", backupDir + "/" + backupFile}
-	_, err = controllers.ContainerExec(r, pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
+	_, err = controllers.ContainerExec(r, pod, execCmd, backupPod, pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to modify backup file permissions")
 		return err
 	}
 
 	pgConfig := &corev1.Secret{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.PostgresConfigurationSecret, Namespace: pulpBackup.Namespace}, pgConfig)
+	err = r.Get(ctx, types.NamespacedName{Name: postgresConfigurationSecret, Namespace: pulpBackup.Namespace}, pgConfig)
 	if err != nil {
 		log.Error(err, "Failed to find postgres-configuration secret")
 		return err
@@ -41,7 +43,7 @@ func (r *RepoManagerBackupReconciler) backupDatabase(ctx context.Context, pulpBa
 		"-f", backupDir + "/" + backupFile,
 	}
 
-	_, err = controllers.ContainerExec(r, pod, execCmd, pulpBackup.Name+"-backup-manager", pod.Namespace)
+	_, err = controllers.ContainerExec(r, pod, execCmd, backupPod, pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to run pg_dump")
 		return err

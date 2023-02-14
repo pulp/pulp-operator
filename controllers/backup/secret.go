@@ -36,60 +36,59 @@ type secretType struct {
 // backupSecrets makes a copy of the Secrets used by Pulp components
 func (r *RepoManagerBackupReconciler) backupSecret(ctx context.Context, pulpBackup *repomanagerpulpprojectorgv1beta2.PulpBackup, backupDir string, pod *corev1.Pod) error {
 	log := r.RawLogger
+	deploymentName := getDeploymentName(ctx, pulpBackup)
 
 	// we are considering that pulp CR instance is running in the same namespace as pulpbackup and
 	// that there is only a single instance of pulp CR available
 	// we could also let users pass the name of pulp instance
 	pulp := &repomanagerpulpprojectorgv1beta2.Pulp{}
-	err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.DeploymentName, Namespace: pulpBackup.Namespace}, pulp)
-	if err != nil {
+	if err := r.Get(ctx, types.NamespacedName{Name: deploymentName, Namespace: pulpBackup.Namespace}, pulp); err != nil {
 		log.Error(err, "Failed to get Pulp")
 		return err
 	}
 
+	adminPasswordSecret := getAdminPasswordSecret(ctx, pulpBackup)
+	postgresCfgSecret := getPostgresCfgSecret(ctx, pulpBackup)
+	dbFieldsEncryption := getDBFieldsEncryption(ctx, pulpBackup, pulp)
+	containerTokenSecret := getContainerTokenSecret(ctx, pulpBackup, pulp)
+
 	// pulp-admin and pulp-postgres-configuration secrets will not be stored in secret.yaml file like in pulp-operator
 	// we are splitting them in admin_secret.yaml and postgres_configuration.yaml files
 	// PULP-ADMIN SECRET
-	err = r.createBackupFile(ctx, secretType{"admin_password_secret", pulpBackup, backupDir, "admin_secret.yaml", pulpBackup.Spec.AdminPasswordSecret, pod})
-	if err != nil {
+	if err := r.createBackupFile(ctx, secretType{"admin_password_secret", pulpBackup, backupDir, "admin_secret.yaml", adminPasswordSecret, pod}); err != nil {
 		return err
 	}
 	log.Info("Admin secret backup finished")
 
 	// POSTGRES SECRET (we are not following the same name for the keys that we defined in pulp-operator)
-	err = r.createBackupFile(ctx, secretType{"postgres_secret", pulpBackup, backupDir, "postgres_configuration_secret.yaml", pulpBackup.Spec.DeploymentName + "-postgres-configuration", pod})
-	if err != nil {
+	if err := r.createBackupFile(ctx, secretType{"postgres_secret", pulpBackup, backupDir, "postgres_configuration_secret.yaml", postgresCfgSecret, pod}); err != nil {
 		return err
 	}
 	log.Info("Postgres configuration secret backup finished")
 
 	// FIELDS ENCRYPTION SECRET
-	err = r.createBackupFile(ctx, secretType{"db_fields_encryption_secret", pulpBackup, backupDir, "db_fields_encryption_secret.yaml", pulpBackup.Spec.DeploymentName + "-db-fields-encryption", pod})
-	if err != nil {
+	if err := r.createBackupFile(ctx, secretType{"db_fields_encryption_secret", pulpBackup, backupDir, "db_fields_encryption_secret.yaml", dbFieldsEncryption, pod}); err != nil {
 		return err
 	}
 	log.Info("Fields encryption secret backup finished")
 
 	// SIGNING SECRET
 	if len(pulp.Spec.SigningSecret) > 0 {
-		err = r.createBackupFile(ctx, secretType{"signing_secret", pulpBackup, backupDir, "signing_secret.yaml", pulp.Spec.SigningSecret, pod})
-		if err != nil {
+		if err := r.createBackupFile(ctx, secretType{"signing_secret", pulpBackup, backupDir, "signing_secret.yaml", pulp.Spec.SigningSecret, pod}); err != nil {
 			return err
 		}
 		log.Info("Signing secret backup finished")
 	}
 
 	// CONTAINER TOKEN SECRET
-	err = r.createBackupFile(ctx, secretType{"container_token_secret", pulpBackup, backupDir, "container_token_secret.yaml", pulpBackup.Spec.DeploymentName + "-container-auth", pod})
-	if err != nil {
+	if err := r.createBackupFile(ctx, secretType{"container_token_secret", pulpBackup, backupDir, "container_token_secret.yaml", containerTokenSecret, pod}); err != nil {
 		return err
 	}
 	log.Info("Container token secret backup finished")
 
 	// OBJECT STORAGE S3 SECRET
 	if len(pulp.Spec.ObjectStorageS3Secret) > 0 {
-		err = r.createBackupFile(ctx, secretType{"storage_secret", pulpBackup, backupDir, "objectstorage_secret.yaml", pulp.Spec.ObjectStorageS3Secret, pod})
-		if err != nil {
+		if err := r.createBackupFile(ctx, secretType{"storage_secret", pulpBackup, backupDir, "objectstorage_secret.yaml", pulp.Spec.ObjectStorageS3Secret, pod}); err != nil {
 			return err
 		}
 		log.Info("Object storage s3 secret backup finished")
@@ -97,8 +96,7 @@ func (r *RepoManagerBackupReconciler) backupSecret(ctx context.Context, pulpBack
 
 	// OBJECT STORAGE AZURE SECRET
 	if len(pulp.Spec.ObjectStorageAzureSecret) > 0 {
-		err = r.createBackupFile(ctx, secretType{"storage_secret", pulpBackup, backupDir, "objectstorage_secret.yaml", pulp.Spec.ObjectStorageAzureSecret, pod})
-		if err != nil {
+		if err := r.createBackupFile(ctx, secretType{"storage_secret", pulpBackup, backupDir, "objectstorage_secret.yaml", pulp.Spec.ObjectStorageAzureSecret, pod}); err != nil {
 			return err
 		}
 		log.Info("Object storage azure secret backup finished")
@@ -106,8 +104,7 @@ func (r *RepoManagerBackupReconciler) backupSecret(ctx context.Context, pulpBack
 
 	// OBJECT SSO CONFIG SECRET
 	if len(pulp.Spec.SSOSecret) > 0 {
-		err = r.createBackupFile(ctx, secretType{"sso_secret", pulpBackup, backupDir, "sso_secret.yaml", pulp.Spec.SSOSecret, pod})
-		if err != nil {
+		if err := r.createBackupFile(ctx, secretType{"sso_secret", pulpBackup, backupDir, "sso_secret.yaml", pulp.Spec.SSOSecret, pod}); err != nil {
 			return err
 		}
 		log.Info("SSO secret backup finished")
