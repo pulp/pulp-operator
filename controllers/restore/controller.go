@@ -51,8 +51,6 @@ type RepoManagerRestoreReconciler struct {
 // move the current state of the cluster closer to the desired state.
 func (r *RepoManagerRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.RawLogger
-	backupDir := "/backup"
-
 	pulpRestore := &repomanagerpulpprojectorgv1beta2.PulpRestore{}
 	err := r.Get(ctx, req.NamespacedName, pulpRestore)
 
@@ -68,6 +66,13 @@ func (r *RepoManagerRestoreReconciler) Reconcile(ctx context.Context, req ctrl.R
 		log.Error(err, "Failed to get PulpRestore")
 		return ctrl.Result{}, err
 	}
+
+	backupDir, err := r.getBackupDir(ctx, pulpRestore)
+	if err != nil {
+		log.Error(err, "Failed to get the directory used during backup. Please provide a backup_dir with the path of the backup")
+		return ctrl.Result{}, nil
+	}
+	log.Info("Backup dir found!", "BackupDir", backupDir)
 
 	// if lock configmap is found it means that the restore already ran, so the controller should stop execution.
 	// To rerun a restore the user will have to manually delete the lock configmap first.
@@ -113,10 +118,11 @@ func (r *RepoManagerRestoreReconciler) Reconcile(ctx context.Context, req ctrl.R
 	// Fail early if pvc is defined but does not exist
 	backupPVCName, PVCfound := r.backupPVCFound(ctx, pulpRestore)
 	if !PVCfound {
-		log.Error(err, "PVC "+backupPVCName+" not found!")
+		log.Error(err, "Backup PVC not found!")
 		r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "PVC "+backupPVCName+" not found!", "BackupPVCNotFound")
 		return ctrl.Result{}, err
 	}
+	log.V(1).Info("Backup PVC found!", "PVC", backupPVCName)
 
 	// Delete any existing management pod
 	r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Removing old manager pod ...", "RemovingOldPod")
@@ -124,7 +130,7 @@ func (r *RepoManagerRestoreReconciler) Reconcile(ctx context.Context, req ctrl.R
 
 	// Create a new management pod
 	r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Creating manager pod ...", "CreatingPod")
-	pod, err := r.createRestorePod(ctx, pulpRestore, backupPVCName, backupDir)
+	pod, err := r.createRestorePod(ctx, pulpRestore, backupPVCName, "/backups")
 	if err != nil {
 		r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Failed to create manager pod!", "FailedCreatingPod")
 		return ctrl.Result{}, err
@@ -161,7 +167,7 @@ func (r *RepoManagerRestoreReconciler) Reconcile(ctx context.Context, req ctrl.R
 	}
 
 	// Restoring /var/lib/pulp data
-	if err := r.restorePulpDir(ctx, pulpRestore, backupPVCName, backupDir, pod); err != nil {
+	if err := r.restorePulpDir(ctx, pulpRestore, backupPVCName, backupDir); err != nil {
 		// requeue request when there is an error with pulp dir restore
 		return ctrl.Result{}, err
 	}
@@ -187,6 +193,7 @@ func (r *RepoManagerRestoreReconciler) Reconcile(ctx context.Context, req ctrl.R
 func (r *RepoManagerRestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&repomanagerpulpprojectorgv1beta2.PulpRestore{}).
+		Owns(&corev1.ConfigMap{}).
 		WithEventFilter(controllers.IgnoreUpdateCRStatusPredicate()).
 		Complete(r)
 }

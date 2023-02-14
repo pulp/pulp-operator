@@ -7,4 +7,5 @@
     ".ci/assets/kubernetes/galaxy_sign.secret.yaml",
     ".ci/scripts/prepare-object-storage.sh",
     "containers/compose/certs/database_fields.symmetric.key",
+    ".github/workflows/ci.yml",
   ]

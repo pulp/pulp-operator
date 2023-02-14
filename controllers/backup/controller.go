@@ -56,8 +56,8 @@ type RepoManagerBackupReconciler struct {
 // move the current state of the cluster closer to the desired state.
 func (r *RepoManagerBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.RawLogger
-	backupDir := "/backup"
 
+	formattedCurrentTime := time.Now().Format("2006-01-02-15:04:05")
 	pulpBackup := &repomanagerpulpprojectorgv1beta2.PulpBackup{}
 	err := r.Get(ctx, req.NamespacedName, pulpBackup)
 
@@ -73,6 +73,13 @@ func (r *RepoManagerBackupReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		log.Error(err, "Failed to get PulpBackup")
 		return ctrl.Result{}, err
 	}
+	backupDir := getBackupDir(ctx, pulpBackup, formattedCurrentTime)
+	deploymentType := getDeploymentType(ctx, pulpBackup)
+
+	if err := checkRequiredFields(ctx, pulpBackup); err != nil {
+		log.Error(err, "Required field not filled in backup CR!")
+		return ctrl.Result{}, nil
+	}
 
 	r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Backup process running ...", "StartingBackupProcess")
 	r.cleanup(ctx, pulpBackup)
@@ -85,9 +92,14 @@ func (r *RepoManagerBackupReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Creating backup pod ...", "CreatingPod")
-	pod, err := r.createBackupPod(ctx, pulpBackup, backupDir)
+	pod, err := r.createBackupPod(ctx, pulpBackup, "/backups")
 	if err != nil {
 		r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Failed to create backup pod!", "FailedCreatingPod")
+		return ctrl.Result{}, err
+	}
+
+	if err = r.createBackupDir(ctx, pulpBackup, backupDir, pod); err != nil {
+		r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Failed to create backup directory!", "FailedCreateBkpDir")
 		return ctrl.Result{}, err
 	}
 
@@ -112,18 +124,21 @@ func (r *RepoManagerBackupReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, err
 	}
 
-	r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Running "+pulpBackup.Spec.DeploymentType+" dir backup ...", "BackupDir")
+	r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Running "+deploymentType+" dir backup ...", "BackupDir")
 	err = r.backupPulpDir(ctx, pulpBackup, backupDir, pod)
 	if err != nil {
-		r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Failed to backup "+pulpBackup.Spec.DeploymentType+" dir!", "FailedBackupDir")
+		r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Failed to backup "+deploymentType+" dir!", "FailedBackupDir")
 		return ctrl.Result{}, err
 	}
 
 	log.Info("Cleaning up backup resources ...")
 	r.updateStatus(ctx, pulpBackup, metav1.ConditionFalse, "BackupComplete", "Cleaning up backup resources ...", "DeletingBkpPod")
 	r.cleanup(ctx, pulpBackup)
+	if err := r.setStatusFields(ctx, pulpBackup, formattedCurrentTime); err != nil {
+		log.Error(err, "Failed to update backup CR status!")
+	}
 	r.updateStatus(ctx, pulpBackup, metav1.ConditionTrue, "BackupComplete", "All backup tasks run!", "BackupTasksFinished")
-	log.Info(pulpBackup.Spec.DeploymentType + " CR Backup finished!")
+	log.Info(deploymentType + " CR Backup finished!")
 
 	return ctrl.Result{}, nil
 }
@@ -147,22 +162,26 @@ func (r *RepoManagerBackupReconciler) waitPodReady(ctx context.Context, namespac
 func (r *RepoManagerBackupReconciler) createBackupPod(ctx context.Context, pulpBackup *repomanagerpulpprojectorgv1beta2.PulpBackup, backupDir string) (*corev1.Pod, error) {
 	log := r.RawLogger
 
+	deploymentName := getDeploymentName(ctx, pulpBackup)
+	deploymentType := getDeploymentType(ctx, pulpBackup)
+	backupPVC := getBackupPVC(ctx, pulpBackup)
+
 	// we are considering that pulp CR instance is running in the same namespace as pulpbackup and
 	// that there is only a single instance of pulp CR available
 	// we could also let users pass the name of pulp instance
 	pulp := &repomanagerpulpprojectorgv1beta2.Pulp{}
-	err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Spec.DeploymentName, Namespace: pulpBackup.Namespace}, pulp)
+	err := r.Get(ctx, types.NamespacedName{Name: deploymentName, Namespace: pulpBackup.Namespace}, pulp)
 	if err != nil {
 		log.Error(err, "Failed to get Pulp")
 		return nil, err
 	}
 
 	labels := map[string]string{
-		"app.kubernetes.io/name":       pulpBackup.Spec.DeploymentType + "-backup-storage",
-		"app.kubernetes.io/instance":   pulpBackup.Spec.DeploymentType + "-backup-storage-" + pulpBackup.Name,
+		"app.kubernetes.io/name":       deploymentType + "-backup-storage",
+		"app.kubernetes.io/instance":   deploymentType + "-backup-storage-" + pulpBackup.Name,
 		"app.kubernetes.io/component":  "backup-storage",
-		"app.kubernetes.io/part-of":    pulpBackup.Spec.DeploymentType,
-		"app.kubernetes.io/managed-by": pulpBackup.Spec.DeploymentType + "-operator",
+		"app.kubernetes.io/part-of":    deploymentType,
+		"app.kubernetes.io/managed-by": deploymentType + "-operator",
 	}
 
 	affinity := &corev1.Affinity{}
@@ -184,7 +203,7 @@ func (r *RepoManagerBackupReconciler) createBackupPod(ctx context.Context, pulpB
 		Name: pulpBackup.Name + "-backup",
 		VolumeSource: corev1.VolumeSource{
 			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-				ClaimName: pulpBackup.Name + "-backup-claim",
+				ClaimName: backupPVC,
 			},
 		},
 	}}
@@ -303,6 +322,10 @@ func (r *RepoManagerBackupReconciler) cleanup(ctx context.Context, pulpBackup *r
 func (r *RepoManagerBackupReconciler) createBackupPVC(ctx context.Context, pulpBackup *repomanagerpulpprojectorgv1beta2.PulpBackup) error {
 	log := r.RawLogger
 
+	backupPVC := getBackupPVC(ctx, pulpBackup)
+	backupPVCNamespace := getBackupPVCNamespace(ctx, pulpBackup)
+	deploymentType := getDeploymentType(ctx, pulpBackup)
+
 	var storageClassName string
 	if pulpBackup.Spec.BackupSC != "" {
 		storageClassName = pulpBackup.Spec.BackupSC
@@ -316,20 +339,20 @@ func (r *RepoManagerBackupReconciler) createBackupPVC(ctx context.Context, pulpB
 	}
 
 	labels := map[string]string{
-		"app.kubernetes.io/name":       pulpBackup.Spec.DeploymentType + "-backup-storage",
-		"app.kubernetes.io/instance":   pulpBackup.Spec.DeploymentType + "-backup-storage-" + pulpBackup.Name,
+		"app.kubernetes.io/name":       deploymentType + "-backup-storage",
+		"app.kubernetes.io/instance":   deploymentType + "-backup-storage-" + pulpBackup.Name,
 		"app.kubernetes.io/component":  "backup-storage",
-		"app.kubernetes.io/part-of":    pulpBackup.Spec.DeploymentType,
-		"app.kubernetes.io/managed-by": pulpBackup.Spec.DeploymentType + "-operator",
+		"app.kubernetes.io/part-of":    deploymentType,
+		"app.kubernetes.io/managed-by": deploymentType + "-operator",
 	}
 
 	// create backup pvc
 	pvcFound := &corev1.PersistentVolumeClaim{}
-	err := r.Get(ctx, types.NamespacedName{Name: pulpBackup.Name + "-backup-claim", Namespace: pulpBackup.Namespace}, pvcFound)
+	err := r.Get(ctx, types.NamespacedName{Name: backupPVC, Namespace: backupPVCNamespace}, pvcFound)
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      pulpBackup.Name + "-backup-claim",
-			Namespace: pulpBackup.Namespace,
+			Name:      backupPVC,
+			Namespace: backupPVCNamespace,
 			Labels:    labels,
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
