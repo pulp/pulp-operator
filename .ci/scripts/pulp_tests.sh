@@ -24,12 +24,10 @@ password password\
 export BASE_ADDR="http://$SERVER:$WEB_PORT"
 echo $BASE_ADDR
 
-# Install pulp-cli the same way we do in pulp_ansible repo (to avoid tests with version mismatch, for example)
-# https://github.com/pulp/pulp_ansible/blob/5778d86ae51738578f7c5f00214b5ccb8aa1ee45/.github/workflows/scripts/before_install.sh#L96-L102
-git clone --depth=1 https://github.com/pulp/pulp-cli.git
-pushd pulp-cli
-pip install .
-popd
+
+# Use latest release of pulp-cli to avoid issues with non-released dependencies
+# https://github.com/pulp/pulp-operator/actions/runs/4238998943/jobs/7366637198#step:15:37
+pip install pulp-cli
 
 if [ ! -f ~/.config/pulp/settings.toml ]; then
   echo "Configuring pulp-cli"
