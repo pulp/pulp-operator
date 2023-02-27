@@ -65,7 +65,7 @@ echo "Pushing ..."
 podman push --tls-verify=false localhost:24880/pulp/pulp-operator:devel
 
 echo "Repositories ..."
-curl -H "Authorization:Token $TOKEN" http://localhost:24880/api/galaxy/v3/plugin/execution-environments/repositories/ | jq
+curl -H "Authorization:Token $TOKEN" $BASE_ADDR/api/galaxy/_ui/v1/execution-environments/repositories/ | jq
 
 cat >> ansible.cfg << ANSIBLECFG
 [defaults]
@@ -114,7 +114,7 @@ echo "Upload kubernetes.core collection"
 ansible-galaxy collection publish -vvvv -c .ci/assets/ansible/kubernetes-core-2.3.2.tar.gz
 
 echo "Check if it was uploaded"
-curl -H "Authorization:Token $TOKEN" $BASE_ADDR/api/galaxy/content/staging/v3/collections/ | jq
+curl -LH "Authorization:Token $TOKEN" $BASE_ADDR/api/galaxy/content/staging/v3/collections/ | jq
 
 echo "Sync collections"
 curl -X PUT -d '{"requirements_file": "collections: \n - pulp.squeezer", "url": "https://galaxy.ansible.com/api/"}' -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization:Token $TOKEN" $BASE_ADDR/api/galaxy/content/community/v3/sync/config/ | jq
