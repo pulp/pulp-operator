@@ -24,6 +24,13 @@ show_logs() {
 }
 
 sed -i 's/kubectl/oc/g' Makefile
+
+# TMP workaround to "fix" some ci-operator conflict issues
+oc get crd -oname|grep pulp |xargs oc delete
+oc delete roles --all
+oc get clusterrole -oname|grep pulp|xargs oc delete
+
+
 make deploy
 oc apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
 
