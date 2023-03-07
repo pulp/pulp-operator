@@ -9,7 +9,7 @@ show_logs() {
   oc get pods -o wide
   oc get routes -o wide
   echo "======================== Operator ========================"
-  oc logs -l app.kubernetes.io/name=pulp-operator -c pulp-manager --tail=10000
+  oc logs -l app.kubernetes.io/name=pulp-operator -c manager --tail=10000
   echo "======================== API ========================"
   oc logs -l app.kubernetes.io/name=pulp-api --tail=10000
   echo "======================== Content ========================"
@@ -20,6 +20,8 @@ show_logs() {
   oc logs -l app.kubernetes.io/name=postgres --tail=10000
   echo "======================== Events ========================"
   oc get events --sort-by='.metadata.creationTimestamp'
+  echo "======================== CR ========================"
+  oc get pulp -oyaml
   exit 1
 }
 
