@@ -34,6 +34,8 @@ echo $ROUTE_HOST
 
 if [[ "$CI_TEST" == "galaxy" ]]; then
   CR_FILE=config/samples/pulpproject_v1beta1_pulp_cr.galaxy.ocp.ci.yaml
+  oc apply -f .ci/assets/kubernetes/galaxy_sign.secret.yaml
+  oc apply -f .ci/assets/kubernetes/signing_scripts.configmap.yaml
 else
   CR_FILE=config/samples/pulpproject_v1beta1_pulp_cr.ocp.ci.yaml
 fi
