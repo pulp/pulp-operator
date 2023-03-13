@@ -20,6 +20,10 @@ import (
 	"context"
 	"strings"
 
+	"github.com/go-logr/logr"
+	routev1 "github.com/openshift/api/route/v1"
+	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	"github.com/pulp/pulp-operator/controllers"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
@@ -31,23 +35,15 @@ import (
 	v1 "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
-
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/source"
-
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	"github.com/go-logr/logr"
-	routev1 "github.com/openshift/api/route/v1"
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
-	"github.com/pulp/pulp-operator/controllers"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // RepoManagerReconciler reconciles a Pulp object
@@ -82,31 +78,13 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	IsOpenShift, _ := controllers.IsOpenShift()
 	if IsOpenShift {
 		log.V(1).Info("Running on OpenShift cluster")
-	}
-
-	// Get redhat-operators-pull-secret
-	defaultSecret := &corev1.Secret{}
-	err := r.Get(ctx, types.NamespacedName{Name: "redhat-operators-pull-secret", Namespace: req.NamespacedName.Namespace}, defaultSecret)
-
-	// Create the secret in case it is not found
-	if err != nil && errors.IsNotFound(err) {
-		defaultSecret = &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "redhat-operators-pull-secret",
-				Namespace: req.NamespacedName.Namespace,
-			},
-			StringData: map[string]string{
-				"operator": "pulp",
-			},
+		if err := r.createRHOperatorPullSecret(ctx, req.NamespacedName.Namespace); err != nil {
+			return ctrl.Result{}, err
 		}
-		r.Create(ctx, defaultSecret)
-	} else if err != nil {
-		log.Error(err, "Failed to get redhat-operators-pull-secret")
-		return ctrl.Result{}, err
 	}
 
 	pulp := &repomanagerpulpprojectorgv1beta2.Pulp{}
-	err = r.Get(ctx, req.NamespacedName, pulp)
+	err := r.Get(ctx, req.NamespacedName, pulp)
 
 	if err != nil {
 		if errors.IsNotFound(err) {

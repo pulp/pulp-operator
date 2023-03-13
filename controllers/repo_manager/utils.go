@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	configv1 "github.com/openshift/api/config/v1"
 	routev1 "github.com/openshift/api/route/v1"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
@@ -271,76 +270,6 @@ func (r *RepoManagerReconciler) updateCRField(ctx context.Context, pulp *repoman
 		}
 	}
 	return nil
-}
-
-// createEmptyConfigMap creates an empty ConfigMap that is used by CNO (Cluster Network Operator) to
-// inject custom CA into containers
-func (r *RepoManagerReconciler) createEmptyConfigMap(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, log logr.Logger) (ctrl.Result, error) {
-
-	configMap := &corev1.ConfigMap{}
-	err := r.Get(ctx, types.NamespacedName{Name: caConfigMapName, Namespace: pulp.Namespace}, configMap)
-
-	expected_cm := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      caConfigMapName,
-			Namespace: pulp.Namespace,
-			Labels: map[string]string{
-				"config.openshift.io/inject-trusted-cabundle": "true",
-			},
-		},
-		Data: map[string]string{},
-	}
-
-	// create the configmap if not found
-	if err != nil && k8s_errors.IsNotFound(err) {
-		log.V(1).Info("Creating a new empty ConfigMap")
-		ctrl.SetControllerReference(pulp, expected_cm, r.Scheme)
-		err = r.Create(ctx, expected_cm)
-		if err != nil {
-			log.Error(err, "Failed to create empty ConfigMap")
-			return ctrl.Result{}, err
-		}
-		return ctrl.Result{Requeue: true}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get empty ConfigMap")
-		return ctrl.Result{}, err
-	}
-
-	return ctrl.Result{}, nil
-}
-
-// mountCASpec adds the trusted-ca bundle into []volume and []volumeMount if pulp.Spec.TrustedCA is true
-func mountCASpec(pulp *repomanagerpulpprojectorgv1beta2.Pulp, volumes []corev1.Volume, volumeMounts []corev1.VolumeMount) ([]corev1.Volume, []corev1.VolumeMount) {
-
-	if pulp.Spec.TrustedCa {
-
-		// trustedCAVolume contains the configmap with the custom ca bundle
-		trustedCAVolume := corev1.Volume{
-			Name: "trusted-ca",
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: caConfigMapName,
-					},
-					Items: []corev1.KeyToPath{
-						{Key: "ca-bundle.crt", Path: "tls-ca-bundle.pem"},
-					},
-				},
-			},
-		}
-		volumes = append(volumes, trustedCAVolume)
-
-		// trustedCAMount defines the mount point of the configmap
-		// with the custom ca bundle
-		trustedCAMount := corev1.VolumeMount{
-			Name:      "trusted-ca",
-			MountPath: "/etc/pki/ca-trust/extracted/pem",
-			ReadOnly:  true,
-		}
-		volumeMounts = append(volumeMounts, trustedCAMount)
-	}
-
-	return volumes, volumeMounts
 }
 
 // checkImmutableFields verifies if a user tried to modify an immutable field and rollback
@@ -851,13 +780,7 @@ func getRootURL(resource FunctionResources) string {
 		return "https://" + hostname
 	}
 	if strings.ToLower(resource.Pulp.Spec.IngressType) == "route" {
-		if len(resource.Pulp.Spec.RouteHost) == 0 {
-			ingress := &configv1.Ingress{}
-			resource.RepoManagerReconciler.Get(resource.Context, types.NamespacedName{Name: "cluster"}, ingress)
-			return "https://" + resource.Pulp.Name + "." + ingress.Spec.Domain
-		} else {
-			return "https://" + resource.Pulp.Spec.RouteHost
-		}
+		return "https://" + getRouteHost(resource)
 	}
 
 	return "http://" + resource.Pulp.Name + "-web-svc." + resource.Pulp.Namespace + ".svc.cluster.local:24880"
@@ -875,17 +798,6 @@ func ignoreCronjobStatus() predicate.Predicate {
 			return reflect.DeepEqual(oldObject.Status, newObject.Status)
 		},
 	}
-}
-
-// define route host based on ingress default cluster domain if no .spec.route_host defined
-func getRouteHost(resource FunctionResources) string {
-	routeHost := resource.Pulp.Spec.RouteHost
-	if len(resource.Pulp.Spec.RouteHost) == 0 {
-		ingress := &configv1.Ingress{}
-		resource.RepoManagerReconciler.Get(resource.Context, types.NamespacedName{Name: "cluster"}, ingress)
-		routeHost = resource.Pulp.Name + "." + ingress.Spec.Domain
-	}
-	return routeHost
 }
 
 // convertStringToMap is used to convert old ansible string fields (specifically annotations) into maps

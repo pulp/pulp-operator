@@ -21,7 +21,10 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/go-logr/logr"
 	routev1 "github.com/openshift/api/route/v1"
+	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	"github.com/pulp/pulp-operator/controllers"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	corev1 "k8s.io/api/core/v1"
@@ -32,10 +35,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/go-logr/logr"
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
-	"github.com/pulp/pulp-operator/controllers"
 )
 
 // pulpRouteController creates the routes based on snippets defined in pulp-worker pod

@@ -23,13 +23,12 @@ import (
 
 	"github.com/go-logr/logr"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	policy "k8s.io/api/policy/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	k8s_error "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
-
-	policy "k8s.io/api/policy/v1"
 )
 
 // pdbController creates and reconciles {api,content,worker,web} pdbs
