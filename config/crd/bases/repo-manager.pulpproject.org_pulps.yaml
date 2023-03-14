@@ -15,7 +15,16 @@ spec:
     singular: pulp
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: Status
+      jsonPath: .status.conditions[0].status
+      name: Status
+      type: string
+    - description: Message
+      jsonPath: .status.conditions[0].message
+      name: Message
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: Pulp is the Schema for the pulps API
@@ -1366,6 +1375,31 @@ spec:
                             type: object
                         type: object
                         x-kubernetes-map-type: atomic
+                      unhealthyPodEvictionPolicy:
+                        description: "UnhealthyPodEvictionPolicy defines the criteria
+                          for when unhealthy pods should be considered for eviction.
+                          Current implementation considers healthy pods, as pods that
+                          have status.conditions item with type=\"Ready\",status=\"True\".
+                          \n Valid policies are IfHealthyBudget and AlwaysAllow. If
+                          no policy is specified, the default behavior will be used,
+                          which corresponds to the IfHealthyBudget policy. \n IfHealthyBudget
+                          policy means that running pods (status.phase=\"Running\"),
+                          but not yet healthy can be evicted only if the guarded application
+                          is not disrupted (status.currentHealthy is at least equal
+                          to status.desiredHealthy). Healthy pods will be subject
+                          to the PDB for eviction. \n AlwaysAllow policy means that
+                          all running pods (status.phase=\"Running\"), but not yet
+                          healthy are considered disrupted and can be evicted regardless
+                          of whether the criteria in a PDB is met. This means perspective
+                          running pods of a disrupted application might not get a
+                          chance to become healthy. Healthy pods will be subject to
+                          the PDB for eviction. \n Additional policies may be added
+                          in the future. Clients making eviction decisions should
+                          disallow eviction of unhealthy pods if they encounter an
+                          unrecognized policy in this field. \n This field is alpha-level.
+                          The eviction API uses this field when the feature gate PDBUnhealthyPodEvictionPolicy
+                          is enabled (disabled by default)."
+                        type: string
                     type: object
                   readinessProbe:
                     description: Periodic probe of container service readiness. Container
@@ -1527,6 +1561,27 @@ spec:
                   resource_requirements:
                     description: Resource requirements for the pulp api container.
                     properties:
+                      claims:
+                        description: "Claims lists the names of resources, defined
+                          in spec.resourceClaims, that are used by this container.
+                          \n This is an alpha field and requires enabling the DynamicResourceAllocation
+                          feature gate. \n This field is immutable."
+                        items:
+                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                          properties:
+                            name:
+                              description: Name must match the name of one entry in
+                                pod.spec.resourceClaims of the Pod where this field
+                                is used. It makes that resource available inside a
+                                container.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
                       limits:
                         additionalProperties:
                           anyOf:
@@ -1764,7 +1819,7 @@ spec:
                             - Ignore: nodeAffinity/nodeSelector are ignored. All nodes
                             are included in the calculations. \n If this value is
                             nil, the behavior is equivalent to the Honor policy. This
-                            is a alpha-level feature enabled by the NodeInclusionPolicyInPodTopologySpread
+                            is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread
                             feature flag."
                           type: string
                         nodeTaintsPolicy:
@@ -1774,8 +1829,8 @@ spec:
                             tainted nodes for which the incoming pod has a toleration,
                             are included. - Ignore: node taints are ignored. All nodes
                             are included. \n If this value is nil, the behavior is
-                            equivalent to the Ignore policy. This is a alpha-level
-                            feature enabled by the NodeInclusionPolicyInPodTopologySpread
+                            equivalent to the Ignore policy. This is a beta-level
+                            feature default enabled by the NodeInclusionPolicyInPodTopologySpread
                             feature flag."
                           type: string
                         topologyKey:
@@ -3014,6 +3069,27 @@ spec:
                   redis_resource_requirements:
                     description: Resource requirements for the Redis container
                     properties:
+                      claims:
+                        description: "Claims lists the names of resources, defined
+                          in spec.resourceClaims, that are used by this container.
+                          \n This is an alpha field and requires enabling the DynamicResourceAllocation
+                          feature gate. \n This field is immutable."
+                        items:
+                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                          properties:
+                            name:
+                              description: Name must match the name of one entry in
+                                pod.spec.resourceClaims of the Pod where this field
+                                is used. It makes that resource available inside a
+                                container.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
                       limits:
                         additionalProperties:
                           anyOf:
@@ -4258,6 +4334,31 @@ spec:
                             type: object
                         type: object
                         x-kubernetes-map-type: atomic
+                      unhealthyPodEvictionPolicy:
+                        description: "UnhealthyPodEvictionPolicy defines the criteria
+                          for when unhealthy pods should be considered for eviction.
+                          Current implementation considers healthy pods, as pods that
+                          have status.conditions item with type=\"Ready\",status=\"True\".
+                          \n Valid policies are IfHealthyBudget and AlwaysAllow. If
+                          no policy is specified, the default behavior will be used,
+                          which corresponds to the IfHealthyBudget policy. \n IfHealthyBudget
+                          policy means that running pods (status.phase=\"Running\"),
+                          but not yet healthy can be evicted only if the guarded application
+                          is not disrupted (status.currentHealthy is at least equal
+                          to status.desiredHealthy). Healthy pods will be subject
+                          to the PDB for eviction. \n AlwaysAllow policy means that
+                          all running pods (status.phase=\"Running\"), but not yet
+                          healthy are considered disrupted and can be evicted regardless
+                          of whether the criteria in a PDB is met. This means perspective
+                          running pods of a disrupted application might not get a
+                          chance to become healthy. Healthy pods will be subject to
+                          the PDB for eviction. \n Additional policies may be added
+                          in the future. Clients making eviction decisions should
+                          disallow eviction of unhealthy pods if they encounter an
+                          unrecognized policy in this field. \n This field is alpha-level.
+                          The eviction API uses this field when the feature gate PDBUnhealthyPodEvictionPolicy
+                          is enabled (disabled by default)."
+                        type: string
                     type: object
                   readinessProbe:
                     description: Periodic probe of container service readiness. Container
@@ -4419,6 +4520,27 @@ spec:
                   resource_requirements:
                     description: Resource requirements for the pulp-content container
                     properties:
+                      claims:
+                        description: "Claims lists the names of resources, defined
+                          in spec.resourceClaims, that are used by this container.
+                          \n This is an alpha field and requires enabling the DynamicResourceAllocation
+                          feature gate. \n This field is immutable."
+                        items:
+                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                          properties:
+                            name:
+                              description: Name must match the name of one entry in
+                                pod.spec.resourceClaims of the Pod where this field
+                                is used. It makes that resource available inside a
+                                container.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
                       limits:
                         additionalProperties:
                           anyOf:
@@ -4656,7 +4778,7 @@ spec:
                             - Ignore: nodeAffinity/nodeSelector are ignored. All nodes
                             are included in the calculations. \n If this value is
                             nil, the behavior is equivalent to the Honor policy. This
-                            is a alpha-level feature enabled by the NodeInclusionPolicyInPodTopologySpread
+                            is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread
                             feature flag."
                           type: string
                         nodeTaintsPolicy:
@@ -4666,8 +4788,8 @@ spec:
                             tainted nodes for which the incoming pod has a toleration,
                             are included. - Ignore: node taints are ignored. All nodes
                             are included. \n If this value is nil, the behavior is
-                            equivalent to the Ignore policy. This is a alpha-level
-                            feature enabled by the NodeInclusionPolicyInPodTopologySpread
+                            equivalent to the Ignore policy. This is a beta-level
+                            feature default enabled by the NodeInclusionPolicyInPodTopologySpread
                             feature flag."
                           type: string
                         topologyKey:
@@ -5764,6 +5886,27 @@ spec:
                   postgres_resource_requirements:
                     description: Resource requirements for the database container.
                     properties:
+                      claims:
+                        description: "Claims lists the names of resources, defined
+                          in spec.resourceClaims, that are used by this container.
+                          \n This is an alpha field and requires enabling the DynamicResourceAllocation
+                          feature gate. \n This field is immutable."
+                        items:
+                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                          properties:
+                            name:
+                              description: Name must match the name of one entry in
+                                pod.spec.resourceClaims of the Pod where this field
+                                is used. It makes that resource available inside a
+                                container.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
                       limits:
                         additionalProperties:
                           anyOf:
@@ -6202,6 +6345,26 @@ spec:
                 description: '[DEPRECATED] Temporarily adding to keep compatibility
                   with ansible version. Resource requirements for the database container.'
                 properties:
+                  claims:
+                    description: "Claims lists the names of resources, defined in
+                      spec.resourceClaims, that are used by this container. \n This
+                      is an alpha field and requires enabling the DynamicResourceAllocation
+                      feature gate. \n This field is immutable."
+                    items:
+                      description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                      properties:
+                        name:
+                          description: Name must match the name of one entry in pod.spec.resourceClaims
+                            of the Pod where this field is used. It makes that resource
+                            available inside a container.
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
                   limits:
                     additionalProperties:
                       anyOf:
@@ -6240,6 +6403,26 @@ spec:
                   with ansible version. Storage resource requirements for the database
                   container.'
                 properties:
+                  claims:
+                    description: "Claims lists the names of resources, defined in
+                      spec.resourceClaims, that are used by this container. \n This
+                      is an alpha field and requires enabling the DynamicResourceAllocation
+                      feature gate. \n This field is immutable."
+                    items:
+                      description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                      properties:
+                        name:
+                          description: Name must match the name of one entry in pod.spec.resourceClaims
+                            of the Pod where this field is used. It makes that resource
+                            available inside a container.
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
                   limits:
                     additionalProperties:
                       anyOf:
@@ -6325,6 +6508,27 @@ spec:
                     description: ResourceRequirements describes the compute resource
                       requirements.
                     properties:
+                      claims:
+                        description: "Claims lists the names of resources, defined
+                          in spec.resourceClaims, that are used by this container.
+                          \n This is an alpha field and requires enabling the DynamicResourceAllocation
+                          feature gate. \n This field is immutable."
+                        items:
+                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                          properties:
+                            name:
+                              description: Name must match the name of one entry in
+                                pod.spec.resourceClaims of the Pod where this field
+                                is used. It makes that resource available inside a
+                                container.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
                       limits:
                         additionalProperties:
                           anyOf:
@@ -6358,6 +6562,27 @@ spec:
                     description: ResourceRequirements describes the compute resource
                       requirements.
                     properties:
+                      claims:
+                        description: "Claims lists the names of resources, defined
+                          in spec.resourceClaims, that are used by this container.
+                          \n This is an alpha field and requires enabling the DynamicResourceAllocation
+                          feature gate. \n This field is immutable."
+                        items:
+                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                          properties:
+                            name:
+                              description: Name must match the name of one entry in
+                                pod.spec.resourceClaims of the Pod where this field
+                                is used. It makes that resource available inside a
+                                container.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
                       limits:
                         additionalProperties:
                           anyOf:
@@ -6661,8 +6886,8 @@ spec:
                         are included in the calculations. - Ignore: nodeAffinity/nodeSelector
                         are ignored. All nodes are included in the calculations. \n
                         If this value is nil, the behavior is equivalent to the Honor
-                        policy. This is a alpha-level feature enabled by the NodeInclusionPolicyInPodTopologySpread
-                        feature flag."
+                        policy. This is a beta-level feature default enabled by the
+                        NodeInclusionPolicyInPodTopologySpread feature flag."
                       type: string
                     nodeTaintsPolicy:
                       description: "NodeTaintsPolicy indicates how we will treat node
@@ -6671,8 +6896,8 @@ spec:
                         for which the incoming pod has a toleration, are included.
                         - Ignore: node taints are ignored. All nodes are included.
                         \n If this value is nil, the behavior is equivalent to the
-                        Ignore policy. This is a alpha-level feature enabled by the
-                        NodeInclusionPolicyInPodTopologySpread feature flag."
+                        Ignore policy. This is a beta-level feature default enabled
+                        by the NodeInclusionPolicyInPodTopologySpread feature flag."
                       type: string
                     topologyKey:
                       description: TopologyKey is the key of node labels. Nodes that
@@ -6947,6 +7172,31 @@ spec:
                             type: object
                         type: object
                         x-kubernetes-map-type: atomic
+                      unhealthyPodEvictionPolicy:
+                        description: "UnhealthyPodEvictionPolicy defines the criteria
+                          for when unhealthy pods should be considered for eviction.
+                          Current implementation considers healthy pods, as pods that
+                          have status.conditions item with type=\"Ready\",status=\"True\".
+                          \n Valid policies are IfHealthyBudget and AlwaysAllow. If
+                          no policy is specified, the default behavior will be used,
+                          which corresponds to the IfHealthyBudget policy. \n IfHealthyBudget
+                          policy means that running pods (status.phase=\"Running\"),
+                          but not yet healthy can be evicted only if the guarded application
+                          is not disrupted (status.currentHealthy is at least equal
+                          to status.desiredHealthy). Healthy pods will be subject
+                          to the PDB for eviction. \n AlwaysAllow policy means that
+                          all running pods (status.phase=\"Running\"), but not yet
+                          healthy are considered disrupted and can be evicted regardless
+                          of whether the criteria in a PDB is met. This means perspective
+                          running pods of a disrupted application might not get a
+                          chance to become healthy. Healthy pods will be subject to
+                          the PDB for eviction. \n Additional policies may be added
+                          in the future. Clients making eviction decisions should
+                          disallow eviction of unhealthy pods if they encounter an
+                          unrecognized policy in this field. \n This field is alpha-level.
+                          The eviction API uses this field when the feature gate PDBUnhealthyPodEvictionPolicy
+                          is enabled (disabled by default)."
+                        type: string
                     type: object
                   readinessProbe:
                     description: Periodic probe of container service readiness. Container
@@ -7108,6 +7358,27 @@ spec:
                   resource_requirements:
                     description: Resource requirements for the pulp-web container
                     properties:
+                      claims:
+                        description: "Claims lists the names of resources, defined
+                          in spec.resourceClaims, that are used by this container.
+                          \n This is an alpha field and requires enabling the DynamicResourceAllocation
+                          feature gate. \n This field is immutable."
+                        items:
+                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                          properties:
+                            name:
+                              description: Name must match the name of one entry in
+                                pod.spec.resourceClaims of the Pod where this field
+                                is used. It makes that resource available inside a
+                                container.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
                       limits:
                         additionalProperties:
                           anyOf:
@@ -8295,6 +8566,31 @@ spec:
                             type: object
                         type: object
                         x-kubernetes-map-type: atomic
+                      unhealthyPodEvictionPolicy:
+                        description: "UnhealthyPodEvictionPolicy defines the criteria
+                          for when unhealthy pods should be considered for eviction.
+                          Current implementation considers healthy pods, as pods that
+                          have status.conditions item with type=\"Ready\",status=\"True\".
+                          \n Valid policies are IfHealthyBudget and AlwaysAllow. If
+                          no policy is specified, the default behavior will be used,
+                          which corresponds to the IfHealthyBudget policy. \n IfHealthyBudget
+                          policy means that running pods (status.phase=\"Running\"),
+                          but not yet healthy can be evicted only if the guarded application
+                          is not disrupted (status.currentHealthy is at least equal
+                          to status.desiredHealthy). Healthy pods will be subject
+                          to the PDB for eviction. \n AlwaysAllow policy means that
+                          all running pods (status.phase=\"Running\"), but not yet
+                          healthy are considered disrupted and can be evicted regardless
+                          of whether the criteria in a PDB is met. This means perspective
+                          running pods of a disrupted application might not get a
+                          chance to become healthy. Healthy pods will be subject to
+                          the PDB for eviction. \n Additional policies may be added
+                          in the future. Clients making eviction decisions should
+                          disallow eviction of unhealthy pods if they encounter an
+                          unrecognized policy in this field. \n This field is alpha-level.
+                          The eviction API uses this field when the feature gate PDBUnhealthyPodEvictionPolicy
+                          is enabled (disabled by default)."
+                        type: string
                     type: object
                   readinessProbe:
                     description: Periodic probe of container service readiness. Container
@@ -8456,6 +8752,27 @@ spec:
                   resource_requirements:
                     description: Resource requirements for the pulp-api container
                     properties:
+                      claims:
+                        description: "Claims lists the names of resources, defined
+                          in spec.resourceClaims, that are used by this container.
+                          \n This is an alpha field and requires enabling the DynamicResourceAllocation
+                          feature gate. \n This field is immutable."
+                        items:
+                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                          properties:
+                            name:
+                              description: Name must match the name of one entry in
+                                pod.spec.resourceClaims of the Pod where this field
+                                is used. It makes that resource available inside a
+                                container.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
                       limits:
                         additionalProperties:
                           anyOf:
@@ -8693,7 +9010,7 @@ spec:
                             - Ignore: nodeAffinity/nodeSelector are ignored. All nodes
                             are included in the calculations. \n If this value is
                             nil, the behavior is equivalent to the Honor policy. This
-                            is a alpha-level feature enabled by the NodeInclusionPolicyInPodTopologySpread
+                            is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread
                             feature flag."
                           type: string
                         nodeTaintsPolicy:
@@ -8703,8 +9020,8 @@ spec:
                             tainted nodes for which the incoming pod has a toleration,
                             are included. - Ignore: node taints are ignored. All nodes
                             are included. \n If this value is nil, the behavior is
-                            equivalent to the Ignore policy. This is a alpha-level
-                            feature enabled by the NodeInclusionPolicyInPodTopologySpread
+                            equivalent to the Ignore policy. This is a beta-level
+                            feature default enabled by the NodeInclusionPolicyInPodTopologySpread
                             feature flag."
                           type: string
                         topologyKey:

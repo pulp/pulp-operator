@@ -133,9 +133,9 @@ metadata:
             "file_storage_size": "10Gi",
             "file_storage_storage_class": "standard",
             "image": "quay.io/pulp/galaxy-minimal",
-            "image_version": "nightly",
+            "image_version": "4.6.3",
             "image_web": "quay.io/pulp/galaxy-web",
-            "image_web_version": "nightly",
+            "image_web_version": "4.6.3",
             "ingress_type": "nodeport",
             "pulp_settings": {
               "allowed_export_paths": [
@@ -211,7 +211,7 @@ metadata:
     createdAt: "2021-03-26 16:57:40"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
-    operators.operatorframework.io/builder: operator-sdk-v1.25.2
+    operators.operatorframework.io/builder: operator-sdk-v1.23.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/pulp/pulp-operator
   name: pulp-operator.v1.0.0-alpha.6
@@ -466,6 +466,7 @@ spec:
         displayName: External Cache Secret
         path: cache.external_cache_secret
         x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container liveness. Container will be restarted
           if the probe fails.
@@ -637,6 +638,7 @@ spec:
         displayName: External DBSecret
         path: database.external_db_secret
         x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container liveness. Container will be restarted
           if the probe fails.
@@ -940,6 +942,7 @@ spec:
         displayName: Postgres Configuration Secret
         path: postgres_configuration_secret
         x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
           version. Registry path to the PostgreSQL container to use. Default: "/var/lib/postgresql/data/pgdata"'

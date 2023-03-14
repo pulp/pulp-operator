@@ -450,7 +450,7 @@ type PulpSpec struct {
 	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
 	// Custom configuration secret of database pods
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	PostgresConfigurationSecret string `json:"postgres_configuration_secret,omitempty"`
 
 	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
@@ -785,7 +785,7 @@ type Database struct {
 
 	// Secret name with the configuration to use an external database
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ExternalDBSecret string `json:"external_db_secret,omitempty"`
 
 	// PostgreSQL version [default: "13"]
@@ -889,7 +889,7 @@ type Cache struct {
 
 	// Name of the secret with the parameters to connect to an external Redis cluster
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ExternalCacheSecret string `json:"external_cache_secret,omitempty"`
 
 	// Defines if cache should be enabled.
@@ -1021,6 +1021,8 @@ type PulpStatus struct {
 // Pulp is the Schema for the pulps API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[0].status",description="Status"
+// +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[0].message",description="Message"
 type Pulp struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
