@@ -401,6 +401,7 @@ spec:
         displayName: External Cache Secret
         path: cache.external_cache_secret
         x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container liveness. Container will be restarted
           if the probe fails.
@@ -572,6 +573,7 @@ spec:
         displayName: External DBSecret
         path: database.external_db_secret
         x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container liveness. Container will be restarted
           if the probe fails.
@@ -875,6 +877,7 @@ spec:
         displayName: Postgres Configuration Secret
         path: postgres_configuration_secret
         x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
           version. Registry path to the PostgreSQL container to use. Default: "/var/lib/postgresql/data/pgdata"'
