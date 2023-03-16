@@ -8,6 +8,7 @@ import (
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	netv1 "k8s.io/api/networking/v1"
 	k8s_errors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -175,4 +176,59 @@ func (d DeploymentWorkerOCP) deploy(resources FunctionResources) client.Object {
 	deployment := d.DeploymentWorkerVanilla.deploy(resources).(*appsv1.Deployment)
 	defaultsForOCPDeployment(deployment, resources)
 	return deployment
+}
+
+type IngressOCP struct{}
+
+// deploy returns an ingress using ocp ingress controller (haproxy)
+func (i IngressOCP) deploy(resources FunctionResources, plugins []IngressPlugin) (*netv1.Ingress, error) {
+	ingress, err := ingressDefaults(resources, plugins)
+	if err != nil {
+		return nil, err
+	}
+
+	redirectAnnotation := map[string]string{
+		"web": "false",
+	}
+	var redirectPaths []netv1.HTTPIngressPath
+	pathType := netv1.PathTypePrefix
+
+	hAProxyTimeout := resources.Pulp.Spec.HAProxyTimeout
+	if len(hAProxyTimeout) == 0 {
+		hAProxyTimeout = "180s"
+	}
+	redirectAnnotation["haproxy.router.openshift.io/timeout"] = hAProxyTimeout
+
+	for _, plugin := range plugins {
+		if len(plugin.Rewrite) > 0 {
+			redirectAnnotation["haproxy.router.openshift.io/rewrite-target"] = plugin.Rewrite
+			path := netv1.HTTPIngressPath{
+				Path:     plugin.Path,
+				PathType: &pathType,
+				Backend: netv1.IngressBackend{
+					Service: &netv1.IngressServiceBackend{
+						Name: plugin.ServiceName,
+						Port: netv1.ServiceBackendPort{
+							Name: plugin.TargetPort,
+						},
+					},
+				},
+			}
+			redirectPaths = append(redirectPaths, path)
+		}
+	}
+
+	for key, val := range resources.Pulp.Spec.IngressAnnotations {
+		redirectAnnotation[key] = val
+	}
+
+	ingress.ObjectMeta.Annotations = redirectAnnotation
+	ingress.Spec.IngressClassName = &resources.Pulp.Spec.IngressClassName
+	ingress.Spec.Rules[0].IngressRuleValue = netv1.IngressRuleValue{
+		HTTP: &netv1.HTTPIngressRuleValue{
+			Paths: redirectPaths,
+		},
+	}
+
+	return ingress, nil
 }
