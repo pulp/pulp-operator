@@ -117,7 +117,12 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 
 	// get ingress
 	currentIngress := &netv1.Ingress{}
-	expectedIngress, err := r.pulpIngressObject(ctx, pulp, pulpPlugins)
+	resources := FunctionResources{ctx, pulp, log, r}
+	ingress, err := initIngress(resources)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	expectedIngress, err := ingress.deploy(resources, pulpPlugins)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -166,100 +171,32 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 	return ctrl.Result{}, nil
 }
 
-// pulp-ingress
-func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repomanagerpulpprojectorgv1beta2.Pulp, plugins []IngressPlugin) (*netv1.Ingress, error) {
-	isNginxIngressSupported := false
-	ingressClassName := m.Spec.IngressClassName
-
-	// check if the IngressClassName defined exists and
-	// if the class provision ingresses with nginx controller
-	if len(ingressClassName) > 0 {
-		ic := &netv1.IngressClass{}
-		if err := r.Get(context.TODO(), types.NamespacedName{Name: ingressClassName}, ic); err != nil {
-			return nil, fmt.Errorf("failed to find provided IngressClassName: %s,%s", m.Spec.IngressClassName, err)
-		}
-		isNginxIngressSupported = controllers.IsNginxIngressSupported(r, m.Spec.IngressClassName)
-	}
-
+// ingressDefaults returns an k8s Ingress resource with default values
+func ingressDefaults(resources FunctionResources, plugins []IngressPlugin) (*netv1.Ingress, error) {
 	annotation := map[string]string{
 		"web": "false",
 	}
-	redirectAnnotation := map[string]string{}
 	var paths []netv1.HTTPIngressPath
-	var redirectPaths []netv1.HTTPIngressPath
 	var path netv1.HTTPIngressPath
 	pathType := netv1.PathTypePrefix
-	rewrite := ""
-
-	// set Nginx default values
-	nginxProxyBodySize := m.Spec.NginxProxyBodySize
-	if len(nginxProxyBodySize) == 0 {
-		nginxProxyBodySize = "0"
-	}
-	nginxMaxBodySize := m.Spec.NginxMaxBodySize
-	if len(nginxMaxBodySize) == 0 {
-		nginxMaxBodySize = "10m"
-	}
-	nginxProxyReadTimeout := m.Spec.NginxProxyReadTimeout
-	if len(nginxProxyReadTimeout) == 0 {
-		nginxProxyReadTimeout = "120s"
-	}
-	nginxProxySendTimeout := m.Spec.NginxProxySendTimeout
-	if len(nginxProxySendTimeout) == 0 {
-		nginxProxySendTimeout = "120s"
-	}
-	nginxProxyConnectTimeout := m.Spec.NginxProxyConnectTimeout
-	if len(nginxProxyConnectTimeout) == 0 {
-		nginxProxyConnectTimeout = "120s"
-	}
-	isOpenShift, _ := controllers.IsOpenShift()
-	hAProxyTimeout := m.Spec.HAProxyTimeout
-	if len(hAProxyTimeout) == 0 {
-		hAProxyTimeout = "180s"
-	}
 
 	for _, plugin := range plugins {
 		if len(plugin.Rewrite) > 0 {
-			if isNginxIngressSupported {
-				rewrite = "rewrite ^" + strings.TrimRight(plugin.Path, "/") + "* " + plugin.Rewrite + ";"
-				if strings.Contains(annotation["nginx.ingress.kubernetes.io/configuration-snippet"], rewrite) {
-					continue
-				}
-				annotation["nginx.ingress.kubernetes.io/configuration-snippet"] = rewrite
-				continue
-
-			} else if isOpenShift {
-				redirectAnnotation["haproxy.router.openshift.io/rewrite-target"] = plugin.Rewrite
-				path := netv1.HTTPIngressPath{
-					Path:     plugin.Path,
-					PathType: &pathType,
-					Backend: netv1.IngressBackend{
-						Service: &netv1.IngressServiceBackend{
-							Name: plugin.ServiceName,
-							Port: netv1.ServiceBackendPort{
-								Name: plugin.TargetPort,
-							},
+			annotation["web"] = "true"
+			path = netv1.HTTPIngressPath{
+				Path:     "/",
+				PathType: &pathType,
+				Backend: netv1.IngressBackend{
+					Service: &netv1.IngressServiceBackend{
+						Name: resources.Name + "-web-svc",
+						Port: netv1.ServiceBackendPort{
+							Number: 24880,
 						},
 					},
-				}
-				redirectPaths = append(redirectPaths, path)
-			} else {
-				annotation["web"] = "true"
-				path = netv1.HTTPIngressPath{
-					Path:     "/",
-					PathType: &pathType,
-					Backend: netv1.IngressBackend{
-						Service: &netv1.IngressServiceBackend{
-							Name: m.Name + "-web-svc",
-							Port: netv1.ServiceBackendPort{
-								Number: 24880,
-							},
-						},
-					},
-				}
-				paths = append(paths, path)
-				break
+				},
 			}
+			paths = append(paths, path)
+			break
 		}
 		path = netv1.HTTPIngressPath{
 			Path:     plugin.Path,
@@ -276,24 +213,16 @@ func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repoma
 		paths = append(paths, path)
 	}
 
-	if isNginxIngressSupported {
-		annotation["nginx.ingress.kubernetes.io/proxy-body-size"] = nginxProxyBodySize
-		annotation["nginx.org/client-max-body-size"] = nginxMaxBodySize
-		annotation["nginx.ingress.kubernetes.io/proxy-read-timeout"] = nginxProxyReadTimeout
-		annotation["nginx.ingress.kubernetes.io/proxy-connect-timeout"] = nginxProxyConnectTimeout
-		annotation["nginx.ingress.kubernetes.io/proxy-send-timeout"] = nginxProxySendTimeout
-	} else if isOpenShift {
-		annotation["haproxy.router.openshift.io/timeout"] = hAProxyTimeout
-	}
-	for key, val := range m.Spec.IngressAnnotations {
+	for key, val := range resources.Pulp.Spec.IngressAnnotations {
 		annotation[key] = val
 	}
 
-	hostname := m.Spec.IngressHost
-	if len(m.Spec.Hostname) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		hostname = m.Spec.Hostname
+	hostname := resources.Pulp.Spec.IngressHost
+	if len(resources.Pulp.Spec.Hostname) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		hostname = resources.Pulp.Spec.Hostname
 	}
 	ingressSpec := netv1.IngressSpec{
+		IngressClassName: &resources.Pulp.Spec.IngressClassName,
 		Rules: []netv1.IngressRule{
 			{
 				Host: hostname,
@@ -306,68 +235,160 @@ func (r *RepoManagerReconciler) pulpIngressObject(ctx context.Context, m *repoma
 		},
 	}
 
-	if len(ingressClassName) > 0 {
-		ingressSpec.IngressClassName = &ingressClassName
-	}
-	if len(m.Spec.IngressTLSSecret) > 0 {
+	if len(resources.Pulp.Spec.IngressTLSSecret) > 0 {
 		ingressSpec.TLS = []netv1.IngressTLS{
 			{
 				Hosts:      []string{hostname},
-				SecretName: m.Spec.IngressTLSSecret,
+				SecretName: resources.Pulp.Spec.IngressTLSSecret,
 			},
 		}
 	}
 	labels := map[string]string{
 		"app.kubernetes.io/name":       "ingress",
-		"app.kubernetes.io/instance":   "ingress-" + m.Name,
+		"app.kubernetes.io/instance":   "ingress-" + resources.Pulp.Name,
 		"app.kubernetes.io/component":  "ingress",
-		"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
-		"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
-		"pulp_cr":                      m.Name,
+		"app.kubernetes.io/part-of":    resources.Pulp.Spec.DeploymentType,
+		"app.kubernetes.io/managed-by": resources.Pulp.Spec.DeploymentType + "-operator",
+		"pulp_cr":                      resources.Pulp.Name,
 		"owner":                        "pulp-dev",
-	}
-
-	if isOpenShift {
-		for key, val := range annotation {
-			redirectAnnotation[key] = val
-		}
-		redirectIngressSpec := netv1.IngressSpec{
-			Rules: []netv1.IngressRule{
-				{
-					Host: hostname,
-					IngressRuleValue: netv1.IngressRuleValue{
-						HTTP: &netv1.HTTPIngressRuleValue{
-							Paths: redirectPaths,
-						},
-					},
-				},
-			},
-		}
-		redirectIngressSpec.IngressClassName = ingressSpec.IngressClassName
-		redirectIngressSpec.TLS = ingressSpec.TLS
-		redirectIngress := &netv1.Ingress{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        m.Name + "-redirect",
-				Namespace:   m.Namespace,
-				Labels:      labels,
-				Annotations: redirectAnnotation,
-			},
-			Spec: redirectIngressSpec,
-		}
-		ctrl.SetControllerReference(m, redirectIngress, r.Scheme)
-		r.Create(ctx, redirectIngress)
 	}
 
 	ingress := &netv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        m.Name,
-			Namespace:   m.Namespace,
+			Name:        resources.Pulp.Name,
+			Namespace:   resources.Pulp.Namespace,
 			Labels:      labels,
 			Annotations: annotation,
 		},
 		Spec: ingressSpec,
 	}
-	ctrl.SetControllerReference(m, ingress, r.Scheme)
+	ctrl.SetControllerReference(resources.Pulp, ingress, resources.Scheme)
+	return ingress, nil
+}
+
+// DeploymentObj represents the k8s "Ingress" resource
+type IngressObj struct {
+	Ingresser
+}
+
+// initIngress returns a concrete ingress object based on k8s distribution and
+// ingress controller (nginx, haproxy, etc)
+func initIngress(resources FunctionResources) (*IngressObj, error) {
+	ingressClassName := resources.Pulp.Spec.IngressClassName
+
+	// check if the IngressClassName defined exists and
+	// if the class provision ingresses with nginx controller
+	if len(ingressClassName) > 0 {
+		ic := &netv1.IngressClass{}
+		if err := resources.RepoManagerReconciler.Get(context.TODO(), types.NamespacedName{Name: ingressClassName}, ic); err != nil {
+			return nil, fmt.Errorf("failed to find provided IngressClassName: %s,%s", resources.Pulp.Spec.IngressClassName, err)
+		}
+	}
+
+	if controllers.IsNginxIngressSupported(resources.RepoManagerReconciler, resources.Pulp.Spec.IngressClassName) {
+		return &IngressObj{IngressNginx{}}, nil
+	}
+
+	if isOpenShift, _ := controllers.IsOpenShift(); isOpenShift {
+		return &IngressObj{IngressOCP{}}, nil
+	}
+
+	return &IngressObj{IngressOthers{}}, nil
+}
+
+// Ingresser is an interface for the several ingress types/controllers (nginx,haproxy)
+type Ingresser interface {
+	deploy(FunctionResources, []IngressPlugin) (*netv1.Ingress, error)
+}
+
+type IngressNginx struct{}
+
+// deploy returns an ingress using nginx controller
+func (i IngressNginx) deploy(resources FunctionResources, plugins []IngressPlugin) (*netv1.Ingress, error) {
+	ingress, err := ingressDefaults(resources, plugins)
+	if err != nil {
+		return nil, err
+	}
+
+	annotation := map[string]string{
+		"web": "false",
+	}
+	var paths []netv1.HTTPIngressPath
+	var path netv1.HTTPIngressPath
+	pathType := netv1.PathTypePrefix
+	rewrite := ""
+
+	// set Nginx default values
+	nginxProxyBodySize := resources.Pulp.Spec.NginxProxyBodySize
+	if len(nginxProxyBodySize) == 0 {
+		nginxProxyBodySize = "0"
+	}
+	nginxMaxBodySize := resources.Pulp.Spec.NginxMaxBodySize
+	if len(nginxMaxBodySize) == 0 {
+		nginxMaxBodySize = "10m"
+	}
+	nginxProxyReadTimeout := resources.Pulp.Spec.NginxProxyReadTimeout
+	if len(nginxProxyReadTimeout) == 0 {
+		nginxProxyReadTimeout = "120s"
+	}
+	nginxProxySendTimeout := resources.Pulp.Spec.NginxProxySendTimeout
+	if len(nginxProxySendTimeout) == 0 {
+		nginxProxySendTimeout = "120s"
+	}
+	nginxProxyConnectTimeout := resources.Pulp.Spec.NginxProxyConnectTimeout
+	if len(nginxProxyConnectTimeout) == 0 {
+		nginxProxyConnectTimeout = "120s"
+	}
+
+	for _, plugin := range plugins {
+		if len(plugin.Rewrite) > 0 {
+			rewrite = "rewrite ^" + strings.TrimRight(plugin.Path, "/") + "* " + plugin.Rewrite + ";"
+			if strings.Contains(annotation["nginx.ingress.kubernetes.io/configuration-snippet"], rewrite) {
+				continue
+			}
+			annotation["nginx.ingress.kubernetes.io/configuration-snippet"] = rewrite
+			continue
+		}
+		path = netv1.HTTPIngressPath{
+			Path:     plugin.Path,
+			PathType: &pathType,
+			Backend: netv1.IngressBackend{
+				Service: &netv1.IngressServiceBackend{
+					Name: plugin.ServiceName,
+					Port: netv1.ServiceBackendPort{
+						Name: plugin.TargetPort,
+					},
+				},
+			},
+		}
+		paths = append(paths, path)
+	}
+
+	annotation["nginx.ingress.kubernetes.io/proxy-body-size"] = nginxProxyBodySize
+	annotation["nginx.org/client-max-body-size"] = nginxMaxBodySize
+	annotation["nginx.ingress.kubernetes.io/proxy-read-timeout"] = nginxProxyReadTimeout
+	annotation["nginx.ingress.kubernetes.io/proxy-connect-timeout"] = nginxProxyConnectTimeout
+	annotation["nginx.ingress.kubernetes.io/proxy-send-timeout"] = nginxProxySendTimeout
+
+	ingress.ObjectMeta.Annotations = annotation
+	ingress.Spec.IngressClassName = &resources.Pulp.Spec.IngressClassName
+	ingress.Spec.Rules[0].IngressRuleValue = netv1.IngressRuleValue{
+		HTTP: &netv1.HTTPIngressRuleValue{
+			Paths: paths,
+		},
+	}
+
+	return ingress, nil
+}
+
+type IngressOthers struct{}
+
+// deploy returns an ingress with the default configurations
+func (i IngressOthers) deploy(resources FunctionResources, plugins []IngressPlugin) (*netv1.Ingress, error) {
+	ingress, err := ingressDefaults(resources, plugins)
+	if err != nil {
+		return nil, err
+	}
 	return ingress, nil
 }
 
