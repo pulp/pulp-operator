@@ -26,6 +26,7 @@ import (
 	"github.com/go-logr/logr"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
+	pulp_ocp "github.com/pulp/pulp-operator/controllers/ocp"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	corev1 "k8s.io/api/core/v1"
@@ -82,21 +83,21 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 	cmdOutput, err := controllers.ContainerExec(r, &pod, execCmd, "content", pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to get ingresss from "+pod.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "Failed to get ingresss!", "FailedGet"+pod.Name)
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "Failed to get ingresss!", "FailedGet"+pod.Name)
 		return ctrl.Result{}, err
 	}
-	var pulpPlugins []IngressPlugin
+	var pulpPlugins []controllers.IngressPlugin
 	json.Unmarshal([]byte(cmdOutput), &pulpPlugins)
-	defaultPlugins := []IngressPlugin{
+	defaultPlugins := []controllers.IngressPlugin{
 		{
 			Name:        pulp.Name + "-content",
-			Path:        getPulpSetting(pulp, "content_path_prefix"),
+			Path:        controllers.GetPulpSetting(pulp, "content_path_prefix"),
 			TargetPort:  "content-24816",
 			ServiceName: pulp.Name + "-content-svc",
 		},
 		{
 			Name:        pulp.Name + "-api-v3",
-			Path:        getPulpSetting(pulp, "api_root") + "api/v3/",
+			Path:        controllers.GetPulpSetting(pulp, "api_root") + "api/v3/",
 			TargetPort:  "api-24817",
 			ServiceName: pulp.Name + "-api-svc",
 		},
@@ -117,12 +118,12 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 
 	// get ingress
 	currentIngress := &netv1.Ingress{}
-	resources := FunctionResources{ctx, pulp, log, r}
-	ingress, err := initIngress(resources)
+	resources := controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}
+	ingress, err := r.initIngress(resources)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	expectedIngress, err := ingress.deploy(resources, pulpPlugins)
+	expectedIngress, err := ingress.Deploy(resources, pulpPlugins)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -132,11 +133,11 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 	// Create the ingress in case it is not found
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new ingress", "Ingress.Namespace", expectedIngress.Namespace, "Ingress.Name", expectedIngress.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingIngress", "Creating "+pulp.Name+"-ingress")
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingIngress", "Creating "+pulp.Name+"-ingress")
 		err = r.Create(ctx, expectedIngress)
 		if err != nil {
 			log.Error(err, "Failed to create new ingress", "Ingress.Namespace", expectedIngress.Namespace, "Ingress.Name", expectedIngress.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingIngress", "Failed to create "+pulp.Name+"-ingress: "+err.Error())
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingIngress", "Failed to create "+pulp.Name+"-ingress: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new ingress")
 			return ctrl.Result{}, err
 		}
@@ -146,18 +147,18 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 	}
 
 	// Ensure ingress specs are as expected
-	if requeue, err := reconcileObject(FunctionResources{ctx, pulp, log, r}, expectedIngress, currentIngress, conditionType); err != nil || requeue {
+	if requeue, err := controllers.ReconcileObject(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}, expectedIngress, currentIngress, conditionType); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
 	// Ensure ingress labels and annotations are as expected
-	if requeue, err := reconcileMetadata(FunctionResources{ctx, pulp, log, r}, expectedIngress, currentIngress, conditionType); err != nil || requeue {
+	if requeue, err := controllers.ReconcileMetadata(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}, expectedIngress, currentIngress, conditionType); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
 	// we should only update the status when Ingress-Ready==false
 	if v1.IsStatusConditionFalse(pulp.Status.Conditions, conditionType) {
-		r.updateStatus(ctx, pulp, metav1.ConditionTrue, conditionType, "IngressTasksFinished", "All Ingress tasks ran successfully")
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionTrue, conditionType, "IngressTasksFinished", "All Ingress tasks ran successfully")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "IngressReady", "All Ingress tasks ran successfully")
 	}
 
@@ -171,126 +172,31 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 	return ctrl.Result{}, nil
 }
 
-// ingressDefaults returns an k8s Ingress resource with default values
-func ingressDefaults(resources FunctionResources, plugins []IngressPlugin) (*netv1.Ingress, error) {
-	annotation := map[string]string{
-		"web": "false",
-	}
-	var paths []netv1.HTTPIngressPath
-	var path netv1.HTTPIngressPath
-	pathType := netv1.PathTypePrefix
-
-	for _, plugin := range plugins {
-		if len(plugin.Rewrite) > 0 {
-			annotation["web"] = "true"
-			path = netv1.HTTPIngressPath{
-				Path:     "/",
-				PathType: &pathType,
-				Backend: netv1.IngressBackend{
-					Service: &netv1.IngressServiceBackend{
-						Name: resources.Name + "-web-svc",
-						Port: netv1.ServiceBackendPort{
-							Number: 24880,
-						},
-					},
-				},
-			}
-			paths = append(paths, path)
-			break
-		}
-		path = netv1.HTTPIngressPath{
-			Path:     plugin.Path,
-			PathType: &pathType,
-			Backend: netv1.IngressBackend{
-				Service: &netv1.IngressServiceBackend{
-					Name: plugin.ServiceName,
-					Port: netv1.ServiceBackendPort{
-						Name: plugin.TargetPort,
-					},
-				},
-			},
-		}
-		paths = append(paths, path)
-	}
-
-	for key, val := range resources.Pulp.Spec.IngressAnnotations {
-		annotation[key] = val
-	}
-
-	hostname := resources.Pulp.Spec.IngressHost
-	if len(resources.Pulp.Spec.Hostname) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		hostname = resources.Pulp.Spec.Hostname
-	}
-	ingressSpec := netv1.IngressSpec{
-		IngressClassName: &resources.Pulp.Spec.IngressClassName,
-		Rules: []netv1.IngressRule{
-			{
-				Host: hostname,
-				IngressRuleValue: netv1.IngressRuleValue{
-					HTTP: &netv1.HTTPIngressRuleValue{
-						Paths: paths,
-					},
-				},
-			},
-		},
-	}
-
-	if len(resources.Pulp.Spec.IngressTLSSecret) > 0 {
-		ingressSpec.TLS = []netv1.IngressTLS{
-			{
-				Hosts:      []string{hostname},
-				SecretName: resources.Pulp.Spec.IngressTLSSecret,
-			},
-		}
-	}
-	labels := map[string]string{
-		"app.kubernetes.io/name":       "ingress",
-		"app.kubernetes.io/instance":   "ingress-" + resources.Pulp.Name,
-		"app.kubernetes.io/component":  "ingress",
-		"app.kubernetes.io/part-of":    resources.Pulp.Spec.DeploymentType,
-		"app.kubernetes.io/managed-by": resources.Pulp.Spec.DeploymentType + "-operator",
-		"pulp_cr":                      resources.Pulp.Name,
-		"owner":                        "pulp-dev",
-	}
-
-	ingress := &netv1.Ingress{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        resources.Pulp.Name,
-			Namespace:   resources.Pulp.Namespace,
-			Labels:      labels,
-			Annotations: annotation,
-		},
-		Spec: ingressSpec,
-	}
-	ctrl.SetControllerReference(resources.Pulp, ingress, resources.Scheme)
-	return ingress, nil
-}
-
-// DeploymentObj represents the k8s "Ingress" resource
+// IngressObj represents the k8s "Ingress" resource
 type IngressObj struct {
 	Ingresser
 }
 
 // initIngress returns a concrete ingress object based on k8s distribution and
 // ingress controller (nginx, haproxy, etc)
-func initIngress(resources FunctionResources) (*IngressObj, error) {
+func (r *RepoManagerReconciler) initIngress(resources controllers.FunctionResources) (*IngressObj, error) {
 	ingressClassName := resources.Pulp.Spec.IngressClassName
 
 	// check if the IngressClassName defined exists and
 	// if the class provision ingresses with nginx controller
 	if len(ingressClassName) > 0 {
 		ic := &netv1.IngressClass{}
-		if err := resources.RepoManagerReconciler.Get(context.TODO(), types.NamespacedName{Name: ingressClassName}, ic); err != nil {
+		if err := resources.Client.Get(context.TODO(), types.NamespacedName{Name: ingressClassName}, ic); err != nil {
 			return nil, fmt.Errorf("failed to find provided IngressClassName: %s,%s", resources.Pulp.Spec.IngressClassName, err)
 		}
 	}
 
-	if controllers.IsNginxIngressSupported(resources.RepoManagerReconciler, resources.Pulp.Spec.IngressClassName) {
+	if controllers.IsNginxIngressSupported(r, resources.Pulp.Spec.IngressClassName) {
 		return &IngressObj{IngressNginx{}}, nil
 	}
 
 	if isOpenShift, _ := controllers.IsOpenShift(); isOpenShift {
-		return &IngressObj{IngressOCP{}}, nil
+		return &IngressObj{pulp_ocp.IngressOCP{}}, nil
 	}
 
 	return &IngressObj{IngressOthers{}}, nil
@@ -298,14 +204,17 @@ func initIngress(resources FunctionResources) (*IngressObj, error) {
 
 // Ingresser is an interface for the several ingress types/controllers (nginx,haproxy)
 type Ingresser interface {
-	deploy(FunctionResources, []IngressPlugin) (*netv1.Ingress, error)
+	Deploy(controllers.FunctionResources, []controllers.IngressPlugin) (*netv1.Ingress, error)
 }
 
 type IngressNginx struct{}
 
-// deploy returns an ingress using nginx controller
-func (i IngressNginx) deploy(resources FunctionResources, plugins []IngressPlugin) (*netv1.Ingress, error) {
-	ingress, err := ingressDefaults(resources, plugins)
+// Deploy returns an ingress using nginx controller
+func (i IngressNginx) Deploy(resources controllers.FunctionResources, plugins []controllers.IngressPlugin) (*netv1.Ingress, error) {
+
+	pulp := resources.Pulp
+
+	ingress, err := controllers.IngressDefaults(resources, plugins)
 	if err != nil {
 		return nil, err
 	}
@@ -319,23 +228,23 @@ func (i IngressNginx) deploy(resources FunctionResources, plugins []IngressPlugi
 	rewrite := ""
 
 	// set Nginx default values
-	nginxProxyBodySize := resources.Pulp.Spec.NginxProxyBodySize
+	nginxProxyBodySize := pulp.Spec.NginxProxyBodySize
 	if len(nginxProxyBodySize) == 0 {
 		nginxProxyBodySize = "0"
 	}
-	nginxMaxBodySize := resources.Pulp.Spec.NginxMaxBodySize
+	nginxMaxBodySize := pulp.Spec.NginxMaxBodySize
 	if len(nginxMaxBodySize) == 0 {
 		nginxMaxBodySize = "10m"
 	}
-	nginxProxyReadTimeout := resources.Pulp.Spec.NginxProxyReadTimeout
+	nginxProxyReadTimeout := pulp.Spec.NginxProxyReadTimeout
 	if len(nginxProxyReadTimeout) == 0 {
 		nginxProxyReadTimeout = "120s"
 	}
-	nginxProxySendTimeout := resources.Pulp.Spec.NginxProxySendTimeout
+	nginxProxySendTimeout := pulp.Spec.NginxProxySendTimeout
 	if len(nginxProxySendTimeout) == 0 {
 		nginxProxySendTimeout = "120s"
 	}
-	nginxProxyConnectTimeout := resources.Pulp.Spec.NginxProxyConnectTimeout
+	nginxProxyConnectTimeout := pulp.Spec.NginxProxyConnectTimeout
 	if len(nginxProxyConnectTimeout) == 0 {
 		nginxProxyConnectTimeout = "120s"
 	}
@@ -371,7 +280,7 @@ func (i IngressNginx) deploy(resources FunctionResources, plugins []IngressPlugi
 	annotation["nginx.ingress.kubernetes.io/proxy-send-timeout"] = nginxProxySendTimeout
 
 	ingress.ObjectMeta.Annotations = annotation
-	ingress.Spec.IngressClassName = &resources.Pulp.Spec.IngressClassName
+	ingress.Spec.IngressClassName = &pulp.Spec.IngressClassName
 	ingress.Spec.Rules[0].IngressRuleValue = netv1.IngressRuleValue{
 		HTTP: &netv1.HTTPIngressRuleValue{
 			Paths: paths,
@@ -383,20 +292,11 @@ func (i IngressNginx) deploy(resources FunctionResources, plugins []IngressPlugi
 
 type IngressOthers struct{}
 
-// deploy returns an ingress with the default configurations
-func (i IngressOthers) deploy(resources FunctionResources, plugins []IngressPlugin) (*netv1.Ingress, error) {
-	ingress, err := ingressDefaults(resources, plugins)
+// Deploy returns an ingress with the default configurations
+func (i IngressOthers) Deploy(resources controllers.FunctionResources, plugins []controllers.IngressPlugin) (*netv1.Ingress, error) {
+	ingress, err := controllers.IngressDefaults(resources, plugins)
 	if err != nil {
 		return nil, err
 	}
 	return ingress, nil
-}
-
-// IngressPlugin defines a plugin ingress.
-type IngressPlugin struct {
-	Name        string `json:"name"`
-	Path        string `json:"path"`
-	ServiceName string `json:"serviceName"`
-	TargetPort  string `json:"targetPort"`
-	Rewrite     string `json:"rewrite"`
 }

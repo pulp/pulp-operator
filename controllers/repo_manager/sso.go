@@ -1,22 +1,24 @@
 package repo_manager
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
 // ssoConfig sets the configurations needed to authenticate pulp through keycloak
-func (r *RepoManagerReconciler) ssoConfig(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, pulpSettings *string) error {
-	log := r.RawLogger
+func ssoConfig(resource controllers.FunctionResources, pulpSettings *string) error {
+	log := resource.Logger
+	client := resource.Client
+	pulp := resource.Pulp
+	ctx := resource.Context
 
 	// Check for specified sso configuration secret
 	secret := &corev1.Secret{}
-	err := r.Get(ctx, types.NamespacedName{Name: pulp.Spec.SSOSecret, Namespace: pulp.Namespace}, secret)
+	err := client.Get(ctx, types.NamespacedName{Name: pulp.Spec.SSOSecret, Namespace: pulp.Namespace}, secret)
 	if err != nil {
 		log.Error(err, "Failed to find "+pulp.Spec.SSOSecret+" secret")
 		return err
@@ -37,13 +39,13 @@ func (r *RepoManagerReconciler) ssoConfig(ctx context.Context, pulp *repomanager
 	}
 
 	// retrieve mandatory keys from sso_secret
-	settings, err := r.retrieveSecretData(ctx, pulp.Spec.SSOSecret, pulp.Namespace, true, requiredKeys...)
+	settings, err := controllers.RetrieveSecretData(ctx, pulp.Spec.SSOSecret, pulp.Namespace, true, client, requiredKeys...)
 	if err != nil {
 		return err
 	}
 
 	// retrieve optional keys from sso_secret
-	optionalSettings, err := r.retrieveSecretData(ctx, pulp.Spec.SSOSecret, pulp.Namespace, false, optionalKeys...)
+	optionalSettings, err := controllers.RetrieveSecretData(ctx, pulp.Spec.SSOSecret, pulp.Namespace, false, client, optionalKeys...)
 	if err != nil {
 		return err
 	}

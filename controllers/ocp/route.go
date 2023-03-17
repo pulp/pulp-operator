@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package repo_manager
+package ocp
 
 import (
 	"context"
@@ -23,7 +23,6 @@ import (
 
 	"github.com/go-logr/logr"
 	routev1 "github.com/openshift/api/route/v1"
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -31,14 +30,42 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// pulpRouteController creates the routes based on snippets defined in pulp-worker pod
-func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, log logr.Logger) (ctrl.Result, error) {
+// statusReturn is used to control goroutines execution
+type statusReturn struct {
+	ctrl.Result
+	error
+}
+
+// RoutePlugin defines a plugin route.
+type RoutePlugin struct {
+	Name        string `json:"name"`
+	Path        string `json:"path"`
+	ServiceName string `json:"serviceName"`
+	TargetPort  string `json:"targetPort"`
+	Rewrite     string `json:"rewrite"`
+}
+
+// PodExec contains the configs to execute a command inside a pod
+type PodExec struct {
+	RESTClient rest.Interface
+	RESTConfig *rest.Config
+	Scheme     *runtime.Scheme
+}
+
+// PulpRouteController creates the routes based on snippets defined in pulp-worker pod
+func PulpRouteController(resources controllers.FunctionResources, restClient rest.Interface, restConfig *rest.Config) (ctrl.Result, error) {
+
+	pulp := resources.Pulp
+	log := resources.Logger
+	ctx := resources.Context
 
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Route-Ready"
@@ -54,17 +81,17 @@ func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *r
 		client.InNamespace(pulp.Namespace),
 		client.MatchingLabels(labels),
 	}
-	if err := r.List(ctx, podList, listOpts...); err != nil {
+	if err := resources.Client.List(ctx, podList, listOpts...); err != nil {
 		log.Error(err, "Failed to list Worker pods", "Pulp.Namespace", pulp.Namespace, "Pulp.Name", pulp.Name)
 		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
-	var IsPodRunning bool = false
+	var isPodRunning bool = false
 	var pod = corev1.Pod{}
 	for _, p := range podList.Items {
 		log.V(1).Info("Checking Worker pod", "Pod", p.Name, "Status", p.Status.Phase)
 		if p.Status.Phase == "Running" {
 			log.V(1).Info("Running!", "Pod", p.Name, "Status", p.Status.Phase)
-			IsPodRunning = true
+			isPodRunning = true
 			pod = p
 			break
 		} else {
@@ -72,17 +99,17 @@ func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *r
 		}
 	}
 
-	if !IsPodRunning {
+	if !isPodRunning {
 		log.Info("Worker pod isn't running yet!")
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 	execCmd := []string{
 		"/usr/bin/route_paths.py", pulp.Name,
 	}
-	cmdOutput, err := controllers.ContainerExec(r, &pod, execCmd, "worker", pod.Namespace)
+	cmdOutput, err := controllers.ContainerExec(PodExec{restClient, restConfig, resources.Scheme}, &pod, execCmd, "worker", pod.Namespace)
 	if err != nil {
 		controllers.CustomZapLogger().Warn(err.Error() + " Failed to get routes from " + pod.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "Failed to get routes!", "FailedGet"+pod.Name)
+		controllers.UpdateStatus(ctx, resources.Client, pulp, metav1.ConditionFalse, conditionType, "Failed to get routes!", "FailedGet"+pod.Name)
 		return ctrl.Result{Requeue: true}, nil
 	}
 	var pulpPlugins []RoutePlugin
@@ -90,13 +117,13 @@ func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *r
 	defaultPlugins := []RoutePlugin{
 		{
 			Name:        pulp.Name + "-content",
-			Path:        getPulpSetting(pulp, "content_path_prefix"),
+			Path:        controllers.GetPulpSetting(pulp, "content_path_prefix"),
 			TargetPort:  "content-24816",
 			ServiceName: pulp.Name + "-content-svc",
 		},
 		{
 			Name:        pulp.Name + "-api-v3",
-			Path:        getPulpSetting(pulp, "api_root") + "api/v3/",
+			Path:        controllers.GetPulpSetting(pulp, "api_root") + "api/v3/",
 			TargetPort:  "api-24817",
 			ServiceName: pulp.Name + "-api-svc",
 		},
@@ -113,7 +140,7 @@ func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *r
 			ServiceName: pulp.Name + "-api-svc",
 		},
 	}
-	routeHost := getRouteHost(FunctionResources{ctx, pulp, log, r})
+	routeHost := GetRouteHost(ctx, resources.Client, pulp)
 	pulpPlugins = append(defaultPlugins, pulpPlugins...)
 
 	// channel used to receive the return value from each goroutine
@@ -126,17 +153,18 @@ func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *r
 
 			// get route
 			currentRoute := &routev1.Route{}
-			expectedRoute := pulpRouteObject(FunctionResources{ctx, pulp, log, r}, &plugin, routeHost)
-			err := r.Get(ctx, types.NamespacedName{Name: plugin.Name, Namespace: pulp.Namespace}, currentRoute)
+			resources := controllers.FunctionResources{Context: ctx, Client: resources.Client, Pulp: pulp, Scheme: resources.Scheme, Logger: log}
+
+			expectedRoute := PulpRouteObject(ctx, resources, &plugin, routeHost)
+			err := resources.Client.Get(ctx, types.NamespacedName{Name: plugin.Name, Namespace: pulp.Namespace}, currentRoute)
 
 			// Create the route in case it is not found
 			if err != nil && errors.IsNotFound(err) {
 				log.Info("Creating a new route", "Route.Namespace", expectedRoute.Namespace, "Route.Name", expectedRoute.Name)
-				r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingRoute", "Creating "+pulp.Name+"-route")
-				if err := r.Create(ctx, expectedRoute); err != nil {
+				controllers.UpdateStatus(ctx, resources.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingRoute", "Creating "+pulp.Name+"-route")
+				if err := resources.Client.Create(ctx, expectedRoute); err != nil {
 					log.Error(err, "Failed to create new route", "Route.Namespace", expectedRoute.Namespace, "Route.Name", expectedRoute.Name)
-					r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingRoute", "Failed to create "+pulp.Name+"-route: "+err.Error())
-					r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new route")
+					controllers.UpdateStatus(ctx, resources.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingRoute", "Failed to create "+pulp.Name+"-route: "+err.Error())
 					c <- statusReturn{ctrl.Result{}, err}
 					return
 				}
@@ -149,13 +177,13 @@ func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *r
 			}
 
 			// Ensure route specs are as expected
-			if requeue, err := reconcileObject(FunctionResources{ctx, pulp, log, r}, expectedRoute, currentRoute, conditionType); err != nil || requeue {
+			if requeue, err := controllers.ReconcileObject(resources, expectedRoute, currentRoute, conditionType); err != nil || requeue {
 				c <- statusReturn{ctrl.Result{Requeue: requeue}, err}
 				return
 			}
 
 			// Ensure route labels and annotations are as expected
-			if requeue, err := reconcileMetadata(FunctionResources{ctx, pulp, log, r}, expectedRoute, currentRoute, conditionType); err != nil || requeue {
+			if requeue, err := controllers.ReconcileMetadata(resources, expectedRoute, currentRoute, conditionType); err != nil || requeue {
 				c <- statusReturn{ctrl.Result{Requeue: requeue}, err}
 				return
 			}
@@ -170,20 +198,19 @@ func (r *RepoManagerReconciler) pulpRouteController(ctx context.Context, pulp *r
 			pluginRoutineReturn := <-c
 			return pluginRoutineReturn.Result, pluginRoutineReturn.error
 		}
-
 	}
 
 	// we should only update the status when Route-Ready==false
 	if v1.IsStatusConditionFalse(pulp.Status.Conditions, conditionType) {
-		r.updateStatus(ctx, pulp, metav1.ConditionTrue, conditionType, "RouteTasksFinished", "All Route tasks ran successfully")
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "RouteReady", "All Route tasks ran successfully")
+		controllers.UpdateStatus(ctx, resources.Client, pulp, metav1.ConditionTrue, conditionType, "RouteTasksFinished", "All Route tasks ran successfully")
 	}
 	return ctrl.Result{}, nil
 }
 
-// pulpRouteObject returns the route object with the specs defined in pulp CR
-func pulpRouteObject(resources FunctionResources, p *RoutePlugin, routeHost string) *routev1.Route {
+// PulpRouteObject returns the route object with the specs defined in pulp CR
+func PulpRouteObject(ctx context.Context, resources controllers.FunctionResources, p *RoutePlugin, routeHost string) *routev1.Route {
 
+	log := logr.Logger{}
 	weight := int32(100)
 
 	// set HAProxy default values
@@ -211,15 +238,15 @@ func pulpRouteObject(resources FunctionResources, p *RoutePlugin, routeHost stri
 
 	certTLSConfig := routev1.TLSConfig{}
 	if len(resources.Pulp.Spec.RouteTLSSecret) > 0 {
-		certData, err := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Spec.RouteTLSSecret, resources.Pulp.Namespace, true, "key", "certificate")
+		certData, err := controllers.RetrieveSecretData(ctx, resources.Pulp.Spec.RouteTLSSecret, resources.Pulp.Namespace, true, resources.Client, "key", "certificate")
 		if err != nil {
-			resources.Logger.Error(err, "Failed to retrieve secret data.")
+			log.Error(err, "Failed to retrieve secret data.")
 		} else {
 			certTLSConfig.Certificate = certData["certificate"]
 			certTLSConfig.Key = certData["key"]
 
 			// caCertificate is optional
-			certData, _ = resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Spec.RouteTLSSecret, resources.Pulp.Namespace, false, "caCertificate")
+			certData, _ = controllers.RetrieveSecretData(ctx, resources.Pulp.Spec.RouteTLSSecret, resources.Pulp.Namespace, false, resources.Client, "caCertificate")
 			certTLSConfig.CACertificate = certData["caCertificate"]
 		}
 	}
@@ -254,15 +281,6 @@ func pulpRouteObject(resources FunctionResources, p *RoutePlugin, routeHost stri
 	}
 
 	// Set Pulp instance as the owner and controller
-	ctrl.SetControllerReference(resources.Pulp, route, resources.RepoManagerReconciler.Scheme)
+	ctrl.SetControllerReference(resources.Pulp, route, resources.Scheme)
 	return route
-}
-
-// RoutePlugin defines a plugin route.
-type RoutePlugin struct {
-	Name        string `json:"name"`
-	Path        string `json:"path"`
-	ServiceName string `json:"serviceName"`
-	TargetPort  string `json:"targetPort"`
-	Rewrite     string `json:"rewrite"`
 }

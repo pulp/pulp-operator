@@ -22,6 +22,7 @@ import (
 	"regexp"
 
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	"github.com/pulp/pulp-operator/controllers"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	corev1 "k8s.io/api/core/v1"
@@ -40,11 +41,11 @@ func (r *RepoManagerReconciler) CreateServiceAccount(ctx context.Context, pulp *
 	expectedSA := r.pulpSA(pulp)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new "+pulp.Spec.DeploymentType+" ServiceAccount", "Namespace", expectedSA.Namespace, "Name", expectedSA.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingSA", "Creating "+pulp.Name+" SA resource")
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingSA", "Creating "+pulp.Name+" SA resource")
 		err = r.Create(ctx, expectedSA)
 		if err != nil {
 			log.Error(err, "Failed to create new "+pulp.Spec.DeploymentType+" ServiceAccount", "Namespace", expectedSA.Namespace, "Name", expectedSA.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingSA", "Failed to create "+pulp.Name+" SA: "+err.Error())
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingSA", "Failed to create "+pulp.Name+" SA: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new "+pulp.Spec.DeploymentType+" SA")
 			return ctrl.Result{}, err
 		}
@@ -84,11 +85,11 @@ func (r *RepoManagerReconciler) CreateRole(ctx context.Context, pulp *repomanage
 	expectedRole := r.pulpRole(pulp)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new "+pulp.Spec.DeploymentType+" Role", "Namespace", expectedRole.Namespace, "Name", expectedRole.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingRole", "Creating "+pulp.Name+" Role resource")
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingRole", "Creating "+pulp.Name+" Role resource")
 		err = r.Create(ctx, expectedRole)
 		if err != nil {
 			log.Error(err, "Failed to create new "+pulp.Spec.DeploymentType+" ServiceAccount", "Namespace", expectedRole.Namespace, "Name", expectedRole.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingRole", "Failed to create "+pulp.Name+" Role: "+err.Error())
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingRole", "Failed to create "+pulp.Name+" Role: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new "+pulp.Spec.DeploymentType+" Role")
 			return ctrl.Result{}, err
 		}
@@ -110,11 +111,11 @@ func (r *RepoManagerReconciler) CreateRoleBinding(ctx context.Context, pulp *rep
 	expectedRoleBinding := r.pulpRoleBinding(pulp)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new "+pulp.Spec.DeploymentType+" RoleBinding", "Namespace", expectedRoleBinding.Namespace, "Name", expectedRoleBinding.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingRoleBinding", "Creating "+pulp.Name+" RoleBinding resource")
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingRoleBinding", "Creating "+pulp.Name+" RoleBinding resource")
 		err = r.Create(ctx, expectedRoleBinding)
 		if err != nil {
 			log.Error(err, "Failed to create new "+pulp.Spec.DeploymentType+" ServiceAccount", "Namespace", expectedRoleBinding.Namespace, "Name", expectedRoleBinding.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingRoleBinding", "Failed to create "+pulp.Name+" RoleBinding: "+err.Error())
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingRoleBinding", "Failed to create "+pulp.Name+" RoleBinding: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new "+pulp.Spec.DeploymentType+" RoleBinding")
 			return ctrl.Result{}, err
 		}

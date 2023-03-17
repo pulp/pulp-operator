@@ -37,17 +37,17 @@ import (
 // ContentResource has the definition and function to provision content objects
 type ContentResource struct {
 	Definition ResourceDefinition
-	Function   func(FunctionResources) client.Object
+	Function   func(controllers.FunctionResources) client.Object
 }
 
 func (r *RepoManagerReconciler) pulpContentController(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Content-Ready"
-	funcResources := FunctionResources{ctx, pulp, log, r}
+	funcResources := controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}
 
 	// define the k8s Deployment function based on k8s distribution and deployment type
-	deploymentForPulpContent := initDeployment(CONTENT_DEPLOYMENT).deploy
+	deploymentForPulpContent := initDeployment(CONTENT_DEPLOYMENT).Deploy
 
 	// list of pulp-content resources that should be provisioned
 	resources := []ContentResource{
@@ -77,7 +77,7 @@ func (r *RepoManagerReconciler) pulpContentController(ctx context.Context, pulp 
 		log.Info("A new image version has been provided! Waiting for API pods to upgrade first ...")
 		controllers.WaitAPIPods(r, pulp, deployment, time.Second*60)
 	}
-	if requeue, err := reconcileObject(funcResources, expected, deployment, conditionType); err != nil || requeue {
+	if requeue, err := controllers.ReconcileObject(funcResources, expected, deployment, conditionType); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
@@ -85,34 +85,21 @@ func (r *RepoManagerReconciler) pulpContentController(ctx context.Context, pulp 
 	cntSvc := &corev1.Service{}
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-content-svc", Namespace: pulp.Namespace}, cntSvc)
 	newCntSvc := serviceForContent(funcResources)
-	if requeue, err := reconcileObject(funcResources, newCntSvc, cntSvc, conditionType); err != nil || requeue {
+	if requeue, err := controllers.ReconcileObject(funcResources, newCntSvc, cntSvc, conditionType); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
 	return ctrl.Result{}, nil
 }
 
-// labelsForPulpContent returns the labels for selecting the resources
-// belonging to the given pulp CR name.
-func labelsForPulpContent(m *repomanagerpulpprojectorgv1beta2.Pulp) map[string]string {
-	return map[string]string{
-		"app.kubernetes.io/name":       m.Spec.DeploymentType + "-content",
-		"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-content-" + m.Name,
-		"app.kubernetes.io/component":  "content",
-		"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
-		"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
-		"app":                          "pulp-content",
-		"pulp_cr":                      m.Name,
-	}
-}
-
 // serviceForContent returns a service object for pulp-content
-func serviceForContent(resources FunctionResources) client.Object {
+func serviceForContent(resources controllers.FunctionResources) client.Object {
 
-	svc := serviceContentObject(resources.Pulp.Name, resources.Pulp.Namespace, resources.Pulp.Spec.DeploymentType)
+	pulp := resources.Pulp
+	svc := serviceContentObject(pulp.Name, pulp.Namespace, pulp.Spec.DeploymentType)
 
 	// Set Pulp instance as the owner and controller
-	ctrl.SetControllerReference(resources.Pulp, svc, resources.RepoManagerReconciler.Scheme)
+	ctrl.SetControllerReference(pulp, svc, resources.Scheme)
 	return svc
 }
 

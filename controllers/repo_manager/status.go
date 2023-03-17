@@ -18,12 +18,12 @@ package repo_manager
 
 import (
 	"context"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/go-logr/logr"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	"github.com/pulp/pulp-operator/controllers"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
@@ -84,11 +84,11 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 
 		// if route or ingress we should do nothing
 		if resource.Type == "web" {
-			if strings.ToLower(pulp.Spec.IngressType) == "route" || r.isNginxIngress(pulp) {
+			if isRoute(pulp) || r.isNginxIngress(pulp) {
 				wg.Done()
 				continue
 			}
-			if strings.ToLower(pulp.Spec.IngressType) == "ingress" {
+			if isIngress(pulp) {
 				currentIngress := &netv1.Ingress{}
 				r.Get(ctx, types.NamespacedName{Name: pulp.Name, Namespace: pulp.Namespace}, currentIngress)
 				if currentIngress.Annotations["web"] == "false" {
@@ -105,9 +105,9 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 			if err := r.Get(ctx, types.NamespacedName{Name: resource.Name, Namespace: pulp.Namespace}, deployment); err == nil {
 				if !isDeploymentReady(deployment) {
 					log.Info(pulp.Spec.DeploymentType + " " + resource.Type + " not ready yet ...")
-					r.updateStatus(ctx, pulp, metav1.ConditionFalse, resource.ConditionType, "Updating"+typeCapitalized+"Deployment", typeCapitalized+" deployment not ready yet")
+					controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, resource.ConditionType, "Updating"+typeCapitalized+"Deployment", typeCapitalized+" deployment not ready yet")
 				} else if v1.IsStatusConditionFalse(pulp.Status.Conditions, resource.ConditionType) {
-					r.updateStatus(ctx, pulp, metav1.ConditionTrue, resource.ConditionType, typeCapitalized+"TasksFinished", "All "+typeCapitalized+" tasks ran successfully")
+					controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionTrue, resource.ConditionType, typeCapitalized+"TasksFinished", "All "+typeCapitalized+" tasks ran successfully")
 					r.recorder.Event(pulp, corev1.EventTypeNormal, typeCapitalized+"Ready", "All "+typeCapitalized+" tasks ran successfully")
 				}
 			} else {

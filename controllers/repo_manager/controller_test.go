@@ -11,21 +11,19 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/format"
-	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/intstr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	routev1 "github.com/openshift/api/route/v1"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -1145,29 +1143,6 @@ var _ = Describe("Pulp controller", Ordered, func() {
 	})
 
 })
-
-// [DEPRECATED]
-// //waitPulpOperatorFinish waits until find "Pulp-Operator-Finished-Execution" pulp.Status.Condition
-// or 60 seconds timeout
-// waitPulpOperatorFinish is now DEPRECATED because we realized that envtest will not update the
-// .status field from deployments, which in turn will not reflect in a real .status.conditions of pulp CR
-func waitPulpOperatorFinish(ctx context.Context, createdPulp *repomanagerpulpprojectorgv1beta2.Pulp) {
-	time.Sleep(time.Second)
-
-	for timeout := 0; timeout < 60; timeout++ {
-		objectGet(ctx, createdPulp, PulpName)
-		//a, _ := json.MarshalIndent(createdPulp.Status.Conditions, "", "  ")
-		//fmt.Println(string(a))
-		if v1.IsStatusConditionTrue(createdPulp.Status.Conditions, "Pulp-Operator-Finished-Execution") {
-			// [TODO] For some reason, even after the controller considering that the execution was finished,
-			// during a small period some resources were still in update process. I need to investigate
-			// this further.
-			time.Sleep(time.Millisecond * 500)
-			break
-		}
-		time.Sleep(time.Second)
-	}
-}
 
 // isDefaultSCDefined returns true if found a StorageClass marked as default
 func isDefaultSCDefined() bool {
