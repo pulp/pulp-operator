@@ -21,6 +21,7 @@ import (
 
 	"github.com/go-logr/logr"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	"github.com/pulp/pulp-operator/controllers"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
@@ -35,10 +36,10 @@ func (r *RepoManagerReconciler) pulpWorkerController(ctx context.Context, pulp *
 
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Worker-Ready"
-	funcResources := FunctionResources{ctx, pulp, log, r}
+	funcResources := controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}
 
 	// define the k8s Deployment function based on k8s distribution and deployment type
-	deploymentForPulpWorker := initDeployment(WORKER_DEPLOYMENT).deploy
+	deploymentForPulpWorker := initDeployment(WORKER_DEPLOYMENT).Deploy
 
 	// Create Worker Deployment
 	if requeue, err := r.createPulpResource(ResourceDefinition{ctx, &appsv1.Deployment{}, pulp.Name + "-worker", "Worker", conditionType, pulp}, deploymentForPulpWorker); err != nil || requeue {
@@ -49,28 +50,14 @@ func (r *RepoManagerReconciler) pulpWorkerController(ctx context.Context, pulp *
 	found := &appsv1.Deployment{}
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-worker", Namespace: pulp.Namespace}, found)
 	expected := deploymentForPulpWorker(funcResources)
-	if requeue, err := reconcileObject(funcResources, expected, found, conditionType); err != nil || requeue {
+	if requeue, err := controllers.ReconcileObject(funcResources, expected, found, conditionType); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
 	// we should only update the status when Worker-Ready==false
 	if v1.IsStatusConditionFalse(pulp.Status.Conditions, conditionType) {
-		r.updateStatus(ctx, pulp, metav1.ConditionTrue, conditionType, "WorkerTasksFinished", "All Worker tasks ran successfully")
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionTrue, conditionType, "WorkerTasksFinished", "All Worker tasks ran successfully")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "WorkerReady", "All Worker tasks ran successfully")
 	}
 	return ctrl.Result{}, nil
-}
-
-// labelsForPulpWorker returns the labels for selecting the resources
-// belonging to the given pulp CR name.
-func labelsForPulpWorker(m *repomanagerpulpprojectorgv1beta2.Pulp) map[string]string {
-	return map[string]string{
-		"app.kubernetes.io/name":       m.Spec.DeploymentType + "-worker",
-		"app.kubernetes.io/instance":   m.Spec.DeploymentType + "-worker-" + m.Name,
-		"app.kubernetes.io/component":  "worker",
-		"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
-		"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
-		"app":                          "pulp-worker",
-		"pulp_cr":                      m.Name,
-	}
 }

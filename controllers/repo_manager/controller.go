@@ -24,6 +24,7 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
+	pulp_ocp "github.com/pulp/pulp-operator/controllers/ocp"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
@@ -75,10 +76,10 @@ type RepoManagerReconciler struct {
 func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.RawLogger
 
-	IsOpenShift, _ := controllers.IsOpenShift()
-	if IsOpenShift {
+	isOpenShift, _ := controllers.IsOpenShift()
+	if isOpenShift {
 		log.V(1).Info("Running on OpenShift cluster")
-		if err := r.createRHOperatorPullSecret(ctx, req.NamespacedName.Namespace); err != nil {
+		if err := pulp_ocp.CreateRHOperatorPullSecret(r.Client, ctx, req.NamespacedName.Namespace); err != nil {
 			return ctrl.Result{}, err
 		}
 	}
@@ -122,8 +123,7 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		}
 	}
 
-	needsPulpWeb := strings.ToLower(pulp.Spec.IngressType) != "route" && !controllers.IsNginxIngressSupported(r, pulp.Spec.IngressClassName)
-	if needsPulpWeb && pulp.Spec.ImageVersion != pulp.Spec.ImageWebVersion {
+	if r.needsPulpWeb(pulp) && pulp.Spec.ImageVersion != pulp.Spec.ImageWebVersion {
 		if pulp.Spec.InhibitVersionConstraint {
 			controllers.CustomZapLogger().Warn("image_version should be equal to image_web_version! Using different versions is not recommended and can make the application unreachable")
 		} else {
@@ -152,11 +152,10 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			log.Error(nil, "ingress_type defined as ingress but no ingress_host provided. Please, define the ingress_host field with the fqdn where "+pulp.Spec.DeploymentType+" should be accessed. This field is required to access API and also redirect "+pulp.Spec.DeploymentType+" CONTENT requests")
 			return ctrl.Result{}, nil
 		}
-
 	}
 
 	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	if requeue, err := ansibleMigrationTasks(FunctionResources{ctx, pulp, log, r}); needsRequeue(err, requeue) {
+	if requeue, err := ansibleMigrationTasks(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}); needsRequeue(err, requeue) {
 		return ctrl.Result{Requeue: true}, err
 	}
 
@@ -171,7 +170,7 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	// Check if this is an OCP cluster and "ingress_type: route".
-	if !IsOpenShift && strings.ToLower(pulp.Spec.IngressType) == "route" {
+	if !isOpenShift && isRoute(pulp) {
 		log.Error(nil, "ingress_type is configured with route in a non-ocp environment. Please, choose another ingress_type (options: [ingress,nodeport]). Route resources are specific to OpenShift installations.")
 		return ctrl.Result{}, nil
 	}
@@ -197,7 +196,7 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// If an expected secret is not found, the operator will fail early and
 	// NOT trigger a reconciliation loop to avoid "spamming" error messages until
 	// the expected secret is found.
-	if err := checkSecretsAvailable(FunctionResources{ctx, pulp, log, r}); err != nil {
+	if err := checkSecretsAvailable(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}); err != nil {
 		log.Error(err, "Secret defined in Pulp CR not found!")
 		return ctrl.Result{}, nil
 	}
@@ -205,8 +204,8 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	var pulpController reconcile.Result
 
 	// Create an empty ConfigMap in which CNO will inject custom CAs
-	if IsOpenShift && pulp.Spec.TrustedCa {
-		pulpController, err = r.createEmptyConfigMap(ctx, pulp, log)
+	if isOpenShift && pulp.Spec.TrustedCa {
+		pulpController, err = pulp_ocp.CreateEmptyConfigMap(r.Client, r.Scheme, ctx, pulp, log)
 		if needsRequeue(err, pulpController) {
 			return pulpController, err
 		}
@@ -265,9 +264,9 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// if this is the first reconciliation loop (.status.ingress_type == "") OR
 	// if there is no update in ingressType field
 	if len(pulp.Status.IngressType) == 0 || pulp.Status.IngressType == pulp.Spec.IngressType {
-		if strings.ToLower(pulp.Spec.IngressType) == "route" {
+		if isRoute(pulp) {
 			log.V(1).Info("Running route tasks")
-			pulpController, err = r.pulpRouteController(ctx, pulp, log)
+			pulpController, err = pulp_ocp.PulpRouteController(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}, r.RESTClient, r.RESTConfig)
 			if needsRequeue(err, pulpController) {
 				return pulpController, err
 			}
@@ -302,7 +301,7 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return pulpController, err
 	}
 
-	if pulpController, err := galaxy(FunctionResources{ctx, pulp, log, r}); needsRequeue(err, pulpController) {
+	if pulpController, err := r.galaxy(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}); needsRequeue(err, pulpController) {
 		return pulpController, err
 	}
 
@@ -397,7 +396,7 @@ func (r *RepoManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
 		)
 
-	if IsOpenShift, _ := controllers.IsOpenShift(); IsOpenShift {
+	if isOpenShift, _ := controllers.IsOpenShift(); isOpenShift {
 		return controller.
 			Owns(&routev1.Route{}).
 			Complete(r)

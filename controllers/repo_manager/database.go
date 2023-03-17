@@ -53,13 +53,13 @@ func (r *RepoManagerReconciler) databaseController(ctx context.Context, pulp *re
 	// Create the secret in case it is not found
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new pulp-postgres-configuration secret", "Secret.Namespace", expected_secret.Namespace, "Secret.Name", expected_secret.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingDatabasePostgresSecret", "Creating "+pulp.Name+"-postgres-configuration secret resource")
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingDatabasePostgresSecret", "Creating "+pulp.Name+"-postgres-configuration secret resource")
 		// Set Pulp instance as the owner and controller
 		ctrl.SetControllerReference(pulp, expected_secret, r.Scheme)
 		err = r.Create(ctx, expected_secret)
 		if err != nil {
 			log.Error(err, "Failed to create new pulp-postgres-configuration secret secret", "Secret.Namespace", expected_secret.Namespace, "Secret.Name", expected_secret.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingDatabasePostgresSecret", "Failed to create "+pulp.Name+"-postgres-configuration secret resource: "+err.Error())
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingDatabasePostgresSecret", "Failed to create "+pulp.Name+"-postgres-configuration secret resource: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new postgres-configuration secret")
 			return ctrl.Result{}, err
 		}
@@ -78,14 +78,14 @@ func (r *RepoManagerReconciler) databaseController(ctx context.Context, pulp *re
 
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new Database StatefulSet", "StatefulSet.Namespace", pgSts.Namespace, "StatefulSet.Name", pgSts.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingDatabaseSts", "Creating "+pulp.Name+"-database statefulset resource")
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingDatabaseSts", "Creating "+pulp.Name+"-database statefulset resource")
 		controllers.CheckEmptyDir(pulp, controllers.DatabaseResource)
 		// Set Pulp instance as the owner and controller
 		ctrl.SetControllerReference(pulp, expected_sts, r.Scheme)
 		err = r.Create(ctx, expected_sts)
 		if err != nil {
 			log.Error(err, "Failed to create new Database StatefulSet", "StatefulSet.Namespace", expected_sts.Namespace, "StatefulSet.Name", expected_sts.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingDatabaseSts", "Failed to create "+pulp.Name+"-database statefulset resource: "+err.Error())
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingDatabaseSts", "Failed to create "+pulp.Name+"-database statefulset resource: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create database StatefulSet")
 			return ctrl.Result{}, err
 		}
@@ -100,7 +100,7 @@ func (r *RepoManagerReconciler) databaseController(ctx context.Context, pulp *re
 	// Reconcile StatefulSet
 	if !equality.Semantic.DeepDerivative(expected_sts.Spec, pgSts.Spec) {
 		log.Info("The Database StatefulSet has been modified! Reconciling ...")
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingDatabaseSts", "Reconciling "+pulp.Name+"-database statefulset resource")
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "UpdatingDatabaseSts", "Reconciling "+pulp.Name+"-database statefulset resource")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling database StatefulSet")
 		// Set Pulp instance as the owner and controller
 		// not sure if this is the best way to do this, but every time that
@@ -109,7 +109,7 @@ func (r *RepoManagerReconciler) databaseController(ctx context.Context, pulp *re
 		err = r.Update(ctx, expected_sts)
 		if err != nil {
 			log.Error(err, "Error trying to update the Database StatefulSet object ... ")
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingDatabaseSts", "Failed to reconcile "+pulp.Name+"-database statefulset resource")
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingDatabaseSts", "Failed to reconcile "+pulp.Name+"-database statefulset resource")
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile database StatefulSet")
 			return ctrl.Result{}, err
 		}
@@ -124,13 +124,13 @@ func (r *RepoManagerReconciler) databaseController(ctx context.Context, pulp *re
 
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new Database Service", "Service.Namespace", expected_svc.Namespace, "Service.Name", expected_svc.Name)
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "CreatingDatabaseService", "Creating "+pulp.Name+"-database-svc service resource")
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingDatabaseService", "Creating "+pulp.Name+"-database-svc service resource")
 		// Set Pulp instance as the owner and controller
 		ctrl.SetControllerReference(pulp, expected_svc, r.Scheme)
 		err = r.Create(ctx, expected_svc)
 		if err != nil {
 			log.Error(err, "Failed to create new Database Service", "Service.Namespace", expected_svc.Namespace, "Service.Name", expected_svc.Name)
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingDatabaseService", "Failed to create "+pulp.Name+"-database-svc service resource: "+err.Error())
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingDatabaseService", "Failed to create "+pulp.Name+"-database-svc service resource: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create database service")
 			return ctrl.Result{}, err
 		}
@@ -145,13 +145,13 @@ func (r *RepoManagerReconciler) databaseController(ctx context.Context, pulp *re
 	// Reconcile Service
 	if !equality.Semantic.DeepDerivative(expected_svc.Spec, dbSvc.Spec) {
 		log.Info("The Database service has been modified! Reconciling ...")
-		r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "UpdatingDatabaseService", "Reconciling "+pulp.Name+"-database-svc service resource")
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "UpdatingDatabaseService", "Reconciling "+pulp.Name+"-database-svc service resource")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling database service")
 		ctrl.SetControllerReference(pulp, expected_svc, r.Scheme)
 		err = r.Update(ctx, expected_svc)
 		if err != nil {
 			log.Error(err, "Error trying to update the Database Service object ... ")
-			r.updateStatus(ctx, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingDatabaseService", "Failed to reconcile "+pulp.Name+"-database-svc service resource: "+err.Error())
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingDatabaseService", "Failed to reconcile "+pulp.Name+"-database-svc service resource: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile database service")
 			return ctrl.Result{}, err
 		}
@@ -161,7 +161,7 @@ func (r *RepoManagerReconciler) databaseController(ctx context.Context, pulp *re
 
 	// we should only update the status when Database-Ready==false
 	if v1.IsStatusConditionFalse(pulp.Status.Conditions, conditionType) {
-		r.updateStatus(ctx, pulp, metav1.ConditionTrue, conditionType, "DatabaseTasksFinished", "All Database tasks ran successfully")
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionTrue, conditionType, "DatabaseTasksFinished", "All Database tasks ran successfully")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "DatabaseReady", "All Database tasks ran successfully")
 	}
 
@@ -170,7 +170,7 @@ func (r *RepoManagerReconciler) databaseController(ctx context.Context, pulp *re
 	// we decided that it will be better to keep it to avoid having to update the secrets and configurations that
 	// depend on the old service address.
 	if pulp.Status.MigrationDone {
-		if err := reconcileOldService(FunctionResources{ctx, pulp, log, r}); err != nil {
+		if err := reconcileOldService(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}); err != nil {
 			return ctrl.Result{}, err
 		}
 	}
@@ -319,21 +319,6 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 		{Name: "POSTGRES_INITDB_ARGS", Value: postgresInitdbArgs},
 		{Name: "POSTGRES_HOST_AUTH_METHOD", Value: postgresHostAuthMethod},
 	}
-
-	postgresStorageSize := resource.Quantity{}
-
-	// Temporarily while we don't find a fix for backup and json.Unmarshal issue
-	/* if reflect.DeepEqual(m.Spec.Database.PostgresStorageRequirements, resource.Quantity{}) {
-		postgresStorageSize = resource.MustParse("8Gi")
-	} else {
-		postgresStorageSize = m.Spec.Database.PostgresStorageRequirements
-	} */
-	if m.Spec.Database.PostgresStorageRequirements == "" {
-		postgresStorageSize = resource.MustParse("8Gi")
-	} else {
-		postgresStorageSize = resource.MustParse(m.Spec.Database.PostgresStorageRequirements)
-	}
-
 	///pvcSpec := corev1.PersistentVolumeClaimSpec{}
 	volumeClaimTemplate := []corev1.PersistentVolumeClaim{}
 	volumes := []corev1.Volume{}
@@ -347,6 +332,11 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 	// if SC defined, we should use the PVC claimed by STS
 	if storageType[0] == controllers.SCNameType {
 
+		// Temporarily while we don't find a fix for backup and json.Unmarshal issue
+		postgresStorageSize := resource.MustParse("8Gi")
+		if m.Spec.Database.PostgresStorageRequirements != "" {
+			postgresStorageSize = resource.MustParse(m.Spec.Database.PostgresStorageRequirements)
+		}
 		storageRequirements := corev1.ResourceRequirements{
 			Requests: corev1.ResourceList{
 				corev1.ResourceName(corev1.ResourceStorage): postgresStorageSize,
@@ -593,9 +583,14 @@ func databaseConfigSecret(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Secr
 
 // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
 // reconcileOldService will ensure the old (from ansible) postgresql svc is present
-func reconcileOldService(m FunctionResources) error {
+func reconcileOldService(resources controllers.FunctionResources) error {
+	ctx := resources.Context
+	client := resources.Client
+	pulp := resources.Pulp
+	log := resources.Logger
+
 	// retrieve the old service name from postgres secret
-	oldSvcName, err := m.RepoManagerReconciler.retrieveSecretData(m.Context, m.Pulp.Name+"-postgres-configuration", m.Pulp.Namespace, true, "host")
+	oldSvcName, err := controllers.RetrieveSecretData(ctx, pulp.Name+"-postgres-configuration", pulp.Namespace, true, client, "host")
 	if err != nil {
 		return err
 	}
@@ -610,7 +605,7 @@ func reconcileOldService(m FunctionResources) error {
 	oldService := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      oldSvcName["host"],
-			Namespace: m.Namespace,
+			Namespace: pulp.Namespace,
 		},
 		Spec: corev1.ServiceSpec{
 			ClusterIP:             "None",
@@ -625,27 +620,27 @@ func reconcileOldService(m FunctionResources) error {
 			}},
 			Selector: map[string]string{
 				"app":     "postgresql",
-				"pulp_cr": m.Name,
+				"pulp_cr": pulp.Name,
 			},
 			SessionAffinity: serviceAffinity,
 			Type:            serviceType,
 		},
 	}
-	ctrl.SetControllerReference(m.Pulp, oldService, m.RepoManagerReconciler.Scheme)
+	ctrl.SetControllerReference(pulp, oldService, resources.Scheme)
 
 	// Create the old svc if it is not found
 	dbSvc := &corev1.Service{}
-	if err := m.RepoManagerReconciler.Get(m.Context, types.NamespacedName{Name: oldSvcName["host"], Namespace: m.Pulp.Namespace}, dbSvc); err != nil && errors.IsNotFound(err) {
-		m.Logger.Info("Recreating the old Database service has been modified! Reconciling ...")
-		if err := m.RepoManagerReconciler.Create(m.Context, oldService); err != nil {
+	if err := client.Get(ctx, types.NamespacedName{Name: oldSvcName["host"], Namespace: pulp.Namespace}, dbSvc); err != nil && errors.IsNotFound(err) {
+		log.Info("Recreating the old Database service has been modified! Reconciling ...")
+		if err := client.Create(ctx, oldService); err != nil {
 			return err
 		}
 	}
 
 	// Reconcile it
 	if !equality.Semantic.DeepDerivative(oldService.Spec, dbSvc.Spec) {
-		m.Logger.Info("The old Database service has been modified! Reconciling ...")
-		if err := m.RepoManagerReconciler.Update(m.Context, oldService); err != nil {
+		log.Info("The old Database service has been modified! Reconciling ...")
+		if err := client.Update(ctx, oldService); err != nil {
 			return err
 		}
 	}
