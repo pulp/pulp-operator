@@ -35,44 +35,25 @@ type IngressPlugin struct {
 func IngressDefaults(resources any, plugins []IngressPlugin) (*netv1.Ingress, error) {
 	pulp := resources.(FunctionResources).Pulp
 	annotation := map[string]string{
-		"web": "false",
+		"web": "true",
 	}
 	var paths []netv1.HTTPIngressPath
 	var path netv1.HTTPIngressPath
 	pathType := netv1.PathTypePrefix
 
-	for _, plugin := range plugins {
-		if len(plugin.Rewrite) > 0 {
-			annotation["web"] = "true"
-			path = netv1.HTTPIngressPath{
-				Path:     "/",
-				PathType: &pathType,
-				Backend: netv1.IngressBackend{
-					Service: &netv1.IngressServiceBackend{
-						Name: pulp.Name + "-web-svc",
-						Port: netv1.ServiceBackendPort{
-							Number: 24880,
-						},
-					},
-				},
-			}
-			paths = append(paths, path)
-			break
-		}
-		path = netv1.HTTPIngressPath{
-			Path:     plugin.Path,
-			PathType: &pathType,
-			Backend: netv1.IngressBackend{
-				Service: &netv1.IngressServiceBackend{
-					Name: plugin.ServiceName,
-					Port: netv1.ServiceBackendPort{
-						Name: plugin.TargetPort,
-					},
+	path = netv1.HTTPIngressPath{
+		Path:     "/",
+		PathType: &pathType,
+		Backend: netv1.IngressBackend{
+			Service: &netv1.IngressServiceBackend{
+				Name: pulp.Name + "-web-svc",
+				Port: netv1.ServiceBackendPort{
+					Number: 24880,
 				},
 			},
-		}
-		paths = append(paths, path)
+		},
 	}
+	paths = append(paths, path)
 
 	for key, val := range pulp.Spec.IngressAnnotations {
 		annotation[key] = val

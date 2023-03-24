@@ -140,7 +140,7 @@ func PulpRouteController(resources controllers.FunctionResources, restClient res
 			ServiceName: pulp.Name + "-api-svc",
 		},
 	}
-	routeHost := GetRouteHost(ctx, resources.Client, pulp)
+	routeHost := GetRouteHost(pulp)
 	pulpPlugins = append(defaultPlugins, pulpPlugins...)
 
 	// channel used to receive the return value from each goroutine

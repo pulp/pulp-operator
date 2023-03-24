@@ -76,6 +76,7 @@ const (
 #     - /tmp
 
 `
+	DefaultOCPIngressClass = "openshift-default"
 )
 
 // FunctionResources contains the list of arguments passed to create new Pulp resources
@@ -260,17 +261,9 @@ func ContainerExec[T any](client T, pod *corev1.Pod, command []string, container
 	return result, nil
 }
 
-// IsNginxIngressSupported returns true if the provided class has nginx as controller
-func IsNginxIngressSupported[T any](resource T, ingressClassName string) bool {
-	// get the concrete value of client ({PulpBackup,RepoManagerBackupReconciler,RepoManagerRestoreReconciler})
-	clientConcrete := reflect.ValueOf(resource)
-	restClient := reflect.Indirect(clientConcrete).FieldByName("Client").Elem().Interface().(client.Client)
-
-	ic := &netv1.IngressClass{}
-	if err := restClient.Get(context.TODO(), types.NamespacedName{Name: ingressClassName}, ic); err == nil {
-		return ic.Spec.Controller == "k8s.io/ingress-nginx"
-	}
-	return false
+// IsNginxIngressSupported returns true if the operator was instructed that this is a nginx ingress controller
+func IsNginxIngressSupported(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
+	return pulp.Spec.IsNginxIngress
 }
 
 // CustomZapLogger should be used only for warn messages
@@ -535,7 +528,7 @@ func updateObject(resources FunctionResources, modified func(interface{}, interf
 	}
 
 	if modified(expectedField, currentField) {
-		log.Info("The " + objKind + " " + objName + " has been modified! Reconciling ...")
+		log.Info("The " + field + " from " + objKind + " " + objName + " has been modified! Reconciling ...")
 		UpdateStatus(resources.Context, client, pulp, metav1.ConditionFalse, conditionType, "Updating"+objKind, "Reconciling "+objName+" "+objKind)
 
 		// for ingress and/or routes we need to "manually" update ResourceVersion fields
@@ -650,5 +643,31 @@ func UpdateCRField(ctx context.Context, r client.Client, pulp *repomanagerpulppr
 			return err
 		}
 	}
+	return nil
+}
+
+// RemovePulpWebResources deletes pulp-web Deployment and Service
+func RemovePulpWebResources(resources FunctionResources) error {
+	ctx := resources.Context
+	pulp := resources.Pulp
+
+	// remove pulp-web components
+	webDeployment := &appsv1.Deployment{}
+	if err := resources.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web", Namespace: pulp.Namespace}, webDeployment); err == nil {
+		resources.Delete(ctx, webDeployment)
+	} else {
+		return err
+	}
+
+	webSvc := &corev1.Service{}
+	if err := resources.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web-svc", Namespace: pulp.Namespace}, webSvc); err == nil {
+		resources.Delete(ctx, webSvc)
+	} else {
+		return err
+	}
+
+	webConditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Web-Ready"
+	v1.RemoveStatusCondition(&pulp.Status.Conditions, webConditionType)
+
 	return nil
 }

@@ -1,0 +1,1 @@
+Fixed an issue in OCP clusters where every ingress would be created with the same configurations (regardless of ingressclass).

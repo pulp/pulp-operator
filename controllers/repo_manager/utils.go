@@ -261,6 +261,9 @@ func (r *RepoManagerReconciler) updateIngressType(ctx context.Context, pulp *rep
 			pulp.Status.IngressClassName = ""
 		}
 
+		// remove pulp-web components
+		controllers.RemovePulpWebResources(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: nil, Logger: logr.Logger{}})
+
 		r.Status().Update(ctx, pulp)
 
 		// nothing else to do (the controller will be responsible for setting up the other resources)
@@ -274,20 +277,9 @@ func (r *RepoManagerReconciler) updateIngressType(ctx context.Context, pulp *rep
 	// we will not remove configmap to avoid losing resources that are potentially unrecoverable
 	if (strings.ToLower(pulp.Status.IngressType) == "nodeport" && strings.ToLower(pulp.Spec.IngressType) != "nodeport") ||
 		(strings.ToLower(pulp.Status.IngressType) == "loadbalancer" && strings.ToLower(pulp.Spec.IngressType) != "loadbalancer") {
-		webDeployment := &appsv1.Deployment{}
-		if err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web", Namespace: pulp.Namespace}, webDeployment); err != nil {
-			return
-		}
-		r.Delete(ctx, webDeployment)
 
-		webSvc := &corev1.Service{}
-		if err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web-svc", Namespace: pulp.Namespace}, webSvc); err != nil {
-			return
-		}
-		r.Delete(ctx, webSvc)
-
-		webConditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Web-Ready"
-		v1.RemoveStatusCondition(&pulp.Status.Conditions, webConditionType)
+		// remove pulp-web components
+		controllers.RemovePulpWebResources(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: nil, Logger: logr.Logger{}})
 
 		pulp.Status.IngressType = pulp.Spec.IngressType
 		r.Status().Update(ctx, pulp)
@@ -327,6 +319,9 @@ func (r *RepoManagerReconciler) updateIngressClass(ctx context.Context, pulp *re
 		ingressConditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Ingress-Ready"
 		v1.RemoveStatusCondition(&pulp.Status.Conditions, ingressConditionType)
 	}
+
+	// handle OCP specific modifications on ingressclass change
+	pulp_ocp.UpdateIngressClass(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: nil, Logger: logr.Logger{}})
 
 	pulp.Status.IngressClassName = pulp.Spec.IngressClassName
 	r.Status().Update(ctx, pulp)
@@ -431,7 +426,7 @@ func needsRequeue(err error, pulpController ctrl.Result) bool {
 // needsPulpWeb will return true if ingress_type is not route and the ingress_type provided does not
 // support nginx controller, which is a scenario where pulp-web should be deployed
 func (r *RepoManagerReconciler) needsPulpWeb(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
-	return isRoute(pulp) && !controllers.IsNginxIngressSupported(r, pulp.Spec.IngressClassName)
+	return isRoute(pulp) && !controllers.IsNginxIngressSupported(pulp)
 }
 
 // isNginxIngress will check if ingress_type is defined as "ingress"
@@ -446,7 +441,7 @@ func isRoute(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
 
 // isNginxIngress returns true if pulp is defined with ingress_type==ingress and the controller of the ingresclass provided is a nginx
 func (r *RepoManagerReconciler) isNginxIngress(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
-	return isIngress(pulp) && controllers.IsNginxIngressSupported(r, pulp.Spec.IngressClassName)
+	return isIngress(pulp) && controllers.IsNginxIngressSupported(pulp)
 }
 
 // getRootURL handles user facing URLs
@@ -459,7 +454,7 @@ func getRootURL(resource controllers.FunctionResources) string {
 		return "https://" + hostname
 	}
 	if isRoute(resource.Pulp) {
-		return "https://" + pulp_ocp.GetRouteHost(resource.Context, resource.Client, resource.Pulp)
+		return "https://" + pulp_ocp.GetRouteHost(resource.Pulp)
 	}
 
 	return "http://" + resource.Pulp.Name + "-web-svc." + resource.Pulp.Namespace + ".svc.cluster.local:24880"

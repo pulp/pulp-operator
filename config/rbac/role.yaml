@@ -1,28 +1,5 @@
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  name: manager-role
-rules:
-- apiGroups:
-  - config.openshift.io
-  resources:
-  - ingresses
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - networking.k8s.io
-  resources:
-  - ingressclasses
-  verbs:
-  - get
-  - list
-  - watch
----
-apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   creationTimestamp: null
@@ -30,18 +7,9 @@ metadata:
   namespace: pulp-operator-system
 rules:
 - apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
-- apiGroups:
   - apps
-  - networking.k8s.io
   resources:
   - deployments
-  - ingresses
   - statefulsets
   verbs:
   - create
@@ -68,7 +36,10 @@ rules:
   resources:
   - configmaps
   - persistentvolumeclaims
+  - pods
+  - pods/log
   - secrets
+  - serviceaccounts
   - services
   verbs:
   - create
@@ -78,6 +49,13 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
 - apiGroups:
   - ""
   resources:
@@ -95,24 +73,13 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - pods
-  - pods/log
-  verbs:
-  - get
-  - list
-- apiGroups:
-  - ""
-  resources:
   - pods/exec
   verbs:
   - create
 - apiGroups:
-  - ""
-  - rbac.authorization.k8s.io
+  - networking.k8s.io
   resources:
-  - rolebindings
-  - roles
-  - serviceaccounts
+  - ingresses
   verbs:
   - create
   - delete
@@ -125,6 +92,19 @@ rules:
   - policy
   resources:
   - poddisruptionbudgets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - rolebindings
+  - roles
   verbs:
   - create
   - delete

@@ -3,7 +3,7 @@
 make bundle-check
 
 echo "Comparing files ..."
-diff -qr bundle /tmp/bundle
+diff -qr --ignore-matching-lines='createdAt:.*' bundle /tmp/bundle
 if [ $? != 0 ]; then
   echo """
 There is probably an update made in the CRD that is pending in the above bundle file(s).

@@ -19,7 +19,6 @@ package repo_manager
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"time"
 
@@ -180,22 +179,14 @@ type IngressObj struct {
 // initIngress returns a concrete ingress object based on k8s distribution and
 // ingress controller (nginx, haproxy, etc)
 func (r *RepoManagerReconciler) initIngress(resources controllers.FunctionResources) (*IngressObj, error) {
-	ingressClassName := resources.Pulp.Spec.IngressClassName
 
-	// check if the IngressClassName defined exists and
-	// if the class provision ingresses with nginx controller
-	if len(ingressClassName) > 0 {
-		ic := &netv1.IngressClass{}
-		if err := resources.Client.Get(context.TODO(), types.NamespacedName{Name: ingressClassName}, ic); err != nil {
-			return nil, fmt.Errorf("failed to find provided IngressClassName: %s,%s", resources.Pulp.Spec.IngressClassName, err)
-		}
-	}
-
-	if controllers.IsNginxIngressSupported(r, resources.Pulp.Spec.IngressClassName) {
+	// if the ingressclass provided has nginx as controller set the IngressObj as IngressNginx
+	if controllers.IsNginxIngressSupported(resources.Pulp) {
 		return &IngressObj{IngressNginx{}}, nil
 	}
 
-	if isOpenShift, _ := controllers.IsOpenShift(); isOpenShift {
+	// if this is an ocp cluster and ingressclass provided is the ocp default set the IngressObj as IngressOCP
+	if isOpenShift, _ := controllers.IsOpenShift(); isOpenShift && resources.Pulp.Spec.IngressClassName == controllers.DefaultOCPIngressClass {
 		return &IngressObj{pulp_ocp.IngressOCP{}}, nil
 	}
 
