@@ -131,7 +131,7 @@ func (r *RepoManagerRestoreReconciler) scaleDeployments(ctx context.Context, pul
 		pulp.Spec.Api.Replicas = 1
 		pulp.Spec.Content.Replicas = 1
 		pulp.Spec.Worker.Replicas = 1
-		isNginxIngress := strings.ToLower(pulp.Spec.IngressType) == "ingress" && !controllers.IsNginxIngressSupported(r, pulp.Spec.IngressClassName)
+		isNginxIngress := strings.ToLower(pulp.Spec.IngressType) == "ingress" && !controllers.IsNginxIngressSupported(pulp)
 		if strings.ToLower(pulp.Spec.IngressType) != "route" && !isNginxIngress {
 			pulp.Spec.Web.Replicas = 1
 		}

@@ -1,0 +1,1 @@
+Fixed an issue in OCP clusters where the "pulp-redirect" Ingress would not get removed after modifying ingress_class_name.

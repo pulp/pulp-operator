@@ -563,6 +563,10 @@ jobs:
           kubectl get pulps.repo-manager.pulpproject.org
           sudo systemctl stop pulp-operator.service
           make local
+          if [[ "$INGRESS_TYPE" == "ingress" ]]; then
+            kubectl patch pulp example-pulp --type=merge -p '{"spec": { "web": {"replicas": 1 }}}'
+            kubectl patch pulp example-pulp --type=merge -p '{"spec": { "ingress_annotations": { "nginx.ingress.kubernetes.io/proxy-body-size": "0" } }}'
+          fi
           sleep 10
         shell: bash
       - name: Check and wait pulp-operator deploy

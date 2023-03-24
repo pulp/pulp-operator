@@ -1,0 +1,1 @@
+Fixed an issue in `Ingress.spec.rules.http.paths` from non "nginx" or "openshift-default" ingresses.

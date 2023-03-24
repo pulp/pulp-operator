@@ -139,6 +139,15 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
 	IngressClassName string `json:"ingress_class_name,omitempty"`
 
+	// Define if the IngressClass provided has Nginx as Ingress Controller.
+	// If the Ingress Controller is not nginx the operator will automatically provision `pulp-web` pods to redirect the traffic.
+	// If it is a nginx controller the traffic will be forwarded to api and content pods.
+	// This variable is a workaround to avoid having to grant a ClusterRole (to do a get into the IngressClass and verify the controller).
+	// Default: false
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
+	IsNginxIngress bool `json:"is_nginx_ingress,omitempty"`
+
 	// Ingress DNS host
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
 	IngressHost string `json:"ingress_host,omitempty"`

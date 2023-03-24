@@ -1,0 +1,1 @@
+The operator will not get the default ingress domain nor verify the ingressclass anymore to avoid the need of clusterroles.

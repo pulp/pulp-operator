@@ -165,6 +165,7 @@ PulpSpec defines the desired state of Pulp
 | ingress_type | The ingress type to use to reach the deployed instance. Default: none (will not expose the service) | string | false |
 | ingress_annotations | Annotations for the Ingress | map[string]string | false |
 | ingress_class_name | IngressClassName is used to inform the operator which ingressclass should be used to provision the ingress. Default: \"\" (will use the default ingress class) | string | false |
+| is_nginx_ingress | Define if the IngressClass provided has Nginx as Ingress Controller. If the Ingress Controller is not nginx the operator will automatically provision `pulp-web` pods to redirect the traffic. If it is a nginx controller the traffic will be forwarded to api and content pods. This variable is a workaround to avoid having to grant a ClusterRole (to do a get into the IngressClass and verify the controller). Default: false | bool | false |
 | ingress_host | Ingress DNS host | string | false |
 | ingress_tls_secret | Ingress TLS secret | string | false |
 | route_host | Route DNS host. Default: <operator's name> + \".\" + ingress.Spec.Domain | string | false |

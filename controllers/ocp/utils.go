@@ -20,8 +20,8 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	configv1 "github.com/openshift/api/config/v1"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	k8s_errors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -134,12 +134,12 @@ func mountCASpec(pulp *repomanagerpulpprojectorgv1beta2.Pulp, volumes []corev1.V
 }
 
 // GetRouteHost defines route host based on ingress default cluster domain if no .spec.route_host defined
-func GetRouteHost(ctx context.Context, client client.Client, pulp *repomanagerpulpprojectorgv1beta2.Pulp) string {
-	routeHost := pulp.Spec.RouteHost
+func GetRouteHost(pulp *repomanagerpulpprojectorgv1beta2.Pulp) string {
 	if len(pulp.Spec.RouteHost) == 0 {
-		ingress := &configv1.Ingress{}
-		client.Get(ctx, types.NamespacedName{Name: "cluster"}, ingress)
-		routeHost = pulp.Name + "." + ingress.Spec.Domain
+		controllers.CustomZapLogger().Warn(`ingress_type defined as "route" but no route_host provided.`)
+		controllers.CustomZapLogger().Warn(`Setting "example.com" as the default hostname for routes ...`)
+		return "example.com"
 	}
-	return routeHost
+
+	return pulp.Spec.RouteHost
 }
