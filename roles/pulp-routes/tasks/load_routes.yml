@@ -28,6 +28,7 @@
       pod: "{{ _pod_list.resources[0].metadata.name }}"
       command: "/usr/bin/route_paths.py {{ ansible_operator_meta.name }}"
     register: _route_paths_output
+    changed_when: false
 
   - set_fact:
       _pulp_plugins: "{{ _pulp_default_plugins + _route_paths_output.stdout | from_json }}"

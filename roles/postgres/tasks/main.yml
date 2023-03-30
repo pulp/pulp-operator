@@ -199,6 +199,7 @@
           cat {{ path_to_pg_version }}
           """
       register: _old_pg_version
+      changed_when: false
 
     - name: Upgrade data dir from Postgres 12 to 13 if applicable
       include_tasks: upgrade_postgres.yml
