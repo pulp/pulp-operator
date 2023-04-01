@@ -9155,6 +9155,7 @@ spec:
               deployedVersion:
                 type: string
               deployment_type:
+                default: pulp
                 description: Name of the deployment type.
                 type: string
               external_cache_secret:
