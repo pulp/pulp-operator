@@ -16,7 +16,7 @@
 
 - name: Iterate over the imagePullSecrets to see if can find the dockercfg secret (for OCP environments)
   set_fact:
-    __dockercfg_secret: "{{ item.name | regex_search( '{{ ansible_operator_meta.name }}' + '-dockercfg-' + '[a-z0-9]{5}') }}"
+    __dockercfg_secret: "{{ item.name | regex_search( ansible_operator_meta.name + '-dockercfg-' + '[a-z0-9]{5}') }}"
   when: __pulp_operator_sa_output.resources[0].imagePullSecrets is defined and __dockercfg_secret | default() | length == 0
   with_items: '{{ __pulp_operator_sa_output.resources[0].imagePullSecrets }}'
 
