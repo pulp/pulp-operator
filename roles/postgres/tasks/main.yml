@@ -151,7 +151,7 @@
     namespace: "{{ ansible_operator_meta.namespace }}"
     label_selectors:
       - "{{ postgres_label_selector }}"
-      - app.kubernetes.io/version='12'
+      - "app.kubernetes.io/version=12"
     field_selectors:
       - status.phase=Running
   register: old_postgres_pod

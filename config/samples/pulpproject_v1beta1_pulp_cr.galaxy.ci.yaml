@@ -4,9 +4,9 @@ metadata:
   name: example-pulp
 spec:
   image: quay.io/pulp/galaxy-minimal
-  image_version: nightly
+  image_version: 4.6.3
   image_web: quay.io/pulp/galaxy-web
-  image_web_version: nightly
+  image_web_version: 4.6.3
   no_log: false
   admin_password_secret: "example-pulp-admin-password"
   signing_secret: "signing-galaxy"
