@@ -1,5 +1,4 @@
 ---
-- include_tasks: create_app_sa.yml
 
 - name: Fail execution if image_pull_secret or image_pull_secrets are defined but as NoneType ('image_pull_secret[s]:')
   fail:
@@ -12,13 +11,13 @@
     kind: ServiceAccount
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
-  register: __pulp_operator_sa_output
+  register: _sa_output
 
 - name: Iterate over the imagePullSecrets to see if can find the dockercfg secret (for OCP environments)
   set_fact:
     __dockercfg_secret: "{{ item.name | regex_search( ansible_operator_meta.name + '-dockercfg-' + '[a-z0-9]{5}') }}"
-  when: __pulp_operator_sa_output.resources[0].imagePullSecrets is defined and __dockercfg_secret | default() | length == 0
-  with_items: '{{ __pulp_operator_sa_output.resources[0].imagePullSecrets }}'
+  when: _sa_output.resources[0].imagePullSecrets is defined and __dockercfg_secret | default() | length == 0
+  with_items: '{{ _sa_output.resources[0].imagePullSecrets }}'
 
 - name: Update service account with image pull secret
   k8s:

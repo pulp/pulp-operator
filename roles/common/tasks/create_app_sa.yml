@@ -1,8 +1,0 @@
----
-- name: Apply Resources for application ServiceAccount
-  kubernetes.core.k8s:
-    name: pulp-operator-sa
-    namespace: "{{ ansible_operator_meta.namespace }}"
-    api_version: v1
-    kind: ServiceAccount
-    state: present
