@@ -151,8 +151,12 @@ spec:
               readOnly: true
 {% if signing_secret is defined %}
             - name: {{ ansible_operator_meta.name }}-signing-scripts
-              mountPath: "/var/lib/pulp/scripts"
-              subPath: scripts
+              mountPath: "/var/lib/pulp/scripts/collection_sign.sh"
+              subPath: collection_sign.sh
+              readOnly: true
+            - name: {{ ansible_operator_meta.name }}-signing-scripts
+              mountPath: "/var/lib/pulp/scripts/container_sign.sh"
+              subPath: container_sign.sh
               readOnly: true
             - name: {{ ansible_operator_meta.name }}-signing-galaxy
               mountPath: "/etc/pulp/keys/signing_service.gpg"
