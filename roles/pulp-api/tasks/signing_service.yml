@@ -54,15 +54,6 @@
           status: "False"
           lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
-  - name: Import galaxy signing service GPG key file
-    command: gpg --batch --import /tmp/signing_service.gpg
-    register: result
-    # Imported successfully: rc 0
-    # Already imported: rc 2
-    # If you try to import multiple keys but only some need to be imported: rc 2
-    changed_when: result.stderr is search("imported:")
-    failed_when: result.rc not in [0,2]
-
   - k8s_status:
       api_version: "{{ api_version }}"
       kind: "{{ kind }}"
@@ -74,16 +65,6 @@
           reason: UpdatingOwnertrustTrustLevel
           status: "False"
           lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
-
-  - name: Trust the galaxy signing service GPG key
-    # When using this syntax, "ultimate" trust == 6
-    shell: >
-      echo {{ signing_key.stdout }}:6 | gpg --import-ownertrust
-    register: result
-    # changed messages can be either:
-    # gpg: inserting ownertrust of 6
-    # gpg: changing ownertrust from 3 to 6
-    changed_when: "'ownertrust' in result.stderr"
 
   - name: Set environment variable for the GPG key ID
     set_fact:
