@@ -78,6 +78,7 @@ spec:
         - name: {{ ansible_operator_meta.name }}-signing-scripts
           configMap:
             name: {{ signing_scripts_configmap }}
+            defaultMode: 0755
         - name: {{ ansible_operator_meta.name }}-signing-galaxy
           secret:
             secretName: {{ signing_secret }}

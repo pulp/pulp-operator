@@ -93,6 +93,7 @@ spec:
         - name: {{ ansible_operator_meta.name }}-signing-scripts
           configMap:
             name: {{ signing_scripts_configmap }}
+            defaultMode: 0755
         - name: {{ ansible_operator_meta.name }}-signing-galaxy
           secret:
             secretName: {{ signing_secret }}
@@ -145,6 +146,8 @@ spec:
               value: "{{ pulp_combined_settings.galaxy_collection_signing_service }}"
             - name: CONTAINER_SIGNING_SERVICE
               value: "{{ pulp_combined_settings.galaxy_container_signing_service }}"
+            - name: HOME
+              value: "/var/lib/pulp"
 {% endif %}
           ports:
             - protocol: TCP
