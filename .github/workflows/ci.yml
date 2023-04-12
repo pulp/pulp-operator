@@ -30,9 +30,9 @@ jobs:
         with:
           python-version: '3.8'
       - name: Setup Go environment
-        uses: actions/setup-go@v3.2.0
+        uses: actions/setup-go@v4
         with:
-          go-version: '1.18.3'
+          go-version-file: 'go.mod'
           cache: true
       - name: Check commit message
         if: github.event_name == 'pull_request'
@@ -69,9 +69,9 @@ jobs:
         with:
           python-version: '3.8'
       - name: Setup Go environment
-        uses: actions/setup-go@v3.2.0
+        uses: actions/setup-go@v4
         with:
-          go-version: '1.18.3'
+          go-version-file: 'go.mod'
           cache: true
       - name: Install httpie
         run: |
@@ -173,9 +173,9 @@ jobs:
         with:
           python-version: '3.8'
       - name: Setup Go environment
-        uses: actions/setup-go@v3.2.0
+        uses: actions/setup-go@v4
         with:
-          go-version: '1.18.3'
+          go-version-file: 'go.mod'
           cache: true
       - name: Install httpie
         run: |
@@ -287,9 +287,9 @@ jobs:
         with:
           python-version: '3.8'
       - name: Setup Go environment
-        uses: actions/setup-go@v3.2.0
+        uses: actions/setup-go@v4
         with:
-          go-version: '1.18.3'
+          go-version-file: 'go.mod'
           cache: true
       - name: Install httpie
         run: |
@@ -404,9 +404,9 @@ jobs:
         with:
           python-version: '3.8'
       - name: Setup Go environment
-        uses: actions/setup-go@v3.2.0
+        uses: actions/setup-go@v4
         with:
-          go-version: '1.18.3'
+          go-version-file: 'go.mod'
           cache: true
       - name: Install httpie
         run: |
@@ -526,9 +526,9 @@ jobs:
         with:
           python-version: '3.8'
       - name: Setup Go environment
-        uses: actions/setup-go@v3.2.0
+        uses: actions/setup-go@v4
         with:
-          go-version: '1.18.3'
+          go-version-file: 'go.mod'
           cache: true
       - name: Install httpie
         run: |
