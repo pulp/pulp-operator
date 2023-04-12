@@ -925,21 +925,26 @@ DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
 	// credentials from aws secret into settings.py
 	if storageType[0] == controllers.S3ObjType {
 		resources.Logger.Info("Retrieving S3 data from " + resources.Pulp.Spec.ObjectStorageS3Secret)
-		storageData, err := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Spec.ObjectStorageS3Secret, resources.Pulp.Namespace, true, "s3-access-key-id", "s3-secret-access-key", "s3-bucket-name", "s3-region")
+		storageData, err := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Spec.ObjectStorageS3Secret, resources.Pulp.Namespace, true, "s3-access-key-id", "s3-secret-access-key", "s3-bucket-name")
 		if err != nil {
 			resources.Logger.Error(err, "Secret Not Found!", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Spec.ObjectStorageS3Secret)
 			return &corev1.Secret{}
 		}
 
-		optionalKey, _ := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Spec.ObjectStorageS3Secret, resources.Pulp.Namespace, false, "s3-endpoint")
+		optionalKey, _ := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Spec.ObjectStorageS3Secret, resources.Pulp.Namespace, false, "s3-endpoint", "s3-region")
+		if len(optionalKey["s3-endpoint"]) == 0 && len(optionalKey["s3-region"]) == 0 {
+			resources.Logger.Error(err, "Either s3-endpoint or s3-region needs to be specified", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Spec.ObjectStorageS3Secret)
+		}
 		if len(optionalKey["s3-endpoint"]) > 0 {
 			pulp_settings = pulp_settings + fmt.Sprintf("AWS_S3_ENDPOINT_URL = \"%v\"\n", optionalKey["s3-endpoint"])
+		}
+		if len(optionalKey["s3-region"]) > 0 {
+			pulp_settings = pulp_settings + fmt.Sprintf("AWS_S3_REGION_NAME = \"%v\"\n", optionalKey["s3-region"])
 		}
 
 		pulp_settings = pulp_settings + `AWS_ACCESS_KEY_ID = '` + storageData["s3-access-key-id"] + `'
 AWS_SECRET_ACCESS_KEY = '` + storageData["s3-secret-access-key"] + `'
 AWS_STORAGE_BUCKET_NAME = '` + storageData["s3-bucket-name"] + `'
-AWS_S3_REGION_NAME = '` + storageData["s3-region"] + `'
 AWS_DEFAULT_ACL = "@none None"
 S3_USE_SIGV4 = "True"
 AWS_S3_SIGNATURE_VERSION = "s3v4"
