@@ -145,6 +145,9 @@ stringData:
   s3-region: $S3_REGION
 EOF
 ```
+If you want to use a custom S3-compatible endpoint, you can use it by specifying the endpoint 
+within the secret data as `s3-endpoint`.
+In this case `s3-region` does not need to be specified and is ignored.
 
 Now configure `Pulp CR` with the secret created:
 ```
