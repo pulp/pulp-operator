@@ -317,6 +317,11 @@ bundle-build: ## Build the bundle image.
 bundle-push: ## Push the bundle image.
 	$(MAKE) docker-push IMG=$(BUNDLE_IMG)
 
+
+.PHONY: bundle-check
+bundle-check: sdkbin kustomize
+	$(KUSTOMIZE) build config/manifests | $(SDK_BIN) generate bundle -q --output-dir=/tmp/bundle --overwrite=false --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+
 .PHONY: opm
 OPM = ./bin/opm
 opm: ## Download opm locally if necessary.

@@ -55,6 +55,14 @@ jobs:
         run: |
           make fmt vet
         shell: bash
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Check if bundle files are updated
+        run: |
+          .ci/scripts/bundle_check.sh
+        shell: bash
   containerized:
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
