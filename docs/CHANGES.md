@@ -13,6 +13,33 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+1.0.0-alpha.6 (2023-04-27)
+==========================
+
+
+Bugfixes
+--------
+
+- The container_token_secret was not getting its name from Pulp CR.
+  [#852](https://github.com/pulp/pulp-operator/issues/852)
+
+
+Improved Documentation
+----------------------
+
+- Add Documentation for custom S3 endpoints
+  [#882](https://github.com/pulp/pulp-operator/issues/882)
+
+
+Misc
+----
+
+- [#858](https://github.com/pulp/pulp-operator/issues/858), [#935](https://github.com/pulp/pulp-operator/issues/935), [#942](https://github.com/pulp/pulp-operator/issues/942)
+
+
+----
+
+
 1.0.0-alpha.5 (2023-01-03)
 ==========================
 
