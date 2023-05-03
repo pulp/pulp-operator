@@ -605,6 +605,7 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File
         - urn:alm:descriptor:com.tectonic.ui:select:ReadWriteMany
+        - urn:alm:descriptor:com.tectonic.ui:select:ReadWriteOnce
       - displayName: File storage size
         path: file_storage_size
         x-descriptors:
