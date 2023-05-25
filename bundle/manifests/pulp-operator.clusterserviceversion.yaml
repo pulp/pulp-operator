@@ -1017,6 +1017,8 @@ spec:
           - ingresses
           verbs:
           - get
+          - list
+          - watch
         serviceAccountName: pulp-operator-sa
       deployments:
       - label:
