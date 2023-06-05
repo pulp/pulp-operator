@@ -38,6 +38,18 @@ If the Kubernetes cluster has no Storage Class configured, it is possible to con
 !!! note
     If the Storage Class defined will provision RWO volumes, it is recommended to also set the [`Deployment strategy`](https://docs.pulpproject.org/pulp_operator/pulp/) in Pulp CR as [`Recreate`](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#recreate-deployment) to avoid the [`Multi-Attach`](https://docs.pulpproject.org/pulp_operator/faq/#how-can-i-fix-the-multi-attach-error-for-volume-my-volume-volume-is-already-used-by-pods-my-pod) volume error.
 
+Here is an example to deploy Pulp in a persistent way providing different `StorageClasses` for each component:
+```
+spec:
+  file_storage_storage_class: my-sc-for-pulpcore
+  file_storage_size: "10Gi"
+  file_storage_access_mode: "ReadWriteMany"
+  database:
+    postgres_storage_class: my-sc-for-database
+  cache:
+    redis_storage_class: my-sc-for-cache
+```
+
 
 ## Configuring Pulp Operator storage to use a Persistent Volume Claim
 
@@ -59,6 +71,16 @@ If the installation namespace has no Persistent Volume Claim available, it is po
 
 !!! note
     If the Persistent Volume Claim defined is bound to a RWO volume, it is recommended to also set the [`Deployment strategy`](https://docs.pulpproject.org/pulp_operator/pulp/) in Pulp CR as [`Recreate`](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#recreate-deployment) to avoid the [`Multi-Attach`](https://docs.pulpproject.org/pulp_operator/faq/#how-can-i-fix-the-multi-attach-error-for-volume-my-volume-volume-is-already-used-by-pods-my-pod) volume error.
+
+Here is an example to deploy Pulp in a persistent way providing different `PersistentVolumeClaims` for each component:
+```
+spec:
+  pvc: my-pvc-for-pulpcore
+  database:
+    pvc: my-pvc-for-database
+  cache:
+    pvc: my-pvc-for-cache
+```
 
 ## Configuring Pulp Operator to use object storage
 
@@ -172,4 +194,10 @@ You must configure storage for the Pulp Operator. For non-production clusters, y
 
 !!! warning
     Configure this option for only non-production clusters.
+
+!!! warning
+    The content stored in an `emptyDir` volume is not shared between the pods, because of that deploying Pulp with more than a single replica of `pulpcore-api` and/or `pulpcore-content` will result in unexpected behaviors.
+
+Configuring Pulp operator with `emptyDir` will fail the execution of some plugins.
+For example, `pulp-container` plugin needs to access the data created by `pulpcore-api` component through `pulpcore-content` pod, but since each pod has its own `emptyDir` volume - and their data is not shared between them - Pulp will not work as expected.
 
