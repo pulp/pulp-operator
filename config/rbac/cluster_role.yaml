@@ -6,8 +6,6 @@ metadata:
 rules:
   - apiGroups:
       - config.openshift.io
-    resourceNames:
-      - cluster
     resources:
       - ingresses
     verbs:
