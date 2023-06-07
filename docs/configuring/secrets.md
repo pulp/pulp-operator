@@ -2,7 +2,7 @@
 
 Pulp Operator creates k8s `Secrets` based on the configuration defined in Pulp `CR`.
 
-These `Secrets` are **not** reconciled, which means, any modification in their content will **not**
+Some `Secrets` are **not** reconciled, which means, any modification in their content will **not**
 get synchronized with the `CR` definition. This is to avoid losing any custom data added to the `Secret`.
 
 
@@ -43,6 +43,11 @@ The name of the `Secrets` can be different depending on the Pulp's `CR` name.
 Will be used to populate `/etc/pulp/settings.py` configuration file.  
 It is managed by `pulp_settings` field in Pulp `CR`.
 Some fields from this `Secret` will be filled with other `CR` definitions.
+
+!!! warning
+    Do not modify this `Secret`, the content will get overwritten by the operator.
+    Any modification in `Pulp CR` that impact changing the content of this
+    `Secret` will trigger a redeploy of `pulp-api` and `pulp-content` pods.
 
 Here is an example of a `Secret` created by the Operator:
 

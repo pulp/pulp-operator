@@ -35,6 +35,18 @@ const (
 	PulpResource     = "Pulp"
 	CacheResource    = "Cache"
 	DatabaseResource = "Database"
+
+	DotNotEditMessage = `
+# This file is managed by Pulp operator.
+# DO NOT EDIT IT.
+#
+# To modify custom fields, use the pulp_settings from Pulp CR, for example:
+# spec:
+#   pulp_settings:
+#     allowed_export_paths:
+#     - /tmp
+
+`
 )
 
 // ignoreUpdateCRStatusPredicate filters update events on pulpbackup CR status

@@ -501,6 +501,7 @@ jobs:
           kubectl get pulps.repo-manager.pulpproject.org
           sudo systemctl stop pulp-operator.service
           make local
+          sleep 5
         shell: bash
       - name: Check and wait pulp-operator deploy
         run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
