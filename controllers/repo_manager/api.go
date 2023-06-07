@@ -128,10 +128,10 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 	}
 
 	// Ensure the deployment spec is as expected
-	found := &appsv1.Deployment{}
-	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, found)
+	apiDeployment := &appsv1.Deployment{}
+	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, apiDeployment)
 	expected := deploymentForPulpApi(funcResources)
-	if requeue, err := reconcileObject(funcResources, expected, found, conditionType); err != nil || requeue {
+	if requeue, err := reconcileObject(funcResources, expected, apiDeployment, conditionType); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
@@ -147,6 +147,21 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api-svc", Namespace: pulp.Namespace}, apiSvc)
 	expectedSvc := serviceForAPI(funcResources)
 	if requeue, err := reconcileObject(funcResources, expectedSvc, apiSvc, conditionType); err != nil || requeue {
+		return ctrl.Result{Requeue: requeue}, err
+	}
+
+	// Ensure the secret data is as expected
+	serverSecret := &corev1.Secret{}
+	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-server", Namespace: pulp.Namespace}, serverSecret)
+	expectedServerSecret := pulpServerSecret(funcResources)
+	if requeue, err := reconcileObject(funcResources, expectedServerSecret, serverSecret, conditionType); err != nil || requeue {
+
+		// when requeue==true it means the secret changed so we need to redeploy api and content pods to get the new settings.py
+		r.restartPods(pulp, apiDeployment)
+		contentDeployment := &appsv1.Deployment{}
+		r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-content", Namespace: pulp.Namespace}, contentDeployment)
+		r.restartPods(pulp, contentDeployment)
+
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
@@ -808,7 +823,7 @@ func pulpServerSecret(resources FunctionResources) client.Object {
 			postgresConfigurationSecret = resources.Pulp.Spec.PostgresConfigurationSecret
 		}
 
-		resources.Logger.Info("Retrieving Postgres credentials from "+postgresConfigurationSecret+" secret", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Name)
+		resources.Logger.V(1).Info("Retrieving Postgres credentials from "+postgresConfigurationSecret+" secret", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Name)
 		pgCredentials, err := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, postgresConfigurationSecret, resources.Pulp.Namespace, true, "username", "password", "database", "port", "sslmode")
 		if err != nil {
 			resources.Logger.Error(err, "Secret Not Found!", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Name)
@@ -820,7 +835,7 @@ func pulpServerSecret(resources FunctionResources) client.Object {
 		dbName = pgCredentials["database"]
 		dbSSLMode = pgCredentials["sslmode"]
 	} else {
-		resources.Logger.Info("Retrieving Postgres credentials from "+resources.Pulp.Spec.Database.ExternalDBSecret+" secret", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Name)
+		resources.Logger.V(1).Info("Retrieving Postgres credentials from "+resources.Pulp.Spec.Database.ExternalDBSecret+" secret", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Name)
 		externalPostgresData := []string{"POSTGRES_HOST", "POSTGRES_PORT", "POSTGRES_USERNAME", "POSTGRES_PASSWORD", "POSTGRES_DB_NAME", "POSTGRES_SSLMODE"}
 		pgCredentials, err := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Spec.Database.ExternalDBSecret, resources.Pulp.Namespace, true, externalPostgresData...)
 		if err != nil {
@@ -838,7 +853,8 @@ func pulpServerSecret(resources FunctionResources) client.Object {
 	rootUrl := getRootURL(resources)
 
 	// default settings.py configuration
-	var pulp_settings = `DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
+	var pulp_settings = controllers.DotNotEditMessage + `
+DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
 GALAXY_COLLECTION_SIGNING_SERVICE = "ansible-default"
 GALAXY_CONTAINER_SIGNING_SERVICE = "container-default"
 ANSIBLE_API_HOSTNAME = "` + rootUrl + `"
@@ -904,7 +920,7 @@ REDIS_DB = "` + cacheDB + `"
 	// if an Azure Blob is defined in Pulp CR we should add the
 	// credentials from azure secret into settings.py
 	if storageType[0] == controllers.AzureObjType {
-		resources.Logger.Info("Retrieving Azure data from " + resources.Pulp.Spec.ObjectStorageAzureSecret)
+		resources.Logger.V(1).Info("Retrieving Azure data from " + resources.Pulp.Spec.ObjectStorageAzureSecret)
 		storageData, err := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Spec.ObjectStorageAzureSecret, resources.Pulp.Namespace, true, "azure-account-name", "azure-account-key", "azure-container", "azure-container-path", "azure-connection-string")
 		if err != nil {
 			resources.Logger.Error(err, "Secret Not Found!", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Spec.ObjectStorageAzureSecret)
@@ -924,7 +940,7 @@ DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
 	// if a S3 is defined in Pulp CR we should add the
 	// credentials from aws secret into settings.py
 	if storageType[0] == controllers.S3ObjType {
-		resources.Logger.Info("Retrieving S3 data from " + resources.Pulp.Spec.ObjectStorageS3Secret)
+		resources.Logger.V(1).Info("Retrieving S3 data from " + resources.Pulp.Spec.ObjectStorageS3Secret)
 		storageData, err := resources.RepoManagerReconciler.retrieveSecretData(resources.Context, resources.Pulp.Spec.ObjectStorageS3Secret, resources.Pulp.Namespace, true, "s3-access-key-id", "s3-secret-access-key", "s3-bucket-name")
 		if err != nil {
 			resources.Logger.Error(err, "Secret Not Found!", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Spec.ObjectStorageS3Secret)

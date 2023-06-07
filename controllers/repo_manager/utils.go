@@ -16,7 +16,9 @@ import (
 	"io"
 	"math/rand"
 	"reflect"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	configv1 "github.com/openshift/api/config/v1"
@@ -35,11 +37,13 @@ import (
 	k8s_errors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 const (
@@ -144,6 +148,35 @@ func getPulpSetting(pulp *repomanagerpulpprojectorgv1beta2.Pulp, key string) str
 
 }
 
+// sortKeys will return an ordered slice of strings defined with the keys from a.
+// It is used to make sure that custom settings from pulp-server secret
+// will be built in the same order and avoiding issues when verifying if its
+// content is as expected. For example, this will avoid the controller having
+// to check if
+//
+//	  pulp_settings:
+//		    allowed_export_paths:
+//		    - /tmp
+//		    telemetry: falsew
+//
+// will converge into a secret like:
+//
+//	ALLOWED_IMPORT_PATHS = ["/tmp"]
+//	TELEMETRY = "false"
+//
+// instead of (different order, which would fail the checkSecretModification)
+//
+//	TELEMETRY = "false"
+//	ALLOWED_IMPORT_PATHS = ["/tmp"]
+func sortKeys(a map[string]interface{}) []string {
+	keys := make([]string, 0, len(a))
+	for k := range a {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 // addCustomPulpSettings appends custom settings defined in Pulp CR to settings.py
 func addCustomPulpSettings(pulp *repomanagerpulpprojectorgv1beta2.Pulp, current_settings string) string {
 	settings := pulp.Spec.PulpSettings.Raw
@@ -151,20 +184,21 @@ func addCustomPulpSettings(pulp *repomanagerpulpprojectorgv1beta2.Pulp, current_
 	json.Unmarshal(settings, &settingsJson)
 
 	var convertedSettings string
-	for k, v := range settingsJson {
+	sortedKeys := sortKeys(settingsJson)
+	for _, k := range sortedKeys {
 		if strings.Contains(current_settings, strings.ToUpper(k)) {
 			lines := strings.Split(current_settings, strings.ToUpper(k))
 			current_settings = lines[0] + strings.Join(strings.Split(lines[1], "\n")[1:], "\n")
 		}
-		switch v.(type) {
+		switch settingsJson[k].(type) {
 		case map[string]interface{}:
-			rawMapping, _ := json.Marshal(v)
+			rawMapping, _ := json.Marshal(settingsJson[k])
 			convertedSettings = convertedSettings + fmt.Sprintln(strings.ToUpper(k), "=", strings.Replace(string(rawMapping), "\"", "'", -1))
 		case []interface{}:
-			rawMapping, _ := json.Marshal(v)
+			rawMapping, _ := json.Marshal(settingsJson[k])
 			convertedSettings = convertedSettings + fmt.Sprintln(strings.ToUpper(k), "=", string(rawMapping))
 		default:
-			convertedSettings = convertedSettings + fmt.Sprintf("%v = \"%v\"\n", strings.ToUpper(k), v)
+			convertedSettings = convertedSettings + fmt.Sprintf("%v = \"%v\"\n", strings.ToUpper(k), settingsJson[k])
 		}
 	}
 
@@ -493,6 +527,15 @@ func reconcileObject(funcResources FunctionResources, expectedState, currentStat
 	case *appsv1.Deployment:
 		objKind = "Deployment"
 		checkFunction = checkDeploymentSpec
+	case *corev1.Secret:
+		// by default, defines secretModFunc with the function to verify if pulp-server secret has been modified
+		secretModFunc := checkPulpServerSecretModification
+
+		// if the secret to be verified is the postgres-configuration we need to use another function
+		if expectedState.GetName() == funcResources.Pulp.Name+"-postgres-configuration" {
+			secretModFunc = checkPostgresSecretModification
+		}
+		return updateObject(funcResources, secretModFunc, "Secret", conditionType, "Data", expectedState, currentState)
 	default:
 		return false, nil
 	}
@@ -555,6 +598,20 @@ func checkDeploymentSpec(expectedState, currentState interface{}) bool {
 		!equality.Semantic.DeepEqual(expectedSpec.Template.Spec.Affinity, currentSpec.Template.Spec.Affinity)
 }
 
+// checkPulpServerSecretModification returns true if the settings.py from pulp-server secret
+// does not have the expected contents
+func checkPulpServerSecretModification(expectedState, currentState interface{}) bool {
+	expectedData := expectedState.(map[string]string)["settings.py"]
+	currentData := string(currentState.(map[string][]byte)["settings.py"])
+	return expectedData != currentData
+}
+
+// [TODO] Pending implementation. Not sure if we should focus on this now considering
+// that for production clusters an external postgres should be used.
+func checkPostgresSecretModification(expectedState, currentState interface{}) bool {
+	return false
+}
+
 // checkMetadataModification returns true if annotations or labels fields are not equal
 // it is used to compare .metadata.annotations and .metadata.labels fields
 // since these are map[string]string types
@@ -574,6 +631,40 @@ func checkSpecModification(currentField, expectedField interface{}) bool {
 	return !equality.Semantic.DeepDerivative(currentField, expectedField)
 }
 
+// checkSecretsAvailable verifies if the list of secrets that pulp-server secret can depend on
+// are available.
+func checkSecretsAvailable(funcResources FunctionResources) error {
+	ctx := funcResources.Context
+	pulp := funcResources.Pulp
+
+	secrets := []string{"ObjectStorageAzureSecret", "ObjectStorageS3Secret", "SSOSecret"}
+	for _, secretField := range secrets {
+		structField := reflect.Indirect(reflect.ValueOf(pulp)).FieldByName("Spec").FieldByName(secretField)
+		if structField.IsValid() && len(structField.Interface().(string)) != 0 {
+			secret := &corev1.Secret{}
+			if err := funcResources.Get(ctx, types.NamespacedName{Name: structField.Interface().(string), Namespace: pulp.Namespace}, secret); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(pulp.Spec.Database.ExternalDBSecret) != 0 {
+		secret := &corev1.Secret{}
+		if err := funcResources.Get(ctx, types.NamespacedName{Name: pulp.Spec.Database.ExternalDBSecret, Namespace: pulp.Namespace}, secret); err != nil {
+			return err
+		}
+	}
+
+	if len(pulp.Spec.Cache.ExternalCacheSecret) != 0 {
+		secret := &corev1.Secret{}
+		if err := funcResources.Get(ctx, types.NamespacedName{Name: pulp.Spec.Cache.ExternalCacheSecret, Namespace: pulp.Namespace}, secret); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // updateObject is a function that verifies if an object has been modified
 // and update, if necessary, with the expected config
 func updateObject(funcResources FunctionResources, modified func(interface{}, interface{}) bool, objKind, conditionType, field string, expectedState, currentState client.Object) (bool, error) {
@@ -589,6 +680,12 @@ func updateObject(funcResources FunctionResources, modified func(interface{}, in
 	} else if field == "Spec" {
 		currentField = reflect.Indirect(reflect.ValueOf(currentState)).FieldByName(field).Interface()
 		expectedField = reflect.Indirect(reflect.ValueOf(expectedState)).FieldByName(field).Interface()
+	} else if field == "Data" {
+		// Retrieving a Secret using k8s-client will return the Data field (map[string][uint8])
+		// When we are creating the secrets (for example, through the pulpServerSecret function) we are
+		// using the StringData field
+		currentField = reflect.Indirect(reflect.ValueOf(currentState)).FieldByName(field).Interface()
+		expectedField = reflect.Indirect(reflect.ValueOf(expectedState)).FieldByName("StringData").Interface()
 	}
 
 	if modified(expectedField, currentField) {
@@ -975,4 +1072,54 @@ func updateOldAnsibleSvc(resource FunctionResources) {
 		resource.Logger.Error(err, "Failed to change selectors from old "+serviceName+" Service ansible version.")
 	}
 
+}
+
+// findPulpDependentSecrets will search for Pulp objects based on Secret names defined in Pulp CR.
+// It is used to "link" these Secrets (not "owned" by Pulp operator) with Pulp object
+func (r *RepoManagerReconciler) findPulpDependentSecrets(secret client.Object) []reconcile.Request {
+
+	associatedPulp := repomanagerpulpprojectorgv1beta2.PulpList{}
+
+	secrets := []string{
+		".spec.object_storage_azure_secret",
+		".spec.object_storage_s3_secret",
+		".spec.database.external_db_secret",
+		".spec.cache.external_cache_secret",
+		".spec.sso_secret",
+	}
+
+	for i := range secrets {
+		opts := &client.ListOptions{
+			FieldSelector: fields.OneTermEqualSelector(secrets[i], secret.GetName()),
+			Namespace:     secret.GetNamespace(),
+		}
+		if err := r.List(context.TODO(), &associatedPulp, opts); err != nil {
+			return []reconcile.Request{}
+		}
+		if len(associatedPulp.Items) > 0 {
+			return []reconcile.Request{{
+				NamespacedName: types.NamespacedName{
+					Name:      associatedPulp.Items[0].GetName(),
+					Namespace: associatedPulp.Items[0].GetNamespace(),
+				},
+			}}
+		}
+	}
+
+	return []reconcile.Request{}
+}
+
+// restartPods modifies a deployment template field (`.annotations`) which will
+// start a new rollout of pods
+func (r *RepoManagerReconciler) restartPods(pulp *repomanagerpulpprojectorgv1beta2.Pulp, obj client.Object) {
+	switch obj := obj.(type) {
+	case *appsv1.Deployment:
+
+		patch := client.MergeFrom(obj.DeepCopy())
+		if obj.Spec.Template.ObjectMeta.Annotations == nil {
+			obj.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
+		}
+		obj.Spec.Template.ObjectMeta.Annotations["repo-manager.pulpproject.org/restartedAt"] = time.Now().Format(time.RFC3339)
+		r.Patch(context.TODO(), obj, patch)
+	}
 }

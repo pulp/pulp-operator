@@ -38,7 +38,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -209,6 +211,15 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		}
 	}
 
+	// Checking if the secrets defined in Pulp CR are available.
+	// If an expected secret is not found, the operator will fail early and
+	// NOT trigger a reconciliation loop to avoid "spamming" error messages until
+	// the expected secret is found.
+	if err := checkSecretsAvailable(FunctionResources{ctx, pulp, log, r}); err != nil {
+		log.Error(err, "Secret defined in Pulp CR not found!")
+		return ctrl.Result{}, nil
+	}
+
 	var pulpController reconcile.Result
 
 	// Create an empty ConfigMap in which CNO will inject custom CAs
@@ -331,6 +342,62 @@ func (r *RepoManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	// creates a new eventRecorder to be able to interact with events
 	r.recorder = mgr.GetEventRecorderFor("Pulp")
 
+	// [TODO] Refactor the following blocks to avoid code duplication
+	// adds an index to `object_storage_azure_secret` allowing to lookup `Pulp` by a referenced `Azure Object Storage Secret` name
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &repomanagerpulpprojectorgv1beta2.Pulp{}, ".spec.object_storage_azure_secret", func(rawObj client.Object) []string {
+		pulp := rawObj.(*repomanagerpulpprojectorgv1beta2.Pulp)
+		if pulp.Spec.ObjectStorageAzureSecret == "" {
+			return nil
+		}
+		return []string{pulp.Spec.ObjectStorageAzureSecret}
+	}); err != nil {
+		return err
+	}
+
+	// the same for S3 secret
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &repomanagerpulpprojectorgv1beta2.Pulp{}, ".spec.object_storage_s3_secret", func(rawObj client.Object) []string {
+		pulp := rawObj.(*repomanagerpulpprojectorgv1beta2.Pulp)
+		if pulp.Spec.ObjectStorageS3Secret == "" {
+			return nil
+		}
+		return []string{pulp.Spec.ObjectStorageS3Secret}
+	}); err != nil {
+		return err
+	}
+
+	// external postgres secret
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &repomanagerpulpprojectorgv1beta2.Pulp{}, ".spec.database.external_db_secret", func(rawObj client.Object) []string {
+		pulp := rawObj.(*repomanagerpulpprojectorgv1beta2.Pulp)
+		if pulp.Spec.Database.ExternalDBSecret == "" {
+			return nil
+		}
+		return []string{pulp.Spec.Database.ExternalDBSecret}
+	}); err != nil {
+		return err
+	}
+
+	// external redis secret
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &repomanagerpulpprojectorgv1beta2.Pulp{}, ".spec.cache.external_cache_secret", func(rawObj client.Object) []string {
+		pulp := rawObj.(*repomanagerpulpprojectorgv1beta2.Pulp)
+		if pulp.Spec.Cache.ExternalCacheSecret == "" {
+			return nil
+		}
+		return []string{pulp.Spec.Cache.ExternalCacheSecret}
+	}); err != nil {
+		return err
+	}
+
+	// sso secret
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &repomanagerpulpprojectorgv1beta2.Pulp{}, ".spec.sso_secret", func(rawObj client.Object) []string {
+		pulp := rawObj.(*repomanagerpulpprojectorgv1beta2.Pulp)
+		if pulp.Spec.SSOSecret == "" {
+			return nil
+		}
+		return []string{pulp.Spec.SSOSecret}
+	}); err != nil {
+		return err
+	}
+
 	controller := ctrl.NewControllerManagedBy(mgr).
 		For(&repomanagerpulpprojectorgv1beta2.Pulp{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&appsv1.StatefulSet{}).
@@ -341,7 +408,12 @@ func (r *RepoManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&policy.PodDisruptionBudget{}).
 		Owns(&corev1.ServiceAccount{}).
 		Owns(&batchv1.CronJob{}, builder.WithPredicates(ignoreCronjobStatus())).
-		Owns(&netv1.Ingress{})
+		Owns(&netv1.Ingress{}).
+		Watches(
+			&source.Kind{Type: &corev1.Secret{}},
+			handler.EnqueueRequestsFromMapFunc(r.findPulpDependentSecrets),
+			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
+		)
 
 	if IsOpenShift, _ := controllers.IsOpenShift(); IsOpenShift {
 		return controller.
