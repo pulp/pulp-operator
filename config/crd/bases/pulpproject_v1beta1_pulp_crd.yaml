@@ -67,7 +67,7 @@ spec:
                   GALAXY_FEATURE_FLAGS:
                     properties:
                       execution_environments:
-                        type: string
+                        type: boolean
                     type: object
                 type: object
               sso_secret:
