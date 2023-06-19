@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -270,5 +272,30 @@ func CheckEmptyDir(pulp *repomanagerpulpprojectorgv1beta2.Pulp, resource string)
 		logger := CustomZapLogger()
 		logger.Warn("No StorageClass or PVC defined for " + strings.ToUpper(resource) + " pods!")
 		logger.Warn("CONFIGURING " + strings.ToUpper(resource) + " POD VOLUME AS EMPTYDIR. THIS SHOULD NOT BE USED IN PRODUCTION CLUSTERS.")
+	}
+}
+
+// CheckImageVersionModified verifies if the container image tag defined in
+// Pulp CR matches the one in the Deployment
+func CheckImageVersionModified(pulp *repomanagerpulpprojectorgv1beta2.Pulp, deployment *appsv1.Deployment) bool {
+	r := regexp.MustCompile(`(?P<ImageName>.*?):(?P<Tag>.*)`)
+	currentImageVersion := r.FindStringSubmatch(deployment.Spec.Template.Spec.Containers[0].Image)
+	return pulp.Spec.ImageVersion != currentImageVersion[2]
+}
+
+// WaitAPIPods waits until all API pods are in a READY state
+func WaitAPIPods[T any](resource T, pulp *repomanagerpulpprojectorgv1beta2.Pulp, deployment *appsv1.Deployment, timeout time.Duration) {
+
+	// we need to add a litte "stand by" to give time for the operator get the updated status from database/cluster
+	time.Sleep(time.Millisecond * 500)
+	clientConcrete := reflect.ValueOf(resource)
+	restClient := reflect.Indirect(clientConcrete).FieldByName("Client").Elem().Interface().(client.Client)
+	for i := 0; i < int(timeout.Seconds()); i++ {
+		apiDeployment := &appsv1.Deployment{}
+		restClient.Get(context.TODO(), types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, apiDeployment)
+		if apiDeployment.Status.ReadyReplicas == apiDeployment.Status.Replicas {
+			return
+		}
+		time.Sleep(time.Second)
 	}
 }

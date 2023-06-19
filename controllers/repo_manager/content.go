@@ -20,6 +20,7 @@ import (
 	"context"
 	"os"
 	"strconv"
+	"time"
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -71,6 +72,12 @@ func (r *RepoManagerReconciler) pulpContentController(ctx context.Context, pulp 
 	deployment := &appsv1.Deployment{}
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-content", Namespace: pulp.Namespace}, deployment)
 	expected := deploymentForPulpContent(funcResources)
+	// before doing the reconciliation, in case of image version change
+	// we should wait for all API pods get upgraded
+	if controllers.CheckImageVersionModified(pulp, deployment) {
+		log.Info("A new image version has been provided! Waiting for API pods to upgrade first ...")
+		controllers.WaitAPIPods(r, pulp, deployment, time.Second*60)
+	}
 	if requeue, err := reconcileObject(funcResources, expected, deployment, conditionType); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
 	}
