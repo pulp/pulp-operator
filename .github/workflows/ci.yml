@@ -63,6 +63,21 @@ jobs:
         run: |
           .ci/scripts/bundle_check.sh
         shell: bash
+  envtest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup Go environment
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - name: Check code format and generate manifests
+        run: |
+          make test
+        shell: bash
   containerized:
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
@@ -135,7 +150,7 @@ jobs:
         shell: bash
       - name: Check code format and generate manifests
         run: |
-          make test
+          make manifests generate fmt vet
         shell: bash
       - name: Deploy pulp-operator to K8s
         run: |
@@ -240,7 +255,7 @@ jobs:
         shell: bash
       - name: Check code format and generate manifests
         run: |
-          make test
+          make manifests generate fmt vet
         shell: bash
       - name: Prepare Object Storage
         run: |
@@ -332,7 +347,7 @@ jobs:
         run: make rename manifests bundle generate CR_KIND=Galaxy CR_DOMAIN=ansible.com CR_PLURAL=galaxies APP_IMAGE=quay.io/pulp/galaxy-minimal WEB_IMAGE=quay.io/pulp/galaxy-web
       - name: Check code format and generate manifests
         run: |
-          make test CR_KIND=Galaxy CR_DOMAIN=ansible.com CR_PLURAL=galaxies APP_IMAGE=quay.io/pulp/galaxy-minimal WEB_IMAGE=quay.io/pulp/galaxy-web
+          make manifests generate fmt vet CR_KIND=Galaxy CR_DOMAIN=ansible.com CR_PLURAL=galaxies APP_IMAGE=quay.io/pulp/galaxy-minimal WEB_IMAGE=quay.io/pulp/galaxy-web
         shell: bash
       - name: Prepare Object Storage
         run: |
