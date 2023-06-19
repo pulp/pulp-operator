@@ -155,11 +155,12 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-server", Namespace: pulp.Namespace}, serverSecret)
 	expectedServerSecret := pulpServerSecret(funcResources)
 	if requeue, err := reconcileObject(funcResources, expectedServerSecret, serverSecret, conditionType); err != nil || requeue {
-
+		log.Info("Reprovisioning pulpcore-api pods to get the new settings ...")
 		// when requeue==true it means the secret changed so we need to redeploy api and content pods to get the new settings.py
 		r.restartPods(pulp, apiDeployment)
 		contentDeployment := &appsv1.Deployment{}
 		r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-content", Namespace: pulp.Namespace}, contentDeployment)
+		log.Info("Reprovisioning pulpcore-content pods to get the new settings ...")
 		r.restartPods(pulp, contentDeployment)
 
 		return ctrl.Result{Requeue: requeue}, err
