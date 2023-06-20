@@ -79,7 +79,8 @@ jobs:
           make test
         shell: bash
   containerized:
-    runs-on: ubuntu-latest
+    runs-on:
+      labels: 4-core-16gb-ram
     if: github.event_name != 'pull_request'
     steps:
       - uses: actions/checkout@v2
@@ -178,7 +179,8 @@ jobs:
         if: always()
         run: .github/workflows/scripts/show_logs.sh
   components:
-    runs-on: ubuntu-latest
+    runs-on:
+      labels: 4-core-16gb-ram
     strategy:
       fail-fast: false
       matrix:
@@ -291,7 +293,8 @@ jobs:
         if: always()
         run: .github/workflows/scripts/show_logs.sh
   galaxy:
-    runs-on: ubuntu-latest
+    runs-on:
+      labels: 4-core-16gb-ram
     strategy:
       fail-fast: false
       matrix:
@@ -409,7 +412,8 @@ jobs:
         if: always()
         run: .github/workflows/scripts/show_logs.sh
   upgrade:
-    runs-on: ubuntu-latest
+    runs-on:
+      labels: 4-core-16gb-ram
     if: github.ref_name != 'main'
     strategy:
       fail-fast: false
@@ -536,7 +540,8 @@ jobs:
         if: always()
         run: .github/workflows/scripts/show_logs.sh
   migrate:
-    runs-on: ubuntu-latest
+    runs-on:
+      labels: 4-core-16gb-ram
     if: github.ref_name != 'ansible'
     strategy:
       fail-fast: false
