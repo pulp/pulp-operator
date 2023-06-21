@@ -24548,6 +24548,10 @@ spec:
                 - NodePort
                 - nodeport
                 type: string
+              inhibit_version_constraint:
+                description: 'Relax the check of image_version and image_web_version
+                  not matching. Default: "false"'
+                type: boolean
               loadbalancer_port:
                 description: Port exposed by pulp-web service when ingress_type==loadbalancer
                 format: int32
