@@ -245,6 +245,12 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ImageVersion string `json:"image_version,omitempty"`
 
+	// Relax the check of image_version and image_web_version not matching.
+	// Default: "false"
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	InhibitVersionConstraint bool `json:"inhibit_version_constraint,omitempty"`
+
 	// Image pull policy for container image.
 	// Default: "IfNotPresent"
 	// +kubebuilder:validation:Optional

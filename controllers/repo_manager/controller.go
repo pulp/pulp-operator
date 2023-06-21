@@ -146,8 +146,12 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	needsPulpWeb := strings.ToLower(pulp.Spec.IngressType) != "route" && !controllers.IsNginxIngressSupported(r, pulp.Spec.IngressClassName)
 	if needsPulpWeb && pulp.Spec.ImageVersion != pulp.Spec.ImageWebVersion {
-		log.Error(nil, "imageVersion should be equal to ImageWebVersion. Please, define image_version and image_web_version with the same value")
-		return ctrl.Result{}, nil
+		if pulp.Spec.InhibitVersionConstraint {
+			controllers.CustomZapLogger().Warn("image_version should be equal to image_web_version! Using different versions is not recommended and can make the application unreachable")
+		} else {
+			log.Error(nil, "image_version should be equal to image_web_version. Please, define image_version and image_web_version with the same value")
+			return ctrl.Result{}, nil
+		}
 	}
 
 	// in case of ingress_type == ingress.
