@@ -1,2 +1,0 @@
-Added a watcher on some secrets not managed by the operator and added a
-reconciliation loop in case these secrets get modified.

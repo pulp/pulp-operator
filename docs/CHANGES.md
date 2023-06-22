@@ -13,6 +13,41 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+1.0.0-alpha.7 (2023-06-22)
+==========================
+
+
+Features
+--------
+
+- Modified the reconciliation for `pulpcore-content` to wait for `API` pods get
+  into a READY state before updating the `Deployment` in case of image version change.
+  [#969](https://github.com/pulp/pulp-operator/issues/969)
+- Added a log message when restarting `api` and `content` pods in case of a
+  secret reconciliation.
+  [#973](https://github.com/pulp/pulp-operator/issues/973)
+
+
+Bugfixes
+--------
+
+- Added a watcher on some secrets not managed by the operator and added a
+  reconciliation loop in case these secrets get modified.
+  [#521](https://github.com/pulp/pulp-operator/issues/521)
+
+
+Improved Documentation
+----------------------
+
+- Added a networking section in configuration doc.
+  [#666](https://github.com/pulp/pulp-operator/issues/666)
+- Added more information regarding the usage and limitation of `emptyDir`.
+  [#824](https://github.com/pulp/pulp-operator/issues/824)
+
+
+----
+
+
 1.0.0-alpha.6 (2023-04-27)
 ==========================
 
