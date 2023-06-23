@@ -17,6 +17,7 @@ import (
 	"math/rand"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -131,6 +132,10 @@ func getPulpSetting(pulp *repomanagerpulpprojectorgv1beta2.Pulp, key string) str
 		case "api_root":
 			return "/pulp/"
 		case "content_path_prefix":
+			domainEnabled := settingsJson[strings.ToLower("domain_enabled")]
+			if domainEnabled != nil && domainEnabled.(bool) {
+				return "/pulp/content/default/"
+			}
 			return "/pulp/content/"
 		case "galaxy_collection_signing_service":
 			return "ansible-default"
@@ -197,6 +202,11 @@ func addCustomPulpSettings(pulp *repomanagerpulpprojectorgv1beta2.Pulp, current_
 		case []interface{}:
 			rawMapping, _ := json.Marshal(settingsJson[k])
 			convertedSettings = convertedSettings + fmt.Sprintln(strings.ToUpper(k), "=", string(rawMapping))
+		case bool:
+			// Pulp expects True or False, but golang boolean values are true or false
+			// so we are converting to string and changing to capital T or F
+			convertToString := cases.Title(language.English, cases.Compact).String(strconv.FormatBool(settingsJson[k].(bool)))
+			convertedSettings = convertedSettings + fmt.Sprintf("%v = %v\n", strings.ToUpper(k), convertToString)
 		default:
 			convertedSettings = convertedSettings + fmt.Sprintf("%v = \"%v\"\n", strings.ToUpper(k), settingsJson[k])
 		}
