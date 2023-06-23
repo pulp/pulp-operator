@@ -13,6 +13,20 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+1.0.0-alpha.8 (2023-06-23)
+==========================
+
+
+Bugfixes
+--------
+
+- Modified the default readiness probe endpoint when DOMAIN is enabled.
+  [#987](https://github.com/pulp/pulp-operator/issues/987)
+
+
+----
+
+
 1.0.0-alpha.7 (2023-06-22)
 ==========================
 
