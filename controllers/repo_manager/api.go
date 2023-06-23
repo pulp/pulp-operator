@@ -909,7 +909,7 @@ TOKEN_SIGNATURE_ALGORITHM = "ES256"
 			cacheDB = externalCacheConfig["REDIS_DB"]
 		}
 
-		cacheSettings := `CACHE_ENABLED = "True"
+		cacheSettings := `CACHE_ENABLED = True
 REDIS_HOST =  "` + cacheHost + `"
 REDIS_PORT =  "` + cachePort + `"
 REDIS_PASSWORD = "` + cachePassword + `"
@@ -933,7 +933,7 @@ AZURE_ACCOUNT_NAME = '` + storageData["azure-account-name"] + `'
 AZURE_ACCOUNT_KEY = '` + storageData["azure-account-key"] + `'
 AZURE_CONTAINER = '` + storageData["azure-container"] + `'
 AZURE_URL_EXPIRATION_SECS = 60
-AZURE_OVERWRITE_FILES = "True"
+AZURE_OVERWRITE_FILES = True
 DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
 `
 	}
@@ -963,7 +963,7 @@ DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
 AWS_SECRET_ACCESS_KEY = '` + storageData["s3-secret-access-key"] + `'
 AWS_STORAGE_BUCKET_NAME = '` + storageData["s3-bucket-name"] + `'
 AWS_DEFAULT_ACL = "@none None"
-S3_USE_SIGV4 = "True"
+S3_USE_SIGV4 = True
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_S3_ADDRESSING_STYLE = "path"
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"

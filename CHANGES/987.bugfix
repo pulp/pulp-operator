@@ -1,0 +1,1 @@
+Modified the default readiness probe endpoint when DOMAIN is enabled.
