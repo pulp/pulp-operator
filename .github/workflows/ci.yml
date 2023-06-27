@@ -63,6 +63,52 @@ jobs:
         run: |
           .ci/scripts/bundle_check.sh
         shell: bash
+  bundle-upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup Go environment
+        uses: actions/setup-go@v3.2.0
+        with:
+          go-version: '1.18.3'
+          cache: true
+      - name: Install kind
+        run: |
+          .ci/scripts/kind_with_registry.sh
+        shell: bash
+      - name: Install OLM
+        run: |
+          make sdkbin OPERATOR_SDK_VERSION=v1.29.0 LOCALBIN=/tmp
+          /tmp/operator-sdk olm install
+        shell: bash
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          repository: pulp/pulp-operator
+          ref: 1.0.0-alpha.8
+      - name: Install Pulp CRD
+        run: |
+          make install
+        shell: bash
+      - name: Build bundle image
+        run: |
+          make bundle-build bundle-push BUNDLE_IMG=localhost:5001/pulp-operator-bundle:old
+        shell: bash
+      - name: Install the operator
+        run: |
+          /tmp/operator-sdk run bundle --skip-tls localhost:5001/pulp-operator-bundle:old
+        shell: bash
+      - uses: actions/checkout@v2
+      - name: Build bundle image
+        run: |
+          make bundle-build  bundle-push BUNDLE_IMG=localhost:5001/pulp-operator-bundle:new
+        shell: bash
+      - name: Upgrade the operator
+        run: |
+          /tmp/operator-sdk run bundle-upgrade --use-http localhost:5001/pulp-operator-bundle:new
+        shell: bash
   envtest:
     runs-on: ubuntu-latest
     steps:
