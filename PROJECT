@@ -39,7 +39,7 @@ resources:
     crdVersion: v1
     namespaced: true
   domain: pulpproject.org
-  group: repo-manager.pulpproject.org
+  group: repo-manager
   kind: Pulp
   path: github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta1
   version: v1beta1
@@ -65,7 +65,7 @@ resources:
     crdVersion: v1
     namespaced: true
   domain: pulpproject.org
-  group: repo-manager.pulpproject.org
+  group: repo-manager
   kind: Pulp
   path: github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2
   version: v1beta2
