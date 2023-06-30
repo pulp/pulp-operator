@@ -1,0 +1,1 @@
+Fixed signing-scripts to be compatible with passphrase in the gpg key.
