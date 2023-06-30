@@ -14,7 +14,7 @@ data:
       PASSWORD="password"
 
       # Create a detached signature
-      gpg --quiet --batch --yes --passphrase \
+      gpg --quiet --batch --pinentry-mode loopback --yes --passphrase \
           $PASSWORD --homedir ~/.gnupg/ --detach-sign --default-key $ADMIN_ID \
           --armor --output $SIGNATURE_PATH $FILE_PATH
 
@@ -29,7 +29,7 @@ data:
     #!/usr/bin/env bash
     set -u
     # This GPG_TTY variable might be needed on a container image that is not running as root.
-    #export GPG_TTY=$(tty)
+    export GPG_TTY=$(tty)
     # Create a file with passphrase only if the key is password protected.
     # echo "Galaxy2022" > /tmp/key_password.txt
     # pulp_container SigningService will pass the next 3 variables to the script.
