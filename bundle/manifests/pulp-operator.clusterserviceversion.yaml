@@ -683,7 +683,7 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - displayName: Reids storage class
+      - displayName: Redis storage class
         path: redis_storage_class
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
