@@ -697,7 +697,7 @@ func deploymentForPulpApi(resources FunctionResources) client.Object {
 	livenessProbe := resources.Pulp.Spec.Api.LivenessProbe
 	if livenessProbe == nil {
 		livenessProbe = &corev1.Probe{
-			FailureThreshold: 5,
+			FailureThreshold: 10,
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
 					Path: getPulpSetting(resources.Pulp, "api_root") + "api/v3/status/",

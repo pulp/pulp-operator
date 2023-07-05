@@ -544,6 +544,7 @@ jobs:
             kubectl apply -f config/samples/simple.ingress.yaml
           else
             kubectl apply -f config/samples/simple.yaml
+            kubectl patch pulp example-pulp --type=merge -p '{"spec":{"api":{"strategy":{"type":"Recreate"}}}}'
           fi
         shell: bash
       - name: Check and wait pulp-operator deploy [before upgrade]
@@ -562,7 +563,7 @@ jobs:
           kubectl get pulps.repo-manager.pulpproject.org
           sudo systemctl stop pulp-operator.service
           make local
-          sleep 5
+          sleep 10
         shell: bash
       - name: Check and wait pulp-operator deploy
         run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
