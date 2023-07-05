@@ -440,7 +440,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 	}
 
 	livenessProbeApi := &corev1.Probe{
-		FailureThreshold: 5,
+		FailureThreshold: 10,
 		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/pulp/api/v3/status/",

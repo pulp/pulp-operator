@@ -26,16 +26,32 @@ journalctl --unit=pulp-operator -n 10000 --no-pager --output=cat
 kubectl logs -l app.kubernetes.io/component=operator -c manager --tail=10000
 echo ::endgroup::
 
+echo ::group::PULP_API_PODS
+kubectl describe pods -l app.kubernetes.io/component=api
+echo ::endgroup::
+
 echo ::group::PULP_API_LOGS
-kubectl logs -l app.kubernetes.io/component=api --tail=10000
+kubectl logs --timestamps -l app.kubernetes.io/component=api --tail=10000
+echo ::endgroup::
+
+echo ::group::PULP_CONTENT_PODS
+kubectl describe pods -l app.kubernetes.io/component=content
 echo ::endgroup::
 
 echo ::group::PULP_CONTENT_LOGS
-kubectl logs -l app.kubernetes.io/component=content --tail=10000
+kubectl logs --timestamps -l app.kubernetes.io/component=content --tail=10000
+echo ::endgroup::
+
+echo ::group::PULP_WORKER_PODS
+kubectl describe pods -l app.kubernetes.io/component=worker
 echo ::endgroup::
 
 echo ::group::PULP_WORKER_LOGS
-kubectl logs -l app.kubernetes.io/component=worker --tail=10000
+kubectl logs --timestamps -l app.kubernetes.io/component=worker --tail=10000
+echo ::endgroup::
+
+echo ::group::PULP_WEB_PODS
+kubectl describe pods -l app.kubernetes.io/component=webserver
 echo ::endgroup::
 
 echo ::group::PULP_WEB_LOGS
