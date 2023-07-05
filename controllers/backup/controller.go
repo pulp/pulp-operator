@@ -57,7 +57,7 @@ type RepoManagerBackupReconciler struct {
 func (r *RepoManagerBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.RawLogger
 
-	formattedCurrentTime := time.Now().Format("2006-01-02-15:04:05")
+	formattedCurrentTime := time.Now().Format("2006-01-02-150405")
 	pulpBackup := &repomanagerpulpprojectorgv1beta2.PulpBackup{}
 	err := r.Get(ctx, req.NamespacedName, pulpBackup)
 
