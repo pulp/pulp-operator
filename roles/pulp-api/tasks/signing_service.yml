@@ -11,6 +11,12 @@
         status: "False"
         lastTransitionTime: "{{ lookup('pipe', 'date --iso-8601=seconds') }}"
 
+- name: Set GPG initContainer image
+  set_fact:
+    gpg_init_container_image: >-
+      {{ lookup('env', 'RELATED_IMAGE_GPG_INIT_CONTAINER') |
+         default(__gpg_init_container_image,true) }}
+
 - name: Check for signing keys
   k8s_info:
     kind: Secret
