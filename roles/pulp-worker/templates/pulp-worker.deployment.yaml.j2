@@ -43,6 +43,10 @@ spec:
         app.kubernetes.io/component: worker
         app.kubernetes.io/part-of: '{{ deployment_type }}'
         app.kubernetes.io/managed-by: '{{ deployment_type }}-operator'
+{% if signing_secret is defined %}
+      annotations:
+        kubectl.kubernetes.io/default-container: worker
+{% endif %}
     spec:
 {% if _node_affinity is defined %}
       affinity:
@@ -75,6 +79,10 @@ spec:
               - path: database_fields.symmetric.key
                 key: database_fields.symmetric.key
 {% if signing_secret is defined %}
+{% if not is_file_storage %}
+        - name: gpg-file-storage
+          emptyDir: {}
+{% endif %}
         - name: {{ ansible_operator_meta.name }}-signing-scripts
           configMap:
             name: {{ signing_scripts_configmap }}
@@ -123,6 +131,8 @@ spec:
 {% if signing_secret is defined %}
             - name: PULP_SIGNING_KEY_FINGERPRINT
               value: "{{ signing_key_fingerprint }}"
+            - name: HOME
+              value: "/var/lib/pulp"
 {% endif %}
           readinessProbe:
             exec:
@@ -168,7 +178,49 @@ spec:
 {% else %}
             - name: tmp-file-storage
               mountPath: "/var/lib/pulp/tmp"
+{% if signing_secret is defined %}
+            - name: gpg-file-storage
+              mountPath: "/var/lib/pulp/.gnupg"
+{% endif %}
 {% endif %}
 {% if worker.resource_requirements is defined %}
           resources: {{ worker.resource_requirements }}
+{% endif %}
+{% if signing_secret is defined %}
+      initContainers:
+        - name: gpg-importer
+          image: "{{ gpg_init_container_image }}"
+          imagePullPolicy: "{{ image_pull_policy }}"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              gpg --batch --import /etc/pulp/keys/signing_service.gpg
+              echo "${PULP_SIGNING_KEY_FINGERPRINT}:6" | gpg --import-ownertrust
+          env:
+            - name: PULP_SIGNING_KEY_FINGERPRINT
+              value: "{{ signing_key_fingerprint }}"
+            - name: COLLECTION_SIGNING_SERVICE
+              value: "{{ pulp_combined_settings.galaxy_collection_signing_service }}"
+            - name: CONTAINER_SIGNING_SERVICE
+              value: "{{ pulp_combined_settings.galaxy_container_signing_service }}"
+            - name: HOME
+              value: "/var/lib/pulp"
+          volumeMounts:
+{% if is_file_storage %}
+            - name: file-storage
+              readOnly: false
+              mountPath: "/var/lib/pulp"
+{% else %}
+            - name: gpg-file-storage
+              mountPath: "/var/lib/pulp/.gnupg"
+{% endif %}
+            - name: {{ ansible_operator_meta.name }}-signing-galaxy
+              mountPath: "/etc/pulp/keys/signing_service.gpg"
+              subPath: signing_service.gpg
+              readOnly: true
+            - name: {{ ansible_operator_meta.name }}-signing-galaxy
+              mountPath: "/etc/pulp/keys/signing_service.asc"
+              subPath: signing_service.asc
+              readOnly: true
 {% endif %}

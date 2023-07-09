@@ -1,0 +1,1 @@
+Fixed a bug where the gpg keys were not available in all API and worker pods.
