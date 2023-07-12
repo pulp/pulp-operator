@@ -14,7 +14,7 @@
 - name: Set GPG initContainer image
   set_fact:
     gpg_init_container_image: >-
-      {{ lookup('env', 'RELATED_IMAGE_GPG_INIT_CONTAINER') |
+      {{ lookup('env', 'RELATED_IMAGE_PULP_INIT_GPG_CONTAINER') |
          default(__gpg_init_container_image,true) }}
 
 - name: Check for signing keys

@@ -938,6 +938,8 @@ spec:
                   value: redis:latest
                 - name: RELATED_IMAGE_PULP_POSTGRES
                   value: postgres:13
+                - name: RELATED_IMAGE_PULP_INIT_GPG_CONTAINER
+                  value: quay.io/centos/centos:stream9
                 image: quay.io/pulp/pulp-operator:devel
                 name: pulp-manager
                 resources: {}
