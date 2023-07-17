@@ -542,6 +542,11 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	NoLog bool `json:"no_log,omitempty"`
 
+	// Telemetry defines the OpenTelemetry configuration
+	// +kubebuilder:default:={enabled:true}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	Telemetry Telemetry `json:"telemetry"`
+
 	ResourceManager ResourceManager `json:"resource_manager,omitempty"`
 }
 
@@ -1080,6 +1085,25 @@ type PulpList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Pulp `json:"items"`
+}
+
+// Telemetry defines the configuration for OpenTelemetry used by Pulp
+type Telemetry struct {
+
+	// Enable Pulp Telemetry
+	// Default: false
+	// +kubebuilder:default:=false
+	// +kubebuilder:validation:Optional
+	// +nullable
+	Enabled bool `json:enabled`
+
+	// Defines the protocol used by the instrumentator to comunicate with the collector
+	// Default: http/protobuf
+	// +kubebuilder:default:="http/protobuf"
+	ExporterOtlpProtocol string `json:exporterOtlpProtocol`
+
+	// Defines the image to be used as collector
+	OpenTelemetryCollectorImage string `json:otelCollectorImage`
 }
 
 func init() {
