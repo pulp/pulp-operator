@@ -553,6 +553,28 @@ func (DeploymentAPICommon) Deploy(resources any) client.Object {
 		image = "quay.io/pulp/pulp-minimal:stable"
 	}
 
+	containerList := []corev1.Container{
+		{
+			Name:            "api",
+			Image:           image,
+			ImagePullPolicy: corev1.PullPolicy(pulp.Spec.ImagePullPolicy),
+			Args:            []string{"pulp-api"},
+			Env:             envVars,
+			Ports: []corev1.ContainerPort{{
+				ContainerPort: 24817,
+				Protocol:      "TCP",
+			}},
+			LivenessProbe:  livenessProbe,
+			ReadinessProbe: readinessProbe,
+			Resources:      resourceRequirements,
+			VolumeMounts:   volumeMounts,
+		},
+	}
+
+	if pulp.Spec.Telemetry.Enabled {
+		envVars, containerList = verifyTelemetryConfig(resources, envVars, containerList)
+	}
+
 	// deployment definition
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -591,22 +613,7 @@ func (DeploymentAPICommon) Deploy(resources any) client.Object {
 					Volumes:                   volumes,
 					ServiceAccountName:        pulp.Name,
 					TopologySpreadConstraints: topologySpreadConstraint,
-					Containers: []corev1.Container{{
-						Name:            "api",
-						Image:           image,
-						ImagePullPolicy: corev1.PullPolicy(pulp.Spec.ImagePullPolicy),
-						Args:            []string{"pulp-api"},
-						Env:             envVars,
-						Ports: []corev1.ContainerPort{{
-							ContainerPort: 24817,
-							Protocol:      "TCP",
-						}},
-						LivenessProbe:  livenessProbe,
-						ReadinessProbe: readinessProbe,
-						Resources:      resourceRequirements,
-						VolumeMounts:   volumeMounts,
-					}},
-
+					Containers:                containerList,
 					/* the following configs are not defined on pulp-operator (ansible version)  */
 					/* but i'll keep it here just in case we can manage to make deepequal usable */
 					RestartPolicy:                 restartPolicy,

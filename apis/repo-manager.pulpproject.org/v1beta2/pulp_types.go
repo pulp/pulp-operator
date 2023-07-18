@@ -544,8 +544,7 @@ type PulpSpec struct {
 
 	// Telemetry defines the OpenTelemetry configuration
 	// +kubebuilder:default:={enabled:true}
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	Telemetry Telemetry `json:"telemetry"`
+	Telemetry Telemetry `json:"telemetry,omitempty"`
 
 	ResourceManager ResourceManager `json:"resource_manager,omitempty"`
 }
@@ -1095,15 +1094,16 @@ type Telemetry struct {
 	// +kubebuilder:default:=false
 	// +kubebuilder:validation:Optional
 	// +nullable
-	Enabled bool `json:enabled`
+	Enabled bool `json:"enabled,omitempty"`
 
 	// Defines the protocol used by the instrumentator to comunicate with the collector
 	// Default: http/protobuf
 	// +kubebuilder:default:="http/protobuf"
-	ExporterOtlpProtocol string `json:exporterOtlpProtocol`
+	ExporterOtlpProtocol string `json:"exporter_otlp_protocol,omitempty"`
 
 	// Defines the image to be used as collector
-	OpenTelemetryCollectorImage string `json:otelCollectorImage`
+	OpenTelemetryCollectorImage        string `json:"otel_collector_image,omitempty"`
+	OpenTelemetryCollectorImageVersion string `json:"otel_collector_image_version,omitempty"`
 }
 
 func init() {
