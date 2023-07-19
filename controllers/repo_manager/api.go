@@ -113,6 +113,15 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 		{ResourceDefinition{ctx, &corev1.Service{}, pulp.Name + "-api-svc", "Api", conditionType, pulp}, serviceForAPI},
 	}
 
+	// create telemetry resources
+	if pulp.Spec.Telemetry.Enabled {
+		telemetry := []ApiResource{
+			{ResourceDefinition{ctx, &corev1.ConfigMap{}, controllers.OtelConfigName, "Telemetry", conditionType, pulp}, controllers.OtelConfigMap},
+			{ResourceDefinition{ctx, &corev1.Service{}, controllers.OtelServiceName, "Telemetry", conditionType, pulp}, controllers.ServiceOtel},
+		}
+		resources = append(resources, telemetry...)
+	}
+
 	// create pulp-api resources
 	for _, resource := range resources {
 		requeue, err := r.createPulpResource(resource.Definition, resource.Function)
@@ -165,6 +174,25 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 		r.restartPods(pulp, contentDeployment)
 
 		return ctrl.Result{Requeue: requeue}, err
+	}
+
+	// telemetry resources reconciliation
+	if pulp.Spec.Telemetry.Enabled {
+		// Ensure otelConfigMap is as expected
+		telemetryConfigMap := &corev1.ConfigMap{}
+		r.Get(ctx, types.NamespacedName{Name: controllers.OtelConfigName, Namespace: pulp.Namespace}, telemetryConfigMap)
+		expectedTelemetryConfigMap := controllers.OtelConfigMap(funcResources)
+		if requeue, err := controllers.ReconcileObject(funcResources, expectedTelemetryConfigMap, telemetryConfigMap, conditionType); err != nil || requeue {
+			return ctrl.Result{Requeue: requeue}, err
+		}
+
+		// Ensure otelService is as expected
+		telemetryService := &corev1.Service{}
+		r.Get(ctx, types.NamespacedName{Name: controllers.OtelServiceName, Namespace: pulp.Namespace}, telemetryService)
+		expectedTelemetryService := controllers.ServiceOtel(funcResources)
+		if requeue, err := controllers.ReconcileObject(funcResources, expectedTelemetryService, telemetryService, conditionType); err != nil || requeue {
+			return ctrl.Result{Requeue: requeue}, err
+		}
 	}
 
 	return ctrl.Result{}, nil

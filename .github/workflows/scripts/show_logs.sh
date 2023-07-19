@@ -31,6 +31,7 @@ kubectl describe pods -l app.kubernetes.io/component=api
 echo ::endgroup::
 
 echo ::group::PULP_API_LOGS
+kubectl logs --timestamps -cinit-container -l app.kubernetes.io/component=api --tail=10000
 kubectl logs --timestamps -l app.kubernetes.io/component=api --tail=10000
 echo ::endgroup::
 

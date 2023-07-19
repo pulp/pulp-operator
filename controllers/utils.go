@@ -520,11 +520,15 @@ func updateObject(resources FunctionResources, modified func(interface{}, interf
 		currentField = reflect.Indirect(reflect.ValueOf(currentState)).FieldByName(field).Interface()
 		expectedField = reflect.Indirect(reflect.ValueOf(expectedState)).FieldByName(field).Interface()
 	} else if field == "Data" {
-		// Retrieving a Secret using k8s-client will return the Data field (map[string][uint8])
-		// When we are creating the secrets (for example, through the pulpServerSecret function) we are
-		// using the StringData field
 		currentField = reflect.Indirect(reflect.ValueOf(currentState)).FieldByName(field).Interface()
-		expectedField = reflect.Indirect(reflect.ValueOf(expectedState)).FieldByName("StringData").Interface()
+		if objKind == "Secret" {
+			// Retrieving a Secret using k8s-client will return the Data field (map[string][uint8])
+			// When we are creating the secrets (for example, through the pulpServerSecret function) we are
+			// using the StringData field
+			expectedField = reflect.Indirect(reflect.ValueOf(expectedState)).FieldByName("StringData").Interface()
+		} else {
+			expectedField = reflect.Indirect(reflect.ValueOf(expectedState)).FieldByName("Data").Interface()
+		}
 	}
 
 	if modified(expectedField, currentField) {
@@ -573,6 +577,9 @@ func ReconcileObject(funcResources FunctionResources, expectedState, currentStat
 	case *appsv1.Deployment:
 		objKind = "Deployment"
 		checkFunction = CheckDeploymentSpec
+	case *corev1.ConfigMap:
+		objKind = "ConfigMap"
+		return updateObject(funcResources, checkFunction, objKind, conditionType, "Data", expectedState, currentState)
 	case *corev1.Secret:
 		// by default, defines secretModFunc with the function to verify if pulp-server secret has been modified
 		secretModFunc := checkPulpServerSecretModification

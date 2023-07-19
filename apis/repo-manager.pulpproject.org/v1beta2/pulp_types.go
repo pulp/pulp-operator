@@ -551,6 +551,10 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	NoLog bool `json:"no_log,omitempty"`
 
+	// Telemetry defines the OpenTelemetry configuration
+	// +kubebuilder:validation:Optional
+	Telemetry Telemetry `json:"telemetry,omitempty"`
+
 	ResourceManager ResourceManager `json:"resource_manager,omitempty"`
 }
 
@@ -1032,6 +1036,28 @@ type ResourceManager struct {
 	ResourceRequirements *corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
 }
 
+// Telemetry defines the configuration for OpenTelemetry used by Pulp
+type Telemetry struct {
+
+	// Enable Pulp Telemetry
+	// Default: false
+	// +kubebuilder:default:=false
+	// +kubebuilder:validation:Optional
+	// +nullable
+	Enabled bool `json:"enabled,omitempty"`
+
+	// Defines the protocol used by the instrumentator to comunicate with the collector
+	// Default: http/protobuf
+	// +kubebuilder:default:="http/protobuf"
+	ExporterOtlpProtocol string `json:"exporter_otlp_protocol,omitempty"`
+
+	// Defines the image to be used as collector
+	OpenTelemetryCollectorImage string `json:"otel_collector_image,omitempty"`
+
+	// The image version for opentelemetry-collector image. Default: \"latest\"
+	OpenTelemetryCollectorImageVersion string `json:"otel_collector_image_version,omitempty"`
+}
+
 // PulpStatus defines the observed state of Pulp
 type PulpStatus struct {
 	//+operator-sdk:csv:customresourcedefinitions:type=status,xDescriptors={"urn:alm:descriptor:io.kubernetes.conditions"}
@@ -1054,6 +1080,8 @@ type PulpStatus struct {
 	AdminPasswordSecret string `json:"admin_password_secret,omitempty"`
 	// Name of the secret with the parameters to connect to an external Redis cluster
 	ExternalCacheSecret string `json:"external_cache_secret,omitempty"`
+	// Pulp metrics collection enabled
+	TelemetryEnabled bool `json:"telemetry_enabled,omitempty"`
 
 	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
 	StoragePersistentVolumeClaim       string `json:"storagePersistentVolumeClaim,omitempty"`

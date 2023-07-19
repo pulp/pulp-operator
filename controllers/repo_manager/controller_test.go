@@ -516,6 +516,48 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		},
 	}
 
+	apiInitContainers := []corev1.Container{
+		{
+			Name:    "init-container",
+			Image:   "quay.io/pulp/pulp-minimal:latest",
+			Env:     envVarsApi,
+			Command: []string{"/bin/sh"},
+			Args: []string{
+				"-c",
+				`mkdir -p /var/lib/pulp/{media,assets,tmp}
+				/usr/bin/wait_on_postgres.py
+				/usr/local/bin/pulpcore-manager migrate --noinput
+				ADMIN_PASSWORD_FILE=/etc/pulp/pulp-admin-password
+				if [[ -f "$ADMIN_PASSWORD_FILE" ]]; then
+				   echo "pulp admin can be initialized."
+				   PULP_ADMIN_PASSWORD=$(cat $ADMIN_PASSWORD_FILE)
+				fi
+				if [ -n "${PULP_ADMIN_PASSWORD}" ]; then
+					/usr/local/bin/pulpcore-manager reset-admin-password --password "${PULP_ADMIN_PASSWORD}"
+				fi`,
+			},
+			VolumeMounts: volumeMountsApi,
+		},
+	}
+
+	apiContainers := []corev1.Container{{
+		Name:    "api",
+		Image:   "quay.io/pulp/pulp-minimal:latest",
+		Command: []string{"/bin/sh"},
+		Args: []string{
+			"-c",
+			`exec gunicorn --bind '[::]:24817' pulpcore.app.wsgi:application --name pulp-api --timeout "${PULP_GUNICORN_TIMEOUT}" --workers "${PULP_API_WORKERS}"`,
+		},
+		Env: envVarsApi,
+		Ports: []corev1.ContainerPort{{
+			ContainerPort: 24817,
+			Protocol:      "TCP",
+		}},
+		LivenessProbe:  livenessProbeApi,
+		ReadinessProbe: readinessProbeApi,
+		VolumeMounts:   volumeMountsApi,
+	}}
+
 	// this is the expected api deployment
 	expectedApiDeployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -544,24 +586,16 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labelsApi,
+					Annotations: map[string]string{
+						"kubectl.kubernetes.io/default-container": "api",
+					},
 				},
 				Spec: corev1.PodSpec{
 					Affinity:           &corev1.Affinity{},
 					ServiceAccountName: PulpName,
 					Volumes:            volumesApi,
-					Containers: []corev1.Container{{
-						Name:  "api",
-						Image: "quay.io/pulp/pulp-minimal:latest",
-						Args:  []string{"pulp-api"},
-						Env:   envVarsApi,
-						Ports: []corev1.ContainerPort{{
-							ContainerPort: 24817,
-							Protocol:      "TCP",
-						}},
-						LivenessProbe:  livenessProbeApi,
-						ReadinessProbe: readinessProbeApi,
-						VolumeMounts:   volumeMountsApi,
-					}},
+					InitContainers:     apiInitContainers,
+					Containers:         apiContainers,
 				},
 			},
 		},

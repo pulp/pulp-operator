@@ -229,8 +229,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - INGRESS_TYPE: ingress
-          - INGRESS_TYPE: nodeport
+          - COMPONENT_TYPE: ingress
+          - COMPONENT_TYPE: nodeport
+          - COMPONENT_TYPE: telemetry
     steps:
       - uses: actions/checkout@v2
         with:
@@ -255,7 +256,7 @@ jobs:
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
           echo "CI_TEST=true" >> $GITHUB_ENV
           echo "TEST=pulp" >> $GITHUB_ENV
-          echo "INGRESS_TYPE=${{ matrix.INGRESS_TYPE }}" >> $GITHUB_ENV
+          echo "COMPONENT_TYPE=${{ matrix.COMPONENT_TYPE }}" >> $GITHUB_ENV
         shell: bash
       - name: Updating registries configuration
         run: |
@@ -313,8 +314,10 @@ jobs:
           kubectl get namespace
           kubectl config set-context --current --namespace=pulp-operator-system
           kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
-          if [[ "$INGRESS_TYPE" == "ingress" ]]; then
+          if [[ "$COMPONENT_TYPE" == "ingress" ]]; then
             kubectl apply -f config/samples/simple.ingress.yaml
+          elif [[ "$COMPONENT_TYPE" == "telemetry" ]]; then
+            kubectl apply -f config/samples/telemetry.yaml
           else
             kubectl apply -f config/samples/simple.yaml
           fi
@@ -327,9 +330,13 @@ jobs:
         run: .ci/scripts/kubelinter.sh
       - name: Test all components
         run: |
+          export INGRESS_TYPE=$COMPONENT_TYPE
           git clone --depth=1 https://github.com/pulp/pulp_ansible.git
           git clone --depth=1 https://github.com/pulp/pulp_container.git
           .ci/scripts/pulp_tests.sh -m
+          if [[ "$COMPONENT_TYPE" == "telemetry" ]]; then
+            .ci/scripts/telemetry.sh
+          fi
         shell: bash
         env:
           PY_COLORS: '1'

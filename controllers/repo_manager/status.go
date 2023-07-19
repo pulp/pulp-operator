@@ -227,6 +227,12 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 		r.Status().Update(ctx, pulp)
 	}
 
+	// update telemetry status
+	if pulp.Status.TelemetryEnabled != pulp.Spec.Telemetry.Enabled {
+		pulp.Status.TelemetryEnabled = pulp.Spec.Telemetry.Enabled
+		r.Status().Update(ctx, pulp)
+	}
+
 	return ctrl.Result{}, nil
 }
 
