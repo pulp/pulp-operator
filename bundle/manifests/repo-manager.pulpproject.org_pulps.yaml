@@ -25159,6 +25159,27 @@ spec:
                 - Azure
                 - azure
                 type: string
+              telemetry:
+                description: Telemetry defines the OpenTelemetry configuration
+                properties:
+                  enabled:
+                    default: false
+                    description: 'Enable Pulp Telemetry Default: false'
+                    nullable: true
+                    type: boolean
+                  exporter_otlp_protocol:
+                    default: http/protobuf
+                    description: 'Defines the protocol used by the instrumentator
+                      to comunicate with the collector Default: http/protobuf'
+                    type: string
+                  otel_collector_image:
+                    description: Defines the image to be used as collector
+                    type: string
+                  otel_collector_image_version:
+                    description: 'The image version for opentelemetry-collector image.
+                      Default: \"latest\"'
+                    type: string
+                type: object
               tolerations:
                 description: '[DEPRECATED] Temporarily adding to keep compatibility
                   with ansible version. Node tolerations for the Pulp pods.'
@@ -27621,6 +27642,9 @@ spec:
                 type: string
               storageType:
                 type: string
+              telemetry_enabled:
+                description: Pulp metrics collection enabled
+                type: boolean
               upgradedPostgresVersion:
                 type: string
               webURL:

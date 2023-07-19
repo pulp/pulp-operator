@@ -15,6 +15,7 @@
 * [PulpStatus](#pulpstatus)
 * [Redis](#redis)
 * [ResourceManager](#resourcemanager)
+* [Telemetry](#telemetry)
 * [Web](#web)
 * [Worker](#worker)
 
@@ -232,6 +233,7 @@ PulpSpec defines the desired state of Pulp
 | postgres_label_selector | [TODO] Pending implementation, added just to keep compatibility [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Label selector used to identify postgres pod for executing migration | string | false |
 | postgres_keep_pvc_after_upgrade | [TODO] Pending implementation, added just to keep compatibility [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Specify whether or not to keep the old PVC after PostgreSQL upgrades | bool | false |
 | no_log | Configure no_log for no_log tasks | bool | false |
+| telemetry | Telemetry defines the OpenTelemetry configuration | [Telemetry](#telemetry) | false |
 | resource_manager |  | [ResourceManager](#resourcemanager) | false |
 
 [Back to Custom Resources](#custom-resources)
@@ -252,6 +254,7 @@ PulpStatus defines the observed state of Pulp
 | container_token_secret | Secret where the container token certificates are stored. | string | false |
 | admin_password_secret | Secret where the administrator password can be found | string | false |
 | external_cache_secret | Name of the secret with the parameters to connect to an external Redis cluster | string | false |
+| telemetry_enabled | Pulp metrics collection enabled | bool | false |
 | storagePersistentVolumeClaim | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. | string | false |
 | webURL |  | string | false |
 | databaseConfigurationSecret |  | string | false |
@@ -289,6 +292,19 @@ PulpStatus defines the observed state of Pulp
 | replicas |  | int32 | true |
 | strategy |  | *appsv1.DeploymentStrategy | false |
 | resource_requirements |  | *corev1.ResourceRequirements | false |
+
+[Back to Custom Resources](#custom-resources)
+
+#### Telemetry
+
+Telemetry defines the configuration for OpenTelemetry used by Pulp
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| enabled | Enable Pulp Telemetry Default: false | bool | false |
+| exporter_otlp_protocol | Defines the protocol used by the instrumentator to comunicate with the collector Default: http/protobuf | string | false |
+| otel_collector_image | Defines the image to be used as collector | string | false |
+| otel_collector_image_version | The image version for opentelemetry-collector image. Default: \"latest\" | string | false |
 
 [Back to Custom Resources](#custom-resources)
 

@@ -553,6 +553,60 @@ func (DeploymentAPICommon) Deploy(resources any) client.Object {
 		image = "quay.io/pulp/pulp-minimal:stable"
 	}
 
+	initContainers := []corev1.Container{
+		{
+			Name:    "init-container",
+			Image:   image,
+			Env:     envVars,
+			Command: []string{"/bin/sh"},
+			Args: []string{
+				"-c",
+				`mkdir -p /var/lib/pulp/{media,assets,tmp}
+				/usr/bin/wait_on_postgres.py
+				/usr/local/bin/pulpcore-manager migrate --noinput
+				ADMIN_PASSWORD_FILE=/etc/pulp/pulp-admin-password
+				if [[ -f "$ADMIN_PASSWORD_FILE" ]]; then
+				   echo "pulp admin can be initialized."
+				   PULP_ADMIN_PASSWORD=$(cat $ADMIN_PASSWORD_FILE)
+				fi
+				if [ -n "${PULP_ADMIN_PASSWORD}" ]; then
+					/usr/local/bin/pulpcore-manager reset-admin-password --password "${PULP_ADMIN_PASSWORD}"
+				fi`,
+			},
+			VolumeMounts: volumeMounts,
+		},
+	}
+
+	containers := []corev1.Container{
+		{
+			Name:            "api",
+			Image:           image,
+			ImagePullPolicy: corev1.PullPolicy(pulp.Spec.ImagePullPolicy),
+			Command:         []string{"/bin/sh"},
+			Args: []string{
+				"-c",
+				`exec gunicorn --bind '[::]:24817' pulpcore.app.wsgi:application --name pulp-api --timeout "${PULP_GUNICORN_TIMEOUT}" --workers "${PULP_API_WORKERS}"`,
+			},
+			Env: envVars,
+			Ports: []corev1.ContainerPort{{
+				ContainerPort: 24817,
+				Protocol:      "TCP",
+			}},
+			LivenessProbe:  livenessProbe,
+			ReadinessProbe: readinessProbe,
+			Resources:      resourceRequirements,
+			VolumeMounts:   volumeMounts,
+		},
+	}
+
+	podAnnotations := map[string]string{
+		"kubectl.kubernetes.io/default-container": "api",
+	}
+
+	if pulp.Spec.Telemetry.Enabled {
+		containers, volumes = telemetryConfig(resources, envVars, containers, volumes)
+	}
+
 	// deployment definition
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -581,7 +635,8 @@ func (DeploymentAPICommon) Deploy(resources any) client.Object {
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: ls,
+					Labels:      ls,
+					Annotations: podAnnotations,
 				},
 				Spec: corev1.PodSpec{
 					Affinity:                  affinity,
@@ -591,22 +646,8 @@ func (DeploymentAPICommon) Deploy(resources any) client.Object {
 					Volumes:                   volumes,
 					ServiceAccountName:        pulp.Name,
 					TopologySpreadConstraints: topologySpreadConstraint,
-					Containers: []corev1.Container{{
-						Name:            "api",
-						Image:           image,
-						ImagePullPolicy: corev1.PullPolicy(pulp.Spec.ImagePullPolicy),
-						Args:            []string{"pulp-api"},
-						Env:             envVars,
-						Ports: []corev1.ContainerPort{{
-							ContainerPort: 24817,
-							Protocol:      "TCP",
-						}},
-						LivenessProbe:  livenessProbe,
-						ReadinessProbe: readinessProbe,
-						Resources:      resourceRequirements,
-						VolumeMounts:   volumeMounts,
-					}},
-
+					InitContainers:            initContainers,
+					Containers:                containers,
 					/* the following configs are not defined on pulp-operator (ansible version)  */
 					/* but i'll keep it here just in case we can manage to make deepequal usable */
 					RestartPolicy:                 restartPolicy,

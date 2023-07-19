@@ -303,6 +303,11 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return pulpController, err
 	}
 
+	// remove telemetry resources in case it is not enabled anymore
+	if pulp.Status.TelemetryEnabled && !pulp.Spec.Telemetry.Enabled {
+		controllers.RemoveTelemetryResources(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log})
+	}
+
 	log.V(1).Info("Running status tasks")
 	pulpController, err = r.pulpStatus(ctx, pulp, log)
 	if needsRequeue(err, pulpController) {
