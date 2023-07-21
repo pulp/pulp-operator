@@ -12,6 +12,7 @@ redis:
       cpu: 800m
       memory: 4Gi
 
+redis_storage_size: 1Gi
 # Here we use  _pulp_pulpproject_org_pulp to get un-modified cr
 # see: https://github.com/operator-framework/operator-sdk/issues/1770
 raw_spec: "{{ vars['_pulp_pulpproject_org_pulp']['spec'] }}"

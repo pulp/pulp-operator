@@ -13,7 +13,7 @@ metadata:
 spec:
   resources:
     requests:
-      storage: 1Gi
+      storage: '{{ redis_storage_size }}'
   accessModes:
     - ReadWriteOnce
 {% if redis_storage_class is defined %}
