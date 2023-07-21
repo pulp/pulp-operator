@@ -689,6 +689,12 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:hidden
         - urn:alm:descriptor:io.kubernetes:StorageClass
+      - displayName: Redis storage size
+        path: redis_storage_size
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+        - urn:alm:descriptor:io.kubernetes:StorageClass
       - displayName: API server configuration
         path: api
         x-descriptors:

@@ -58,6 +58,9 @@ spec:
               redis_storage_class:
                 description: Storage class to use for the Redis PVC
                 type: string
+              redis_storage_size:
+                description: Storage size to use for the Redis PVC
+                type: string
               pulp_settings:
                 x-kubernetes-preserve-unknown-fields: true
                 description: The pulp settings.
