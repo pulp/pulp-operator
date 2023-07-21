@@ -151,6 +151,11 @@ You just completed the most basic install of an Pulp instance via this operator.
 Pulp can be installed from [OperatorHub](https://operatorhub.io) on the following link:
 [https://operatorhub.io/operator/pulp-operator](https://operatorhub.io/operator/pulp-operator)
 
+### Helm Chart Install
+
+Pulp can also be installed using Helm Charts.  
+Check [Helm Chart](/pulp_operator/install/helm) section for more information.
+
 ## OpenShift
 
 Pulp is available on `OperatorHub`, you can find it at the `Integration & Delivery` section:
