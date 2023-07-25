@@ -15873,6 +15873,10 @@ spec:
                 description: '[DEPRECATED] Temporarily adding to keep compatibility
                   with ansible version. Storage class to use for the Redis PVC'
                 type: string
+              redis_storage_size:
+                description: '[DEPRECATED] Temporarily adding to keep compatibility
+                  with ansible version. Storage size to use for the Redis PVC'
+                type: string
               resource_manager:
                 description: '[DEPRECATED] Temporarily adding to keep compatibility
                   with ansible version'
@@ -24992,6 +24996,10 @@ spec:
               redis_storage_class:
                 description: '[DEPRECATED] Temporarily adding to keep compatibility
                   with ansible version. Storage class to use for the Redis PVC'
+                type: string
+              redis_storage_size:
+                description: '[DEPRECATED] Temporarily adding to keep compatibility
+                  with ansible version. Storage size to use for the Redis PVC'
                 type: string
               resource_manager:
                 description: '[DEPRECATED] Temporarily adding to keep compatibility

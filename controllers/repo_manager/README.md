@@ -207,6 +207,7 @@ PulpSpec defines the desired state of Pulp
 | redis_image | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. The image name for the redis image. Default: \"redis:latest\" | string | false |
 | redis_storage_class | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Storage class to use for the Redis PVC | string | false |
 | redis | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Redis defines desired state of cache resources | [Redis](#redis) | false |
+| redis_storage_size | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Storage size to use for the Redis PVC | string | false |
 | postgres_initdb_args | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Arguments to pass to PostgreSQL initdb command when creating a new cluster. Default: \"--auth-host=scram-sha-256\" | string | false |
 | postgres_host_auth_method | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. PostgreSQL host authentication method. Default: \"scram-sha-256\" | string | false |
 | postgres_image | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. PostgreSQL container image. Default: \"postgres:13\" | string | false |
