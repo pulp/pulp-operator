@@ -145,6 +145,13 @@ func redisDataPVC(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.PersistentVo
 		storageClass = &m.Spec.RedisStorageClass
 	}
 
+	storageSize := "1Gi"
+	if storageResourceQuantity := m.Spec.Cache.RedisResourceRequirements.Requests.Storage(); !storageResourceQuantity.IsZero() {
+		storageSize = storageResourceQuantity.String()
+	} else if len(m.Spec.RedisStorageSize) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		storageSize = m.Spec.RedisStorageSize
+	}
+
 	// Define the new PVC
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
@@ -161,7 +168,7 @@ func redisDataPVC(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.PersistentVo
 		Spec: corev1.PersistentVolumeClaimSpec{
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
-					corev1.ResourceName(corev1.ResourceStorage): resource.MustParse("1Gi"),
+					corev1.ResourceName(corev1.ResourceStorage): resource.MustParse(storageSize),
 				},
 			},
 			AccessModes: []corev1.PersistentVolumeAccessMode{
@@ -349,6 +356,7 @@ func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.Deploymen
 	} else if m.Spec.Redis.RedisResourceRequirements != nil {
 		resources = *m.Spec.Redis.RedisResourceRequirements
 	}
+	removeStorageDefinition(&resources)
 
 	// deployment definition
 	return &appsv1.Deployment{
@@ -413,6 +421,18 @@ func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.Deploymen
 				},
 			},
 		},
+	}
+}
+
+// removeStorageDefinition ensures that no storage definition is present in resourceRequirements
+// we need to get rid of it because cache.redis_resource_requirements is a corev1.ResourceRequirements (which can contain storage definition)
+// but storage is not a valid value for container resources
+func removeStorageDefinition(resources *corev1.ResourceRequirements) {
+	if resources.Requests.Storage() != nil {
+		delete(resources.Requests, "storage")
+	}
+	if resources.Limits.Storage() != nil {
+		delete(resources.Limits, "storage")
 	}
 }
 

@@ -390,6 +390,10 @@ type PulpSpec struct {
 	Redis Redis `json:"redis,omitempty"`
 
 	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+	// Storage size to use for the Redis PVC
+	RedisStorageSize string `json:"redis_storage_size,omitempty"`
+
+	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
 	// Arguments to pass to PostgreSQL initdb command when creating a new cluster.
 	// Default: "--auth-host=scram-sha-256"
 	// +kubebuilder:validation:Optional
