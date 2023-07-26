@@ -18,8 +18,11 @@ const OtelServiceName = "otel-collector-svc"
 const otelContainerPort = 8889
 
 // telemetryConfig adds the otel container sidecar to containers' slice, an otelConfigMap as a new volume, and a pod annotation
-func telemetryConfig(resources any, envVars []corev1.EnvVar, containers []corev1.Container, volumes []corev1.Volume) ([]corev1.Container, []corev1.Volume) {
+func telemetryConfig(resources any, envVars []corev1.EnvVar, containers []corev1.Container, volumes []corev1.Volume, pulpcoreType string) ([]corev1.Container, []corev1.Volume) {
 	pulp := resources.(FunctionResources).Pulp
+	if !pulp.Spec.Telemetry.Enabled || pulpcoreType != api {
+		return containers, volumes
+	}
 
 	// set telemetry container image
 	telemetryImage := telemetryContainerImage(resources)
