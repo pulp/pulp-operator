@@ -203,15 +203,15 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			ReadOnly:  true,
 		},
 		{
-			Name:      PulpName + "-admin-password",
-			MountPath: "/etc/pulp/pulp-admin-password",
-			SubPath:   "admin-password",
-			ReadOnly:  true,
-		},
-		{
 			Name:      PulpName + "-db-fields-encryption",
 			MountPath: "/etc/pulp/keys/database_fields.symmetric.key",
 			SubPath:   "database_fields.symmetric.key",
+			ReadOnly:  true,
+		},
+		{
+			Name:      PulpName + "-admin-password",
+			MountPath: "/etc/pulp/pulp-admin-password",
+			SubPath:   "admin-password",
 			ReadOnly:  true,
 		},
 		{
@@ -241,10 +241,6 @@ var _ = Describe("Pulp controller", Ordered, func() {
 
 	volumeMountsWorker := []corev1.VolumeMount{
 		{
-			Name:      PulpName + "-ansible-tmp",
-			MountPath: "/.ansible/tmp",
-		},
-		{
 			Name:      PulpName + "-server",
 			MountPath: "/etc/pulp/settings.py",
 			SubPath:   "settings.py",
@@ -255,6 +251,10 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			MountPath: "/etc/pulp/keys/database_fields.symmetric.key",
 			SubPath:   "database_fields.symmetric.key",
 			ReadOnly:  true,
+		},
+		{
+			Name:      PulpName + "-ansible-tmp",
+			MountPath: "/.ansible/tmp",
 		},
 		{
 			Name:      "file-storage",
@@ -276,18 +276,6 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			},
 		},
 		{
-			Name: PulpName + "-admin-password",
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: PulpName + "-admin-password",
-					Items: []corev1.KeyToPath{{
-						Path: "admin-password",
-						Key:  "password",
-					}},
-				},
-			},
-		},
-		{
 			Name: PulpName + "-db-fields-encryption",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
@@ -295,6 +283,18 @@ var _ = Describe("Pulp controller", Ordered, func() {
 					Items: []corev1.KeyToPath{{
 						Key:  "database_fields.symmetric.key",
 						Path: "database_fields.symmetric.key",
+					}},
+				},
+			},
+		},
+		{
+			Name: PulpName + "-admin-password",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: PulpName + "-admin-password",
+					Items: []corev1.KeyToPath{{
+						Path: "admin-password",
+						Key:  "password",
 					}},
 				},
 			},

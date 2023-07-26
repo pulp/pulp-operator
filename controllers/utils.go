@@ -241,7 +241,7 @@ func ContainerExec[T any](client T, pod *corev1.Pod, command []string, container
 
 	stdout := new(bytes.Buffer)
 	stderr := new(bytes.Buffer)
-	err = exec.Stream(remotecommand.StreamOptions{
+	err = exec.StreamWithContext(context.TODO(), remotecommand.StreamOptions{
 		Stdout: stdout,
 		Stderr: stderr,
 		Tty:    false,

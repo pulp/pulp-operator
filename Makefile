@@ -174,7 +174,9 @@ rename: ## Replace Custom Resource name
 	find config/*/* -exec sed -i "s/3b5210cd.pulpproject.org/3b5210cd.${CR_DOMAIN}/g" {} \;
 	find config/*/* -exec sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" {} \;
 	find controllers/*/*.go -exec sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" {} \;
+	find controllers/*.go -exec sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" {} \;
 	find controllers/*/*.go -exec sed -i "s/pulps/${CR_PLURAL}/g" {} \;
+	find controllers/*.go -exec sed -i "s/pulps/${CR_PLURAL}/g" {} \;
 	find controllers/*/*.go -exec sed -i "s/pulpbackup/${LOWER_CR_KIND}backup/g" {} \;
 	find controllers/*/*.go -exec sed -i "s/pulprestore/${LOWER_CR_KIND}restore/g" {} \;
 	sed -i "s/default:=\"pulp\"/default:=\"${LOWER_CR_KIND}\"/" apis/repo-manager.pulpproject.org/v1beta2/pulp_types.go
