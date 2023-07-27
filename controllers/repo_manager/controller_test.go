@@ -537,6 +537,12 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				fi`,
 			},
 			VolumeMounts: volumeMountsApi,
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("50m"),
+					corev1.ResourceMemory: resource.MustParse("128Mi"),
+				},
+			},
 		},
 	}
 

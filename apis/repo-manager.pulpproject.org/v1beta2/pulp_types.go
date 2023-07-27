@@ -638,6 +638,9 @@ type Api struct {
 	// [TODO] I couldnt find a reference for this var in ansible
 	// [DEPRECATED?] Temporarily adding to keep compatibility with ansible version.
 	LogLevel string `json:"log_level,omitempty"`
+
+	// InitContainer defines configuration of the init-containers that run in pulpcore pods
+	InitContainer InitContainer `json:"init_container,omitempty"`
 }
 
 // Content defines desired state of pulpcore-content resources
@@ -1060,6 +1063,27 @@ type Telemetry struct {
 
 	// The image version for opentelemetry-collector image. Default: \"latest\"
 	OpenTelemetryCollectorImageVersion string `json:"otel_collector_image_version,omitempty"`
+
+	// Resource requirements for the sidecar container.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
+}
+
+// InitContainer defines configuration of the init-containers that run in pulpcore pods
+type InitContainer struct {
+
+	// The image name for the init-container.
+	// By default, if not provided, it will use the same image from .Spec.Image
+	// WARN: defining a different image than the one used by API pods can cause unexpected behaviors!
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	Image string `json:"image,omitempty"`
+
+	// Resource requirements for pulpcore init-container.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
 }
 
 // PulpStatus defines the observed state of Pulp
