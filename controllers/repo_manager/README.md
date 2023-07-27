@@ -10,6 +10,7 @@
 * [Cache](#cache)
 * [Content](#content)
 * [Database](#database)
+* [InitContainer](#initcontainer)
 * [PulpList](#pulplist)
 * [PulpSpec](#pulpspec)
 * [PulpStatus](#pulpstatus)
@@ -48,6 +49,7 @@ Api defines desired state of pulpcore-api resources
 | pdb | PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods | *policy.PodDisruptionBudgetSpec | false |
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
 | log_level | [TODO] I couldnt find a reference for this var in ansible [DEPRECATED?] Temporarily adding to keep compatibility with ansible version. | string | false |
+| init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [InitContainer](#initcontainer) | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -119,6 +121,17 @@ Database defines desired state of postgres
 | pvc | PersistenVolumeClaim name that will be used by database pods If defined, the PVC must be provisioned by the user and the operator will only configure the deployment to use it | string | false |
 | readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |
 | livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
+
+[Back to Custom Resources](#custom-resources)
+
+#### InitContainer
+
+InitContainer defines configuration of the init-containers that run in pulpcore pods
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| image | The image name for the init-container. By default, if not provided, it will use the same image from .Spec.Image WARN: defining a different image than the one used by API pods can cause unexpected behaviors! | string | false |
+| resource_requirements | Resource requirements for pulpcore init-container. | corev1.ResourceRequirements | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -306,6 +319,7 @@ Telemetry defines the configuration for OpenTelemetry used by Pulp
 | exporter_otlp_protocol | Defines the protocol used by the instrumentator to comunicate with the collector Default: http/protobuf | string | false |
 | otel_collector_image | Defines the image to be used as collector | string | false |
 | otel_collector_image_version | The image version for opentelemetry-collector image. Default: \"latest\" | string | false |
+| resource_requirements | Resource requirements for the sidecar container. | corev1.ResourceRequirements | false |
 
 [Back to Custom Resources](#custom-resources)
 

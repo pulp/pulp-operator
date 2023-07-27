@@ -324,7 +324,7 @@ metadata:
     capabilities: Full Lifecycle
     categories: Integration & Delivery
     containerImage: quay.io/pulp/pulp-operator:devel
-    createdAt: "2023-07-25T13:55:21Z"
+    createdAt: "2023-07-27T21:41:02Z"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
     operators.operatorframework.io/builder: operator-sdk-v1.29.0
@@ -2550,6 +2550,19 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:number
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: 'The image name for the init-container. By default, if not provided,
+          it will use the same image from .Spec.Image WARN: defining a different image
+          than the one used by API pods can cause unexpected behaviors!'
+        displayName: Image
+        path: api.init_container.image
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Resource requirements for pulpcore init-container.
+        displayName: Resource Requirements
+        path: api.init_container.resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container liveness. Container will be restarted
           if the probe fails.
         displayName: Liveness Probe
@@ -3292,6 +3305,12 @@ spec:
         - urn:alm:descriptor:com.tectonic.ui:select:File
         - urn:alm:descriptor:com.tectonic.ui:select:S3
         - urn:alm:descriptor:com.tectonic.ui:select:Azure
+      - description: Resource requirements for the sidecar container.
+        displayName: Resource Requirements
+        path: telemetry.resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: '[DEPRECATED] Temporarily adding to keep compatibility with ansible
           version. Node tolerations for the Pulp pods.'
         displayName: Tolerations

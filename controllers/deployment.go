@@ -40,30 +40,32 @@ const (
 
 // CommonDeployment has the common definition for all pulpcore deployments
 type CommonDeployment struct {
-	replicas                 int32
-	podLabels                map[string]string
-	deploymentLabels         map[string]string
-	affinity                 *corev1.Affinity
-	strategy                 appsv1.DeploymentStrategy
-	podSecurityContext       *corev1.PodSecurityContext
-	nodeSelector             map[string]string
-	toleration               []corev1.Toleration
-	topologySpreadConstraint []corev1.TopologySpreadConstraint
-	envVars                  []corev1.EnvVar
-	volumes                  []corev1.Volume
-	volumeMounts             []corev1.VolumeMount
-	resourceRequirements     corev1.ResourceRequirements
-	readinessProbe           *corev1.Probe
-	livenessProbe            *corev1.Probe
-	image                    string
-	initContainers           []corev1.Container
-	containers               []corev1.Container
-	podAnnotations           map[string]string
-	deploymentAnnotations    map[string]string
-	restartPolicy            corev1.RestartPolicy
-	terminationPeriod        *int64
-	dnsPolicy                corev1.DNSPolicy
-	schedulerName            string
+	replicas                          int32
+	podLabels                         map[string]string
+	deploymentLabels                  map[string]string
+	affinity                          *corev1.Affinity
+	strategy                          appsv1.DeploymentStrategy
+	podSecurityContext                *corev1.PodSecurityContext
+	nodeSelector                      map[string]string
+	toleration                        []corev1.Toleration
+	topologySpreadConstraint          []corev1.TopologySpreadConstraint
+	envVars                           []corev1.EnvVar
+	volumes                           []corev1.Volume
+	volumeMounts                      []corev1.VolumeMount
+	resourceRequirements              corev1.ResourceRequirements
+	initContainerResourceRequirements corev1.ResourceRequirements
+	readinessProbe                    *corev1.Probe
+	livenessProbe                     *corev1.Probe
+	image                             string
+	initContainerImage                string
+	initContainers                    []corev1.Container
+	containers                        []corev1.Container
+	podAnnotations                    map[string]string
+	deploymentAnnotations             map[string]string
+	restartPolicy                     corev1.RestartPolicy
+	terminationPeriod                 *int64
+	dnsPolicy                         corev1.DNSPolicy
+	schedulerName                     string
 }
 
 // Deploy returns a common Deployment object that can be used by any pulpcore component
@@ -709,6 +711,22 @@ func (d *CommonDeployment) setResourceRequirements(pulp repomanagerpulpprojector
 	d.resourceRequirements = reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("ResourceRequirements").Interface().(corev1.ResourceRequirements)
 }
 
+// setInitContainerResourceRequirements defines the init-container resources
+func (d *CommonDeployment) setInitContainerResourceRequirements(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
+	switch pulpcoreType {
+	case api:
+		d.initContainerResourceRequirements = reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("InitContainer").FieldByName("ResourceRequirements").Interface().(corev1.ResourceRequirements)
+		if reflect.DeepEqual(d.initContainerResourceRequirements, corev1.ResourceRequirements{}) {
+			d.initContainerResourceRequirements = corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("50m"),
+					corev1.ResourceMemory: resource.MustParse("128Mi"),
+				},
+			}
+		}
+	}
+}
+
 // setReadinessProbe defines the container readinessprobe
 func (d *CommonDeployment) setReadinessProbe(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
 	readinessProbe := reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("ReadinessProbe").Interface().(*corev1.Probe)
@@ -809,6 +827,17 @@ func (d *CommonDeployment) setImage(pulp repomanagerpulpprojectorgv1beta2.Pulp) 
 	d.image = image
 }
 
+// setInitContainerImage defines pulpcore init-container image
+func (d *CommonDeployment) setInitContainerImage(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
+	switch pulpcoreType {
+	case api:
+		d.initContainerImage = reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("InitContainer").FieldByName("Image").String()
+		if len(d.initContainerImage) == 0 {
+			d.initContainerImage = d.image
+		}
+	}
+}
+
 // setInitContainers defines initContainers specs
 func (d *CommonDeployment) setInitContainers(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
 	switch pulpcoreType {
@@ -816,7 +845,7 @@ func (d *CommonDeployment) setInitContainers(pulp repomanagerpulpprojectorgv1bet
 		initContainers := []corev1.Container{
 			{
 				Name:    "init-container",
-				Image:   d.image,
+				Image:   d.initContainerImage,
 				Env:     d.envVars,
 				Command: []string{"/bin/sh"},
 				Args: []string{
@@ -834,12 +863,7 @@ func (d *CommonDeployment) setInitContainers(pulp repomanagerpulpprojectorgv1bet
 				fi`,
 				},
 				VolumeMounts: d.volumeMounts,
-				Resources: corev1.ResourceRequirements{
-					Requests: corev1.ResourceList{
-						corev1.ResourceCPU:    resource.MustParse("100m"),
-						corev1.ResourceMemory: resource.MustParse("256Mi"),
-					},
-				},
+				Resources:    d.initContainerResourceRequirements,
 			},
 		}
 		d.initContainers = append([]corev1.Container(nil), initContainers...)
@@ -964,6 +988,8 @@ func (d *CommonDeployment) build(resources any, pulpcoreType string) {
 	d.setReadinessProbe(*pulp, pulpcoreType)
 	d.setImage(*pulp)
 	d.setTopologySpreadConstraints(*pulp, pulpcoreType)
+	d.setInitContainerResourceRequirements(*pulp, pulpcoreType)
+	d.setInitContainerImage(*pulp, pulpcoreType)
 	d.setInitContainers(*pulp, pulpcoreType)
 	d.setContainers(*pulp, pulpcoreType)
 	d.setRestartPolicy()

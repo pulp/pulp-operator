@@ -2,9 +2,11 @@ package controllers
 
 import (
 	"os"
+	"reflect"
 	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -61,6 +63,9 @@ func telemetryConfig(resources any, envVars []corev1.EnvVar, containers []corev1
 		},
 	}
 
+	// set resource requirements
+	requirements := setResourceRequirements(resources)
+
 	// define the otel container sidecar
 	sidecarTelemetryContainer := corev1.Container{
 		Name:            "otel-collector-sidecar",
@@ -74,6 +79,7 @@ func telemetryConfig(resources any, envVars []corev1.EnvVar, containers []corev1
 			"--config", "file:/etc/otelcol-contrib/" + OtelConfigFile,
 		},
 		VolumeMounts: telemetryVolMount,
+		Resources:    requirements,
 	}
 
 	containers = append(containers, sidecarTelemetryContainer)
@@ -105,6 +111,21 @@ func telemetryEnvVars(resources any) []corev1.EnvVar {
 		{Name: "OTEL_EXPORTER_OTLP_PROTOCOL", Value: pulp.Spec.Telemetry.ExporterOtlpProtocol},
 		{Name: "OTEL_EXPORTER_OTLP_ENDPOINT", Value: "http://localhost:4318"},
 	}
+}
+
+// setResourceRequirements defines the telemetry container resources
+func setResourceRequirements(resources any) corev1.ResourceRequirements {
+	pulp := resources.(FunctionResources).Pulp
+	requirements := pulp.Spec.Telemetry.ResourceRequirements
+	if reflect.DeepEqual(requirements, corev1.ResourceRequirements{}) {
+		requirements = corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse("50m"),
+				corev1.ResourceMemory: resource.MustParse("128Mi"),
+			},
+		}
+	}
+	return requirements
 }
 
 // otelConfigMap defines a configmap resource to keep otel-collector-config.yaml configuration file
