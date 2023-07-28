@@ -678,31 +678,20 @@ func updateOldAnsibleSvc(resource controllers.FunctionResources) {
 func (r *RepoManagerReconciler) findPulpDependentSecrets(secret client.Object) []reconcile.Request {
 
 	associatedPulp := repomanagerpulpprojectorgv1beta2.PulpList{}
-
-	secrets := []string{
-		".spec.object_storage_azure_secret",
-		".spec.object_storage_s3_secret",
-		".spec.database.external_db_secret",
-		".spec.cache.external_cache_secret",
-		".spec.sso_secret",
+	opts := &client.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector("secrets", secret.GetName()),
+		Namespace:     secret.GetNamespace(),
 	}
-
-	for i := range secrets {
-		opts := &client.ListOptions{
-			FieldSelector: fields.OneTermEqualSelector(secrets[i], secret.GetName()),
-			Namespace:     secret.GetNamespace(),
-		}
-		if err := r.List(context.TODO(), &associatedPulp, opts); err != nil {
-			return []reconcile.Request{}
-		}
-		if len(associatedPulp.Items) > 0 {
-			return []reconcile.Request{{
-				NamespacedName: types.NamespacedName{
-					Name:      associatedPulp.Items[0].GetName(),
-					Namespace: associatedPulp.Items[0].GetNamespace(),
-				},
-			}}
-		}
+	if err := r.List(context.TODO(), &associatedPulp, opts); err != nil {
+		return []reconcile.Request{}
+	}
+	if len(associatedPulp.Items) > 0 {
+		return []reconcile.Request{{
+			NamespacedName: types.NamespacedName{
+				Name:      associatedPulp.Items[0].GetName(),
+				Namespace: associatedPulp.Items[0].GetNamespace(),
+			},
+		}}
 	}
 
 	return []reconcile.Request{}
