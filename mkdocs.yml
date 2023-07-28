@@ -50,6 +50,7 @@ nav:
       - Custom CA: configuring/customCA.md
       - Pod Disruption Budget: configuring/pdb.md
       - Secrets: configuring/secrets.md
+      - Reseting Pulp Admin Password: configuring/reset_admin_pwd.md
       - Disabling Reconciliation: configuring/unmanaged.md
       - Galaxy: configuring/galaxy.md
       - Telemetry: configuring/telemetry.md

@@ -68,7 +68,7 @@ type RepoManagerReconciler struct {
 //+kubebuilder:rbac:groups=core,namespace=pulp-operator-system,resources=events,verbs=create;patch
 //+kubebuilder:rbac:groups=apps,namespace=pulp-operator-system,resources=deployments;statefulsets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=policy,namespace=pulp-operator-system,resources=poddisruptionbudgets,verbs=get;list;create;delete;patch;update;watch
-//+kubebuilder:rbac:groups=batch,namespace=pulp-operator-system,resources=cronjobs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=batch,namespace=pulp-operator-system,resources=cronjobs;jobs,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -260,6 +260,9 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return pulpController, err
 	}
 
+	// create the job to reset pulp admin password in case admin_password_secret has changed
+	r.updateAdminSecret(ctx, pulp)
+
 	// if this is the first reconciliation loop (.status.ingress_type == "") OR
 	// if there is no update in ingressType field
 	if len(pulp.Status.IngressType) == 0 || pulp.Status.IngressType == pulp.Spec.IngressType {
@@ -326,7 +329,7 @@ func indexerFunc(obj client.Object) []string {
 	pulp := obj.(*repomanagerpulpprojectorgv1beta2.Pulp)
 	var keys []string
 
-	secrets := []string{"ObjectStorageAzureSecret", "ObjectStorageS3Secret", "SSOSecret"}
+	secrets := []string{"ObjectStorageAzureSecret", "ObjectStorageS3Secret", "SSOSecret", "AdminPasswordSecret"}
 	for _, secretField := range secrets {
 		structField := reflect.Indirect(reflect.ValueOf(pulp)).FieldByName("Spec").FieldByName(secretField).String()
 		if structField != "" {

@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"reflect"
 	"regexp"
 	"strings"
@@ -48,6 +49,7 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
+	"k8s.io/kubernetes/pkg/util/hash"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -77,6 +79,7 @@ const (
 
 `
 	DefaultOCPIngressClass = "openshift-default"
+	OperatorHashLabel      = "pulp-operator-hash"
 )
 
 // FunctionResources contains the list of arguments passed to create new Pulp resources
@@ -677,4 +680,26 @@ func RemovePulpWebResources(resources FunctionResources) error {
 	v1.RemoveStatusCondition(&pulp.Status.Conditions, webConditionType)
 
 	return nil
+}
+
+// CalculateHash returns a string of the hashed value from obj
+func CalculateHash(obj any) string {
+	calculatedHash := fnv.New32a()
+	hash.DeepHashObject(calculatedHash, obj)
+	return fmt.Sprint(calculatedHash.Sum32())
+}
+
+// SetHashLabel appends the operator's hash label into object
+func SetHashLabel(label string, obj client.Object) {
+	currentLabels := obj.GetLabels()
+	if currentLabels == nil {
+		currentLabels = make(map[string]string)
+	}
+	currentLabels[OperatorHashLabel] = label
+	obj.SetLabels(currentLabels)
+}
+
+// getCurrentHash retrieves the hash defined in obj label
+func GetCurrentHash(obj client.Object) string {
+	return obj.GetLabels()[OperatorHashLabel]
 }

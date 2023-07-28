@@ -218,6 +218,18 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			Name:      "file-storage",
 			MountPath: "/var/lib/pulp",
 		},
+		{
+			Name:      PulpName + "-container-auth-certs",
+			MountPath: "/etc/pulp/keys/container_auth_private_key.pem",
+			SubPath:   "container_auth_private_key.pem",
+			ReadOnly:  true,
+		},
+		{
+			Name:      PulpName + "-container-auth-certs",
+			MountPath: "/etc/pulp/keys/container_auth_public_key.pem",
+			SubPath:   "container_auth_public_key.pem",
+			ReadOnly:  true,
+		},
 	}
 
 	volumeMountsContent := []corev1.VolumeMount{
@@ -304,6 +316,24 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 					ClaimName: PulpName + "-file-storage",
+				},
+			},
+		},
+		{
+			Name: PulpName + "-container-auth-certs",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: PulpName + "-container-auth",
+					Items: []corev1.KeyToPath{
+						{
+							Key:  "container_auth_public_key.pem",
+							Path: "container_auth_public_key.pem",
+						},
+						{
+							Key:  "container_auth_private_key.pem",
+							Path: "container_auth_private_key.pem",
+						},
+					},
 				},
 			},
 		},
@@ -525,16 +555,8 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			Args: []string{
 				"-c",
 				`mkdir -p /var/lib/pulp/{media,assets,tmp}
-				/usr/bin/wait_on_postgres.py
-				/usr/local/bin/pulpcore-manager migrate --noinput
-				ADMIN_PASSWORD_FILE=/etc/pulp/pulp-admin-password
-				if [[ -f "$ADMIN_PASSWORD_FILE" ]]; then
-				   echo "pulp admin can be initialized."
-				   PULP_ADMIN_PASSWORD=$(cat $ADMIN_PASSWORD_FILE)
-				fi
-				if [ -n "${PULP_ADMIN_PASSWORD}" ]; then
-					/usr/local/bin/pulpcore-manager reset-admin-password --password "${PULP_ADMIN_PASSWORD}"
-				fi`,
+/usr/bin/wait_on_postgres.py
+/usr/local/bin/pulpcore-manager migrate --noinput`,
 			},
 			VolumeMounts: volumeMountsApi,
 			Resources: corev1.ResourceRequirements{
