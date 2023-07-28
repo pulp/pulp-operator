@@ -18,6 +18,7 @@ package repo_manager
 
 import (
 	"context"
+	"reflect"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -320,65 +321,35 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	return ctrl.Result{}, nil
 }
 
+// indexerFunc knows how to take an object and turn it into a series of non-namespaced keys
+func indexerFunc(obj client.Object) []string {
+	pulp := obj.(*repomanagerpulpprojectorgv1beta2.Pulp)
+	var keys []string
+
+	secrets := []string{"ObjectStorageAzureSecret", "ObjectStorageS3Secret", "SSOSecret"}
+	for _, secretField := range secrets {
+		structField := reflect.Indirect(reflect.ValueOf(pulp)).FieldByName("Spec").FieldByName(secretField).String()
+		if structField != "" {
+			keys = append(keys, structField)
+		}
+	}
+	if pulp.Spec.Database.ExternalDBSecret != "" {
+		keys = append(keys, pulp.Spec.Database.ExternalDBSecret)
+	}
+	if pulp.Spec.Cache.ExternalCacheSecret != "" {
+		keys = append(keys, pulp.Spec.Cache.ExternalCacheSecret)
+	}
+	return keys
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *RepoManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	// creates a new eventRecorder to be able to interact with events
 	r.recorder = mgr.GetEventRecorderFor("Pulp")
 
-	// [TODO] Refactor the following blocks to avoid code duplication
 	// adds an index to `object_storage_azure_secret` allowing to lookup `Pulp` by a referenced `Azure Object Storage Secret` name
-	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &repomanagerpulpprojectorgv1beta2.Pulp{}, ".spec.object_storage_azure_secret", func(rawObj client.Object) []string {
-		pulp := rawObj.(*repomanagerpulpprojectorgv1beta2.Pulp)
-		if pulp.Spec.ObjectStorageAzureSecret == "" {
-			return nil
-		}
-		return []string{pulp.Spec.ObjectStorageAzureSecret}
-	}); err != nil {
-		return err
-	}
-
-	// the same for S3 secret
-	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &repomanagerpulpprojectorgv1beta2.Pulp{}, ".spec.object_storage_s3_secret", func(rawObj client.Object) []string {
-		pulp := rawObj.(*repomanagerpulpprojectorgv1beta2.Pulp)
-		if pulp.Spec.ObjectStorageS3Secret == "" {
-			return nil
-		}
-		return []string{pulp.Spec.ObjectStorageS3Secret}
-	}); err != nil {
-		return err
-	}
-
-	// external postgres secret
-	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &repomanagerpulpprojectorgv1beta2.Pulp{}, ".spec.database.external_db_secret", func(rawObj client.Object) []string {
-		pulp := rawObj.(*repomanagerpulpprojectorgv1beta2.Pulp)
-		if pulp.Spec.Database.ExternalDBSecret == "" {
-			return nil
-		}
-		return []string{pulp.Spec.Database.ExternalDBSecret}
-	}); err != nil {
-		return err
-	}
-
-	// external redis secret
-	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &repomanagerpulpprojectorgv1beta2.Pulp{}, ".spec.cache.external_cache_secret", func(rawObj client.Object) []string {
-		pulp := rawObj.(*repomanagerpulpprojectorgv1beta2.Pulp)
-		if pulp.Spec.Cache.ExternalCacheSecret == "" {
-			return nil
-		}
-		return []string{pulp.Spec.Cache.ExternalCacheSecret}
-	}); err != nil {
-		return err
-	}
-
-	// sso secret
-	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &repomanagerpulpprojectorgv1beta2.Pulp{}, ".spec.sso_secret", func(rawObj client.Object) []string {
-		pulp := rawObj.(*repomanagerpulpprojectorgv1beta2.Pulp)
-		if pulp.Spec.SSOSecret == "" {
-			return nil
-		}
-		return []string{pulp.Spec.SSOSecret}
-	}); err != nil {
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &repomanagerpulpprojectorgv1beta2.Pulp{}, "secrets", indexerFunc); err != nil {
 		return err
 	}
 
