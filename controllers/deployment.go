@@ -269,76 +269,8 @@ func (d *CommonDeployment) setEnvVars(resources any, pulpcoreType string) {
 		}
 	}
 
-	var dbHost, dbPort string
-
-	// if there is no ExternalDBSecret defined, we should
-	// use the postgres instance provided by the operator
-	if len(pulp.Spec.PostgresConfigurationSecret) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		postgresEnvVars := []corev1.EnvVar{
-			{
-				Name: "POSTGRES_SERVICE_HOST",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: pulp.Spec.PostgresConfigurationSecret,
-						},
-						Key: "POSTGRES_HOST",
-					},
-				},
-			}, {
-				Name: "POSTGRES_SERVICE_PORT",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: pulp.Spec.PostgresConfigurationSecret,
-						},
-						Key: "POSTGRES_PORT",
-					},
-				},
-			},
-		}
-		envVars = append(envVars, postgresEnvVars...)
-	} else if len(pulp.Spec.Database.ExternalDBSecret) == 0 {
-		containerPort := 0
-		if pulp.Spec.Database.PostgresPort == 0 {
-			containerPort = 5432
-		} else {
-			containerPort = pulp.Spec.Database.PostgresPort
-		}
-		dbHost = pulp.Name + "-database-svc"
-		dbPort = strconv.Itoa(containerPort)
-
-		postgresEnvVars := []corev1.EnvVar{
-			{Name: "POSTGRES_SERVICE_HOST", Value: dbHost},
-			{Name: "POSTGRES_SERVICE_PORT", Value: dbPort},
-		}
-		envVars = append(envVars, postgresEnvVars...)
-	} else {
-		postgresEnvVars := []corev1.EnvVar{
-			{
-				Name: "POSTGRES_SERVICE_HOST",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: pulp.Spec.Database.ExternalDBSecret,
-						},
-						Key: "POSTGRES_HOST",
-					},
-				},
-			}, {
-				Name: "POSTGRES_SERVICE_PORT",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: pulp.Spec.Database.ExternalDBSecret,
-						},
-						Key: "POSTGRES_PORT",
-					},
-				},
-			},
-		}
-		envVars = append(envVars, postgresEnvVars...)
-	}
+	// add postgres env vars
+	envVars = append(envVars, GetPostgresEnvVars(*pulp)...)
 
 	// add cache configuration if enabled
 	if pulp.Spec.Cache.Enabled {
@@ -423,8 +355,83 @@ func (d *CommonDeployment) setEnvVars(resources any, pulpcoreType string) {
 	d.envVars = append([]corev1.EnvVar(nil), envVars...)
 }
 
-// getAdminSecretName retrieves pulp admin user password
-func getAdminSecretName(pulp repomanagerpulpprojectorgv1beta2.Pulp) string {
+// GetPostgresEnvVars return the list of postgres environment variables to use in containers
+func GetPostgresEnvVars(pulp repomanagerpulpprojectorgv1beta2.Pulp) (envVars []corev1.EnvVar) {
+	var dbHost, dbPort string
+
+	// if there is no ExternalDBSecret defined, we should
+	// use the postgres instance provided by the operator
+	if len(pulp.Spec.PostgresConfigurationSecret) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
+		postgresEnvVars := []corev1.EnvVar{
+			{
+				Name: "POSTGRES_SERVICE_HOST",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: pulp.Spec.PostgresConfigurationSecret,
+						},
+						Key: "POSTGRES_HOST",
+					},
+				},
+			}, {
+				Name: "POSTGRES_SERVICE_PORT",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: pulp.Spec.PostgresConfigurationSecret,
+						},
+						Key: "POSTGRES_PORT",
+					},
+				},
+			},
+		}
+		envVars = append(envVars, postgresEnvVars...)
+	} else if len(pulp.Spec.Database.ExternalDBSecret) == 0 {
+		containerPort := 0
+		if pulp.Spec.Database.PostgresPort == 0 {
+			containerPort = 5432
+		} else {
+			containerPort = pulp.Spec.Database.PostgresPort
+		}
+		dbHost = pulp.Name + "-database-svc"
+		dbPort = strconv.Itoa(containerPort)
+
+		postgresEnvVars := []corev1.EnvVar{
+			{Name: "POSTGRES_SERVICE_HOST", Value: dbHost},
+			{Name: "POSTGRES_SERVICE_PORT", Value: dbPort},
+		}
+		envVars = append(envVars, postgresEnvVars...)
+	} else {
+		postgresEnvVars := []corev1.EnvVar{
+			{
+				Name: "POSTGRES_SERVICE_HOST",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: pulp.Spec.Database.ExternalDBSecret,
+						},
+						Key: "POSTGRES_HOST",
+					},
+				},
+			}, {
+				Name: "POSTGRES_SERVICE_PORT",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: pulp.Spec.Database.ExternalDBSecret,
+						},
+						Key: "POSTGRES_PORT",
+					},
+				},
+			},
+		}
+		envVars = append(envVars, postgresEnvVars...)
+	}
+	return envVars
+}
+
+// GetAdminSecretName retrieves pulp admin user password
+func GetAdminSecretName(pulp repomanagerpulpprojectorgv1beta2.Pulp) string {
 	adminSecretName := pulp.Name + "-admin-password"
 	if len(pulp.Spec.AdminPasswordSecret) > 1 {
 		adminSecretName = pulp.Spec.AdminPasswordSecret
@@ -438,15 +445,17 @@ func getStorageType(pulp repomanagerpulpprojectorgv1beta2.Pulp) []string {
 	return storageType
 }
 
+// GetDBFieldsEncryptionSecret returns the name of DBFieldsEncryption Secret
+func GetDBFieldsEncryptionSecret(pulp repomanagerpulpprojectorgv1beta2.Pulp) string {
+	if pulp.Spec.DBFieldsEncryptionSecret == "" {
+		return pulp.Name + "-db-fields-encryption"
+	}
+	return pulp.Spec.DBFieldsEncryptionSecret
+}
+
 // setVolumes defines the list of pod volumes
 func (d *CommonDeployment) setVolumes(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
-	dbFieldsEncryptionSecret := ""
-	if pulp.Spec.DBFieldsEncryptionSecret == "" {
-		dbFieldsEncryptionSecret = pulp.Name + "-db-fields-encryption"
-	} else {
-		dbFieldsEncryptionSecret = pulp.Spec.DBFieldsEncryptionSecret
-	}
-
+	dbFieldsEncryptionSecret := GetDBFieldsEncryptionSecret(pulp)
 	volumes := []corev1.Volume{
 		{
 			Name: pulp.Name + "-server",
@@ -487,7 +496,7 @@ func (d *CommonDeployment) setVolumes(pulp repomanagerpulpprojectorgv1beta2.Pulp
 
 	// worker and content pods don't need to mount the admin secret
 	if pulpcoreType == api {
-		adminSecretName := getAdminSecretName(pulp)
+		adminSecretName := GetAdminSecretName(pulp)
 		volume := corev1.Volume{
 			Name: adminSecretName,
 			VolumeSource: corev1.VolumeSource{
@@ -635,7 +644,7 @@ func (d *CommonDeployment) setVolumeMounts(pulp repomanagerpulpprojectorgv1beta2
 
 	// worker and content pods don't need to mount the admin secret
 	if pulpcoreType == api {
-		adminSecretName := getAdminSecretName(pulp)
+		adminSecretName := GetAdminSecretName(pulp)
 		adminSecret := corev1.VolumeMount{
 			Name:      adminSecretName,
 			MountPath: "/etc/pulp/pulp-admin-password",
@@ -851,16 +860,8 @@ func (d *CommonDeployment) setInitContainers(pulp repomanagerpulpprojectorgv1bet
 				Args: []string{
 					"-c",
 					`mkdir -p /var/lib/pulp/{media,assets,tmp}
-				/usr/bin/wait_on_postgres.py
-				/usr/local/bin/pulpcore-manager migrate --noinput
-				ADMIN_PASSWORD_FILE=/etc/pulp/pulp-admin-password
-				if [[ -f "$ADMIN_PASSWORD_FILE" ]]; then
-				   echo "pulp admin can be initialized."
-				   PULP_ADMIN_PASSWORD=$(cat $ADMIN_PASSWORD_FILE)
-				fi
-				if [ -n "${PULP_ADMIN_PASSWORD}" ]; then
-					/usr/local/bin/pulpcore-manager reset-admin-password --password "${PULP_ADMIN_PASSWORD}"
-				fi`,
+/usr/bin/wait_on_postgres.py
+/usr/local/bin/pulpcore-manager migrate --noinput`,
 				},
 				VolumeMounts: d.volumeMounts,
 				Resources:    d.initContainerResourceRequirements,
