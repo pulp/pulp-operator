@@ -29,6 +29,7 @@
     postgres_port: "{{ pg_config['resources'][0]['data']['port'] | b64decode }}"
     postgres_host: "{{ pg_config['resources'][0]['data']['host'] | b64decode }}"
     postgres_sslmode: "{{ pg_config['resources'][0]['data']['sslmode'] | default('prefer'|b64encode) | b64decode }}"
+    postgres_type: "{{ pg_config['resources'][0]['data']['type'] | default('unmanaged'|b64encode) | b64decode }}"
   no_log: "{{ no_log }}"
 
 - name: Default label selector to custom resource generated postgres
@@ -36,21 +37,23 @@
     postgres_label_selector: "app.kubernetes.io/instance=postgres-{{ deployment_name }}"
   when: postgres_label_selector is not defined
 
-- name: Get the postgres pod information
-  k8s_info:
-    kind: Pod
-    namespace: '{{ ansible_operator_meta.namespace }}'
-    label_selectors:
-      - "{{ postgres_label_selector }}"
-      - "app.kubernetes.io/version={{ postgres_version }}"
-  register: postgres_pod
-  until: "postgres_pod['resources'][0]['status']['phase'] == 'Running'"
-  delay: 5
-  retries: 60
+- block:
+    - name: Get the postgres pod information
+      k8s_info:
+        kind: Pod
+        namespace: '{{ ansible_operator_meta.namespace }}'
+        label_selectors:
+          - "{{ postgres_label_selector }}"
+          - "app.kubernetes.io/version={{ postgres_version }}"
+      register: postgres_pod
+      until: "postgres_pod['resources'][0]['status']['phase'] == 'Running'"
+      delay: 5
+      retries: 60
 
-- name: Set the resource pod name as a variable.
-  set_fact:
-    postgres_pod_name: "{{ postgres_pod['resources'][0]['metadata']['name'] }}"
+    - name: Set the resource pod name as a variable.
+      set_fact:
+        postgres_pod_name: "{{ postgres_pod['resources'][0]['metadata']['name'] }}"
+  when: postgres_type == 'managed'
 
 - name: Determine the timestamp for the backup once for all nodes
   set_fact:
