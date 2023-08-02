@@ -7,7 +7,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/onsi/gomega v1.27.10
 	github.com/openshift/api v0.0.0-20220825183227-75c111537c4d
-	go.uber.org/zap v1.24.0
+	go.uber.org/zap v1.25.0
 	golang.org/x/crypto v0.11.0
 	golang.org/x/exp v0.0.0-20230108222341-4b8118a2686a
 	golang.org/x/text v0.11.0
@@ -15,7 +15,7 @@ require (
 	k8s.io/api v0.26.3
 	k8s.io/apimachinery v0.27.1
 	k8s.io/client-go v0.26.3
-	k8s.io/kubernetes v1.27.4
+	k8s.io/kubernetes v1.15.0-alpha.0
 	sigs.k8s.io/controller-runtime v0.14.6
 )
 
@@ -55,8 +55,7 @@ require (
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	go.uber.org/atomic v1.7.0 // indirect
-	go.uber.org/multierr v1.6.0 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/net v0.12.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b // indirect
 	golang.org/x/sys v0.10.0 // indirect
