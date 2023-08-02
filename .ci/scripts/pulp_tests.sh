@@ -10,15 +10,13 @@ if [[ "$INGRESS_TYPE" == "ingress" ]]; then
   echo $(minikube ip) ingress.local | sudo tee -a /etc/hosts
 elif [[ "${1-}" == "--minikube" ]] || [[ "${1-}" == "-m" ]]; then
   KUBE="minikube"
-  SERVER="localhost"
   if [[ "$CI_TEST" == "true" ]]; then
-    SVC_NAME="example-pulp-web-svc"
-    WEB_PORT="24880"
-    API_SVC="example-pulp-api-svc"
-    API_PORT="24817"
-    kubectl port-forward service/$SVC_NAME $WEB_PORT:$WEB_PORT &
-    kubectl port-forward service/$API_SVC $API_PORT:$API_PORT &
-    echo 127.0.0.1   example-pulp-web-svc.pulp-operator-system.svc.cluster.local example-pulp-api-svc.pulp-operator-system.svc.cluster.local| sudo tee -a /etc/hosts
+    SERVER=nodeport.local
+    echo $(minikube ip) nodeport.local | sudo tee -a /etc/hosts
+    WEB_PORT=30000
+    kubectl patch pulp example-pulp --type=merge -p "{\"spec\":{ \"nodeport_port\": ${WEB_PORT}, \"pulp_settings\": {\"TOKEN_SERVER\": \"http://${SERVER}:${WEB_PORT}/token/\",\"CONTENT_ORIGIN\": \"http://${SERVER}:${WEB_PORT}\",\"ANSIBLE_API_HOSTNAME\": \"http://${SERVER}:${WEB_PORT}\"} }}"
+    sleep 5
+    kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=180s
   fi
 fi
 
