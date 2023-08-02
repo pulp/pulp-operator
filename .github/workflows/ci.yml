@@ -161,7 +161,7 @@ jobs:
             "
 
             echo "$(cat /etc/docker/daemon.json | jq -s '.[0] + {
-            "insecure-registries" : ["ingress.local"]
+            "insecure-registries" : ["ingress.local","nodeport.local:30000"]
             }')" | sudo tee /etc/docker/daemon.json
             sudo service docker restart || true
           fi
@@ -172,7 +172,7 @@ jobs:
             Updating registries configuration
             "
             echo "[registries.insecure]
-            registries = ['ingress.local']
+            registries = ['ingress.local','nodeport.local:30000']
             " | sudo tee -a /etc/containers/registries.conf
           fi
         shell: bash
@@ -251,7 +251,7 @@ jobs:
             "
 
             echo "$(cat /etc/docker/daemon.json | jq -s '.[0] + {
-            "insecure-registries" : ["ingress.local"]
+            "insecure-registries" : ["ingress.local","nodeport.local:30000"]
             }')" | sudo tee /etc/docker/daemon.json
             sudo service docker restart || true
           fi
@@ -262,7 +262,7 @@ jobs:
             Updating registries configuration
             "
             echo "[registries.insecure]
-            registries = ['ingress.local']
+            registries = ['ingress.local','nodeport.local:30000']
             " | sudo tee -a /etc/containers/registries.conf
           fi
         shell: bash
@@ -356,7 +356,7 @@ jobs:
             "
 
             echo "$(cat /etc/docker/daemon.json | jq -s '.[0] + {
-            "insecure-registries" : ["ingress.local"]
+            "insecure-registries" : ["ingress.local","nodeport.local:30000"]
             }')" | sudo tee /etc/docker/daemon.json
             sudo service docker restart || true
           fi
@@ -367,7 +367,7 @@ jobs:
             Updating registries configuration
             "
             echo "[registries.insecure]
-            registries = ['ingress.local']
+            registries = ['ingress.local','nodeport.local:30000']
             " | sudo tee -a /etc/containers/registries.conf
           fi
         shell: bash
@@ -593,7 +593,7 @@ jobs:
             "
 
             echo "$(cat /etc/docker/daemon.json | jq -s '.[0] + {
-            "insecure-registries" : ["ingress.local"]
+            "insecure-registries" : ["ingress.local","nodeport.local:30000"]
             }')" | sudo tee /etc/docker/daemon.json
             sudo service docker restart || true
           fi
@@ -604,7 +604,7 @@ jobs:
             Updating registries configuration
             "
             echo "[registries.insecure]
-            registries = ['ingress.local']
+            registries = ['ingress.local','nodeport.local:30000']
             " | sudo tee -a /etc/containers/registries.conf
           fi
         shell: bash
@@ -719,7 +719,7 @@ jobs:
             "
 
             echo "$(cat /etc/docker/daemon.json | jq -s '.[0] + {
-            "insecure-registries" : ["ingress.local"]
+            "insecure-registries" : ["ingress.local","nodeport.local:30000"]
             }')" | sudo tee /etc/docker/daemon.json
             sudo service docker restart || true
           fi
@@ -730,7 +730,7 @@ jobs:
             Updating registries configuration
             "
             echo "[registries.insecure]
-            registries = ['ingress.local']
+            registries = ['ingress.local','nodeport.local:30000']
             " | sudo tee -a /etc/containers/registries.conf
           fi
         shell: bash
