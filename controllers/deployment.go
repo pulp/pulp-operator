@@ -861,8 +861,7 @@ func (d *CommonDeployment) setInitContainers(pulp repomanagerpulpprojectorgv1bet
 					"-c",
 					`mkdir -p /var/lib/pulp/{media,assets,tmp}
 /usr/bin/wait_on_postgres.py
-/usr/local/bin/pulpcore-manager migrate --noinput`,
-				},
+/usr/bin/wait_on_database_migrations.sh`},
 				VolumeMounts: d.volumeMounts,
 				Resources:    d.initContainerResourceRequirements,
 			},

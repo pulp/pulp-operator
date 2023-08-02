@@ -26,6 +26,14 @@ journalctl --unit=pulp-operator -n 10000 --no-pager --output=cat
 kubectl logs -l app.kubernetes.io/component=operator -c manager --tail=10000
 echo ::endgroup::
 
+echo ::group::MIGRATION_JOB_LOGS
+for i in $(kubectl get jobs -oname -l app.kubernetes.io/component=migration) ; do echo "=== $i ===" ; kubectl logs $i ; done
+echo ::endgroup::
+
+echo ::group::ADMIN_PWD_JOB_LOGS
+for i in $(kubectl get jobs -oname -l app.kubernetes.io/component=reset-admin-password) ; do echo "=== $i ===" ; kubectl logs $i ; done
+echo ::endgroup::
+
 echo ::group::PULP_API_PODS
 kubectl describe pods -l app.kubernetes.io/component=api
 echo ::endgroup::

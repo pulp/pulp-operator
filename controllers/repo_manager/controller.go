@@ -249,6 +249,9 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return pulpController, err
 	}
 
+	// create the job to run django migrations
+	r.runMigration(ctx, pulp)
+
 	log.V(1).Info("Running content tasks")
 	pulpController, err = r.pulpContentController(ctx, pulp, log)
 	if needsRequeue(err, pulpController) {
@@ -261,7 +264,7 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	// create the job to reset pulp admin password in case admin_password_secret has changed
-	r.updateAdminSecret(ctx, pulp)
+	r.updateAdminPasswordJob(ctx, pulp)
 
 	// if this is the first reconciliation loop (.status.ingress_type == "") OR
 	// if there is no update in ingressType field

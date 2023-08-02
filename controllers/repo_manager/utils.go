@@ -711,3 +711,56 @@ func (r *RepoManagerReconciler) restartPods(pulp *repomanagerpulpprojectorgv1bet
 		r.Patch(context.TODO(), obj, patch)
 	}
 }
+
+// runMigration deploys a k8s Job to run django migrations in case of pulpcore image change
+func (r *RepoManagerReconciler) runMigration(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) {
+	if !r.needsMigration(ctx, pulp) {
+		return
+	}
+	r.migrationJob(ctx, pulp)
+}
+
+// needsMigration verifies if the pulpcore image has changed and no migration
+// has been done yet.
+func (r *RepoManagerReconciler) needsMigration(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
+	return controllers.ImageChanged(pulp) && !r.migrationDone(ctx, pulp)
+}
+
+// migrationDone checks if there is a migration Job with the expected image
+func (r *RepoManagerReconciler) migrationDone(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
+	jobList := &batchv1.JobList{}
+	labels := jobLabels(*pulp)
+	listOpts := []client.ListOption{
+		client.InNamespace(pulp.Namespace),
+		client.MatchingLabels(labels),
+	}
+
+	r.List(ctx, jobList, listOpts...)
+	return hasActiveJob(*jobList, pulp)
+}
+
+// jobActive returns true if there is at least one running pod for Job.
+// This is a workaround to identify if the Job is still running because, as of now,
+// it is not possible to filter - using client.ListOption - the list of Jobs using
+// something like client.MatchingFieldsSelector{ "state.running=true" }
+func jobActive(job batchv1.Job) bool {
+	return job.Status.Active >= 1
+}
+
+// jobImageEqualsCurrent verifies if the image used in migration job is the same
+// as the one used in pulpcore-{api,content,worker} pods
+func jobImageEqualsCurrent(job batchv1.Job, pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
+	return job.Spec.Template.Spec.Containers[0].Image == pulp.Spec.Image+":"+pulp.Spec.ImageVersion
+}
+
+// hasActiveJob will iterate over the JobList looking for any Job with the current
+// pulpcore image (meaning that a migration for the current version has already
+// been triggered and there is no need to create a new job).
+func hasActiveJob(jobList batchv1.JobList, pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
+	for _, job := range jobList.Items {
+		if jobImageEqualsCurrent(job, pulp) {
+			return true
+		}
+	}
+	return false
+}

@@ -1098,6 +1098,8 @@ type PulpStatus struct {
 	ObjectStorageS3Secret string `json:"object_storage_s3_secret,omitempty"`
 	// Secret where the Fernet symmetric encryption key is stored.
 	DBFieldsEncryptionSecret string `json:"db_fields_encryption_secret,omitempty"`
+	// Name of pulp image deployed.
+	Image string `json:"image,omitempty"`
 	// The ingress type to use to reach the deployed instance
 	IngressType string `json:"ingress_type,omitempty"`
 	// IngressClassName is used to inform the operator which ingressclass should be used to provision the ingress.

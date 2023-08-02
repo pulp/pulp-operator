@@ -263,6 +263,7 @@ PulpStatus defines the observed state of Pulp
 | object_storage_azure_secret | The secret for Azure compliant object storage configuration. | string | false |
 | object_storage_s3_secret | The secret for S3 compliant object storage configuration. | string | false |
 | db_fields_encryption_secret | Secret where the Fernet symmetric encryption key is stored. | string | false |
+| image | Name of pulp image deployed. | string | false |
 | ingress_type | The ingress type to use to reach the deployed instance | string | false |
 | ingress_class_name | IngressClassName is used to inform the operator which ingressclass should be used to provision the ingress. | string | false |
 | container_token_secret | Secret where the container token certificates are stored. | string | false |
