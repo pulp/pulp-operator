@@ -32,8 +32,8 @@ const (
 	adminPasswordSecretName = "admin-password"
 )
 
-// pulpApiController provision and reconciles api objects
-func (r *RepoManagerReconciler) updateAdminSecret(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) {
+// updateAdminPasswordJob creates a k8s job if the admin-password secret has changed
+func (r *RepoManagerReconciler) updateAdminPasswordJob(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) {
 	log := r.RawLogger
 
 	adminSecretName := controllers.GetAdminSecretName(*pulp)
@@ -49,8 +49,10 @@ func (r *RepoManagerReconciler) updateAdminSecret(ctx context.Context, pulp *rep
 		return
 	}
 
+	labels := jobLabels(*pulp)
+	labels["app.kubernetes.io/component"] = "reset-admin-password"
 	containers := []corev1.Container{resetAdminPasswordContainer(pulp)}
-	volumes := resetAdminPasswordVolumes(pulp, adminSecretName)
+	volumes := pulpcoreVolumes(pulp, adminSecretName)
 	backOffLimit := int32(2)
 	jobTTL := int32(3600)
 
@@ -59,22 +61,24 @@ func (r *RepoManagerReconciler) updateAdminSecret(ctx context.Context, pulp *rep
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "reset-admin-password-",
 			Namespace:    pulp.Namespace,
+			Labels:       labels,
 		},
 		Spec: jobs.JobSpec{
 			BackoffLimit:            &backOffLimit,
 			TTLSecondsAfterFinished: &jobTTL,
 			Template: corev1.PodTemplateSpec{
 				Spec: corev1.PodSpec{
-					RestartPolicy: "Never",
-					Containers:    containers,
-					Volumes:       volumes,
+					RestartPolicy:      "Never",
+					Containers:         containers,
+					Volumes:            volumes,
+					ServiceAccountName: pulp.Name,
 				},
 			},
 		},
 	}
 
 	// create job
-	log.Info("Creating a new " + adminPasswordSecretName + " reset Job ...")
+	log.Info("Creating a new " + adminPasswordSecretName + " reset Job")
 	if err := r.Create(ctx, job); err != nil {
 		log.Error(err, "Failed to create "+adminPasswordSecretName+" Job!")
 	}
@@ -87,11 +91,11 @@ func (r *RepoManagerReconciler) updateAdminSecret(ctx context.Context, pulp *rep
 	}
 }
 
-// resetAdminPasswordVolumes defines the list of volumeMounts from reset admin password container
-func resetAdminPasswordVolumes(pulp *repomanagerpulpprojectorgv1beta2.Pulp, adminSecretName string) []corev1.Volume {
+// pulpcoreVolumes defines the list of volumes used by pulpcore containers
+func pulpcoreVolumes(pulp *repomanagerpulpprojectorgv1beta2.Pulp, adminSecretName string) []corev1.Volume {
 	dbFieldsEncryptionSecret := controllers.GetDBFieldsEncryptionSecret(*pulp)
 
-	return []corev1.Volume{
+	volumes := []corev1.Volume{
 		{
 			Name: pulp.Name + "-server",
 			VolumeSource: corev1.VolumeSource{
@@ -100,18 +104,6 @@ func resetAdminPasswordVolumes(pulp *repomanagerpulpprojectorgv1beta2.Pulp, admi
 					Items: []corev1.KeyToPath{{
 						Key:  "settings.py",
 						Path: "settings.py",
-					}},
-				},
-			},
-		},
-		{
-			Name: adminSecretName,
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: adminSecretName,
-					Items: []corev1.KeyToPath{{
-						Path: "admin-password",
-						Key:  "password",
 					}},
 				},
 			},
@@ -129,13 +121,28 @@ func resetAdminPasswordVolumes(pulp *repomanagerpulpprojectorgv1beta2.Pulp, admi
 			},
 		},
 	}
+
+	if len(adminSecretName) > 0 {
+		adminSecret := corev1.Volume{
+			Name: adminSecretName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: adminSecretName,
+					Items: []corev1.KeyToPath{{
+						Path: "admin-password",
+						Key:  "password",
+					}},
+				},
+			},
+		}
+		return append(volumes, adminSecret)
+	}
+
+	return volumes
 }
 
-// resetAdminPasswordVolumeMounts defines the list of volumeMounts from reset admin password container
-func resetAdminPasswordVolumeMounts(pulp *repomanagerpulpprojectorgv1beta2.Pulp) []corev1.VolumeMount {
-	// admin password secret volume
-	adminSecretName := controllers.GetAdminSecretName(*pulp)
-
+// pulpcoreVolumeMounts defines the list of volumeMounts from pulpcore containers
+func pulpcoreVolumeMounts(pulp *repomanagerpulpprojectorgv1beta2.Pulp) []corev1.VolumeMount {
 	return []corev1.VolumeMount{
 		{
 			Name:      pulp.Name + "-server",
@@ -149,17 +156,11 @@ func resetAdminPasswordVolumeMounts(pulp *repomanagerpulpprojectorgv1beta2.Pulp)
 			SubPath:   "database_fields.symmetric.key",
 			ReadOnly:  true,
 		},
-		{
-			Name:      adminSecretName,
-			MountPath: "/etc/pulp/pulp-admin-password",
-			SubPath:   "admin-password",
-			ReadOnly:  true,
-		},
 	}
 }
 
-// resetAdminPasswordResources returns the resourceRequirements for reset admin password container
-func resetAdminPasswordResources() corev1.ResourceRequirements {
+// pulpcoreResources returns the resourceRequirements for pulpcore containers
+func pulpcoreResources() corev1.ResourceRequirements {
 	return corev1.ResourceRequirements{
 		Requests: corev1.ResourceList{
 			corev1.ResourceCPU:    resource.MustParse("20m"),
@@ -174,10 +175,20 @@ func resetAdminPasswordContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) co
 	envVars := controllers.GetPostgresEnvVars(*pulp)
 
 	// volume mounts
-	volumeMounts := resetAdminPasswordVolumeMounts(pulp)
+	volumeMounts := pulpcoreVolumeMounts(pulp)
+
+	// admin password secret volume
+	adminSecretName := controllers.GetAdminSecretName(*pulp)
+	adminSecretVolume := corev1.VolumeMount{
+		Name:      adminSecretName,
+		MountPath: "/etc/pulp/pulp-admin-password",
+		SubPath:   "admin-password",
+		ReadOnly:  true,
+	}
+	volumeMounts = append(volumeMounts, adminSecretVolume)
 
 	// resource requirements
-	resources := resetAdminPasswordResources()
+	resources := pulpcoreResources()
 
 	return corev1.Container{
 		Name:    "reset-admin-password",
@@ -199,5 +210,78 @@ func resetAdminPasswordContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) co
 		},
 		Resources:    resources,
 		VolumeMounts: volumeMounts,
+	}
+}
+
+// migrationJob creates a k8s Job to run django migrations
+func (r *RepoManagerReconciler) migrationJob(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) {
+	log := r.RawLogger
+
+	labels := jobLabels(*pulp)
+	labels["app.kubernetes.io/component"] = "migration"
+	containers := []corev1.Container{migrationContainer(pulp)}
+	volumes := pulpcoreVolumes(pulp, "")
+	backOffLimit := int32(2)
+	jobTTL := int32(3600)
+
+	// job definition
+	job := &jobs.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "pulpcore-migration-",
+			Namespace:    pulp.Namespace,
+			Labels:       labels,
+		},
+		Spec: jobs.JobSpec{
+			BackoffLimit:            &backOffLimit,
+			TTLSecondsAfterFinished: &jobTTL,
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					RestartPolicy:      "Never",
+					Containers:         containers,
+					Volumes:            volumes,
+					ServiceAccountName: pulp.Name,
+				},
+			},
+		},
+	}
+
+	// create the Job
+	log.Info("Creating a new pulpcore migration Job")
+	if err := r.Create(ctx, job); err != nil {
+		log.Error(err, "Failed to create pulpcore migration Job!")
+	}
+}
+
+// migrationContainer defines the container spec for the django migrations Job
+func migrationContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) corev1.Container {
+	// env vars
+	envVars := controllers.GetPostgresEnvVars(*pulp)
+
+	// volume mounts
+	volumeMounts := pulpcoreVolumeMounts(pulp)
+
+	// resource requirements
+	resources := pulpcoreResources()
+
+	return corev1.Container{
+		Name:    "migration",
+		Image:   pulp.Spec.Image + ":" + pulp.Spec.ImageVersion,
+		Env:     envVars,
+		Command: []string{"/bin/sh"},
+		Args: []string{
+			"-c",
+			`/usr/bin/wait_on_postgres.py
+/usr/local/bin/pulpcore-manager migrate --noinput`,
+		},
+		Resources:    resources,
+		VolumeMounts: volumeMounts,
+	}
+}
+
+// jobLabels defines the common labels used in Jobs
+func jobLabels(pulp repomanagerpulpprojectorgv1beta2.Pulp) map[string]string {
+	return map[string]string{
+		"app.kubernetes.io/managed-by": pulp.Spec.DeploymentType + "-operator",
+		"pulp_cr":                      pulp.Name,
 	}
 }

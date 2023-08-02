@@ -27733,6 +27733,9 @@ spec:
                 description: Name of the secret with the parameters to connect to
                   an external Redis cluster
                 type: string
+              image:
+                description: Name of pulp image deployed.
+                type: string
               ingress_class_name:
                 description: IngressClassName is used to inform the operator which
                   ingressclass should be used to provision the ingress.

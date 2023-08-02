@@ -556,7 +556,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				"-c",
 				`mkdir -p /var/lib/pulp/{media,assets,tmp}
 /usr/bin/wait_on_postgres.py
-/usr/local/bin/pulpcore-manager migrate --noinput`,
+/usr/bin/wait_on_database_migrations.sh`,
 			},
 			VolumeMounts: volumeMountsApi,
 			Resources: corev1.ResourceRequirements{

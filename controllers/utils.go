@@ -25,7 +25,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"reflect"
-	"regexp"
 	"strings"
 	"time"
 
@@ -317,10 +316,10 @@ func CheckEmptyDir(pulp *repomanagerpulpprojectorgv1beta2.Pulp, resource string)
 
 // CheckImageVersionModified verifies if the container image tag defined in
 // Pulp CR matches the one in the Deployment
-func CheckImageVersionModified(pulp *repomanagerpulpprojectorgv1beta2.Pulp, deployment *appsv1.Deployment) bool {
-	r := regexp.MustCompile(`(?P<ImageName>.*?):(?P<Tag>.*)`)
-	currentImageVersion := r.FindStringSubmatch(deployment.Spec.Template.Spec.Containers[0].Image)
-	return pulp.Spec.ImageVersion != currentImageVersion[2]
+func ImageChanged(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
+	definedImage := pulp.Spec.Image + ":" + pulp.Spec.ImageVersion
+	currentImage := pulp.Status.Image
+	return currentImage != definedImage
 }
 
 // WaitAPIPods waits until all API pods are in a READY state

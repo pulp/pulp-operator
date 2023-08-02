@@ -46,6 +46,12 @@ type pulpResource struct {
 // pulpStatus will cheeck the READY state of the pods before considering the component status as ready
 func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, log logr.Logger) (ctrl.Result, error) {
 
+	// update pulp image name status
+	if controllers.ImageChanged(pulp) {
+		pulp.Status.Image = pulp.Spec.Image + ":" + pulp.Spec.ImageVersion
+		r.Status().Update(ctx, pulp)
+	}
+
 	// This is a very ugly workaround to "fix" a possible race condition issue.
 	// During a reconciliation task we call the pulpStatus method to update the .status.conditions field.
 	// Without the sleep, when we do the isDeploymentReady check, the deployment can still be with the
