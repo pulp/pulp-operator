@@ -544,9 +544,8 @@ func serviceAPISpec(name, namespace, deployment_type string) corev1.ServiceSpec 
 			"app":                          "pulp-api",
 			"pulp_cr":                      name,
 		},
-		SessionAffinity:          serviceAffinity,
-		Type:                     serviceType,
-		PublishNotReadyAddresses: true,
+		SessionAffinity: serviceAffinity,
+		Type:            serviceType,
 	}
 }
 

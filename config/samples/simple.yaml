@@ -17,10 +17,26 @@ spec:
 #            - test
   api:
     replicas: 1
+    init_container:
+      resource_requirements:
+        limits:
+          cpu: 100m
+          memory: 128Mi
   content:
     replicas: 1
+    init_container:
+      resource_requirements:
+        limits:
+          cpu: 100m
+          memory: 128Mi
+
   worker:
     replicas: 1
+    init_container:
+      resource_requirements:
+        limits:
+          cpu: 100m
+          memory: 128Mi
   web:
     replicas: 1
 
@@ -38,6 +54,7 @@ spec:
     redis_storage_class: standard
 
   ingress_type: nodeport
+  nodeport_port: 30000
 
   pulp_settings:
     api_root: "/pulp/"
@@ -46,6 +63,9 @@ spec:
     allowed_import_paths:
       - /tmp
     telemetry: false
+    token_server: http://nodeport.local:30000/token/
+    content_origin: http://nodeport.local:30000
+    ansible_api_hostname: http://nodeport.local:30000
     # cache_enabled: true
     # db_encryption_key: "/etc/pulp/keys/database_fields.symmetric.key"
     # galaxy_collection_signing_service: ansible-default

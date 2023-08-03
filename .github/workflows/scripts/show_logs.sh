@@ -26,12 +26,28 @@ journalctl --unit=pulp-operator -n 10000 --no-pager --output=cat
 kubectl logs -l app.kubernetes.io/component=operator -c manager --tail=10000
 echo ::endgroup::
 
+echo ::group::DESCRIBE_JOBS
+kubectl describe jobs
+echo ::endgroup::
+
 echo ::group::MIGRATION_JOB_LOGS
-for i in $(kubectl get jobs -oname -l app.kubernetes.io/component=migration) ; do echo "=== $i ===" ; kubectl logs $i ; done
+for i in $(kubectl get jobs -oname -l app.kubernetes.io/component=migration) ; do echo "=== $i ===" ; kubectl logs --timestamps $i ; done
 echo ::endgroup::
 
 echo ::group::ADMIN_PWD_JOB_LOGS
-for i in $(kubectl get jobs -oname -l app.kubernetes.io/component=reset-admin-password) ; do echo "=== $i ===" ; kubectl logs $i ; done
+for i in $(kubectl get jobs -oname -l app.kubernetes.io/component=reset-admin-password) ; do echo "=== $i ===" ; kubectl logs --timestamps  $i ; done
+echo ::endgroup::
+
+echo ::group::INITCONTAINER_API_LOGS
+kubectl logs --timestamps -cinit-container -l app.kubernetes.io/component=api --tail=10000
+echo ::endgroup::
+
+echo ::group::INITCONTAINER_CONTENT_LOGS
+kubectl logs --timestamps -cinit-container -l app.kubernetes.io/component=content --tail=10000
+echo ::endgroup::
+
+echo ::group::INITCONTAINER_WORKER_LOGS
+kubectl logs --timestamps -cinit-container -l app.kubernetes.io/component=worker --tail=10000
 echo ::endgroup::
 
 echo ::group::PULP_API_PODS
@@ -39,7 +55,6 @@ kubectl describe pods -l app.kubernetes.io/component=api
 echo ::endgroup::
 
 echo ::group::PULP_API_LOGS
-kubectl logs --timestamps -cinit-container -l app.kubernetes.io/component=api --tail=10000
 kubectl logs --timestamps -l app.kubernetes.io/component=api --tail=10000
 echo ::endgroup::
 
@@ -84,7 +99,7 @@ fi
 if [[ "$INGRESS_TYPE" == "ingress" ]]; then
     export BASE_ADDR="http://ingress.local"
 else
-    export BASE_ADDR="http://localhost:24880"
+    export BASE_ADDR="http://nodeport.local:30000"
 fi
 
 echo "Status endpoint"

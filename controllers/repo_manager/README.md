@@ -94,6 +94,7 @@ Content defines desired state of pulpcore-content resources
 | pdb | PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods | *policy.PodDisruptionBudgetSpec | false |
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
 | log_level | [TODO] Implement this like in ansible version [DEPRECATED?] Temporarily adding to keep compatibility with ansible version. | string | false |
+| init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [InitContainer](#initcontainer) | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -358,5 +359,6 @@ Worker defines desired state of pulpcore-worker resources
 | livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
 | pdb | PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods | *policy.PodDisruptionBudgetSpec | false |
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
+| init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [InitContainer](#initcontainer) | false |
 
 [Back to Custom Resources](#custom-resources)

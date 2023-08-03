@@ -25,7 +25,6 @@ import (
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -53,12 +52,9 @@ type CommonDeployment struct {
 	volumes                           []corev1.Volume
 	volumeMounts                      []corev1.VolumeMount
 	resourceRequirements              corev1.ResourceRequirements
-	initContainerResourceRequirements corev1.ResourceRequirements
 	readinessProbe                    *corev1.Probe
 	livenessProbe                     *corev1.Probe
 	image                             string
-	initContainerImage                string
-	initContainers                    []corev1.Container
 	containers                        []corev1.Container
 	podAnnotations                    map[string]string
 	deploymentAnnotations             map[string]string
@@ -66,6 +62,11 @@ type CommonDeployment struct {
 	terminationPeriod                 *int64
 	dnsPolicy                         corev1.DNSPolicy
 	schedulerName                     string
+	initContainerEnvVars              []corev1.EnvVar
+	initContainerResourceRequirements corev1.ResourceRequirements
+	initContainerVolumeMounts         []corev1.VolumeMount
+	initContainerImage                string
+	initContainers                    []corev1.Container
 }
 
 // Deploy returns a common Deployment object that can be used by any pulpcore component
@@ -353,6 +354,12 @@ func (d *CommonDeployment) setEnvVars(resources any, pulpcoreType string) {
 		envVars = append(envVars, signingKeyEnvVars...)
 	}
 	d.envVars = append([]corev1.EnvVar(nil), envVars...)
+}
+
+// setInitContainerEnvVars defines the list of init-containers' environment variables
+func (d *CommonDeployment) setInitContainerEnvVars(resources any) {
+	pulp := resources.(FunctionResources).Pulp
+	d.initContainerEnvVars = append([]corev1.EnvVar(nil), GetPostgresEnvVars(*pulp)...)
 }
 
 // GetPostgresEnvVars return the list of postgres environment variables to use in containers
@@ -715,6 +722,39 @@ func (d *CommonDeployment) setVolumeMounts(pulp repomanagerpulpprojectorgv1beta2
 	d.volumeMounts = append([]corev1.VolumeMount(nil), volumeMounts...)
 }
 
+// setInitContainerVolumeMount defines the init-containers volumes mount points
+func (d *CommonDeployment) setInitContainerVolumeMounts(pulp repomanagerpulpprojectorgv1beta2.Pulp) {
+
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      pulp.Name + "-server",
+			MountPath: "/etc/pulp/settings.py",
+			SubPath:   "settings.py",
+			ReadOnly:  true,
+		},
+		{
+			Name:      pulp.Name + "-db-fields-encryption",
+			MountPath: "/etc/pulp/keys/database_fields.symmetric.key",
+			SubPath:   "database_fields.symmetric.key",
+			ReadOnly:  true,
+		},
+	}
+
+	storageType := getStorageType(pulp)
+	if storageType[0] == SCNameType || storageType[0] == PVCType { // we will mount file-storage if a storageclass or a pvc was provided
+		fileStorageMount := corev1.VolumeMount{
+			Name:      "file-storage",
+			ReadOnly:  false,
+			MountPath: "/var/lib/pulp",
+		}
+		volumeMounts = append(volumeMounts, fileStorageMount)
+	} else if storageType[0] == EmptyDirType { // if no file-storage nor object storage were provided we will mount the emptyDir
+		emptyDir := corev1.VolumeMount{Name: "tmp-file-storage", MountPath: "/var/lib/pulp/tmp"}
+		volumeMounts = append(volumeMounts, emptyDir)
+	}
+	d.initContainerVolumeMounts = append([]corev1.VolumeMount(nil), volumeMounts...)
+}
+
 // setResourceRequirements defines the container resources
 func (d *CommonDeployment) setResourceRequirements(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
 	d.resourceRequirements = reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("ResourceRequirements").Interface().(corev1.ResourceRequirements)
@@ -722,18 +762,7 @@ func (d *CommonDeployment) setResourceRequirements(pulp repomanagerpulpprojector
 
 // setInitContainerResourceRequirements defines the init-container resources
 func (d *CommonDeployment) setInitContainerResourceRequirements(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
-	switch pulpcoreType {
-	case api:
-		d.initContainerResourceRequirements = reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("InitContainer").FieldByName("ResourceRequirements").Interface().(corev1.ResourceRequirements)
-		if reflect.DeepEqual(d.initContainerResourceRequirements, corev1.ResourceRequirements{}) {
-			d.initContainerResourceRequirements = corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("50m"),
-					corev1.ResourceMemory: resource.MustParse("128Mi"),
-				},
-			}
-		}
-	}
+	d.initContainerResourceRequirements = reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("InitContainer").FieldByName("ResourceRequirements").Interface().(corev1.ResourceRequirements)
 }
 
 // setReadinessProbe defines the container readinessprobe
@@ -751,8 +780,8 @@ func (d *CommonDeployment) setReadinessProbe(pulp repomanagerpulpprojectorgv1bet
 						},
 					},
 				},
-				FailureThreshold:    10,
-				InitialDelaySeconds: 60,
+				FailureThreshold:    1,
+				InitialDelaySeconds: 3,
 				PeriodSeconds:       10,
 				SuccessThreshold:    1,
 				TimeoutSeconds:      10,
@@ -769,8 +798,8 @@ func (d *CommonDeployment) setReadinessProbe(pulp repomanagerpulpprojectorgv1bet
 						},
 					},
 				},
-				FailureThreshold:    10,
-				InitialDelaySeconds: 60,
+				FailureThreshold:    1,
+				InitialDelaySeconds: 3,
 				PeriodSeconds:       10,
 				SuccessThreshold:    1,
 				TimeoutSeconds:      10,
@@ -786,8 +815,8 @@ func (d *CommonDeployment) setReadinessProbe(pulp repomanagerpulpprojectorgv1bet
 						},
 					},
 				},
-				FailureThreshold:    10,
-				InitialDelaySeconds: 30,
+				FailureThreshold:    1,
+				InitialDelaySeconds: 3,
 				PeriodSeconds:       10,
 				SuccessThreshold:    1,
 				TimeoutSeconds:      10,
@@ -815,7 +844,7 @@ func (d *CommonDeployment) setLivenessProbe(pulp repomanagerpulpprojectorgv1beta
 						Scheme: corev1.URIScheme("HTTP"),
 					},
 				},
-				InitialDelaySeconds: 120,
+				InitialDelaySeconds: 3,
 				PeriodSeconds:       20,
 				SuccessThreshold:    1,
 				TimeoutSeconds:      10,
@@ -838,36 +867,40 @@ func (d *CommonDeployment) setImage(pulp repomanagerpulpprojectorgv1beta2.Pulp) 
 
 // setInitContainerImage defines pulpcore init-container image
 func (d *CommonDeployment) setInitContainerImage(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
-	switch pulpcoreType {
-	case api:
-		d.initContainerImage = reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("InitContainer").FieldByName("Image").String()
-		if len(d.initContainerImage) == 0 {
-			d.initContainerImage = d.image
-		}
+	d.initContainerImage = reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("InitContainer").FieldByName("Image").String()
+	if len(d.initContainerImage) == 0 {
+		d.initContainerImage = d.image
 	}
 }
 
 // setInitContainers defines initContainers specs
 func (d *CommonDeployment) setInitContainers(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
-	switch pulpcoreType {
-	case api:
-		initContainers := []corev1.Container{
-			{
-				Name:    "init-container",
-				Image:   d.initContainerImage,
-				Env:     d.envVars,
-				Command: []string{"/bin/sh"},
-				Args: []string{
-					"-c",
-					`mkdir -p /var/lib/pulp/{media,assets,tmp}
-/usr/bin/wait_on_postgres.py
-/usr/bin/wait_on_database_migrations.sh`},
-				VolumeMounts: d.volumeMounts,
-				Resources:    d.initContainerResourceRequirements,
-			},
-		}
-		d.initContainers = append([]corev1.Container(nil), initContainers...)
+	args := []string{
+		"-c",
+		`/usr/bin/wait_on_postgres.py
+/usr/bin/wait_on_database_migrations.sh`,
 	}
+	if pulpcoreType == api {
+		args = []string{
+			"-c",
+			`mkdir -p /var/lib/pulp/{media,assets,tmp}
+/usr/bin/wait_on_postgres.py
+/usr/bin/wait_on_database_migrations.sh`,
+		}
+	}
+
+	initContainers := []corev1.Container{
+		{
+			Name:         "init-container",
+			Image:        d.initContainerImage,
+			Env:          d.initContainerEnvVars,
+			Command:      []string{"/bin/sh"},
+			Args:         args,
+			VolumeMounts: d.initContainerVolumeMounts,
+			Resources:    d.initContainerResourceRequirements,
+		},
+	}
+	d.initContainers = append([]corev1.Container(nil), initContainers...)
 }
 
 // setContainers defines pulpcore containers specs
@@ -901,9 +934,13 @@ func (d *CommonDeployment) setContainers(pulp repomanagerpulpprojectorgv1beta2.P
 			Name:            "content",
 			Image:           d.image,
 			ImagePullPolicy: corev1.PullPolicy(pulp.Spec.ImagePullPolicy),
-			Args:            []string{"pulp-content"},
-			Resources:       d.resourceRequirements,
-			Env:             d.envVars,
+			Command:         []string{"/bin/sh"},
+			Args: []string{
+				"-c",
+				`exec gunicorn pulpcore.content:server --name pulp-content --bind '[::]:24816' --worker-class 'aiohttp.GunicornWebWorker' --timeout "${PULP_GUNICORN_TIMEOUT}" --workers "${PULP_CONTENT_WORKERS}" --access-logfile -`,
+			},
+			Resources: d.resourceRequirements,
+			Env:       d.envVars,
 			Ports: []corev1.ContainerPort{{
 				ContainerPort: 24816,
 				Protocol:      "TCP",
@@ -917,12 +954,28 @@ func (d *CommonDeployment) setContainers(pulp repomanagerpulpprojectorgv1beta2.P
 			Name:            "worker",
 			Image:           d.image,
 			ImagePullPolicy: corev1.PullPolicy(pulp.Spec.ImagePullPolicy),
-			Args:            []string{"pulp-worker"},
-			Env:             d.envVars,
-			LivenessProbe:   d.livenessProbe,
-			ReadinessProbe:  d.readinessProbe,
-			VolumeMounts:    d.volumeMounts,
-			Resources:       d.resourceRequirements,
+			Command:         []string{"/bin/sh"},
+			Args: []string{
+				"-c",
+				`NEW_TASKING_SYSTEM=$(python3 -c "from packaging.version import parse; from pulpcore.app.apps import PulpAppConfig; print('yes' if parse(PulpAppConfig.version) >= parse('3.13.0.dev0') else 'no')")
+echo $NEW_TASKING_SYSTEM
+
+if [[ "$NEW_TASKING_SYSTEM" == "no" ]]; then
+  # TODO: Set ${PULP_WORKER_NUMBER} to the Pod Number
+  # In the meantime, the hostname provides uniqueness.
+  exec rq worker --url "redis://${REDIS_SERVICE_HOST}:${REDIS_SERVICE_PORT}" -w "pulpcore.tasking.worker.PulpWorker" -c "pulpcore.rqconfig"
+else
+  export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
+  export PULP_SETTINGS=/etc/pulp/settings.py
+  export PATH=/usr/local/bin:/usr/bin/
+  exec pulpcore-worker
+fi`,
+			},
+			Env:            d.envVars,
+			LivenessProbe:  d.livenessProbe,
+			ReadinessProbe: d.readinessProbe,
+			VolumeMounts:   d.volumeMounts,
+			Resources:      d.resourceRequirements,
 		}}
 	}
 	d.containers = append([]corev1.Container(nil), containers...)
@@ -930,11 +983,8 @@ func (d *CommonDeployment) setContainers(pulp repomanagerpulpprojectorgv1beta2.P
 
 // setAnnotations defines the list of pods and deployments annotations
 func (d *CommonDeployment) setAnnotations(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
-	switch pulpcoreType {
-	case api:
-		d.podAnnotations = map[string]string{
-			"kubectl.kubernetes.io/default-container": strings.ToLower(pulpcoreType),
-		}
+	d.podAnnotations = map[string]string{
+		"kubectl.kubernetes.io/default-container": strings.ToLower(pulpcoreType),
 	}
 
 	d.deploymentAnnotations = map[string]string{
@@ -990,6 +1040,8 @@ func (d *CommonDeployment) build(resources any, pulpcoreType string) {
 	d.setTopologySpreadConstraints(*pulp, pulpcoreType)
 	d.setInitContainerResourceRequirements(*pulp, pulpcoreType)
 	d.setInitContainerImage(*pulp, pulpcoreType)
+	d.setInitContainerVolumeMounts(*pulp)
+	d.setInitContainerEnvVars(resources)
 	d.setInitContainers(*pulp, pulpcoreType)
 	d.setContainers(*pulp, pulpcoreType)
 	d.setRestartPolicy()

@@ -23,7 +23,6 @@ import (
 	"github.com/pulp/pulp-operator/controllers"
 	jobs "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -161,12 +160,7 @@ func pulpcoreVolumeMounts(pulp *repomanagerpulpprojectorgv1beta2.Pulp) []corev1.
 
 // pulpcoreResources returns the resourceRequirements for pulpcore containers
 func pulpcoreResources() corev1.ResourceRequirements {
-	return corev1.ResourceRequirements{
-		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("20m"),
-			corev1.ResourceMemory: resource.MustParse("56Mi"),
-		},
-	}
+	return corev1.ResourceRequirements{}
 }
 
 // resetAdminPasswordContainer defines the container spec for the reset admin password job
@@ -188,7 +182,7 @@ func resetAdminPasswordContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) co
 	volumeMounts = append(volumeMounts, adminSecretVolume)
 
 	// resource requirements
-	resources := pulpcoreResources()
+	resources := corev1.ResourceRequirements{}
 
 	return corev1.Container{
 		Name:    "reset-admin-password",
@@ -264,10 +258,11 @@ func migrationContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) corev1.Cont
 	resources := pulpcoreResources()
 
 	return corev1.Container{
-		Name:    "migration",
-		Image:   pulp.Spec.Image + ":" + pulp.Spec.ImageVersion,
-		Env:     envVars,
-		Command: []string{"/bin/sh"},
+		Name:            "migration",
+		Image:           pulp.Spec.Image + ":" + pulp.Spec.ImageVersion,
+		ImagePullPolicy: "Always",
+		Env:             envVars,
+		Command:         []string{"/bin/sh"},
 		Args: []string{
 			"-c",
 			`/usr/bin/wait_on_postgres.py

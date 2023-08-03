@@ -162,6 +162,11 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		{Name: "POSTGRES_HOST_AUTH_METHOD", Value: "scram-sha-256"},
 	}
 
+	envVarsInitContainer := []corev1.EnvVar{
+		{Name: "POSTGRES_SERVICE_HOST", Value: PulpName + "-database-svc"},
+		{Name: "POSTGRES_SERVICE_PORT", Value: "5432"},
+	}
+
 	envVarsApi := []corev1.EnvVar{
 		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(90)},
 		{Name: "PULP_API_WORKERS", Value: strconv.Itoa(2)},
@@ -192,6 +197,24 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			Name:      "postgres",
 			MountPath: "/var/lib/postgresql/data",
 			SubPath:   "data",
+		},
+	}
+	volumeMountsInitContainer := []corev1.VolumeMount{
+		{
+			Name:      PulpName + "-server",
+			MountPath: "/etc/pulp/settings.py",
+			SubPath:   "settings.py",
+			ReadOnly:  true,
+		},
+		{
+			Name:      PulpName + "-db-fields-encryption",
+			MountPath: "/etc/pulp/keys/database_fields.symmetric.key",
+			SubPath:   "database_fields.symmetric.key",
+			ReadOnly:  true,
+		},
+		{
+			Name:      "file-storage",
+			MountPath: "/var/lib/pulp",
 		},
 	}
 
@@ -460,8 +483,8 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				},
 			},
 		},
-		FailureThreshold:    10,
-		InitialDelaySeconds: 60,
+		FailureThreshold:    1,
+		InitialDelaySeconds: 3,
 		PeriodSeconds:       10,
 		SuccessThreshold:    1,
 		TimeoutSeconds:      10,
@@ -478,7 +501,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				Scheme: corev1.URIScheme("HTTP"),
 			},
 		},
-		InitialDelaySeconds: 120,
+		InitialDelaySeconds: 3,
 		PeriodSeconds:       20,
 		SuccessThreshold:    1,
 		TimeoutSeconds:      10,
@@ -550,7 +573,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		{
 			Name:    "init-container",
 			Image:   "quay.io/pulp/pulp-minimal:latest",
-			Env:     envVarsApi,
+			Env:     envVarsInitContainer,
 			Command: []string{"/bin/sh"},
 			Args: []string{
 				"-c",
@@ -558,13 +581,22 @@ var _ = Describe("Pulp controller", Ordered, func() {
 /usr/bin/wait_on_postgres.py
 /usr/bin/wait_on_database_migrations.sh`,
 			},
-			VolumeMounts: volumeMountsApi,
-			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("50m"),
-					corev1.ResourceMemory: resource.MustParse("128Mi"),
-				},
+			VolumeMounts: volumeMountsInitContainer,
+		},
+	}
+
+	commonInitContainers := []corev1.Container{
+		{
+			Name:    "init-container",
+			Image:   "quay.io/pulp/pulp-minimal:latest",
+			Env:     envVarsInitContainer,
+			Command: []string{"/bin/sh"},
+			Args: []string{
+				"-c",
+				`/usr/bin/wait_on_postgres.py
+/usr/bin/wait_on_database_migrations.sh`,
 			},
+			VolumeMounts: volumeMountsInitContainer,
 		},
 	}
 
@@ -634,6 +666,10 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      ContentName,
 			Namespace: PulpNamespace,
+			Annotations: map[string]string{
+				"email": "pulp-dev@redhat.com",
+				"ignore-check.kube-linter.io/no-node-affinity": "Do not check node affinity",
+			},
 			Labels: map[string]string{
 				"app.kubernetes.io/name":       OperatorType + "-content",
 				"app.kubernetes.io/instance":   OperatorType + "-content-" + PulpName,
@@ -653,6 +689,9 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labelsContent,
+					Annotations: map[string]string{
+						"kubectl.kubernetes.io/default-container": "content",
+					},
 				},
 				Spec: corev1.PodSpec{
 					Affinity:                  &corev1.Affinity{},
@@ -662,19 +701,38 @@ var _ = Describe("Pulp controller", Ordered, func() {
 					Volumes:                   volumesContent,
 					ServiceAccountName:        PulpName,
 					TopologySpreadConstraints: []corev1.TopologySpreadConstraint{},
+					InitContainers:            commonInitContainers,
 					Containers: []corev1.Container{{
 						Name:            "content",
-						Image:           "quay.io/pulp/pulp:latest",
+						Image:           "quay.io/pulp/pulp-minimal:latest",
 						ImagePullPolicy: corev1.PullPolicy("IfNotPresent"),
-						Args:            []string{"pulp-content"},
-						Resources:       corev1.ResourceRequirements{},
-						Env:             envVarsContent,
+						Command:         []string{"/bin/sh"},
+						Args: []string{
+							"-c",
+							`exec gunicorn pulpcore.content:server --name pulp-content --bind '[::]:24816' --worker-class 'aiohttp.GunicornWebWorker' --timeout "${PULP_GUNICORN_TIMEOUT}" --workers "${PULP_CONTENT_WORKERS}" --access-logfile -`,
+						},
+						Resources: corev1.ResourceRequirements{},
+						Env:       envVarsContent,
 						Ports: []corev1.ContainerPort{{
 							ContainerPort: 24816,
 							Protocol:      "TCP",
 						}},
 						// LivenessProbe:  livenessProbe,
-						// ReadinessProbe: readinessProbe,
+						ReadinessProbe: &corev1.Probe{
+							ProbeHandler: corev1.ProbeHandler{
+								Exec: &corev1.ExecAction{
+									Command: []string{
+										"/usr/bin/readyz.py",
+										"/pulp/content/",
+									},
+								},
+							},
+							FailureThreshold:    1,
+							InitialDelaySeconds: 3,
+							PeriodSeconds:       10,
+							SuccessThreshold:    1,
+							TimeoutSeconds:      10,
+						},
 						VolumeMounts: volumeMountsContent,
 					}},
 				},
@@ -687,6 +745,10 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      WorkerName,
 			Namespace: PulpNamespace,
+			Annotations: map[string]string{
+				"email": "pulp-dev@redhat.com",
+				"ignore-check.kube-linter.io/no-node-affinity": "Do not check node affinity",
+			},
 			Labels: map[string]string{
 				"app.kubernetes.io/name":       OperatorType + "-worker",
 				"app.kubernetes.io/instance":   OperatorType + "-worker-" + PulpName,
@@ -704,6 +766,9 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labelsWorker,
+					Annotations: map[string]string{
+						"kubectl.kubernetes.io/default-container": "worker",
+					},
 				},
 				Spec: corev1.PodSpec{
 					Affinity:                  &corev1.Affinity{},
@@ -713,12 +778,29 @@ var _ = Describe("Pulp controller", Ordered, func() {
 					Volumes:                   volumesWorker,
 					ServiceAccountName:        PulpName,
 					TopologySpreadConstraints: []corev1.TopologySpreadConstraint{},
+					InitContainers:            commonInitContainers,
 					Containers: []corev1.Container{{
 						Name:            "worker",
-						Image:           "quay.io/pulp/pulp:latest",
+						Image:           "quay.io/pulp/pulp-minimal:latest",
 						ImagePullPolicy: corev1.PullPolicy("IfNotPresent"),
-						Args:            []string{"pulp-worker"},
-						Env:             envVarsWorker,
+						Command:         []string{"/bin/sh"},
+						Args: []string{
+							"-c",
+							`NEW_TASKING_SYSTEM=$(python3 -c "from packaging.version import parse; from pulpcore.app.apps import PulpAppConfig; print('yes' if parse(PulpAppConfig.version) >= parse('3.13.0.dev0') else 'no')")
+echo $NEW_TASKING_SYSTEM
+
+if [[ "$NEW_TASKING_SYSTEM" == "no" ]]; then
+  # TODO: Set ${PULP_WORKER_NUMBER} to the Pod Number
+  # In the meantime, the hostname provides uniqueness.
+  exec rq worker --url "redis://${REDIS_SERVICE_HOST}:${REDIS_SERVICE_PORT}" -w "pulpcore.tasking.worker.PulpWorker" -c "pulpcore.rqconfig"
+else
+  export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
+  export PULP_SETTINGS=/etc/pulp/settings.py
+  export PATH=/usr/local/bin:/usr/bin/
+  exec pulpcore-worker
+fi`,
+						},
+						Env: envVarsWorker,
 						// LivenessProbe:  livenessProbe,
 						// ReadinessProbe: readinessProbe,
 						VolumeMounts: volumeMountsWorker,
@@ -975,7 +1057,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 
 			// rollback the config to not impact other tests
 			objectGet(ctx, createdPulp, PulpName)
-			createdPulp.Spec.Image = "quay.io/pulp/pulp"
+			createdPulp.Spec.Image = "quay.io/pulp/pulp-minimal"
 			createdPulp.Spec.ImageVersion = "latest"
 			createdPulp.Spec.ImageWebVersion = "latest"
 			objectUpdate(ctx, createdPulp)
@@ -1040,7 +1122,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			// rollback the config to not impact other tests
 			//waitPulpOperatorFinish(ctx, createdPulp)
 			objectGet(ctx, createdPulp, PulpName)
-			createdPulp.Spec.Image = "quay.io/pulp/pulp"
+			createdPulp.Spec.Image = "quay.io/pulp/pulp-minimal"
 			createdPulp.Spec.ImageVersion = "latest"
 			createdPulp.Spec.ImageWebVersion = "latest"
 			objectUpdate(ctx, createdPulp)
@@ -1097,7 +1179,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			// rollback the config to not impact other tests
 			//waitPulpOperatorFinish(ctx, createdPulp)
 			objectGet(ctx, createdPulp, PulpName)
-			createdPulp.Spec.Image = "quay.io/pulp/pulp"
+			createdPulp.Spec.Image = "quay.io/pulp/pulp-minimal"
 			createdPulp.Spec.ImageVersion = "latest"
 			createdPulp.Spec.ImageWebVersion = "latest"
 			objectUpdate(ctx, createdPulp)

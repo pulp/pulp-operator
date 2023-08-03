@@ -156,7 +156,7 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 	readinessProbe := m.Spec.Web.ReadinessProbe
 	if readinessProbe == nil {
 		readinessProbe = &corev1.Probe{
-			FailureThreshold: 5,
+			FailureThreshold: 2,
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
 					Path: controllers.GetPulpSetting(m, "api_root") + "api/v3/status/",
@@ -166,8 +166,8 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 					Scheme: corev1.URIScheme("HTTP"),
 				},
 			},
-			InitialDelaySeconds: 150,
-			PeriodSeconds:       20,
+			InitialDelaySeconds: 3,
+			PeriodSeconds:       10,
 			SuccessThreshold:    1,
 			TimeoutSeconds:      10,
 		}

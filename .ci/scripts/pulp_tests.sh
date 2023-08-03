@@ -14,9 +14,6 @@ elif [[ "${1-}" == "--minikube" ]] || [[ "${1-}" == "-m" ]]; then
     SERVER=nodeport.local
     echo $(minikube ip) nodeport.local | sudo tee -a /etc/hosts
     WEB_PORT=30000
-    kubectl patch pulp example-pulp --type=merge -p "{\"spec\":{ \"nodeport_port\": ${WEB_PORT}, \"pulp_settings\": {\"TOKEN_SERVER\": \"http://${SERVER}:${WEB_PORT}/token/\",\"CONTENT_ORIGIN\": \"http://${SERVER}:${WEB_PORT}\",\"ANSIBLE_API_HOSTNAME\": \"http://${SERVER}:${WEB_PORT}\"} }}"
-    sleep 5
-    kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=180s
   fi
 fi
 
