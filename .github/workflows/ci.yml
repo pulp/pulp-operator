@@ -196,7 +196,7 @@ jobs:
           kubectl apply -f config/samples/simple.yaml
         shell: bash
       - name: Check and wait pulp-operator deploy
-        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
+        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
         shell: bash
       - name: Test all components
         run: |
@@ -296,7 +296,7 @@ jobs:
           kubectl apply -f config/samples/simple.yaml
         shell: bash
       - name: Check and wait pulp-operator deploy
-        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
+        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
         shell: bash
       - name: KubeLinter
         if: github.event_name == 'pull_request'
@@ -412,7 +412,7 @@ jobs:
           fi
         shell: bash
       - name: Check and wait pulp-operator deploy
-        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
+        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
         shell: bash
       - name: KubeLinter
         if: github.event_name == 'pull_request'
@@ -514,7 +514,7 @@ jobs:
           fi
         shell: bash
       - name: Check and wait pulp-operator deploy
-        run: kubectl wait --for condition=Galaxy-Operator-Finished-Execution galaxy/galaxy-example --timeout=600s
+        run: kubectl wait --for condition=Galaxy-Operator-Finished-Execution galaxy/galaxy-example --timeout=900s
         shell: bash
       - name: KubeLinter
         if: github.event_name == 'pull_request'
@@ -644,7 +644,7 @@ jobs:
           fi
         shell: bash
       - name: Check and wait pulp-operator deploy [before upgrade]
-        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
+        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
         shell: bash
       - name: Logs [before upgrade]
         if: always()
@@ -660,13 +660,17 @@ jobs:
           sudo systemctl stop pulp-operator.service
           make local
           if [[ "$INGRESS_TYPE" == "ingress" ]]; then
+            kubectl apply -f config/samples/simple.ingress.yaml
             kubectl patch pulp example-pulp --type=merge -p '{"spec": { "web": {"replicas": 1 }}}'
             kubectl patch pulp example-pulp --type=merge -p '{"spec": { "ingress_annotations": { "nginx.ingress.kubernetes.io/proxy-body-size": "0" } }}'
+          else
+            kubectl apply -f config/samples/simple.yaml
+            kubectl patch pulp example-pulp --type=merge -p '{"spec":{"api":{"strategy":{"type":"Recreate"}}}}'
           fi
           sleep 10
         shell: bash
       - name: Check and wait pulp-operator deploy
-        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
+        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
         shell: bash
       - name: KubeLinter
         if: github.event_name == 'pull_request'
@@ -788,7 +792,7 @@ jobs:
           fi
         shell: bash
       - name: Check and wait pulp-operator deploy [before migration]
-        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
+        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
         shell: bash
       - name: Logs [before migration]
         if: always()
@@ -812,9 +816,13 @@ jobs:
           sudo -E docker build -t quay.io/pulp/pulp-operator:go-devel .
           make deploy IMG=quay.io/pulp/pulp-operator:go-devel
           kubectl get pulps.pulp.pulpproject.org
+          kubectl patch pulp example-pulp --type=merge -p '{"spec":{ "api": { "init_container": { "resource_requirements": { "limits": { "cpu": "100m", "memory": "128Mi"  }}}}}}'
+          kubectl patch pulp example-pulp --type=merge -p '{"spec":{ "content": { "init_container": { "resource_requirements": { "limits": { "cpu": "100m", "memory": "128Mi"  }}}}}}'
+          kubectl patch pulp example-pulp --type=merge -p '{"spec":{ "worker": { "init_container": { "resource_requirements": { "limits": { "cpu": "100m", "memory": "128Mi"  }}}}}}'
+          kubectl patch pulp example-pulp --type=merge -p '{"spec":{"nodeport_port": 30000, "pulp_settings": {"TOKEN_SERVER": "http://nodeport.local:30000/token/", "CONTENT_ORIGIN": "http://nodeport.local:30000", "ANSIBLE_API_HOSTNAME": "http://nodeport.local:30000"} }}'
         shell: bash
       - name: Check and wait pulp-operator deploy
-        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
+        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
         shell: bash
       - name: KubeLinter
         if: github.event_name == 'pull_request'

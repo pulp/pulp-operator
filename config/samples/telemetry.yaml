@@ -21,6 +21,7 @@ spec:
   file_storage_size: "2Gi"
   file_storage_storage_class: standard
   ingress_type: nodeport
+  nodeport_port: 30000
   pulp_settings:
     api_root: "/pulp/"
     allowed_export_paths:
@@ -28,3 +29,6 @@ spec:
     allowed_import_paths:
       - /tmp
     analytics: false
+    token_server: http://nodeport.local:30000/token/
+    content_origin: http://nodeport.local:30000
+    ansible_api_hostname: http://nodeport.local:30000

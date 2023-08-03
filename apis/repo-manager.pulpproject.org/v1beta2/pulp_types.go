@@ -717,6 +717,9 @@ type Content struct {
 	// [TODO] Implement this like in ansible version
 	// [DEPRECATED?] Temporarily adding to keep compatibility with ansible version.
 	LogLevel string `json:"log_level,omitempty"`
+
+	// InitContainer defines configuration of the init-containers that run in pulpcore pods
+	InitContainer InitContainer `json:"init_container,omitempty"`
 }
 
 // Worker defines desired state of pulpcore-worker resources
@@ -775,6 +778,9 @@ type Worker struct {
 	// +optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:updateStrategy","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	Strategy appsv1.DeploymentStrategy `json:"strategy,omitempty"`
+
+	// InitContainer defines configuration of the init-containers that run in pulpcore pods
+	InitContainer InitContainer `json:"init_container,omitempty"`
 }
 
 // Web defines desired state of pulpcore-web (reverse-proxy) resources

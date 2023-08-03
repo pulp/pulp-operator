@@ -144,8 +144,7 @@ func serviceContentSpec(name, namespace, deployment_type string) corev1.ServiceS
 			"app":                          "pulp-content",
 			"pulp_cr":                      name,
 		},
-		SessionAffinity:          serviceAffinity,
-		Type:                     serviceType,
-		PublishNotReadyAddresses: true,
+		SessionAffinity: serviceAffinity,
+		Type:            serviceType,
 	}
 }

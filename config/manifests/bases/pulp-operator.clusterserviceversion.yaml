@@ -784,6 +784,19 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:number
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: 'The image name for the init-container. By default, if not provided,
+          it will use the same image from .Spec.Image WARN: defining a different image
+          than the one used by API pods can cause unexpected behaviors!'
+        displayName: Image
+        path: content.init_container.image
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Resource requirements for pulpcore init-container.
+        displayName: Resource Requirements
+        path: content.init_container.resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container liveness. Container will be restarted
           if the probe fails.
         displayName: Liveness Probe
@@ -1440,6 +1453,19 @@ spec:
         displayName: Affinity
         path: worker.affinity
         x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: 'The image name for the init-container. By default, if not provided,
+          it will use the same image from .Spec.Image WARN: defining a different image
+          than the one used by API pods can cause unexpected behaviors!'
+        displayName: Image
+        path: worker.init_container.image
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Resource requirements for pulpcore init-container.
+        displayName: Resource Requirements
+        path: worker.init_container.resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container liveness. Container will be restarted
           if the probe fails.
