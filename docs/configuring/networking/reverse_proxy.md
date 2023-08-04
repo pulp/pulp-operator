@@ -17,7 +17,7 @@ There are cases in which the `Ingress` resource provided by Pulp Operator does n
 
 For such situations, it is possible to configure it manually.
 
-The following `yaml` file is a template with all the *snipets* used by Pulp: [ingress.yaml](../ingress.yaml)  
+The following `yaml` file is a template with all the *snipets* used by Pulp: [ingress.yaml](../../ingress.yaml).  
 It can be used as an example to configure the `Ingress` *backend rules*.
 
 After modifying the file with the expected configurations, create the `Ingress` resource:
