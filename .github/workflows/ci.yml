@@ -20,13 +20,13 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
       - name: Set up Python 3.8
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: '3.8'
       - name: Setup Go environment
@@ -58,7 +58,7 @@ jobs:
   bundle:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Check if bundle files are updated
         run: |
           .ci/scripts/bundle_check.sh
@@ -66,7 +66,7 @@ jobs:
   bundle-upgrade:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Setup Go environment
@@ -83,7 +83,7 @@ jobs:
           make sdkbin OPERATOR_SDK_VERSION=v1.29.0 LOCALBIN=/tmp
           /tmp/operator-sdk olm install
         shell: bash
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           repository: pulp/pulp-operator
@@ -100,7 +100,7 @@ jobs:
         run: |
           /tmp/operator-sdk run bundle --skip-tls localhost:5001/pulp-operator-bundle:old
         shell: bash
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Build bundle image
         run: |
           make bundle-build  bundle-push BUNDLE_IMG=localhost:5001/pulp-operator-bundle:new
@@ -112,7 +112,7 @@ jobs:
   envtest:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Setup Go environment
@@ -129,11 +129,11 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Set up Python 3.8
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: '3.8'
       - name: Setup Go environment
@@ -217,13 +217,13 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
       - name: Set up Python 3.8
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: '3.8'
       - name: Setup Go environment
@@ -322,13 +322,13 @@ jobs:
           - COMPONENT_TYPE: nodeport
           - COMPONENT_TYPE: telemetry
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
       - name: Set up Python 3.8
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: '3.8'
       - name: Setup Go environment
@@ -442,13 +442,13 @@ jobs:
           - STORAGE: azure
           - STORAGE: s3
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
       - name: Set up Python 3.8
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: '3.8'
       - name: Setup Go environment
@@ -560,12 +560,12 @@ jobs:
           - INGRESS_TYPE: ingress
           - INGRESS_TYPE: nodeport
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: pulp/pulp-operator
           ref: main
       - name: Set up Python 3.8
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: '3.8'
       - name: Setup Go environment
@@ -649,7 +649,7 @@ jobs:
       - name: Logs [before upgrade]
         if: always()
         run: .github/workflows/scripts/show_logs.sh
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Upgrade pulp-operator
@@ -691,12 +691,12 @@ jobs:
         include:
           - INGRESS_TYPE: nodeport
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: pulp/pulp-operator
           ref: ansible
       - name: Set up Python 3.8
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: '3.8'
       - name: Install httpie
@@ -793,7 +793,7 @@ jobs:
       - name: Logs [before migration]
         if: always()
         run: .github/workflows/scripts/show_logs.sh
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Setup Go environment
@@ -835,13 +835,13 @@ jobs:
     needs: [containerized, components, galaxy]
     if: github.event_name != 'pull_request'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
       - name: Set up Python 3.8
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: '3.8'
       - name: Setup Go environment
