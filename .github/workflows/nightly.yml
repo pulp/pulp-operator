@@ -10,7 +10,7 @@ jobs:
     name: Publish ansible-based docs
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         ref: ansible
     - name: Run publish docs script
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: ansible-docs
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Run publish docs script
       env:
         PULP_DOCS_KEY: ${{ secrets.PULP_DOCS_KEY }}
