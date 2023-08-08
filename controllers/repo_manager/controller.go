@@ -26,16 +26,12 @@ import (
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
 	pulp_ocp "github.com/pulp/pulp-operator/controllers/ocp"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	policy "k8s.io/api/policy/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
@@ -106,98 +102,9 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
-	// "initialize" operator's .status.condition field
-	if v1.FindStatusCondition(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Operator-Finished-Execution") == nil {
-		log.V(1).Info("Creating operator's .status.conditions[] field ...")
-		v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
-			Type:               cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Operator-Finished-Execution",
-			Status:             metav1.ConditionFalse,
-			Reason:             "OperatorRunning",
-			LastTransitionTime: metav1.Now(),
-			Message:            pulp.Name + " operator tasks running",
-		})
-		if err := r.Status().Update(ctx, pulp); err != nil {
-			log.Error(err, "Failed to update operator's .status.conditions[] field!")
-			return ctrl.Result{}, err
-		}
-	}
-
-	if r.needsPulpWeb(pulp) && pulp.Spec.ImageVersion != pulp.Spec.ImageWebVersion {
-		if pulp.Spec.InhibitVersionConstraint {
-			controllers.CustomZapLogger().Warn("image_version should be equal to image_web_version! Using different versions is not recommended and can make the application unreachable")
-		} else {
-			log.Error(nil, "image_version should be equal to image_web_version. Please, define image_version and image_web_version with the same value")
-			return ctrl.Result{}, nil
-		}
-	}
-
-	// in case of ingress_type == ingress.
-	if isIngress(pulp) {
-
-		// If ingress_type==ingress the operator should fail in case no ingress_class provided
-		// To avoid errors with clusters configured without or with multiple default IngressClass we will ask users to pass an ingress_class
-		if len(pulp.Spec.IngressClassName) == 0 {
-			log.Error(nil, "ingress_type defined as ingress but no ingress_class_name provided. Please, define the ingress_class_name field (with the name of the IngressClass that the operator should use to deploy the new Ingress) to avoid unexpected errors with multiple controllers available")
-			return ctrl.Result{}, nil
-		}
-
-		// the operator should also fail in case no ingress_host is provided
-		// ingress_host is used to populate CONTENT_ORIGIN and ANSIBLE_API_HOSTNAME vars from settings.py
-		// https://docs.pulpproject.org/pulpcore/configuration/settings.html#content-origin
-		//   "A required string containing the protocol, fqdn, and port where the content app is reachable by users.
-		//   This is used by pulpcore and various plugins when referring users to the content app."
-		// pulp.Spec.Hostname is DEPRECATED! Temporarily adding it to keep compatibility with ansible version.
-		if len(pulp.Spec.IngressHost) == 0 && len(pulp.Spec.Hostname) == 0 {
-			log.Error(nil, "ingress_type defined as ingress but no ingress_host provided. Please, define the ingress_host field with the fqdn where "+pulp.Spec.DeploymentType+" should be accessed. This field is required to access API and also redirect "+pulp.Spec.DeploymentType+" CONTENT requests")
-			return ctrl.Result{}, nil
-		}
-	}
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	if requeue, err := ansibleMigrationTasks(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}); needsRequeue(err, requeue) {
-		return ctrl.Result{Requeue: true}, err
-	}
-
-	// Checking if there is more than one storage type defined.
-	// Only a single type should be provided, if more the operator will not be able to
-	// determine which one should be used.
-	for _, resource := range []string{controllers.PulpResource, controllers.CacheResource, controllers.DatabaseResource} {
-		if foundMultiStorage, storageType := controllers.MultiStorageConfigured(pulp, resource); foundMultiStorage {
-			log.Error(nil, "found more than one storage type \""+strings.Join(storageType, `", "`)+"\" for "+resource+". Please, choose only one storage type or do not define any to use emptyDir")
-			return ctrl.Result{}, nil
-		}
-	}
-
-	// Check if this is an OCP cluster and "ingress_type: route".
-	if !isOpenShift && isRoute(pulp) {
-		log.Error(nil, "ingress_type is configured with route in a non-ocp environment. Please, choose another ingress_type (options: [ingress,nodeport]). Route resources are specific to OpenShift installations.")
-		return ctrl.Result{}, nil
-	}
-
-	// Checking immutable fields update
-	immutableFields := []immutableField{
-		{FieldName: "DeploymentType", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
-		{FieldName: "ObjectStorageAzureSecret", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
-		{FieldName: "ObjectStorageS3Secret", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
-		{FieldName: "DBFieldsEncryptionSecret", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
-		{FieldName: "ContainerTokenSecret", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
-		{FieldName: "AdminPasswordSecret", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
-		{FieldName: "ExternalCacheSecret", FieldPath: repomanagerpulpprojectorgv1beta2.Cache{}},
-	}
-	for _, field := range immutableFields {
-		// if tried to modify an immutable field we should trigger a reconcile loop
-		if r.checkImmutableFields(ctx, pulp, field, log) {
-			return ctrl.Result{}, nil
-		}
-	}
-
-	// Checking if the secrets defined in Pulp CR are available.
-	// If an expected secret is not found, the operator will fail early and
-	// NOT trigger a reconciliation loop to avoid "spamming" error messages until
-	// the expected secret is found.
-	if err := checkSecretsAvailable(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}); err != nil {
-		log.Error(err, "Secret defined in Pulp CR not found!")
-		return ctrl.Result{}, nil
+	// run multiple validations before deploying pulp resources
+	if reconcile, err := prechecks(ctx, r, pulp); err != nil || reconcile != nil {
+		return *reconcile, err
 	}
 
 	var pulpController reconcile.Result
