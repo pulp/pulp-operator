@@ -158,11 +158,6 @@ func pulpcoreVolumeMounts(pulp *repomanagerpulpprojectorgv1beta2.Pulp) []corev1.
 	}
 }
 
-// pulpcoreResources returns the resourceRequirements for pulpcore containers
-func pulpcoreResources() corev1.ResourceRequirements {
-	return corev1.ResourceRequirements{}
-}
-
 // resetAdminPasswordContainer defines the container spec for the reset admin password job
 func resetAdminPasswordContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) corev1.Container {
 	// env vars
@@ -182,7 +177,7 @@ func resetAdminPasswordContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) co
 	volumeMounts = append(volumeMounts, adminSecretVolume)
 
 	// resource requirements
-	resources := corev1.ResourceRequirements{}
+	resources := pulp.Spec.AdminPasswordJob.PulpContainer.ResourceRequirements
 
 	return corev1.Container{
 		Name:    "reset-admin-password",
@@ -255,7 +250,7 @@ func migrationContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) corev1.Cont
 	volumeMounts := pulpcoreVolumeMounts(pulp)
 
 	// resource requirements
-	resources := pulpcoreResources()
+	resources := pulp.Spec.MigrationJob.PulpContainer.ResourceRequirements
 
 	return corev1.Container{
 		Name:            "migration",

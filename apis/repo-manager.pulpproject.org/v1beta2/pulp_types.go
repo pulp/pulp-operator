@@ -354,6 +354,12 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	EEDefaults string `json:"ee_defaults,omitempty"`
 
+	// Job to reset pulp admin password
+	AdminPasswordJob PulpJob `json:"admin_password_job,omitempty"`
+
+	// Job to run django migrations
+	MigrationJob PulpJob `json:"migration_job,omitempty"`
+
 	/*
 	 DEPRECATED FIELDS FROM ANSIBLE VERSION
 	*/
@@ -640,7 +646,7 @@ type Api struct {
 	LogLevel string `json:"log_level,omitempty"`
 
 	// InitContainer defines configuration of the init-containers that run in pulpcore pods
-	InitContainer InitContainer `json:"init_container,omitempty"`
+	InitContainer PulpContainer `json:"init_container,omitempty"`
 }
 
 // Content defines desired state of pulpcore-content resources
@@ -719,7 +725,7 @@ type Content struct {
 	LogLevel string `json:"log_level,omitempty"`
 
 	// InitContainer defines configuration of the init-containers that run in pulpcore pods
-	InitContainer InitContainer `json:"init_container,omitempty"`
+	InitContainer PulpContainer `json:"init_container,omitempty"`
 }
 
 // Worker defines desired state of pulpcore-worker resources
@@ -780,7 +786,7 @@ type Worker struct {
 	Strategy appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 
 	// InitContainer defines configuration of the init-containers that run in pulpcore pods
-	InitContainer InitContainer `json:"init_container,omitempty"`
+	InitContainer PulpContainer `json:"init_container,omitempty"`
 }
 
 // Web defines desired state of pulpcore-web (reverse-proxy) resources
@@ -1076,20 +1082,25 @@ type Telemetry struct {
 	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
 }
 
-// InitContainer defines configuration of the init-containers that run in pulpcore pods
-type InitContainer struct {
+// PulpContainer defines configuration of the "auxiliary" containers that run in pulpcore pods
+type PulpContainer struct {
 
-	// The image name for the init-container.
-	// By default, if not provided, it will use the same image from .Spec.Image
+	// The image name for the container.
+	// By default, if not provided, it will use the same image from .Spec.Image.
 	// WARN: defining a different image than the one used by API pods can cause unexpected behaviors!
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	Image string `json:"image,omitempty"`
 
-	// Resource requirements for pulpcore init-container.
+	// Resource requirements for pulpcore aux container.
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
+}
+
+// PulpJob defines the jobs used by pulpcore containers to run single-shot administrative tasks
+type PulpJob struct {
+	PulpContainer PulpContainer `json:"container,omitempty"`
 }
 
 // PulpStatus defines the observed state of Pulp

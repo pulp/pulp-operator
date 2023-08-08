@@ -324,7 +324,7 @@ metadata:
     capabilities: Full Lifecycle
     categories: Integration & Delivery
     containerImage: quay.io/pulp/pulp-operator:devel
-    createdAt: "2023-07-27T21:41:02Z"
+    createdAt: "2023-08-08T18:04:04Z"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
     operators.operatorframework.io/builder: operator-sdk-v1.29.0
@@ -2516,6 +2516,19 @@ spec:
       kind: Pulp
       name: pulps.repo-manager.pulpproject.org
       specDescriptors:
+      - description: 'The image name for the container. By default, if not provided,
+          it will use the same image from .Spec.Image. WARN: defining a different
+          image than the one used by API pods can cause unexpected behaviors!'
+        displayName: Image
+        path: admin_password_job.container.image
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Resource requirements for pulpcore aux container.
+        displayName: Resource Requirements
+        path: admin_password_job.container.resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'Secret where the administrator password can be found. Default:
           <operator''s name> + "-admin-password"'
         displayName: Admin Password Secret
@@ -2550,14 +2563,14 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:number
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: 'The image name for the init-container. By default, if not provided,
-          it will use the same image from .Spec.Image WARN: defining a different image
-          than the one used by API pods can cause unexpected behaviors!'
+      - description: 'The image name for the container. By default, if not provided,
+          it will use the same image from .Spec.Image. WARN: defining a different
+          image than the one used by API pods can cause unexpected behaviors!'
         displayName: Image
         path: api.init_container.image
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Resource requirements for pulpcore init-container.
+      - description: Resource requirements for pulpcore aux container.
         displayName: Resource Requirements
         path: api.init_container.resource_requirements
         x-descriptors:
@@ -2739,14 +2752,14 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:number
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: 'The image name for the init-container. By default, if not provided,
-          it will use the same image from .Spec.Image WARN: defining a different image
-          than the one used by API pods can cause unexpected behaviors!'
+      - description: 'The image name for the container. By default, if not provided,
+          it will use the same image from .Spec.Image. WARN: defining a different
+          image than the one used by API pods can cause unexpected behaviors!'
         displayName: Image
         path: content.init_container.image
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Resource requirements for pulpcore init-container.
+      - description: Resource requirements for pulpcore aux container.
         displayName: Resource Requirements
         path: content.init_container.resource_requirements
         x-descriptors:
@@ -3074,6 +3087,19 @@ spec:
         displayName: Loadbalancer Protocol
         path: loadbalancer_protocol
         x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: 'The image name for the container. By default, if not provided,
+          it will use the same image from .Spec.Image. WARN: defining a different
+          image than the one used by API pods can cause unexpected behaviors!'
+        displayName: Image
+        path: migration_job.container.image
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Resource requirements for pulpcore aux container.
+        displayName: Resource Requirements
+        path: migration_job.container.resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'Define if the operator should or should not mount the custom
           CA certificates added to the cluster via cluster-wide proxy config. Default:
@@ -3409,14 +3435,14 @@ spec:
         path: worker.affinity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: 'The image name for the init-container. By default, if not provided,
-          it will use the same image from .Spec.Image WARN: defining a different image
-          than the one used by API pods can cause unexpected behaviors!'
+      - description: 'The image name for the container. By default, if not provided,
+          it will use the same image from .Spec.Image. WARN: defining a different
+          image than the one used by API pods can cause unexpected behaviors!'
         displayName: Image
         path: worker.init_container.image
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Resource requirements for pulpcore init-container.
+      - description: Resource requirements for pulpcore aux container.
         displayName: Resource Requirements
         path: worker.init_container.resource_requirements
         x-descriptors:

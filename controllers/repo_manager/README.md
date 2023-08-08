@@ -10,7 +10,8 @@
 * [Cache](#cache)
 * [Content](#content)
 * [Database](#database)
-* [InitContainer](#initcontainer)
+* [PulpContainer](#pulpcontainer)
+* [PulpJob](#pulpjob)
 * [PulpList](#pulplist)
 * [PulpSpec](#pulpspec)
 * [PulpStatus](#pulpstatus)
@@ -49,7 +50,7 @@ Api defines desired state of pulpcore-api resources
 | pdb | PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods | *policy.PodDisruptionBudgetSpec | false |
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
 | log_level | [TODO] I couldnt find a reference for this var in ansible [DEPRECATED?] Temporarily adding to keep compatibility with ansible version. | string | false |
-| init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [InitContainer](#initcontainer) | false |
+| init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [PulpContainer](#pulpcontainer) | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -94,7 +95,7 @@ Content defines desired state of pulpcore-content resources
 | pdb | PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods | *policy.PodDisruptionBudgetSpec | false |
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
 | log_level | [TODO] Implement this like in ansible version [DEPRECATED?] Temporarily adding to keep compatibility with ansible version. | string | false |
-| init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [InitContainer](#initcontainer) | false |
+| init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [PulpContainer](#pulpcontainer) | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -125,17 +126,6 @@ Database defines desired state of postgres
 
 [Back to Custom Resources](#custom-resources)
 
-#### InitContainer
-
-InitContainer defines configuration of the init-containers that run in pulpcore pods
-
-| Field | Description | Scheme | Required |
-| ----- | ----------- | ------ | -------- |
-| image | The image name for the init-container. By default, if not provided, it will use the same image from .Spec.Image WARN: defining a different image than the one used by API pods can cause unexpected behaviors! | string | false |
-| resource_requirements | Resource requirements for pulpcore init-container. | corev1.ResourceRequirements | false |
-
-[Back to Custom Resources](#custom-resources)
-
 #### Pulp
 
 
@@ -145,6 +135,27 @@ InitContainer defines configuration of the init-containers that run in pulpcore 
 | metadata |  | metav1.ObjectMeta | false |
 | spec |  | [PulpSpec](#pulpspec) | false |
 | status |  | [PulpStatus](#pulpstatus) | false |
+
+[Back to Custom Resources](#custom-resources)
+
+#### PulpContainer
+
+PulpContainer defines configuration of the \"auxiliary\" containers that run in pulpcore pods
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| image | The image name for the container. By default, if not provided, it will use the same image from .Spec.Image. WARN: defining a different image than the one used by API pods can cause unexpected behaviors! | string | false |
+| resource_requirements | Resource requirements for pulpcore aux container. | corev1.ResourceRequirements | false |
+
+[Back to Custom Resources](#custom-resources)
+
+#### PulpJob
+
+PulpJob defines the jobs used by pulpcore containers to run single-shot administrative tasks
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| container |  | [PulpContainer](#pulpcontainer) | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -216,6 +227,8 @@ PulpSpec defines the desired state of Pulp
 | mount_trusted_ca | Define if the operator should or should not mount the custom CA certificates added to the cluster via cluster-wide proxy config. Default: false | bool | false |
 | deploy_ee_defaults | Define if the operator should or should not deploy the default Execution Environments. Default: false | bool | false |
 | ee_defaults | Name of the ConfigMap with the list of Execution Environments that should be synchronized. Default: ee-default-images | string | false |
+| admin_password_job | Job to reset pulp admin password | [PulpJob](#pulpjob) | false |
+| migration_job | Job to run django migrations | [PulpJob](#pulpjob) | false |
 | image_pull_secret | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Image pull secret for container images. Default: \"\" | string | false |
 | affinity | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Affinity is a group of affinity scheduling rules. | *[Affinity](#affinity) | false |
 | redis_image | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. The image name for the redis image. Default: \"redis:latest\" | string | false |
@@ -359,6 +372,6 @@ Worker defines desired state of pulpcore-worker resources
 | livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
 | pdb | PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods | *policy.PodDisruptionBudgetSpec | false |
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
-| init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [InitContainer](#initcontainer) | false |
+| init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [PulpContainer](#pulpcontainer) | false |
 
 [Back to Custom Resources](#custom-resources)

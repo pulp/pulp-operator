@@ -17,28 +17,19 @@ spec:
 #            - test
   api:
     replicas: 1
-    init_container:
-      resource_requirements:
-        limits:
-          cpu: 100m
-          memory: 128Mi
   content:
     replicas: 1
-    init_container:
-      resource_requirements:
-        limits:
-          cpu: 100m
-          memory: 128Mi
-
   worker:
     replicas: 1
-    init_container:
-      resource_requirements:
-        limits:
-          cpu: 100m
-          memory: 128Mi
   web:
     replicas: 1
+  migration_job:
+    container:
+      resource_requirements:
+        requests:
+          cpu: 1
+        limits:
+          cpu: 1
 
   database:
     postgres_storage_class: standard
