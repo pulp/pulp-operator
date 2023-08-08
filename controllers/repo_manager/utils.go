@@ -426,7 +426,7 @@ func needsRequeue(err error, pulpController ctrl.Result) bool {
 // needsPulpWeb will return true if ingress_type is not route and the ingress_type provided does not
 // support nginx controller, which is a scenario where pulp-web should be deployed
 func (r *RepoManagerReconciler) needsPulpWeb(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
-	return isRoute(pulp) && !controllers.IsNginxIngressSupported(pulp)
+	return !isRoute(pulp) && !controllers.IsNginxIngressSupported(pulp)
 }
 
 // isNginxIngress will check if ingress_type is defined as "ingress"
