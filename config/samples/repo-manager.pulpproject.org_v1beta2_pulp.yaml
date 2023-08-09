@@ -3,8 +3,6 @@ kind: Pulp
 metadata:
   name: example
 spec:
-  file_storage_access_mode: "ReadWriteMany"
-  file_storage_size: "10Gi"
   ingress_type: nodeport
   pulp_settings:
     api_root: "/pulp/"
@@ -12,7 +10,6 @@ spec:
       - /tmp
     allowed_import_paths:
       - /tmp
-  storage_type: File
   api:
     replicas: 1
   cache:

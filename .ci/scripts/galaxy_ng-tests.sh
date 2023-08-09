@@ -6,16 +6,9 @@ SERVER=$(hostname)
 WEB_PORT="24817"
 if [[ "$1" == "--minikube" ]] || [[ "$1" == "-m" ]]; then
   KUBE="minikube"
-  SERVER="localhost"
-  if [[ "$CI_TEST" == "true" ]]; then
-    SVC_NAME="galaxy-example-web-svc"
-    WEB_PORT="24880"
-    API_SVC="galaxy-example-api-svc"
-    API_PORT="24817"
-    kubectl port-forward service/$SVC_NAME $WEB_PORT:$WEB_PORT &
-    kubectl port-forward service/$API_SVC $API_PORT:$API_PORT &
-    echo 127.0.0.1   galaxy-example-api-svc.pulp-operator-system.svc.cluster.local| sudo tee -a /etc/hosts
-  fi
+  WEB_PORT=30000
+  SERVER=nodeport.local
+  echo $(minikube ip) nodeport.local | sudo tee -a /etc/hosts
 fi
 
 pip install ansible
@@ -58,11 +51,11 @@ done
 echo "Pulling ..."
 podman pull quay.io/pulp/pulp-operator:devel
 echo "Login ..."
-podman login --tls-verify=false -u admin -p password localhost:24880
+podman login --tls-verify=false -u admin -p password $SERVER:$WEB_PORT
 echo "Tagging ..."
-podman tag quay.io/pulp/pulp-operator:devel localhost:24880/pulp/pulp-operator:devel
+podman tag quay.io/pulp/pulp-operator:devel $SERVER:$WEB_PORT/pulp/pulp-operator:devel
 echo "Pushing ..."
-podman push --tls-verify=false localhost:24880/pulp/pulp-operator:devel
+podman push --tls-verify=false $SERVER:$WEB_PORT/pulp/pulp-operator:devel
 
 echo "Repositories ..."
 curl -H "Authorization:Token $TOKEN" $BASE_ADDR/api/galaxy/_ui/v1/execution-environments/repositories/ | jq
