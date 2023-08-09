@@ -816,10 +816,10 @@ jobs:
           sudo -E docker build -t quay.io/pulp/pulp-operator:go-devel .
           make deploy IMG=quay.io/pulp/pulp-operator:go-devel
           kubectl get pulps.pulp.pulpproject.org
-          kubectl patch pulp example-pulp --type=merge -p '{"spec":{ "api": { "init_container": { "resource_requirements": { "limits": { "cpu": "100m", "memory": "128Mi"  }}}}}}'
-          kubectl patch pulp example-pulp --type=merge -p '{"spec":{ "content": { "init_container": { "resource_requirements": { "limits": { "cpu": "100m", "memory": "128Mi"  }}}}}}'
-          kubectl patch pulp example-pulp --type=merge -p '{"spec":{ "worker": { "init_container": { "resource_requirements": { "limits": { "cpu": "100m", "memory": "128Mi"  }}}}}}'
+          kubectl patch pulp example-pulp --type=merge -p '{"spec":{ "migration_job": { "container": { "resource_requirements": { "requests": { "cpu": 1 }, "limits":{ "cpu": 1} }}  }}}'
           kubectl patch pulp example-pulp --type=merge -p '{"spec":{"nodeport_port": 30000, "pulp_settings": {"TOKEN_SERVER": "http://nodeport.local:30000/token/", "CONTENT_ORIGIN": "http://nodeport.local:30000", "ANSIBLE_API_HOSTNAME": "http://nodeport.local:30000"} }}'
+          kubectl patch pulp example-pulp --type=merge -p '{"spec":{ "pvc": "example-pulp-file-storage" }}'
+          kubectl patch pulp example-pulp --type=json -p="[{'op': 'remove', 'path': '/spec/content/resource_requirements'},{'op': 'remove', 'path': '/spec/worker/resource_requirements'},{'op': 'remove', 'path': '/spec/web/resource_requirements'},{'op': 'remove', 'path': '/spec/file_storage_access_mode'},{'op': 'remove', 'path': '/spec/file_storage_size'}]"
         shell: bash
       - name: Check and wait pulp-operator deploy
         run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s

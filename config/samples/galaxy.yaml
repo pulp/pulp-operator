@@ -14,18 +14,22 @@ spec:
   signing_scripts_configmap: "signing-scripts"
   storage_type: File
   ingress_type: nodeport
+  nodeport_port: 30000
   # k3s local-path requires this
   file_storage_access_mode: "ReadWriteMany"
   # We have a little over 10GB free on GHA VMs/instances
   file_storage_size: "10Gi"
   file_storage_storage_class: standard
   pulp_settings:
+    token_server: http://nodeport.local:30000/token/
+    content_origin: http://nodeport.local:30000
+    ansible_api_hostname: http://nodeport.local:30000
     api_root: "/api/galaxy/pulp/"
     allowed_export_paths:
       - /tmp
     allowed_import_paths:
       - /tmp
-    telemetry: false
+    analytics: false
   database:
     postgres_storage_class: standard
   api:

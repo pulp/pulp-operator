@@ -189,8 +189,6 @@ metadata:
                 }
               }
             },
-            "file_storage_access_mode": "ReadWriteMany",
-            "file_storage_size": "10Gi",
             "ingress_type": "nodeport",
             "pulp_settings": {
               "allowed_export_paths": [
@@ -201,7 +199,6 @@ metadata:
               ],
               "api_root": "/pulp/"
             },
-            "storage_type": "File",
             "worker": {
               "replicas": 2,
               "resource_requirements": {
@@ -253,6 +250,7 @@ metadata:
             "image_web": "quay.io/pulp/galaxy-web",
             "image_web_version": "4.6.3",
             "ingress_type": "nodeport",
+            "nodeport_port": 30000,
             "pulp_settings": {
               "allowed_export_paths": [
                 "/tmp"
@@ -260,8 +258,11 @@ metadata:
               "allowed_import_paths": [
                 "/tmp"
               ],
+              "analytics": false,
+              "ansible_api_hostname": "http://nodeport.local:30000",
               "api_root": "/api/galaxy/pulp/",
-              "telemetry": false
+              "content_origin": "http://nodeport.local:30000",
+              "token_server": "http://nodeport.local:30000/token/"
             },
             "signing_scripts_configmap": "signing-scripts",
             "signing_secret": "signing-galaxy",
@@ -324,7 +325,7 @@ metadata:
     capabilities: Full Lifecycle
     categories: Integration & Delivery
     containerImage: quay.io/pulp/pulp-operator:devel
-    createdAt: "2023-08-08T18:04:04Z"
+    createdAt: "2023-08-09T19:33:08Z"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
     operators.operatorframework.io/builder: operator-sdk-v1.29.0

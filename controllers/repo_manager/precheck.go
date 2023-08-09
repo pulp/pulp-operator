@@ -73,6 +73,11 @@ func prechecks(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerp
 		return reconcile, nil
 	}
 
+	// verify inconsistency in file_storage_* definition
+	if reconcile := checkFileStorage(ctx, r, pulp); reconcile != nil {
+		return reconcile, nil
+	}
+
 	return nil, nil
 }
 
@@ -200,4 +205,24 @@ func checkSecretsAvailability(ctx context.Context, r *RepoManagerReconciler, pul
 		return &ctrl.Result{}
 	}
 	return nil
+}
+
+// checkFileStorage verifies if there is a file_storage definition but the storage_class is not provided
+// the file_storage_* fields are used to provision the PVC using the provided file_storage_class
+// if no file_storage_class is provided, the other fields will not be useful and can cause confusion
+func checkFileStorage(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
+	if hasFileStorageDefinition(pulp) && len(pulp.Spec.FileStorageClass) == 0 {
+		r.RawLogger.Error(nil, "No file_storage_class provided for the file_storage_{access_mode,size} definition(s)!")
+		r.RawLogger.Error(nil, "Provide a file_storage_storage_class with the file_storage_{access_mode,size} fields to deploy Pulp with persistent data")
+		r.RawLogger.Error(nil, "or remove all file_storage_* fields to deploy Pulp with emptyDir.")
+		return &ctrl.Result{}
+	}
+	return nil
+}
+
+// hasFileStorageDefinition returns true if any file_storage field is defined
+func hasFileStorageDefinition(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
+	// [TODO] check if we should also verify strings.ToLower(pulp.Spec.StorageType) == "file"
+	// not sure if we will deprecate the storageType field
+	return len(pulp.Spec.FileStorageAccessMode) > 0 || len(pulp.Spec.FileStorageSize) > 0
 }
