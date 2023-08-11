@@ -141,7 +141,7 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 	apiDeployment := &appsv1.Deployment{}
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, apiDeployment)
 	expected := deploymentForPulpApi(funcResources)
-	if requeue, err := controllers.ReconcileObject(funcResources, expected, apiDeployment, conditionType); err != nil || requeue {
+	if requeue, err := controllers.ReconcileObject(funcResources, expected, apiDeployment, conditionType, controllers.PulpDeployment{}); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
@@ -156,7 +156,7 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 	apiSvc := &corev1.Service{}
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api-svc", Namespace: pulp.Namespace}, apiSvc)
 	expectedSvc := serviceForAPI(funcResources)
-	if requeue, err := controllers.ReconcileObject(funcResources, expectedSvc, apiSvc, conditionType); err != nil || requeue {
+	if requeue, err := controllers.ReconcileObject(funcResources, expectedSvc, apiSvc, conditionType, controllers.PulpService{}); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
@@ -164,7 +164,7 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 	serverSecret := &corev1.Secret{}
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-server", Namespace: pulp.Namespace}, serverSecret)
 	expectedServerSecret := pulpServerSecret(funcResources)
-	if requeue, err := controllers.ReconcileObject(funcResources, expectedServerSecret, serverSecret, conditionType); err != nil || requeue {
+	if requeue, err := controllers.ReconcileObject(funcResources, expectedServerSecret, serverSecret, conditionType, controllers.PulpSecret{}); err != nil || requeue {
 		log.Info("Reprovisioning pulpcore-api pods to get the new settings ...")
 		// when requeue==true it means the secret changed so we need to redeploy api and content pods to get the new settings.py
 		r.restartPods(pulp, apiDeployment)
@@ -182,7 +182,7 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 		telemetryConfigMap := &corev1.ConfigMap{}
 		r.Get(ctx, types.NamespacedName{Name: controllers.OtelConfigName, Namespace: pulp.Namespace}, telemetryConfigMap)
 		expectedTelemetryConfigMap := controllers.OtelConfigMap(funcResources)
-		if requeue, err := controllers.ReconcileObject(funcResources, expectedTelemetryConfigMap, telemetryConfigMap, conditionType); err != nil || requeue {
+		if requeue, err := controllers.ReconcileObject(funcResources, expectedTelemetryConfigMap, telemetryConfigMap, conditionType, controllers.PulpConfigMap{}); err != nil || requeue {
 			return ctrl.Result{Requeue: requeue}, err
 		}
 
@@ -190,7 +190,7 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 		telemetryService := &corev1.Service{}
 		r.Get(ctx, types.NamespacedName{Name: controllers.OtelServiceName, Namespace: pulp.Namespace}, telemetryService)
 		expectedTelemetryService := controllers.ServiceOtel(funcResources)
-		if requeue, err := controllers.ReconcileObject(funcResources, expectedTelemetryService, telemetryService, conditionType); err != nil || requeue {
+		if requeue, err := controllers.ReconcileObject(funcResources, expectedTelemetryService, telemetryService, conditionType, controllers.PulpService{}); err != nil || requeue {
 			return ctrl.Result{Requeue: requeue}, err
 		}
 	}

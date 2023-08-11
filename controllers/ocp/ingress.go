@@ -121,7 +121,7 @@ func deployOCPIngressRedirect(resources controllers.FunctionResources, plugins [
 	}
 
 	// Ensure ingress specs are as expected
-	if _, err := controllers.ReconcileObject(controllers.FunctionResources{Context: resources.Context, Client: resources.Client, Pulp: pulp, Scheme: resources.Scheme, Logger: log}, expectedIngress, currentIngress, conditionType); err != nil {
+	if _, err := controllers.ReconcileObject(controllers.FunctionResources{Context: resources.Context, Client: resources.Client, Pulp: pulp, Scheme: resources.Scheme, Logger: log}, expectedIngress, currentIngress, conditionType, controllers.PulpIngress{}); err != nil {
 		return err
 	}
 

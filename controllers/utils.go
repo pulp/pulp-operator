@@ -450,49 +450,46 @@ func UpdateStatus(ctx context.Context, r client.Client, pulp *repomanagerpulppro
 
 // checkSpecModification returns true if .spec fields present on A are equal to
 // what is in B
-func checkSpecModification(currentField, expectedField interface{}) bool {
-	return !equality.Semantic.DeepDerivative(currentField, expectedField)
+func checkSpecModification(fields ...interface{}) bool {
+	expectedField := fields[0]
+	currentField := fields[1]
+	return !equality.Semantic.DeepDerivative(expectedField, currentField)
 }
 
 // CheckDeployment returns true if a spec from deployment is not
 // with the expected contents defined in Pulp CR
-func CheckDeploymentSpec(expectedState, currentState interface{}) bool {
+func CheckDeploymentSpec(fields ...interface{}) bool {
+	expected := fields[0].(appsv1.Deployment)
+	current := fields[1].(appsv1.Deployment)
+	hashFromLabel := GetCurrentHash(&current)
+	hashFromExpected := HashFromMutated(&expected, fields[2].(FunctionResources))
+	hashFromCurrent := CalculateHash(current.Spec)
+	return deploymentChanged(hashFromLabel, hashFromExpected, hashFromCurrent)
+}
 
-	expectedSpec := expectedState.(appsv1.DeploymentSpec)
-	currentSpec := currentState.(appsv1.DeploymentSpec)
-
-	// Ensure the deployment template spec is as expected
-	// https://github.com/kubernetes-sigs/kubebuilder/issues/592
-	// * we are checking the []VolumeMounts because DeepDerivative will only make sure that
-	//   what is in the expected definition is found in the current running deployment, which can have a gap
-	//   in case of TrustedCA being true and eventually modified to false (the trusted-ca cm will not get unmounted).
-	// * we are checking the .[]Containers.[]Volumemounts instead of []Volumes because reflect.DeepEqual(dep.Volumes,found.Volumes)
-	//   identifies VolumeSource.EmptyDir being diff (not sure why).
-	// * for NodeSelector, Tolerations, TopologySpreadConstraints, ResourceRequirements
-	//     we are checking through Semantic.DeepEqual(expectedState.NodeSelector,currentState.NodeSelector) because the
-	//     DeepDerivative(expectedState.Spec, currentState.Spec) only checks if {labels,tolerations,constraints} defined in expectedState are in currentState, but not
-	//     if what is in the currentState is also in expectedState and we are not using reflect.DeepEqual because it will consider [] != nil
-	return !equality.Semantic.DeepDerivative(expectedSpec, currentSpec) ||
-		!reflect.DeepEqual(expectedSpec.Template.Spec.Containers[0].VolumeMounts, currentSpec.Template.Spec.Containers[0].VolumeMounts) ||
-		!equality.Semantic.DeepEqual(expectedSpec.Template.Spec.NodeSelector, currentSpec.Template.Spec.NodeSelector) ||
-		!equality.Semantic.DeepEqual(expectedSpec.Template.Spec.Tolerations, currentSpec.Template.Spec.Tolerations) ||
-		!equality.Semantic.DeepEqual(expectedSpec.Template.Spec.TopologySpreadConstraints, currentSpec.Template.Spec.TopologySpreadConstraints) ||
-		!equality.Semantic.DeepEqual(expectedSpec.Template.Spec.Containers[0].Resources, currentSpec.Template.Spec.Containers[0].Resources) ||
-		!equality.Semantic.DeepEqual(expectedSpec.Template.Spec.Affinity, currentSpec.Template.Spec.Affinity)
+// deploymentChanged returns true if
+// * the hash stored as deployment label is equal to the hash calculated from the expected spec AND
+// * the hash calculated from the current deployment spec is equal to the hash calculated from the expected spec
+func deploymentChanged(hashFromLabel, hashFromExpected, hashFromCurrent string) bool {
+	return hashFromLabel != hashFromExpected || hashFromCurrent != hashFromExpected
 }
 
 // checkPulpServerSecretModification returns true if the settings.py from pulp-server secret
 // does not have the expected contents
-func checkPulpServerSecretModification(expectedState, currentState interface{}) bool {
-	expectedData := expectedState.(map[string]string)["settings.py"]
-	currentData := string(currentState.(map[string][]byte)["settings.py"])
+func checkPulpServerSecretModification(fields ...interface{}) bool {
+	expectedData := CalculateHash(fields[0])
+	convertCurrent := convertSecretDataFormat(fields[1].(map[string][]byte))
+	currentData := CalculateHash(convertCurrent)
 	return expectedData != currentData
 }
 
-// [TODO] Pending implementation. Not sure if we should focus on this now considering
-// that for production clusters an external postgres should be used.
-func checkPostgresSecretModification(expectedState, currentState interface{}) bool {
-	return false
+// convertSecretDataFormat converts the Secret's data field into a map[string]string
+func convertSecretDataFormat(secret map[string][]byte) map[string]string {
+	converted := map[string]string{}
+	for k := range secret {
+		converted[k] = string(secret[k])
+	}
+	return converted
 }
 
 // isRouteOrIngress is used to assert if the provided resource is an ingress or a route
@@ -502,9 +499,165 @@ func isRouteOrIngress(resource interface{}) bool {
 	return route || ingress
 }
 
+// PulpObject represents Pulp resources managed by pulp-operator
+type PulpObject interface {
+	GetFields(...interface{}) []interface{}
+	GetModifiedFunc() func(...interface{}) bool
+	GetFieldAndKind() (string, string)
+}
+type PulpDeployment struct{}
+type PulpSecret struct{}
+type PulpService struct{}
+type PulpConfigMap struct{}
+type PulpIngress struct{}
+type PulpRoute struct{}
+type PulpObjectMetadata struct{}
+
+// GetFields expects 3 arguments:
+// * the current Deployment spec
+// * the expected Deployment spec
+// * a FunctionResources so that CheckDeploymentSpec can use it to get the labels from current Deployment
+func (PulpDeployment) GetFields(obj ...interface{}) []interface{} {
+	var fieldsState []interface{}
+	expectedSpec := reflect.Indirect(reflect.ValueOf(obj[0].(client.Object))).Interface()
+	currentSpec := reflect.Indirect(reflect.ValueOf(obj[1].(client.Object))).Interface()
+	return append(fieldsState, expectedSpec, currentSpec, obj[2].(FunctionResources))
+}
+
+// GetModifiedFunc returns the function used to check the Deployment modification
+func (PulpDeployment) GetModifiedFunc() func(...interface{}) bool {
+	return CheckDeploymentSpec
+}
+
+// GetFieldAndKind returns the field being checked and the object kind
+func (PulpDeployment) GetFieldAndKind() (string, string) {
+	return "Spec", "Deployment"
+}
+
+// GetFields expects 2 arguments:
+// * the current encoded Secret data
+// * the expected "raw" Secret string data
+func (PulpSecret) GetFields(obj ...interface{}) []interface{} {
+	var fieldsState []interface{}
+	expectedData := reflect.Indirect(reflect.ValueOf(obj[0].(client.Object))).FieldByName("StringData").Interface()
+	currentData := reflect.Indirect(reflect.ValueOf(obj[1].(client.Object))).FieldByName("Data").Interface()
+	return append(fieldsState, expectedData, currentData)
+}
+
+// GetModifiedFunc returns the function used to check the Secret modification
+func (PulpSecret) GetModifiedFunc() func(...interface{}) bool {
+	return checkPulpServerSecretModification
+}
+
+// GetFieldAndKind returns the field being checked and the object kind
+func (PulpSecret) GetFieldAndKind() (string, string) {
+	return "Data", "Secret"
+}
+
+// GetFields expects 2 arguments:
+// * the current ConfigMap data
+// * the expected ConfigMap data
+func (PulpConfigMap) GetFields(obj ...interface{}) []interface{} {
+	var fieldsState []interface{}
+	expectedData := append(fieldsState, reflect.Indirect(reflect.ValueOf(obj[0].(client.Object))).FieldByName("Data").Interface())
+	currentData := append(fieldsState, reflect.Indirect(reflect.ValueOf(obj[1].(client.Object))).FieldByName("Data").Interface())
+	return append(fieldsState, expectedData, currentData)
+}
+
+// GetModifiedFunc returns the function used to check the COnfigMap modification
+func (PulpConfigMap) GetModifiedFunc() func(...interface{}) bool {
+	return checkSpecModification
+}
+
+// GetFieldAndKind returns the field being checked and the object kind
+func (PulpConfigMap) GetFieldAndKind() (string, string) {
+	return "Data", "ConfigMap"
+}
+
+// GetFields expects 2 arguments:
+// * the current Service spec field
+// * the expected Service spec field
+func (PulpService) GetFields(obj ...interface{}) []interface{} {
+	var fieldsState []interface{}
+	expectedSpec := append(fieldsState, reflect.Indirect(reflect.ValueOf(obj[0].(client.Object))).FieldByName("Spec").Interface())
+	currentSpec := append(fieldsState, reflect.Indirect(reflect.ValueOf(obj[1].(client.Object))).FieldByName("Spec").Interface())
+	return append(fieldsState, expectedSpec, currentSpec)
+}
+
+// GetModifiedFunc returns the function used to check the Service modification
+func (PulpService) GetModifiedFunc() func(...interface{}) bool {
+	return checkSpecModification
+}
+
+// GetFieldAndKind returns the field being checked and the object kind
+func (PulpService) GetFieldAndKind() (string, string) {
+	return "Spec", "Service"
+}
+
+// GetFields expects 2 arguments:
+// * the current Service spec field
+// * the expected Service spec field
+func (PulpIngress) GetFields(obj ...interface{}) []interface{} {
+	var fieldsState []interface{}
+	expectedSpec := append(fieldsState, reflect.Indirect(reflect.ValueOf(obj[0].(client.Object))).FieldByName("Spec").Interface())
+	currentSpec := append(fieldsState, reflect.Indirect(reflect.ValueOf(obj[1].(client.Object))).FieldByName("Spec").Interface())
+	return append(fieldsState, expectedSpec, currentSpec)
+}
+
+// GetModifiedFunc returns the function used to check the Ingress modification
+func (PulpIngress) GetModifiedFunc() func(...interface{}) bool {
+	return checkSpecModification
+}
+
+// GetFieldAndKind returns the field being checked and the object kind
+func (PulpIngress) GetFieldAndKind() (string, string) {
+	return "Spec", "Ingress"
+}
+
+// GetFields expects 3 arguments:
+// * the current Deployment spec
+// * the expected Deployment spec
+// * a FunctionResources so that CheckDeploymentSpec can use it to get the labels from current Deployment
+func (PulpRoute) GetFields(obj ...interface{}) []interface{} {
+	var fieldsState []interface{}
+	expectedSpec := append(fieldsState, reflect.Indirect(reflect.ValueOf(obj[0].(client.Object))).FieldByName("Spec").Interface())
+	currentSpec := append(fieldsState, reflect.Indirect(reflect.ValueOf(obj[1].(client.Object))).FieldByName("Spec").Interface())
+	return append(fieldsState, expectedSpec, currentSpec)
+}
+
+// GetModifiedFunc returns the function used to check the Route modification
+func (PulpRoute) GetModifiedFunc() func(...interface{}) bool {
+	return checkSpecModification
+}
+
+// GetFieldAndKind returns the field being checked and the object kind
+func (PulpRoute) GetFieldAndKind() (string, string) {
+	return "Spec", "Route"
+}
+
+// GetFields expects 2 arguments:
+// * the current Object definition
+// * the expected Object definition
+func (PulpObjectMetadata) GetFields(obj ...interface{}) []interface{} {
+	var fieldsState []interface{}
+	expectedState := reflect.Indirect(reflect.ValueOf(obj[0].(client.Object))).FieldByName("ObjectMeta").Interface()
+	currentState := reflect.Indirect(reflect.ValueOf(obj[1].(client.Object))).FieldByName("ObjectMeta").Interface()
+	return append(fieldsState, expectedState, currentState)
+}
+
+// GetModifiedFunc returns the function used to check the Metadata modification
+func (PulpObjectMetadata) GetModifiedFunc() func(...interface{}) bool {
+	return checkMetadataModification
+}
+
+// GetFieldAndKind returns the field being checked and the object kind
+func (PulpObjectMetadata) GetFieldAndKind() (string, string) {
+	return "Metadata", "pulp resource"
+}
+
 // updateObject is a function that verifies if an object has been modified
 // and update, if necessary, with the expected config
-func updateObject(resources FunctionResources, modified func(interface{}, interface{}) bool, objKind, conditionType, field string, expectedState, currentState client.Object) (bool, error) {
+func updateObject(resources FunctionResources, modified func(...interface{}) bool, objKind, conditionType, field string, expectedState, currentState client.Object, pulpObject PulpObject) (bool, error) {
 
 	log := resources.Logger
 	client := resources.Client
@@ -512,28 +665,11 @@ func updateObject(resources FunctionResources, modified func(interface{}, interf
 
 	// get object name
 	objName := reflect.Indirect(reflect.ValueOf(expectedState)).FieldByName("Name").Interface().(string)
-	var currentField, expectedField interface{}
 
-	// Get the interface value based on "field" parameter
-	if field == "Annotations" || field == "Labels" {
-		currentField = reflect.Indirect(reflect.ValueOf(currentState)).FieldByName("ObjectMeta").FieldByName(field).Interface()
-		expectedField = reflect.Indirect(reflect.ValueOf(expectedState)).FieldByName("ObjectMeta").FieldByName(field).Interface()
-	} else if field == "Spec" {
-		currentField = reflect.Indirect(reflect.ValueOf(currentState)).FieldByName(field).Interface()
-		expectedField = reflect.Indirect(reflect.ValueOf(expectedState)).FieldByName(field).Interface()
-	} else if field == "Data" {
-		currentField = reflect.Indirect(reflect.ValueOf(currentState)).FieldByName(field).Interface()
-		if objKind == "Secret" {
-			// Retrieving a Secret using k8s-client will return the Data field (map[string][uint8])
-			// When we are creating the secrets (for example, through the pulpServerSecret function) we are
-			// using the StringData field
-			expectedField = reflect.Indirect(reflect.ValueOf(expectedState)).FieldByName("StringData").Interface()
-		} else {
-			expectedField = reflect.Indirect(reflect.ValueOf(expectedState)).FieldByName("Data").Interface()
-		}
-	}
+	// consolidate the fields to be verified/compared into a slice
+	fieldsState := pulpObject.GetFields(expectedState, currentState, resources)
 
-	if modified(expectedField, currentField) {
+	if modified(fieldsState...) {
 		log.Info("The " + field + " from " + objKind + " " + objName + " has been modified! Reconciling ...")
 		UpdateStatus(resources.Context, client, pulp, metav1.ConditionFalse, conditionType, "Updating"+objKind, "Reconciling "+objName+" "+objKind)
 
@@ -543,10 +679,14 @@ func updateObject(resources FunctionResources, modified func(interface{}, interf
 		if isRouteOrIngress(expectedState) {
 			reflect.ValueOf(expectedState).MethodByName("SetResourceVersion").Call(reflect.ValueOf(currentState).MethodByName("GetResourceVersion").Call([]reflect.Value{}))
 		}
-		if err := client.Update(resources.Context, expectedState); err != nil {
+		if err := client.Update(resources.Context, expectedState); err != nil && !k8s_errors.IsConflict(err) {
 			log.Error(err, "Error trying to update "+objName+" "+objKind+" ...")
 			UpdateStatus(resources.Context, client, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdating"+objKind, "Failed to reconcile "+objName+" "+objKind+": "+err.Error())
 			return false, err
+		} else if err != nil && k8s_errors.IsConflict(err) {
+			// whenever we get the "**object has been modified**" error we can just
+			// trigger a new reconciliation to get the updated object and try again
+			return true, nil
 		}
 		return true, nil
 	}
@@ -555,47 +695,19 @@ func updateObject(resources FunctionResources, modified func(interface{}, interf
 
 // ReconcileObject will check if the definition from Pulp CR is reflecting the current
 // object state and if not will synchronize the configuration
-func ReconcileObject(funcResources FunctionResources, expectedState, currentState client.Object, conditionType string) (bool, error) {
+// func ReconcileObject(funcResources FunctionResources, expectedState, currentState client.Object, conditionType string, pulpObject PulpObject) (bool, error) {
+func ReconcileObject(funcResources FunctionResources, expectedState, currentState client.Object, conditionType string, pulpObject PulpObject) (bool, error) {
 
-	var objKind string
-
-	// checkFunction is the function to check if resource is equal to expected
-	checkFunction := checkSpecModification
-	switch expectedState.(type) {
-	case *routev1.Route:
-		objKind = "Route"
-	case *netv1.Ingress:
-		objKind = "Ingress"
-	case *corev1.Service:
-		objKind = "Service"
-
-		// if NodePort field is REMOVED we dont need to do anything
-		// kubernetes will define a new nodeport automatically
-		// we need to do this check only for pulp-web-svc service because it is
-		// the only nodePort svc
-		if expectedState.GetName() == funcResources.Pulp.Name+"-web-svc" && funcResources.Pulp.Spec.NodePort == 0 {
-			return false, nil
-		}
-	case *appsv1.Deployment:
-		objKind = "Deployment"
-		checkFunction = CheckDeploymentSpec
-	case *corev1.ConfigMap:
-		objKind = "ConfigMap"
-		return updateObject(funcResources, checkFunction, objKind, conditionType, "Data", expectedState, currentState)
-	case *corev1.Secret:
-		// by default, defines secretModFunc with the function to verify if pulp-server secret has been modified
-		secretModFunc := checkPulpServerSecretModification
-
-		// if the secret to be verified is the postgres-configuration we need to use another function
-		if expectedState.GetName() == funcResources.Pulp.Name+"-postgres-configuration" {
-			secretModFunc = checkPostgresSecretModification
-		}
-		return updateObject(funcResources, secretModFunc, "Secret", conditionType, "Data", expectedState, currentState)
-	default:
+	// if NodePort field is REMOVED we dont need to do anything
+	// kubernetes will define a new nodeport automatically
+	// we need to do this check only for pulp-web-svc service because it is
+	// the only nodePort svc (this is an edge case)
+	if expectedState.GetName() == funcResources.Pulp.Name+"-web-svc" && funcResources.Pulp.Spec.NodePort == 0 {
 		return false, nil
 	}
 
-	return updateObject(funcResources, checkFunction, objKind, conditionType, "Spec", expectedState, currentState)
+	field, objKind := pulpObject.GetFieldAndKind()
+	return updateObject(funcResources, pulpObject.GetModifiedFunc(), objKind, conditionType, field, expectedState, currentState, pulpObject)
 }
 
 // checkMetadataModification returns true if annotations or labels fields are not equal
@@ -607,8 +719,22 @@ func ReconcileObject(funcResources FunctionResources, expectedState, currentStat
 //
 // to evaluate map[string]nil == map[string]""(empty string) and
 // map[string]"" == map[string]nil
-func checkMetadataModification(currentField, expectedField interface{}) bool {
-	return !equality.Semantic.DeepEqual(currentField, expectedField) || !equality.Semantic.DeepEqual(expectedField, currentField)
+func checkMetadataModification(fields ...interface{}) bool {
+	return metadataAnnotationsDiff(fields...) || metadataLabelsDiff(fields...)
+}
+
+// metadataAnnotationsDiff returns true if the expected annotations are diff from the current
+func metadataAnnotationsDiff(fields ...interface{}) bool {
+	currentAnnotations := fields[0].(metav1.ObjectMeta).Annotations
+	expectedAnnotations := fields[1].(metav1.ObjectMeta).Annotations
+	return !equality.Semantic.DeepEqual(currentAnnotations, expectedAnnotations) || !equality.Semantic.DeepEqual(expectedAnnotations, currentAnnotations)
+}
+
+// metadataLabelsDiff returns true if the expected labels are diff from the current
+func metadataLabelsDiff(fields ...interface{}) bool {
+	currentLabels := fields[0].(metav1.ObjectMeta).Labels
+	expectedLabels := fields[1].(metav1.ObjectMeta).Labels
+	return !equality.Semantic.DeepEqual(currentLabels, expectedLabels) || !equality.Semantic.DeepEqual(expectedLabels, currentLabels)
 }
 
 // ReconcileMetadata is a method to handle only .metadata.{labels,annotations} reconciliation
@@ -618,25 +744,9 @@ func checkMetadataModification(currentField, expectedField interface{}) bool {
 //
 // it will get into an infinite loop
 func ReconcileMetadata(funcResources FunctionResources, expectedState, currentState client.Object, conditionType string) (bool, error) {
-
-	objKind := ""
-	switch expectedState.(type) {
-	case *routev1.Route:
-		objKind = "Route"
-	case *netv1.Ingress:
-		objKind = "Ingress"
-	default:
-		return false, nil
-	}
-
-	metadataFields := []string{"Labels", "Annotations"}
-	for _, field := range metadataFields {
-		if requeue, err := updateObject(funcResources, checkMetadataModification, objKind, conditionType, field, expectedState, currentState); err != nil || requeue {
-			return requeue, err
-		}
-	}
-
-	return false, nil
+	pulpObject := PulpObjectMetadata{}
+	field, objKind := pulpObject.GetFieldAndKind()
+	return updateObject(funcResources, checkMetadataModification, objKind, conditionType, field, expectedState, currentState, pulpObject)
 }
 
 // UpdatCRField patches fieldName in Pulp CR with fieldValue
@@ -685,7 +795,7 @@ func RemovePulpWebResources(resources FunctionResources) error {
 func CalculateHash(obj any) string {
 	calculatedHash := fnv.New32a()
 	hash.DeepHashObject(calculatedHash, obj)
-	return fmt.Sprint(calculatedHash.Sum32())
+	return hex.EncodeToString(calculatedHash.Sum(nil))
 }
 
 // SetHashLabel appends the operator's hash label into object
@@ -701,4 +811,11 @@ func SetHashLabel(label string, obj client.Object) {
 // getCurrentHash retrieves the hash defined in obj label
 func GetCurrentHash(obj client.Object) string {
 	return obj.GetLabels()[OperatorHashLabel]
+}
+
+func HashFromMutated(dep *appsv1.Deployment, resources FunctionResources) string {
+	// execute a "dry run" to update the local "deploy" variable with all
+	// mutated configurations
+	resources.Update(context.TODO(), dep, client.DryRunAll)
+	return CalculateHash(dep.Spec)
 }

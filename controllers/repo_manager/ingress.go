@@ -146,7 +146,7 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 	}
 
 	// Ensure ingress specs are as expected
-	if requeue, err := controllers.ReconcileObject(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}, expectedIngress, currentIngress, conditionType); err != nil || requeue {
+	if requeue, err := controllers.ReconcileObject(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}, expectedIngress, currentIngress, conditionType, controllers.PulpIngress{}); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
 	}
 

@@ -50,7 +50,7 @@ func (r *RepoManagerReconciler) pulpWorkerController(ctx context.Context, pulp *
 	found := &appsv1.Deployment{}
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-worker", Namespace: pulp.Namespace}, found)
 	expected := deploymentForPulpWorker(funcResources)
-	if requeue, err := controllers.ReconcileObject(funcResources, expected, found, conditionType); err != nil || requeue {
+	if requeue, err := controllers.ReconcileObject(funcResources, expected, found, conditionType, controllers.PulpDeployment{}); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
