@@ -177,7 +177,7 @@ func PulpRouteController(resources controllers.FunctionResources, restClient res
 			}
 
 			// Ensure route specs are as expected
-			if requeue, err := controllers.ReconcileObject(resources, expectedRoute, currentRoute, conditionType); err != nil || requeue {
+			if requeue, err := controllers.ReconcileObject(resources, expectedRoute, currentRoute, conditionType, controllers.PulpRoute{}); err != nil || requeue {
 				c <- statusReturn{ctrl.Result{Requeue: requeue}, err}
 				return
 			}

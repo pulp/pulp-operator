@@ -70,7 +70,7 @@ func (r *RepoManagerReconciler) pulpContentController(ctx context.Context, pulp 
 	deployment := &appsv1.Deployment{}
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-content", Namespace: pulp.Namespace}, deployment)
 	expected := deploymentForPulpContent(funcResources)
-	if requeue, err := controllers.ReconcileObject(funcResources, expected, deployment, conditionType); err != nil || requeue {
+	if requeue, err := controllers.ReconcileObject(funcResources, expected, deployment, conditionType, controllers.PulpDeployment{}); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
@@ -78,7 +78,7 @@ func (r *RepoManagerReconciler) pulpContentController(ctx context.Context, pulp 
 	cntSvc := &corev1.Service{}
 	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-content-svc", Namespace: pulp.Namespace}, cntSvc)
 	newCntSvc := serviceForContent(funcResources)
-	if requeue, err := controllers.ReconcileObject(funcResources, newCntSvc, cntSvc, conditionType); err != nil || requeue {
+	if requeue, err := controllers.ReconcileObject(funcResources, newCntSvc, cntSvc, conditionType, controllers.PulpService{}); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
 	}
 

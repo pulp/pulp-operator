@@ -37,6 +37,7 @@ import (
 )
 
 func (r *RepoManagerReconciler) pulpWebController(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, log logr.Logger) (ctrl.Result, error) {
+	funcResources := controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}
 
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Web-Ready"
@@ -66,7 +67,7 @@ func (r *RepoManagerReconciler) pulpWebController(ctx context.Context, pulp *rep
 	// pulp-web Deployment
 	webDeployment := &appsv1.Deployment{}
 	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web", Namespace: pulp.Namespace}, webDeployment)
-	newWebDeployment := r.deploymentForPulpWeb(pulp)
+	newWebDeployment := r.deploymentForPulpWeb(pulp, funcResources)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new Pulp Web Deployment", "Deployment.Namespace", newWebDeployment.Namespace, "Deployment.Name", newWebDeployment.Name)
 		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingWebDeployment", "Creating "+pulp.Name+"-web deployment resource")
@@ -86,7 +87,7 @@ func (r *RepoManagerReconciler) pulpWebController(ctx context.Context, pulp *rep
 	}
 
 	// Reconcile Deployment
-	if controllers.CheckDeploymentSpec(newWebDeployment.Spec, webDeployment.Spec) {
+	if controllers.CheckDeploymentSpec(*newWebDeployment, *webDeployment, funcResources) {
 		log.Info("The Web Deployment has been modified! Reconciling ...")
 		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "UpdatingWebDeployment", "Reconciling "+pulp.Name+"-web deployment resource")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling Web Deployment")
@@ -125,7 +126,7 @@ func (r *RepoManagerReconciler) pulpWebController(ctx context.Context, pulp *rep
 	}
 
 	// Reconcile Service
-	if requeue, err := controllers.ReconcileObject(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}, newWebSvc, webSvc, conditionType); err != nil || requeue {
+	if requeue, err := controllers.ReconcileObject(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}, newWebSvc, webSvc, conditionType, controllers.PulpService{}); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
@@ -133,7 +134,7 @@ func (r *RepoManagerReconciler) pulpWebController(ctx context.Context, pulp *rep
 }
 
 // deploymentForPulpWeb returns a pulp-web Deployment object
-func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.Deployment {
+func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojectorgv1beta2.Pulp, funcResources controllers.FunctionResources) *appsv1.Deployment {
 
 	ls := labelsForPulpWeb(m)
 	replicas := m.Spec.Web.Replicas
@@ -257,6 +258,8 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 			},
 		},
 	}
+
+	controllers.AddHashLabel(funcResources, dep)
 	// Set Pulp instance as the owner and controller
 	ctrl.SetControllerReference(m, dep, r.Scheme)
 	return dep

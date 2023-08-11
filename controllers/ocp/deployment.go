@@ -50,6 +50,10 @@ func (d DeploymentAPIOCP) Deploy(resources controllers.FunctionResources) client
 	// get the current pulpcore-api common deployment definition
 	deployment := d.DeploymentAPICommon.Deploy(resources).(*appsv1.Deployment)
 	defaultsForOCPDeployment(deployment, resources.Pulp)
+
+	// update the hash label
+	controllers.AddHashLabel(resources, deployment)
+
 	return deployment
 }
 
@@ -64,6 +68,10 @@ func (d DeploymentContentOCP) Deploy(resources controllers.FunctionResources) cl
 	// get the current pulpcore-content common deployment definition
 	deployment := d.DeploymentContentCommon.Deploy(resources).(*appsv1.Deployment)
 	defaultsForOCPDeployment(deployment, resources.Pulp)
+
+	// update the hash label
+	controllers.AddHashLabel(resources, deployment)
+
 	return deployment
 }
 
@@ -78,5 +86,9 @@ func (d DeploymentWorkerOCP) Deploy(resources controllers.FunctionResources) cli
 	// get the current pulpcore-worker common deployment definition
 	deployment := d.DeploymentWorkerCommon.Deploy(resources).(*appsv1.Deployment)
 	defaultsForOCPDeployment(deployment, resources.Pulp)
+
+	// update the hash label
+	controllers.AddHashLabel(resources, deployment)
+
 	return deployment
 }

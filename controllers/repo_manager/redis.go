@@ -8,6 +8,8 @@ import (
 	"github.com/go-logr/logr"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -20,6 +22,10 @@ import (
 )
 
 func (r *RepoManagerReconciler) pulpCacheController(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, log logr.Logger) (ctrl.Result, error) {
+
+	// conditionType is used to update .status.conditions with the current resource state
+	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-API-Ready"
+	funcResources := controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}
 
 	// pulp-redis-data PVC
 	// the PVC will be created only if a StorageClassName is provided
@@ -99,9 +105,8 @@ func (r *RepoManagerReconciler) pulpCacheController(ctx context.Context, pulp *r
 	// redis Deployment
 	deploymentFound := &appsv1.Deployment{}
 	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-redis", Namespace: pulp.Namespace}, deploymentFound)
-	dep := redisDeployment(pulp)
+	dep := redisDeployment(pulp, funcResources)
 	if err != nil && errors.IsNotFound(err) {
-		ctrl.SetControllerReference(pulp, dep, r.Scheme)
 		log.Info("Creating a new Pulp Redis Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 		err = r.Create(ctx, dep)
 		if err != nil {
@@ -117,19 +122,9 @@ func (r *RepoManagerReconciler) pulpCacheController(ctx context.Context, pulp *r
 		return ctrl.Result{}, err
 	}
 
-	// Reconcile Deployment
-	if controllers.CheckDeploymentSpec(dep.Spec, deploymentFound.Spec) {
-		log.Info("The Redis Deployment has been modified! Reconciling ...")
-		ctrl.SetControllerReference(pulp, dep, r.Scheme)
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling Redis Deployment")
-		err = r.Update(ctx, dep)
-		if err != nil {
-			log.Error(err, "Error trying to update the Redis Deployment object ... ")
-			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile Redis Deployment")
-			return ctrl.Result{}, err
-		}
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Redis Deployment reconciled")
-		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
+	// Ensure the deployment spec is as expected
+	if requeue, err := controllers.ReconcileObject(funcResources, dep, deploymentFound, conditionType, controllers.PulpDeployment{}); err != nil || requeue {
+		return ctrl.Result{Requeue: requeue}, err
 	}
 
 	r.recorder.Event(pulp, corev1.EventTypeNormal, "RedisReady", "All Redis tasks ran successfully")
@@ -220,7 +215,7 @@ func redisSvc(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Service {
 }
 
 // redisDeployment returns a Redis Deployment object
-func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.Deployment {
+func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp, funcResources controllers.FunctionResources) *appsv1.Deployment {
 
 	replicas := int32(1)
 
@@ -359,7 +354,7 @@ func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.Deploymen
 	removeStorageDefinition(&resources)
 
 	// deployment definition
-	return &appsv1.Deployment{
+	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name + "-redis",
 			Namespace: m.Namespace,
@@ -422,6 +417,10 @@ func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.Deploymen
 			},
 		},
 	}
+
+	controllers.AddHashLabel(funcResources, dep)
+	ctrl.SetControllerReference(m, dep, funcResources.Scheme)
+	return dep
 }
 
 // removeStorageDefinition ensures that no storage definition is present in resourceRequirements

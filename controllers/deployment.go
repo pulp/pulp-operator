@@ -17,6 +17,7 @@ limitations under the License.
 package controllers
 
 import (
+	"context"
 	"os"
 	"reflect"
 	"strconv"
@@ -112,6 +113,7 @@ func (d CommonDeployment) Deploy(resources any, pulpcoreType string) client.Obje
 		},
 	}
 
+	AddHashLabel(resources.(FunctionResources), dep)
 	// Set Pulp instance as the owner and controller
 	ctrl.SetControllerReference(pulp, dep, resources.(FunctionResources).Scheme)
 	return dep
@@ -1017,6 +1019,17 @@ func (d *CommonDeployment) setSchedulerName() {
 // setTelemetryConfig defines the containers and volumes configuration if telemetry is enabled
 func (d *CommonDeployment) setTelemetryConfig(resources any, pulpcoreType string) {
 	d.containers, d.volumes = telemetryConfig(resources, d.envVars, d.containers, d.volumes, pulpcoreType)
+}
+
+// AddHashLabel creates a label with the calculated hash from the mutated deployment
+func AddHashLabel(r FunctionResources, deployment *appsv1.Deployment) {
+	// if the object does not exist yet we need to mutate the object to get the
+	// default values (I think they are added by the admission controller)
+	if err := r.Create(context.TODO(), deployment, client.DryRunAll); err != nil {
+		SetHashLabel(HashFromMutated(deployment, r), deployment)
+	} else {
+		SetHashLabel(CalculateHash(deployment.Spec), deployment)
+	}
 }
 
 // build constructs the fields used in the deployment specification
