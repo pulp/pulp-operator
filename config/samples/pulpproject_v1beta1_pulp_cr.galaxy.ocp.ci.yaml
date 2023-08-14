@@ -11,14 +11,9 @@ spec:
   admin_password_secret: "example-pulp-admin-password"
   signing_secret: "signing-galaxy"
   signing_scripts_configmap: "signing-scripts"
-  storage_type: File
   ingress_type: route
   route_host: route_host_placeholder
   route_tls_termination_mechanism: edge
-  # k3s local-path requires this
-  file_storage_access_mode: "ReadWriteOnce"
-  # We have a little over 10GB free on GHA VMs/instances
-  file_storage_size: "10Gi"
   pulp_settings:
     api_root: "/api/galaxy/pulp/"
     allowed_export_paths:
