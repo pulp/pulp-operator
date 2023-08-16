@@ -200,10 +200,10 @@
           """
       register: _old_pg_version
 
-    - name: Upgrade data dir from Postgres 12 to 13 if applicable
+    - name: Upgrade data dir from old Postgres to {{ postgres_version }} if applicable
       include_tasks: upgrade_postgres.yml
       when:
-        - _old_pg_version.stdout | default('0') | trim == '12'
+        - (_old_pg_version.stdout | default(0) | int ) < supported_pg_version
   when:
     - managed_database
     - this_pulp['resources'][0]['status']['upgradedPostgresVersion'] | default('none') != '12'

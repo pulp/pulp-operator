@@ -1,4 +1,5 @@
 ---
 
 deployment_type: "pulp"
-_postgres_image: postgres:13
+postgres_version: 15
+_postgres_image: quay.io/sclorg/postgresql-15-c9s:latest

@@ -1,7 +1,7 @@
 ---
 
 deployment_type: "pulp"
-_postgres_image: postgres:13
+_postgres_image: quay.io/sclorg/postgresql-15-c9s:latest
 
 custom_resource_key: '_pulp_pulpproject_org_pulprestore'
 
