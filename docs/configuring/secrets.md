@@ -122,3 +122,23 @@ This field is immutable, i.e., it is not possible to modify the name of the `Sec
 Contains the keys which are going to be used for the [signing and validation of tokens](https://docs.pulpproject.org/pulp_container/authentication.html#token-authentication-label).  
 It is managed by `container_token_secret` field in Pulp `CR`. The `Secret` name is immutable (an attempt to change its name in Pulp `CR` will reconcile it), any update should be done in the existing `Secret` content.
 
+### pulp-secret-key
+
+Name of the Kubernetes `Secret` with Django `SECRET_KEY`.  
+From [Django doc](https://docs.djangoproject.com/en/4.2/ref/settings/#secret-key): "*A secret key for a particular Django installation. This is used to provide cryptographic signing, and should be set to a unique, unpredictable value.*"  
+The `Secret.data.key` must be named **secret_key**.
+
+* in this example we are creating a secret called "*my-django-secret-key*" and the "*secret_key*" key has "*MySuperSecretPassword*" as value
+```bash
+$ kubectl create secret generic my-django-secret-key --from-literal=secret_key=MySuperSecretPassword
+```
+* now we need to set the `pulp_secret_key` field  in the CR
+```yaml
+...
+spec:
+  pulp_secret_key: my-django-secret-key
+...
+```
+
+If the `pulp_secret_key` field is not defined with the name of a `Secret` the Operator will create one (called *pulp-secret-key*) with a random string.  
+This field is immutable, i.e., it is not possible to modify the name of the `Secret` that the Operator will use to define the Django `SECRET_KEY`. In case of a need to update it, the `Secret` content should be updated instead.

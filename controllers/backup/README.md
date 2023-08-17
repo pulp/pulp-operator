@@ -48,6 +48,7 @@ PulpBackupSpec defines the desired state of PulpBackup
 | postgres_label_selector | Label selector used to identify postgres pod for executing migration | string | true |
 | admin_password_secret | Secret where the administrator password can be found | string | false |
 | postgres_configuration_secret | Secret where the database configuration can be found | string | true |
+| pulp_secret_key | Secret where the Django SECRET_KEY configuration can be found | string | false |
 | affinity | Affinity is a group of affinity scheduling rules. | *corev1.Affinity | false |
 
 [Back to Custom Resources](#custom-resources)

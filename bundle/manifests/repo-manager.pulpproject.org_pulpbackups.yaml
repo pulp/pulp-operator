@@ -2922,6 +2922,10 @@ spec:
                 description: Label selector used to identify postgres pod for executing
                   migration
                 type: string
+              pulp_secret_key:
+                description: Secret where the Django SECRET_KEY configuration can
+                  be found
+                type: string
             type: object
           status:
             description: PulpBackupStatus defines the observed state of PulpBackup

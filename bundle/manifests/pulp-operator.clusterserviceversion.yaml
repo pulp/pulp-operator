@@ -325,7 +325,7 @@ metadata:
     capabilities: Full Lifecycle
     categories: Integration & Delivery
     containerImage: quay.io/pulp/pulp-operator:devel
-    createdAt: "2023-08-09T19:33:08Z"
+    createdAt: "2023-08-21T15:47:03Z"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
     operators.operatorframework.io/builder: operator-sdk-v1.29.0
@@ -544,6 +544,11 @@ spec:
       - description: Label selector used to identify postgres pod for executing migration
         displayName: Postgres Label Selector
         path: postgres_label_selector
+      - description: Secret where the Django SECRET_KEY configuration can be found
+        displayName: Django SECRET_KEY configuration
+        path: pulp_secret_key
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
       statusDescriptors:
       - description: Administrator password secret used by the deployed instance
         displayName: Admin Password Secret
@@ -3248,6 +3253,12 @@ spec:
         path: postgres_tolerations
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: 'Name of the Secret to provide Django cryptographic signing.
+          Default: "pulp-secret-key"'
+        displayName: Pulp Secret Key
+        path: pulp_secret_key
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: Definition of /etc/pulp/settings.py config file.
         displayName: Pulp Settings
         path: pulp_settings

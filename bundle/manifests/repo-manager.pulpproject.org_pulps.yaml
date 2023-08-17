@@ -25060,6 +25060,10 @@ spec:
                       type: string
                   type: object
                 type: array
+              pulp_secret_key:
+                description: 'Name of the Secret to provide Django cryptographic signing.
+                  Default: "pulp-secret-key"'
+                type: string
               pulp_settings:
                 description: Definition of /etc/pulp/settings.py config file.
                 type: object
@@ -28000,6 +28004,9 @@ spec:
                 type: string
               object_storage_s3_secret:
                 description: The secret for S3 compliant object storage configuration.
+                type: string
+              pulp_secret_key:
+                description: Name of the Secret to provide Django cryptographic signing.
                 type: string
               storagePersistentVolumeClaim:
                 description: '[DEPRECATED] Temporarily adding to keep compatibility

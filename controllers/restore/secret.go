@@ -72,7 +72,13 @@ type ssoSecret struct {
 	SSOSecret                   string `json:"sso_secret"`
 }
 
+type pulpSecretKey struct {
+	PulpSecretKey string `json:"pulp_secret_key"`
+	SecretKey     string `json:"secret_key"`
+}
+
 const (
+	resourceTypePulpSecretKey      = "PulpSecreyKey"
 	resourceTypeAdminPassword      = "AdminPassword"
 	resourceTypePostgres           = "Postgres"
 	resourceTypeObjectStorage      = "ObjectStorage"
@@ -95,6 +101,11 @@ func (r *RepoManagerRestoreReconciler) restoreSecret(ctx context.Context, pulpRe
 		return r.restoreSecretsFromAnsible(ctx, pulpRestore, backupDir, pod)
 	} else {
 		r.RawLogger.V(1).Info("Restoring from golang backup version", "error: ", err)
+	}
+
+	// restore pulp-secret-key secret
+	if _, err := r.secret(ctx, resourceTypePulpSecretKey, "pulp_secret_key", backupDir, "pulp_secret_key.yaml", pod, pulpRestore); err != nil {
+		return err
 	}
 
 	// restore admin password secret
@@ -200,6 +211,10 @@ func (r *RepoManagerRestoreReconciler) secret(ctx context.Context, resourceType,
 			v = reflect.ValueOf(secretType)
 		case "container_token_secret":
 			secretType := containerTokenSecret{}
+			yaml.Unmarshal([]byte(cmdOutput), &secretType)
+			v = reflect.ValueOf(secretType)
+		case "pulp_secret_key":
+			secretType := pulpSecretKey{}
 			yaml.Unmarshal([]byte(cmdOutput), &secretType)
 			v = reflect.ValueOf(secretType)
 		}

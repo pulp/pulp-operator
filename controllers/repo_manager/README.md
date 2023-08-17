@@ -229,6 +229,7 @@ PulpSpec defines the desired state of Pulp
 | ee_defaults | Name of the ConfigMap with the list of Execution Environments that should be synchronized. Default: ee-default-images | string | false |
 | admin_password_job | Job to reset pulp admin password | [PulpJob](#pulpjob) | false |
 | migration_job | Job to run django migrations | [PulpJob](#pulpjob) | false |
+| pulp_secret_key | Name of the Secret to provide Django cryptographic signing. Default: \"pulp-secret-key\" | string | false |
 | image_pull_secret | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Image pull secret for container images. Default: \"\" | string | false |
 | affinity | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Affinity is a group of affinity scheduling rules. | *[Affinity](#affinity) | false |
 | redis_image | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. The image name for the redis image. Default: \"redis:latest\" | string | false |
@@ -284,6 +285,7 @@ PulpStatus defines the observed state of Pulp
 | admin_password_secret | Secret where the administrator password can be found | string | false |
 | external_cache_secret | Name of the secret with the parameters to connect to an external Redis cluster | string | false |
 | telemetry_enabled | Pulp metrics collection enabled | bool | false |
+| pulp_secret_key | Name of the Secret to provide Django cryptographic signing. | string | false |
 | storagePersistentVolumeClaim | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. | string | false |
 | webURL |  | string | false |
 | databaseConfigurationSecret |  | string | false |

@@ -239,6 +239,18 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 		r.Status().Update(ctx, pulp)
 	}
 
+	// we will only set .status.pulp_secret_key in the first execution (len==0)
+	// and we'll set with the value from pulp.spec.pulp_secret_key if defined
+	if len(pulp.Status.PulpSecretKey) == 0 && len(pulp.Spec.PulpSecretKey) > 0 {
+		pulp.Status.PulpSecretKey = pulp.Spec.PulpSecretKey
+		r.Status().Update(ctx, pulp)
+
+		// if pulp.spec.pulp_secret_key is not defined we should set .status with the default value
+	} else if len(pulp.Status.PulpSecretKey) == 0 && len(pulp.Spec.PulpSecretKey) == 0 {
+		pulp.Status.PulpSecretKey = "pulp-secret-key"
+		r.Status().Update(ctx, pulp)
+	}
+
 	return ctrl.Result{}, nil
 }
 

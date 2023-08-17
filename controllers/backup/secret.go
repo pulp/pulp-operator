@@ -47,10 +47,17 @@ func (r *RepoManagerBackupReconciler) backupSecret(ctx context.Context, pulpBack
 		return err
 	}
 
+	pulpSecretKey := getPulpSecretKey(ctx, pulpBackup)
 	adminPasswordSecret := getAdminPasswordSecret(ctx, pulpBackup)
 	postgresCfgSecret := getPostgresCfgSecret(ctx, pulpBackup)
 	dbFieldsEncryption := getDBFieldsEncryption(ctx, pulpBackup, pulp)
 	containerTokenSecret := getContainerTokenSecret(ctx, pulpBackup, pulp)
+
+	// PULP-SECRET-KEY
+	if err := r.createBackupFile(ctx, secretType{"pulp_secret_key", pulpBackup, backupDir, "pulp_secret_key.yaml", pulpSecretKey, pod}); err != nil {
+		return err
+	}
+	log.Info("PulpSecretKey secret backup finished")
 
 	// pulp-admin and pulp-postgres-configuration secrets will not be stored in secret.yaml file like in pulp-operator
 	// we are splitting them in admin_secret.yaml and postgres_configuration.yaml files

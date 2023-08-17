@@ -58,6 +58,16 @@ func createPwd(pwdSize int) string {
 	return string(pwd)
 }
 
+// Generate a random string to use as a django SECRET_KEY
+func djangoKey() string {
+	const chars = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)"
+	pwd := make([]byte, 50)
+	for i := range pwd {
+		pwd[i] = chars[rand.Intn(len(chars))]
+	}
+	return string(pwd)
+}
+
 // sortKeys will return an ordered slice of strings defined with the keys from a.
 // It is used to make sure that custom settings from pulp-server secret
 // will be built in the same order and avoiding issues when verifying if its

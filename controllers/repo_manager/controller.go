@@ -239,7 +239,7 @@ func indexerFunc(obj client.Object) []string {
 	pulp := obj.(*repomanagerpulpprojectorgv1beta2.Pulp)
 	var keys []string
 
-	secrets := []string{"ObjectStorageAzureSecret", "ObjectStorageS3Secret", "SSOSecret", "AdminPasswordSecret"}
+	secrets := []string{"ObjectStorageAzureSecret", "ObjectStorageS3Secret", "SSOSecret", "AdminPasswordSecret", "PulpSecretKey"}
 	for _, secretField := range secrets {
 		structField := reflect.Indirect(reflect.ValueOf(pulp)).FieldByName("Spec").FieldByName(secretField).String()
 		if structField != "" {

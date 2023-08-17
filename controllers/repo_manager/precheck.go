@@ -185,6 +185,7 @@ func checkImmutableFields(ctx context.Context, r *RepoManagerReconciler, pulp *r
 		{FieldName: "ContainerTokenSecret", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
 		{FieldName: "AdminPasswordSecret", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
 		{FieldName: "ExternalCacheSecret", FieldPath: repomanagerpulpprojectorgv1beta2.Cache{}},
+		{FieldName: "PulpSecretKey", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
 	}
 	for _, field := range immutableFields {
 		// if tried to modify an immutable field we should trigger a reconcile loop
