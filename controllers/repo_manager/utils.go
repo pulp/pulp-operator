@@ -446,12 +446,16 @@ func (r *RepoManagerReconciler) isNginxIngress(pulp *repomanagerpulpprojectorgv1
 
 // getRootURL handles user facing URLs
 func getRootURL(resource controllers.FunctionResources) string {
+	scheme := "https"
 	if isIngress(resource.Pulp) {
+		if resource.Pulp.Spec.IngressTLSSecret == "" {
+			scheme = "http"
+		}
 		hostname := resource.Pulp.Spec.IngressHost
 		if len(resource.Pulp.Spec.Hostname) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
 			hostname = resource.Pulp.Spec.Hostname
 		}
-		return "https://" + hostname
+		return scheme + "://" + hostname
 	}
 	if isRoute(resource.Pulp) {
 		return "https://" + pulp_ocp.GetRouteHost(resource.Pulp)
