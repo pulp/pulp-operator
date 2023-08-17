@@ -56,6 +56,16 @@ func getAdminPasswordSecret(ctx context.Context, pulpBackup *repomanagerpulpproj
 	return adminPasswordSecret
 }
 
+// getPulpSecretKey returns the pulp_secret_key if provided, if not will return
+// the default one based on deployment_name
+func getPulpSecretKey(ctx context.Context, pulpBackup *repomanagerpulpprojectorgv1beta2.PulpBackup) string {
+	adminPasswordSecret := pulpBackup.Spec.PulpSecretKey
+	if len(adminPasswordSecret) == 0 {
+		adminPasswordSecret = getDeploymentName(ctx, pulpBackup) + "-secret-key"
+	}
+	return adminPasswordSecret
+}
+
 // getBackupPVC returns the backup_pvc if provided, if not will return the default one based
 // on deployment_name
 func getBackupPVC(ctx context.Context, pulpBackup *repomanagerpulpprojectorgv1beta2.PulpBackup) string {

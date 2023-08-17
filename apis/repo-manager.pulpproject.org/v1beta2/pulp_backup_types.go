@@ -75,6 +75,12 @@ type PulpBackupSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret"}
 	PostgresConfigurationSecret string `json:"postgres_configuration_secret"`
 
+	// Secret where the Django SECRET_KEY configuration can be found
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Django SECRET_KEY configuration"
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret"}
+	PulpSecretKey string `json:"pulp_secret_key,omitempty"`
+
 	// Affinity is a group of affinity scheduling rules.
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}

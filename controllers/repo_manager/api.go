@@ -86,6 +86,22 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 	if len(pulp.Spec.AdminPasswordSecret) > 1 {
 		adminSecretName = pulp.Spec.AdminPasswordSecret
 	}
+	// update pulp CR admin-password secret with default name
+	if err := controllers.UpdateCRField(ctx, r.Client, pulp, "AdminPasswordSecret", adminSecretName); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	// if .spec.pulp_secret_key is not defined, operator will default to "pulp-secret-key"
+	djangoKey := pulp.Name + "-secret-key"
+	if len(pulp.Spec.PulpSecretKey) > 0 {
+		djangoKey = pulp.Spec.PulpSecretKey
+	}
+	// update pulp CR pulp_secret_key secret with default name
+	// we need to set this field "early" because it will be used to populate
+	// pulp-server-secret with its value
+	if err := controllers.UpdateCRField(ctx, r.Client, pulp, "PulpSecretKey", djangoKey); err != nil {
+		return ctrl.Result{}, err
+	}
 
 	// update pulp CR with container_token_secret secret value
 	if len(pulp.Spec.ContainerTokenSecret) == 0 {
@@ -99,6 +115,8 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 
 	// list of pulp-api resources that should be provisioned
 	resources := []ApiResource{
+		// pulp-secret-key secret
+		{ResourceDefinition{ctx, &corev1.Secret{}, djangoKey, "PulpSecretKey", conditionType, pulp}, pulpDjangoKeySecret},
 		// pulp-server secret
 		{Definition: ResourceDefinition{Context: ctx, Type: &corev1.Secret{}, Name: pulp.Name + "-server", Alias: "Server", ConditionType: conditionType, Pulp: pulp}, Function: pulpServerSecret},
 		// pulp-db-fields-encryption secret
@@ -130,11 +148,6 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 		} else if requeue {
 			return ctrl.Result{Requeue: true}, nil
 		}
-	}
-
-	// update pulp CR admin-password secret with default name
-	if err := controllers.UpdateCRField(ctx, r.Client, pulp, "AdminPasswordSecret", pulp.Name+"-admin-password"); err != nil {
-		return ctrl.Result{}, err
 	}
 
 	// Ensure the deployment spec is as expected
@@ -419,6 +432,12 @@ MEDIA_ROOT = ""
 	}
 	pulp_settings = pulp_settings + fmt.Sprintln("TOKEN_SERVER = \""+tokenServer+"\"")
 
+	if secretKey, err := loadDjangoKey(resources); err != nil {
+		return &corev1.Secret{}
+	} else {
+		pulp_settings = pulp_settings + fmt.Sprintln("SECRET_KEY = \""+secretKey+"\"")
+	}
+
 	// add custom settings to the secret
 	pulp_settings = addCustomPulpSettings(pulp, pulp_settings)
 
@@ -452,13 +471,13 @@ func pulpDBFieldsEncryptionSecret(resources controllers.FunctionResources) clien
 	return sec
 }
 
-// pulp-admin-passowrd
+// pulp-admin-password
 func pulpAdminPasswordSecret(resources controllers.FunctionResources) client.Object {
 
 	pulp := resources.Pulp
 	sec := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      pulp.Name + "-admin-password",
+			Name:      pulp.Spec.AdminPasswordSecret,
 			Namespace: pulp.Namespace,
 		},
 		StringData: map[string]string{
@@ -467,6 +486,22 @@ func pulpAdminPasswordSecret(resources controllers.FunctionResources) client.Obj
 	}
 	ctrl.SetControllerReference(pulp, sec, resources.Scheme)
 
+	return sec
+}
+
+// pulpDjangoKeySecret defines the Secret with the pulp-secret-key
+func pulpDjangoKeySecret(resources controllers.FunctionResources) client.Object {
+	pulp := resources.Pulp
+	sec := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      pulp.Spec.PulpSecretKey,
+			Namespace: pulp.Namespace,
+		},
+		StringData: map[string]string{
+			"secret_key": djangoKey(),
+		},
+	}
+	ctrl.SetControllerReference(pulp, sec, resources.Scheme)
 	return sec
 }
 
@@ -553,4 +588,17 @@ func serviceAPISpec(name, namespace, deployment_type string) corev1.ServiceSpec 
 func storageClassProvided(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
 	_, storageType := controllers.MultiStorageConfigured(pulp, "Pulp")
 	return storageType[0] == controllers.SCNameType
+}
+
+// loadDjangoKey retrieves the django SECRET_KEY from the k8s Secret
+func loadDjangoKey(resources controllers.FunctionResources) (string, error) {
+	pulp := resources.Pulp
+	djangoKey := pulp.Spec.PulpSecretKey
+	resources.Logger.V(1).Info("Retrieving the data from "+pulp.Spec.PulpSecretKey+" Secret", "Secret.Namespace", pulp.Namespace, "Secret.Name", djangoKey)
+	secretKey, err := controllers.RetrieveSecretData(resources.Context, djangoKey, pulp.Namespace, true, resources.Client, "secret_key")
+	if err != nil {
+		resources.Logger.Error(err, "Secret Not Found!", "Secret.Namespace", pulp.Namespace, "Secret.Name", djangoKey)
+		return "", err
+	}
+	return secretKey["secret_key"], nil
 }

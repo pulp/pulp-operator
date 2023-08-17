@@ -360,6 +360,12 @@ type PulpSpec struct {
 	// Job to run django migrations
 	MigrationJob PulpJob `json:"migration_job,omitempty"`
 
+	// Name of the Secret to provide Django cryptographic signing.
+	// Default: "pulp-secret-key"
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	PulpSecretKey string `json:"pulp_secret_key,omitempty"`
+
 	/*
 	 DEPRECATED FIELDS FROM ANSIBLE VERSION
 	*/
@@ -1129,6 +1135,8 @@ type PulpStatus struct {
 	ExternalCacheSecret string `json:"external_cache_secret,omitempty"`
 	// Pulp metrics collection enabled
 	TelemetryEnabled bool `json:"telemetry_enabled,omitempty"`
+	// Name of the Secret to provide Django cryptographic signing.
+	PulpSecretKey string `json:"pulp_secret_key,omitempty"`
 
 	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
 	StoragePersistentVolumeClaim       string `json:"storagePersistentVolumeClaim,omitempty"`
