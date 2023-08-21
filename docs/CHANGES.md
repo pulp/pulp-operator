@@ -13,6 +13,66 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+1.0.0-alpha.9 (2023-08-21)
+==========================
+
+
+Features
+--------
+
+- Added a check for missing file_storage_storage_class definition whenever
+  file_storage_size or file_storage_access_mode is/are provided.
+  [#946](https://github.com/pulp/pulp-operator/issues/946)
+- Moved API container entrypoint migration script to k8s jobs.
+  [#991](https://github.com/pulp/pulp-operator/issues/991)
+- Added the OpenTelemetry support as sidecar container for pulp-api pods.
+  [#1006](https://github.com/pulp/pulp-operator/issues/1006)
+- Added support to define Redis PVC storage size.
+  [#1016](https://github.com/pulp/pulp-operator/issues/1016)
+- Added new fields to set resources for init-container and metrics sidecar containers.
+  [#1019](https://github.com/pulp/pulp-operator/issues/1019)
+- Added the `pulp_secret_key` field to set the Django `SECRET_KEY`.
+  [#1040](https://github.com/pulp/pulp-operator/issues/1040)
+
+
+Bugfixes
+--------
+
+- Fixed an issue in OCP clusters where every ingress would be created with the same configurations (regardless of ingressclass).
+  [#917](https://github.com/pulp/pulp-operator/issues/917)
+- Fixed an issue in OCP clusters where the "pulp-redirect" Ingress would not get removed after modifying ingress_class_name.
+  [#918](https://github.com/pulp/pulp-operator/issues/918)
+- Fixed an issue in `Ingress.spec.rules.http.paths` from non "nginx" or "openshift-default" ingresses.
+  [#923](https://github.com/pulp/pulp-operator/issues/923)
+- Modified the format of backup dir names.
+  [#937](https://github.com/pulp/pulp-operator/issues/937)
+- Fixed a bug that caused the CONTENT_ORIGIN scheme to always be https.
+  [#1048](https://github.com/pulp/pulp-operator/issues/1048)
+
+
+Improved Documentation
+----------------------
+
+- Added a doc section with instructions to install pulp-operator using Helm.
+  [#1008](https://github.com/pulp/pulp-operator/issues/1008)
+
+
+Deprecations and Removals
+-------------------------
+
+- The operator will not get the default ingress domain nor verify the ingressclass anymore to avoid the need of clusterroles.
+  [#885](https://github.com/pulp/pulp-operator/issues/885)
+
+
+Misc
+----
+
+- [#884](https://github.com/pulp/pulp-operator/issues/884), [#984](https://github.com/pulp/pulp-operator/issues/984), [#986](https://github.com/pulp/pulp-operator/issues/986), [#993](https://github.com/pulp/pulp-operator/issues/993), [#1041](https://github.com/pulp/pulp-operator/issues/1041)
+
+
+----
+
+
 1.0.0-alpha.8 (2023-06-23)
 ==========================
 
