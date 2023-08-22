@@ -32,7 +32,7 @@ After installing `pulp-operator` we need to create a `Pulp CR` with the configur
 For example:
 ```
 $ oc apply -f- <<EOF
-apiVersion: repo-manager.pulpproject.org/v1alpha1
+apiVersion: repo-manager.pulpproject.org/v1beta2
 kind: Pulp
 metadata:
   name: pulp

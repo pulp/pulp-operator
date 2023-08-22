@@ -11,7 +11,7 @@ To configure the backup controller, create a manifest file with the definition o
 For example:
 ```
 ---
-apiVersion: repo-manager.pulpproject.org/v1alpha1
+apiVersion: repo-manager.pulpproject.org/v1beta2
 kind: PulpBackup
 metadata:
   name: pulpbackup-sample
@@ -55,7 +55,7 @@ To configure the restore controller, create a manifest file with the definition 
 For example:
 ```
 ---
-apiVersion: repo-manager.pulpproject.org/v1alpha1
+apiVersion: repo-manager.pulpproject.org/v1beta2
 kind: PulpRestore
 metadata:
   name: pulprestore-sample
@@ -78,7 +78,7 @@ By default, the restore procedure will reprovision the environment with a single
 It is also possible to restore with the same number of replicas running when the backup was made. To do so, just set the `keep_replicas` field to true, for example:
 ```
 ---
-apiVersion: repo-manager.pulpproject.org/v1alpha1
+apiVersion: repo-manager.pulpproject.org/v1beta2
 kind: PulpRestore
 metadata:
   name: pulprestore-sample

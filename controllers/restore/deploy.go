@@ -3,7 +3,6 @@ package repo_manager_restore
 import (
 	"context"
 	"encoding/json"
-	"regexp"
 	"strings"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -50,39 +48,7 @@ func (r *RepoManagerRestoreReconciler) restorePulpCR(ctx context.Context, pulpRe
 			},
 		}
 
-		// [DEPRECATED] Temporarily adding to keep compatibility with ansible version
-		ansible, _ := r.isAnsibleBackup(ctx, pulpRestore, backupDir, pod)
-		if !ansible {
-			json.Unmarshal([]byte(cmdOutput), &pulp.Spec)
-		} else {
-			json.Unmarshal([]byte(parseUnquotedJson(cmdOutput)), &pulp.Spec)
-			log.V(1).Info("Restoring Pulp CR from ansible ...", "CR", pulp.Spec)
-
-			// in ansible version the pvc used by database pods was created by the statefulset volumeClaimTemplates
-			// in the current version, if users do not provide a SC or PVC the sts will use emptyDir (no PVC will be created through volumeClaimTemplates)
-			// for ansible restoration we are manually creating the PVC to "replicate" the volumeClaimTemplates behavior
-			postgresPVCName, err := r.deployPostgresPVC(ctx, pulpRestore, &pulp)
-			if err != nil {
-				return PodReplicas{}, err
-			}
-
-			// Configure Pulp CR to use this new PVC
-			pulp.Spec.Database.PVC = postgresPVCName
-
-			// Ansible version deploys Redis by default
-			// cache_enabled is defined in playbook, so we cannot recover this from the copied CR
-			pulp.Spec.Cache.Enabled = true
-
-			// in ansible version if no object storage is defined, the operator will deploy a pvc
-			// in the current version, if users do not provide a SC or PVC or Object Storage credentials
-			// the operator will deploy pulp pods with emptyDir
-			// for ansible restoration we are manually creating the PVC to "replicate" ansible behavior
-			pulpPVCName, err := r.deployPulpPVC(ctx, pulpRestore, &pulp)
-			if err != nil {
-				return PodReplicas{}, err
-			}
-			pulp.Spec.PVC = pulpPVCName
-		}
+		json.Unmarshal([]byte(cmdOutput), &pulp.Spec)
 
 		// store the number of replicas so we can rescale with the same amount later
 		podReplicas = PodReplicas{
@@ -178,21 +144,6 @@ func (r *RepoManagerRestoreReconciler) scaleDeployments(ctx context.Context, pul
 	return nil
 }
 
-// [DEPRECATED] Temporarily adding to keep compatibility with ansible version
-// ansible backup of Pulp CR produces a "non-formatted" file (it is a "json" without quotes in key and values).
-// since it is not formatted we cannot just unmarshal it to Pulp type
-func parseUnquotedJson(pulpCR string) string {
-	re := regexp.MustCompile(`([a-zA-Z0-9-_]+):\s*(http(s)?:\/\/[a-z0-9.-]+(:[0-9]+)?|[a-zA-Z0-9-_./]+)`)
-
-	simpleFields := re.ReplaceAllString(string(pulpCR), `"$1": "$2"`)
-	re = regexp.MustCompile(`([a-zA-Z0-9-_]+):\s*(\{)`)
-
-	objectFields := re.ReplaceAllString(string(simpleFields), `"$1": $2`)
-	re = regexp.MustCompile(`(["a-zA-Z0-9-_]+):\s*\[(.*?)\]`)
-
-	return re.ReplaceAllString(string(objectFields), `"$1": ["$2"]`)
-}
-
 // getDeploymentType returns the deployment_type (if not provided default is "pulp")
 func getDeploymentType(pulp *repomanagerpulpprojectorgv1beta2.Pulp) string {
 	deploymentType := pulp.Spec.DeploymentType
@@ -200,97 +151,4 @@ func getDeploymentType(pulp *repomanagerpulpprojectorgv1beta2.Pulp) string {
 		deploymentType = "pulp"
 	}
 	return deploymentType
-}
-
-// [DEPRECATED] Temporarily adding to keep compatibility with ansible version
-func (r *RepoManagerRestoreReconciler) deployPostgresPVC(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore, pulp *repomanagerpulpprojectorgv1beta2.Pulp) (string, error) {
-
-	log := r.RawLogger
-	postgresPVCName := "postgres-" + pulp.Name
-	deploymentType := getDeploymentType(pulp)
-	postgresPVC := &corev1.PersistentVolumeClaim{}
-	if err := r.Get(ctx, types.NamespacedName{Name: postgresPVCName, Namespace: pulp.Namespace}, postgresPVC); err != nil {
-		postgresPVC = &corev1.PersistentVolumeClaim{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      postgresPVCName,
-				Namespace: pulpRestore.Namespace,
-				Labels: map[string]string{
-					"app.kubernetes.io/name":       "postgres",
-					"app.kubernetes.io/instance":   "postgres-" + pulp.Name,
-					"app.kubernetes.io/component":  "database",
-					"app.kubernetes.io/part-of":    deploymentType,
-					"app.kubernetes.io/managed-by": deploymentType + "-operator",
-					"owner":                        "pulp-dev",
-					"app":                          "postgresql",
-					"pulp_cr":                      pulp.Name,
-				},
-			},
-			Spec: corev1.PersistentVolumeClaimSpec{
-				AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-				StorageClassName: pulp.Spec.PostgresStorageClass,
-			},
-		}
-
-		if pulp.Spec.PostgresResourceRequirements != nil {
-			postgresPVC.Spec.Resources = *pulp.Spec.PostgresResourceRequirements
-		} else {
-			postgresPVC.Spec.Resources.Requests = corev1.ResourceList{
-				corev1.ResourceName(corev1.ResourceStorage): resource.MustParse("8Gi"),
-			}
-		}
-
-		if err = r.Create(ctx, postgresPVC); err != nil {
-			log.Error(err, "Error trying to create the database PVC!")
-			r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Failed to create the database PVC!", "FailedCreateDBPVC")
-			return "", err
-		}
-	}
-	return postgresPVCName, nil
-}
-
-// [DEPRECATED] Temporarily adding to keep compatibility with ansible version
-func (r *RepoManagerRestoreReconciler) deployPulpPVC(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore, pulp *repomanagerpulpprojectorgv1beta2.Pulp) (string, error) {
-
-	log := r.RawLogger
-	deploymentType := getDeploymentType(pulp)
-
-	// in ansible, if no azure nor s3 secret are provided it means it should deploy a PVC
-	if len(pulp.Spec.ObjectStorageAzureSecret) == 0 && len(pulp.Spec.ObjectStorageS3Secret) == 0 {
-		pulpPVCName := pulpRestore.Spec.DeploymentName + "-file-storage"
-		pulpPVC := &corev1.PersistentVolumeClaim{}
-		if err := r.Get(ctx, types.NamespacedName{Name: pulpPVCName, Namespace: pulp.Namespace}, pulpPVC); err != nil {
-			pulpPVC = &corev1.PersistentVolumeClaim{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      pulpPVCName,
-					Namespace: pulpRestore.Namespace,
-					Labels: map[string]string{
-						"app.kubernetes.io/name":       deploymentType + "-storage",
-						"app.kubernetes.io/instance":   deploymentType + "-storage-" + pulpRestore.Spec.DeploymentName,
-						"app.kubernetes.io/component":  "storage",
-						"app.kubernetes.io/part-of":    deploymentType,
-						"app.kubernetes.io/managed-by": deploymentType + "-operator",
-					},
-				},
-				Spec: corev1.PersistentVolumeClaimSpec{
-					AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-					StorageClassName: &pulp.Spec.FileStorageClass,
-				},
-			}
-
-			pulpPVC.Spec.Resources.Requests = corev1.ResourceList{
-				corev1.ResourceName(corev1.ResourceStorage): resource.MustParse(pulp.Spec.FileStorageSize),
-			}
-
-			if err = r.Create(ctx, pulpPVC); err != nil {
-				log.Error(err, "Error trying to create Pulp PVC!")
-				r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Failed to create Pulp PVC!", "FailedCreatePUlpPVC")
-				return "", err
-			}
-		}
-
-		return pulpPVCName, nil
-	}
-
-	// if object storage secret provided, we should not return a PVC
-	return "", nil
 }

@@ -60,9 +60,6 @@ func IngressDefaults(resources any, plugins []IngressPlugin) (*netv1.Ingress, er
 	}
 
 	hostname := pulp.Spec.IngressHost
-	if len(pulp.Spec.Hostname) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		hostname = pulp.Spec.Hostname
-	}
 	ingressSpec := netv1.IngressSpec{
 		IngressClassName: &pulp.Spec.IngressClassName,
 		Rules: []netv1.IngressRule{

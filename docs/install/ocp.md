@@ -54,7 +54,7 @@ After configuring the `Subscription` the only remaining step is to configure `Pu
 For example:
 ```
 $ oc apply -f- <<EOF
-apiVersion: repo-manager.pulpproject.org/v1alpha1
+apiVersion: repo-manager.pulpproject.org/v1beta2
 kind: Pulp
 metadata:
   name: pulp

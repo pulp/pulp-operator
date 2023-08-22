@@ -179,8 +179,6 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 	nodeSelector := map[string]string{}
 	if m.Spec.Web.NodeSelector != nil {
 		nodeSelector = m.Spec.Web.NodeSelector
-	} else if m.Spec.NodeSelector != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		nodeSelector = m.Spec.NodeSelector
 	}
 
 	dep := &appsv1.Deployment{
@@ -281,9 +279,6 @@ func labelsForPulpWeb(m *repomanagerpulpprojectorgv1beta2.Pulp) map[string]strin
 // serviceForPulpWeb returns a service object for pulp-web
 func serviceForPulpWeb(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Service {
 	annotations := m.Spec.Web.ServiceAnnotations
-	if len(m.Spec.ServiceAnnotations) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		annotations = convertStringToMap(m.Spec.ServiceAnnotations)
-	}
 
 	var serviceType corev1.ServiceType
 	servicePort := []corev1.ServicePort{}
@@ -378,9 +373,7 @@ func (r *RepoManagerReconciler) pulpWebConfigMap(m *repomanagerpulpprojectorgv1b
 
 	serverConfig := ""
 	tlsTerminationMechanism := "edge"
-	if len(m.Spec.RouteTLSTerminationMechanism) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		tlsTerminationMechanism = strings.ToLower(m.Spec.RouteTLSTerminationMechanism)
-	} else if len(m.Spec.Web.TLSTerminationMechanism) > 0 {
+	if len(m.Spec.Web.TLSTerminationMechanism) > 0 {
 		tlsTerminationMechanism = strings.ToLower(m.Spec.Web.TLSTerminationMechanism)
 	}
 

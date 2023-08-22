@@ -40,12 +40,10 @@ PulpBackupSpec defines the desired state of PulpBackup
 | ----- | ----------- | ------ | -------- |
 | deployment_type | Name of the deployment type. Can be one of {galaxy,pulp}. | string | true |
 | deployment_name | Name of the deployment to be backed up | string | true |
-| instance_name |  | string | true |
 | backup_pvc | Name of the PVC to be used for storing the backup | string | true |
 | backup_pvc_namespace | Namespace PVC is in | string | true |
 | backup_storage_requirements | Storage requirements for the backup | string | true |
 | backup_storage_class | Storage class to use when creating PVC for backup | string | true |
-| postgres_label_selector | Label selector used to identify postgres pod for executing migration | string | true |
 | admin_password_secret | Secret where the administrator password can be found | string | false |
 | postgres_configuration_secret | Secret where the database configuration can be found | string | true |
 | pulp_secret_key | Secret where the Django SECRET_KEY configuration can be found | string | false |
@@ -64,11 +62,6 @@ PulpBackupStatus defines the observed state of PulpBackup
 | backupClaim | The PVC name used for the backup | string | true |
 | backupNamespace | The namespace used for the backup claim | string | true |
 | backupDirectory | The directory data is backed up to on the PVC | string | true |
-| deploymentStorageType | The deployment storage type | string | true |
 | adminPasswordSecret | Administrator password secret used by the deployed instance | string | true |
-| databaseConfigurationSecret | Database configuration secret used by the deployed instance | string | true |
-| storageSecret | Objectstorage configuration secret used by the deployed instance | string | true |
-| dbFieldsEncryptionSecret | DB fields encryption configuration secret used by deployed instance | string | true |
-| containerTokenSecret | Container token configuration secret used by the deployed instance | string | true |
 
 [Back to Custom Resources](#custom-resources)

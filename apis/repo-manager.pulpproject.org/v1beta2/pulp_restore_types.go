@@ -30,12 +30,6 @@ type PulpRestoreSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	DeploymentType string `json:"deployment_type"`
 
-	// backup source
-	// +kubebuilder:validation:Enum:=CR;PVC
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	BackupSource string `json:"backup_source"`
-
 	// Name of the deployment to be restored to
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="pulp"
@@ -51,26 +45,10 @@ type PulpRestoreSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	BackupPVC string `json:"backup_pvc"`
 
-	// Namespace the PVC is in
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Namespace"}
-	BackupPVCNamespace string `json:"backup_pvc_namespace"`
-
 	// Backup directory name, set as a status found on the backup object (backupDirectory)
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	BackupDir string `json:"backup_dir"`
-
-	// Configuration for the storage type utilized in the backup
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:default:="File"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:select:File","urn:alm:descriptor:com.tectonic.ui:select:S3","urn:alm:descriptor:com.tectonic.ui:select:Azure"}
-	StorageType string `json:"storage_type"`
-
-	// Label selector used to identify postgres pod for executing migration
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	PostgresLabelSelector string `json:"postgres_label_selector"`
 
 	// KeepBackupReplicasCount allows to define if the restore controller should restore the components with the
 	// same number of replicas from backup or restore only a single replica each.

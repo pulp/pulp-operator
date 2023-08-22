@@ -24,31 +24,24 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
-	"go.uber.org/zap/zapcore"
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
 	configv1 "github.com/openshift/api/config/v1"
+	routev1 "github.com/openshift/api/route/v1"
+	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	repo_manager_backup "github.com/pulp/pulp-operator/controllers/backup"
+	repo_manager "github.com/pulp/pulp-operator/controllers/repo_manager"
+	repo_manager_restore "github.com/pulp/pulp-operator/controllers/restore"
+	uzap "go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	routev1 "github.com/openshift/api/route/v1"
-
-	repomanagerv1alpha1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1alpha1"
-	repo_manager_backup "github.com/pulp/pulp-operator/controllers/backup"
-	repo_manager "github.com/pulp/pulp-operator/controllers/repo_manager"
-	repo_manager_restore "github.com/pulp/pulp-operator/controllers/restore"
-
-	uzap "go.uber.org/zap"
-
-	repomanagerpulpprojectorgv1beta1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta1"
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -62,9 +55,6 @@ func init() {
 
 	utilruntime.Must(configv1.AddToScheme(scheme))
 	utilruntime.Must(routev1.AddToScheme(scheme))
-
-	utilruntime.Must(repomanagerv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(repomanagerpulpprojectorgv1beta1.AddToScheme(scheme))
 	utilruntime.Must(repomanagerpulpprojectorgv1beta2.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
@@ -180,7 +170,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info("pulp-operator version: 1.0.1-beta.1")
+	setupLog.Info("pulp-operator version: 1.0.2-beta.1")
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")

@@ -13,7 +13,6 @@ spec:
       - /tmp
     allowed_import_paths:
       - /tmp
-  storage_type: File
   api:
     replicas: 1
   content:
