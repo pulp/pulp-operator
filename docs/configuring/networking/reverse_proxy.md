@@ -25,6 +25,14 @@ After modifying the file with the expected configurations, create the `Ingress` 
 $ kubectl apply -f ingress.yaml
 ```
 
+and update Pulp CR with the `hostname` used in `Ingress`:
+```yaml
+spec:
+  pulp_settings:
+    content_origin: http://<ingress host>
+    ansible_api_hostname: http://<ingress host>
+    token_server: http://<ingress host>/token/
+```
 
 !!! note
     Resources manually created will **not** be managed by the operator, which means,
