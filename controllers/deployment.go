@@ -181,10 +181,6 @@ func (d *CommonDeployment) setAffinity(pulp repomanagerpulpprojectorgv1beta2.Pul
 	if specField != nil {
 		affinity = specField
 	}
-
-	if pulp.Spec.Affinity != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		affinity.NodeAffinity = pulp.Spec.Affinity.NodeAffinity
-	}
 	d.affinity = affinity
 }
 
@@ -217,8 +213,6 @@ func (d *CommonDeployment) setNodeSelector(pulp repomanagerpulpprojectorgv1beta2
 	specField := reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("NodeSelector").Interface().(map[string]string)
 	if specField != nil {
 		nodeSelector = specField
-	} else if pulp.Spec.NodeSelector != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		nodeSelector = pulp.Spec.NodeSelector
 	}
 	d.nodeSelector = nodeSelector
 }
@@ -229,8 +223,6 @@ func (d *CommonDeployment) setTolerations(pulp repomanagerpulpprojectorgv1beta2.
 	specField := reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("Tolerations").Interface().([]corev1.Toleration)
 	if specField != nil {
 		toleration = specField
-	} else if pulp.Spec.Tolerations != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		toleration = pulp.Spec.Tolerations
 	}
 	d.toleration = append([]corev1.Toleration(nil), toleration...)
 }
@@ -241,8 +233,6 @@ func (d *CommonDeployment) setTopologySpreadConstraints(pulp repomanagerpulpproj
 	specField := reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("TopologySpreadConstraints").Interface().([]corev1.TopologySpreadConstraint)
 	if specField != nil {
 		topologySpreadConstraint = specField
-	} else if pulp.Spec.TopologySpreadConstraints != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		topologySpreadConstraint = pulp.Spec.TopologySpreadConstraints
 	}
 	d.topologySpreadConstraint = append([]corev1.TopologySpreadConstraint(nil), topologySpreadConstraint...)
 }
@@ -257,15 +247,10 @@ func (d *CommonDeployment) setEnvVars(resources any, pulpcoreType string) {
 	if pulpcoreType != worker {
 		// gunicornWorkers definition
 		gunicornWorkers := strconv.FormatInt(pulpcoreTypeField.FieldByName("GunicornWorkers").Int(), 10)
-		if pulpcoreType == api && pulp.Spec.GunicornAPIWorkers > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-			gunicornWorkers = strconv.Itoa(pulp.Spec.GunicornAPIWorkers)
-		}
 
 		// gunicornTimeout definition
 		gunicornTimeout := strconv.FormatInt(pulpcoreTypeField.FieldByName("GunicornTimeout").Int(), 10)
-		if pulpcoreType == api && pulp.Spec.GunicornTimeout > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-			gunicornTimeout = strconv.Itoa(pulp.Spec.GunicornTimeout)
-		}
+
 		envVars = []corev1.EnvVar{
 			{Name: "PULP_GUNICORN_TIMEOUT", Value: gunicornTimeout},
 			{Name: "PULP_" + strings.ToUpper(pulpcoreType) + "_WORKERS", Value: gunicornWorkers},
@@ -370,32 +355,7 @@ func GetPostgresEnvVars(pulp repomanagerpulpprojectorgv1beta2.Pulp) (envVars []c
 
 	// if there is no ExternalDBSecret defined, we should
 	// use the postgres instance provided by the operator
-	if len(pulp.Spec.PostgresConfigurationSecret) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		postgresEnvVars := []corev1.EnvVar{
-			{
-				Name: "POSTGRES_SERVICE_HOST",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: pulp.Spec.PostgresConfigurationSecret,
-						},
-						Key: "POSTGRES_HOST",
-					},
-				},
-			}, {
-				Name: "POSTGRES_SERVICE_PORT",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: pulp.Spec.PostgresConfigurationSecret,
-						},
-						Key: "POSTGRES_PORT",
-					},
-				},
-			},
-		}
-		envVars = append(envVars, postgresEnvVars...)
-	} else if len(pulp.Spec.Database.ExternalDBSecret) == 0 {
+	if len(pulp.Spec.Database.ExternalDBSecret) == 0 {
 		containerPort := 0
 		if pulp.Spec.Database.PostgresPort == 0 {
 			containerPort = 5432

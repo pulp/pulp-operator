@@ -1,7 +1,6 @@
 package repo_manager
 
 import (
-	"bufio"
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -24,7 +23,6 @@ import (
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
 	pulp_ocp "github.com/pulp/pulp-operator/controllers/ocp"
-	"golang.org/x/exp/maps"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
@@ -462,9 +460,6 @@ func getRootURL(resource controllers.FunctionResources) string {
 			scheme = "http"
 		}
 		hostname := resource.Pulp.Spec.IngressHost
-		if len(resource.Pulp.Spec.Hostname) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-			hostname = resource.Pulp.Spec.Hostname
-		}
 		return scheme + "://" + hostname
 	}
 	if isRoute(resource.Pulp) {
@@ -485,205 +480,6 @@ func ignoreCronjobStatus() predicate.Predicate {
 			// the controller to do nothing on this update event
 			return reflect.DeepEqual(oldObject.Status, newObject.Status)
 		},
-	}
-}
-
-// convertStringToMap is used to convert old ansible string fields (specifically annotations) into maps
-// An example of usage is the service_annotation field, which is defined as string in ansible version,
-// but the metadata.annotations is expecting map[string]string
-func convertStringToMap(field string) map[string]string {
-	convertedMap := map[string]string{}
-
-	// using a bufio scanner to read the string line by line
-	scanner := bufio.NewScanner(strings.NewReader(field))
-	for scanner.Scan() {
-		split := strings.Split(strings.TrimSpace(scanner.Text()), ":")
-		// ignore empty fields
-		if len(split) == 2 {
-			convertedMap[split[0]] = split[1]
-		}
-	}
-
-	return convertedMap
-}
-
-// ansibleMigrationTasks runs some instructions during upgrade from ansible to go version.
-func ansibleMigrationTasks(resource controllers.FunctionResources) (ctrl.Result, error) {
-
-	pulp := resource.Pulp
-	log := resource.Logger
-	ctx := resource.Context
-
-	// We are using the DeployedImage field (available only in ansible) to verify if
-	// the current CR comes from ansible.
-	if len(pulp.Status.DeployedImage) == 0 || pulp.Status.MigrationDone {
-		return ctrl.Result{}, nil
-	}
-
-	// Block with tasks specific to ansible -> go migration
-	log.Info("Running migration tasks")
-
-	// if .status.storagePersistentVolumeClaim is defined but .spec.pvc is not this is an upgrade from ansible version,
-	// in this case, we need to update the PVC field to avoid the operator provisioning the resources with emptyDir.
-	if len(pulp.Status.StoragePersistentVolumeClaim) > 0 && len(pulp.Spec.PVC) == 0 {
-		log.Info("Updating spec.pvc field ...")
-		if err := controllers.UpdateCRField(ctx, resource.Client, pulp, "PVC", pulp.Status.StoragePersistentVolumeClaim); err != nil {
-			return ctrl.Result{Requeue: true}, err
-		}
-		return ctrl.Result{Requeue: true}, nil
-	}
-
-	// in ansible version a PVC for the database is required (emptyDir is not an option)
-	// since we are migrating, we need to deploy the new STS with the same PVC previously deployed.
-	if len(pulp.Spec.Database.PVC) == 0 {
-		log.Info("Updating spec.database.pvc field ...")
-		oldPVC, err := getPostgresOldPVC(resource)
-		if err != nil {
-			return ctrl.Result{Requeue: true}, err
-		}
-
-		patch := client.MergeFrom(pulp.DeepCopy())
-		pulp.Spec.Database.PVC = oldPVC
-		if err := resource.Client.Patch(ctx, pulp, patch); err != nil {
-			return ctrl.Result{Requeue: true}, err
-		}
-		return ctrl.Result{Requeue: true}, nil
-	}
-
-	// in ansible version Redis is always deployed
-	if !pulp.Spec.Cache.Enabled {
-		log.Info("Updating cache fields ...")
-		patch := client.MergeFrom(pulp.DeepCopy())
-		pulp.Spec.Cache.Enabled = true
-		pulp.Spec.Cache.PVC = pulp.Name + "-redis-data"
-		if err := resource.Client.Patch(ctx, pulp, patch); err != nil {
-			return ctrl.Result{Requeue: true}, err
-		}
-		return ctrl.Result{Requeue: true}, nil
-	}
-
-	// delete api/worker/content apis
-	deleteOldAnsibleDeployments(resource)
-
-	// scale old database sts to 0
-	// we are not deleting it because golang version creates a new sts with different name and
-	// users could manually delete it after reviewing the migration.
-	scaleOldAnsibleSts(resource)
-
-	// update old svc service to point to new postgres pods
-	// (we will keep using it to avoid having to update the secrets with the new hostname)
-	updateOldAnsibleSvc(resource)
-
-	pulp.Status.MigrationDone = true
-	resource.Client.Status().Update(ctx, pulp)
-	log.Info("Migration tasks completed")
-	return ctrl.Result{Requeue: true}, nil
-}
-
-// getOldPostgresLabels returns the list of labels used by ansible postgres sts, svc and pvc.
-func getOldPostgresLabels(resource controllers.FunctionResources) map[string]string {
-	return map[string]string{
-		"app.kubernetes.io/component": "database",
-		"app.kubernetes.io/instance":  "postgres-" + resource.Pulp.Name,
-		"app.kubernetes.io/name":      "postgres",
-	}
-}
-
-// getPostgresOldPVC returns the name of the Postgres PVC deployed by ansible operator
-func getPostgresOldPVC(resource controllers.FunctionResources) (string, error) {
-	pvcList := &corev1.PersistentVolumeClaimList{}
-	labels := getOldPostgresLabels(resource)
-	listOpts := []client.ListOption{
-		client.InNamespace(resource.Pulp.Namespace),
-		client.MatchingLabels(labels),
-	}
-	if err := resource.Client.List(resource.Context, pvcList, listOpts...); err != nil {
-		resource.Logger.Error(err, "Failed to retrieve the list of PostgreSQL volumes")
-		return "", err
-	}
-	if len(pvcList.Items) == 0 {
-		return "", fmt.Errorf("failed to find old ansible PostgreSQL volume")
-	}
-	return pvcList.Items[0].Name, nil
-}
-
-// deleteOldAnsibleDeployments removes old ansible deployments because they are not "compatible"
-// with golang version, the label selectors (immutable fields) are different.
-func deleteOldAnsibleDeployments(resource controllers.FunctionResources) {
-	resource.Logger.Info("Removing old deployments ...")
-	components := []string{"api", "content", "worker", "web", "redis"}
-	for _, component := range components {
-		deployment := &appsv1.Deployment{}
-		deploymentName := resource.Pulp.Name + "-" + component
-		if err := resource.Client.Get(resource.Context, types.NamespacedName{Namespace: resource.Pulp.Namespace, Name: deploymentName}, deployment); err != nil && !k8s_errors.IsNotFound(err) {
-			resource.Logger.Error(err, "Failed to find old "+deploymentName+" deployment from ansible version.")
-			continue
-		}
-		if err := resource.Client.Delete(resource.Context, deployment); err != nil {
-			resource.Logger.Error(err, "Failed to remove old "+deploymentName+" deployment from ansible version.")
-		}
-	}
-}
-
-// scaleOldAnsibleSts scales old ansible postgres statefulset to 0 replicas
-func scaleOldAnsibleSts(resource controllers.FunctionResources) {
-	resource.Logger.Info("Scaling down old Postgres pods ...")
-	replicas := int32(0)
-	statefulSetList := &appsv1.StatefulSetList{}
-	labels := getOldPostgresLabels(resource)
-	listOpts := []client.ListOption{
-		client.InNamespace(resource.Pulp.Namespace),
-		client.MatchingLabels(labels),
-	}
-	if err := resource.Client.List(resource.Context, statefulSetList, listOpts...); err != nil {
-		resource.Logger.Error(err, "Failed to retrieve the list of old ansible StatefulSets.")
-		return
-	}
-
-	statefulSet := &appsv1.StatefulSet{}
-	statefulSetName := statefulSetList.Items[0].Name
-	if err := resource.Client.Get(resource.Context, types.NamespacedName{Namespace: resource.Pulp.Namespace, Name: statefulSetName}, statefulSet); err != nil {
-		resource.Logger.Error(err, "Failed to find old "+statefulSetName+" StatefulSet from ansible version.")
-		return
-	}
-
-	patch := client.MergeFrom(statefulSet.DeepCopy())
-	statefulSet.Spec.Replicas = &replicas
-	if err := resource.Client.Patch(resource.Context, statefulSet, patch); err != nil {
-		resource.Logger.Error(err, "Failed to scale down old "+statefulSetName+" StatefulSet from ansible version.")
-	}
-}
-
-// updateOldAnsibleSvc changes the label selector from ansible postgres service.
-func updateOldAnsibleSvc(resource controllers.FunctionResources) {
-	resource.Logger.Info("Updating Postgres service ...")
-	serviceList := &corev1.ServiceList{}
-	labels := getOldPostgresLabels(resource)
-	listOpts := []client.ListOption{
-		client.InNamespace(resource.Pulp.Namespace),
-		client.MatchingLabels(labels),
-	}
-	if err := resource.Client.List(resource.Context, serviceList, listOpts...); err != nil {
-		resource.Logger.Error(err, "Failed to retrieve the list of old ansible Services.")
-		return
-	}
-
-	service := &corev1.Service{}
-	serviceName := serviceList.Items[0].Name
-	if err := resource.Client.Get(resource.Context, types.NamespacedName{Namespace: resource.Pulp.Namespace, Name: serviceName}, service); err != nil {
-		resource.Logger.Error(err, "Failed to find old "+serviceName+" Service from ansible version.")
-		return
-	}
-
-	newLabels := map[string]string{
-		"app":     "postgresql",
-		"pulp_cr": resource.Pulp.Name,
-	}
-	maps.Copy(newLabels, labels)
-	patch := client.MergeFrom(service.DeepCopy())
-	service.Spec.Selector = newLabels
-	if err := resource.Client.Patch(resource.Context, service, patch); err != nil {
-		resource.Logger.Error(err, "Failed to change selectors from old "+serviceName+" Service ansible version.")
 	}
 }
 

@@ -12,7 +12,6 @@ spec:
   admin_password_secret: "example-pulp-admin-password"
   signing_secret: "signing-galaxy"
   signing_scripts_configmap: "signing-scripts"
-  storage_type: File
   ingress_type: nodeport
   nodeport_port: 30000
   # k3s local-path requires this

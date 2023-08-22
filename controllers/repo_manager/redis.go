@@ -136,15 +136,10 @@ func (r *RepoManagerReconciler) pulpCacheController(ctx context.Context, pulp *r
 func redisDataPVC(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.PersistentVolumeClaim {
 
 	storageClass := &m.Spec.Cache.RedisStorageClass
-	if len(m.Spec.RedisStorageClass) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		storageClass = &m.Spec.RedisStorageClass
-	}
 
 	storageSize := "1Gi"
 	if storageResourceQuantity := m.Spec.Cache.RedisResourceRequirements.Requests.Storage(); !storageResourceQuantity.IsZero() {
 		storageSize = storageResourceQuantity.String()
-	} else if len(m.Spec.RedisStorageSize) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		storageSize = m.Spec.RedisStorageSize
 	}
 
 	// Define the new PVC
@@ -224,10 +219,6 @@ func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp, funcResources con
 		affinity = m.Spec.Cache.Affinity
 	}
 
-	if m.Spec.Affinity != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		affinity.NodeAffinity = m.Spec.Affinity.NodeAffinity
-	}
-
 	// if no strategy is defined in pulp CR we are setting `strategy.Type` with the
 	// default value ("RollingUpdate"), this will be helpful during the reconciliation
 	// when a strategy was previously defined and eventually the field is removed
@@ -236,22 +227,14 @@ func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp, funcResources con
 		strategy.Type = "RollingUpdate"
 	}
 
-	if m.Spec.Redis.Strategy != nil {
-		strategy = *m.Spec.Redis.Strategy
-	}
-
 	nodeSelector := map[string]string{}
 	if m.Spec.Cache.NodeSelector != nil {
 		nodeSelector = m.Spec.Cache.NodeSelector
-	} else if m.Spec.NodeSelector != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		nodeSelector = m.Spec.NodeSelector
 	}
 
 	toleration := []corev1.Toleration{}
 	if m.Spec.Cache.Tolerations != nil {
 		toleration = m.Spec.Cache.Tolerations
-	} else if m.Spec.Tolerations != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		toleration = m.Spec.Tolerations
 	}
 
 	_, storageType := controllers.MultiStorageConfigured(m, "Cache")
@@ -339,18 +322,12 @@ func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp, funcResources con
 	redisImage := os.Getenv("RELATED_IMAGE_PULP_REDIS")
 	if len(m.Spec.Cache.RedisImage) > 0 {
 		redisImage = m.Spec.Cache.RedisImage
-	} else if len(m.Spec.RedisImage) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		redisImage = m.Spec.RedisImage
 	} else if redisImage == "" {
 		redisImage = "docker.io/library/redis:latest"
 	}
 
 	resources := m.Spec.Cache.RedisResourceRequirements
-	if m.Spec.Redis.ResourceRequirements != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		resources = *m.Spec.Redis.ResourceRequirements
-	} else if m.Spec.Redis.RedisResourceRequirements != nil {
-		resources = *m.Spec.Redis.RedisResourceRequirements
-	}
+
 	removeStorageDefinition(&resources)
 
 	// deployment definition

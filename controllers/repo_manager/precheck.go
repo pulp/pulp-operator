@@ -48,11 +48,6 @@ func prechecks(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerp
 		return reconcile, nil
 	}
 
-	// verify and run ansible migration tasks
-	if reconcile, err := ansibleMigration(ctx, r, pulp); err != nil {
-		return &reconcile, err
-	}
-
 	// verify if multiple storage types were provided
 	if reconcile := checkMultipleStorageType(r.RawLogger, pulp); reconcile != nil {
 		return reconcile, nil
@@ -134,21 +129,12 @@ func checkIngressDefinition(log logr.Logger, pulp *repomanagerpulpprojectorgv1be
 		// https://docs.pulpproject.org/pulpcore/configuration/settings.html#content-origin
 		//   "A required string containing the protocol, fqdn, and port where the content app is reachable by users.
 		//   This is used by pulpcore and various plugins when referring users to the content app."
-		// pulp.Spec.Hostname is DEPRECATED! Temporarily adding it to keep compatibility with ansible version.
-		if len(pulp.Spec.IngressHost) == 0 && len(pulp.Spec.Hostname) == 0 {
+		if len(pulp.Spec.IngressHost) == 0 {
 			log.Error(nil, "ingress_type defined as ingress but no ingress_host provided. Please, define the ingress_host field with the fqdn where "+pulp.Spec.DeploymentType+" should be accessed. This field is required to access API and also redirect "+pulp.Spec.DeploymentType+" CONTENT requests")
 			return &ctrl.Result{}
 		}
 	}
 	return nil
-}
-
-// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-func ansibleMigration(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp) (ctrl.Result, error) {
-	if requeue, err := ansibleMigrationTasks(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: r.RawLogger}); needsRequeue(err, requeue) {
-		return ctrl.Result{Requeue: true}, err
-	}
-	return ctrl.Result{}, nil
 }
 
 // checkMultipleStorageType verifies if there is more than one storage type defined.

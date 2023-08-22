@@ -2,7 +2,6 @@ package repo_manager_restore
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
@@ -41,13 +40,6 @@ func (r *RepoManagerRestoreReconciler) restoreDatabaseData(ctx context.Context, 
 		"pg_restore", "-d",
 		"postgresql://" + string(pgConfig.Data["username"]) + ":" + string(pgConfig.Data["password"]) + "@" + string(pgConfig.Data["host"]) + ":" + string(pgConfig.Data["port"]) + "/" + string(pgConfig.Data["database"]),
 		backupDir + "/" + backupFile,
-	}
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version
-	if ansible, _ := r.isAnsibleBackup(ctx, pulpRestore, backupDir, pod); ansible {
-		log.V(1).Info("Restoring from ansible db backup ...")
-		psqlRestore := fmt.Sprintf("psql -U %v -h %v -d %v -p %v", string(pgConfig.Data["username"]), string(pgConfig.Data["host"]), string(pgConfig.Data["database"]), string(pgConfig.Data["port"]))
-		execCmd = []string{"sh", "-c", fmt.Sprintf("cat %v/pulp.db | PGPASSWORD=%v %v", backupDir, string(pgConfig.Data["password"]), psqlRestore)}
 	}
 
 	log.Info("Running db restore ...")

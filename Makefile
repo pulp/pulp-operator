@@ -192,8 +192,6 @@ rename: ## Replace Custom Resource name
 	mv bundle/manifests/repo-manager.pulpproject.org_pulprestores.yaml bundle/manifests/repo-manager.${CR_DOMAIN}_${LOWER_CR_KIND}restores.yaml
 	mv apis/repo-manager.pulpproject.org apis/repo-manager.${CR_DOMAIN}
 	sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" controllers/utils.go
-	mv config/samples/repo-manager.pulpproject.org_v1alpha1_pulp.yaml config/samples/repo-manager.${CR_DOMAIN}_v1alpha1_pulp.yaml
-	mv config/samples/repo-manager.pulpproject.org_v1beta1_pulp.yaml config/samples/repo-manager.${CR_DOMAIN}_v1beta1_pulp.yaml
 	mv config/samples/repo-manager.pulpproject.org_v1beta2_pulp.yaml config/samples/repo-manager.${CR_DOMAIN}_v1beta2_pulp.yaml
 
 .PHONY: run

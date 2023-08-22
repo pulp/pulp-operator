@@ -261,10 +261,6 @@ func pulpServerSecret(resources controllers.FunctionResources) client.Object {
 	// if there is no external database configuration get the databaseconfig from pulp-postgres-configuration secret
 	if len(pulp.Spec.Database.ExternalDBSecret) == 0 {
 		postgresConfigurationSecret := pulp.Name + "-postgres-configuration"
-		if len(pulp.Spec.PostgresConfigurationSecret) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-			postgresConfigurationSecret = pulp.Spec.PostgresConfigurationSecret
-		}
-
 		resources.Logger.V(1).Info("Retrieving Postgres credentials from "+postgresConfigurationSecret+" secret", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Name)
 		pgCredentials, err := controllers.RetrieveSecretData(context, postgresConfigurationSecret, pulp.Namespace, true, client, "username", "password", "database", "port", "sslmode")
 		if err != nil {
@@ -425,9 +421,6 @@ MEDIA_ROOT = ""
 			proto = "https"
 		}
 		hostname := pulp.Spec.IngressHost
-		if len(pulp.Spec.Hostname) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-			hostname = pulp.Spec.Hostname
-		}
 		tokenServer = proto + "://" + hostname + "/token/"
 	}
 	pulp_settings = pulp_settings + fmt.Sprintln("TOKEN_SERVER = \""+tokenServer+"\"")

@@ -34,11 +34,6 @@ type PulpBackupSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	DeploymentName string `json:"deployment_name"`
 
-	// +kubebuilder:default:="pulp"
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	InstanceName string `json:"instance_name"`
-
 	// Name of the PVC to be used for storing the backup
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
@@ -58,11 +53,6 @@ type PulpBackupSpec struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:StorageClass"}
 	BackupSC string `json:"backup_storage_class"`
-
-	// Label selector used to identify postgres pod for executing migration
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	PostgresLabelSelector string `json:"postgres_label_selector"`
 
 	// Secret where the administrator password can be found
 	// +kubebuilder:validation:Optional
@@ -108,29 +98,9 @@ type PulpBackupStatus struct {
 	//+operator-sdk:csv:customresourcedefinitions:type=status
 	BackupDirectory string `json:"backupDirectory"`
 
-	// The deployment storage type
-	//+operator-sdk:csv:customresourcedefinitions:type=status
-	DeploymentStorageType string `json:"deploymentStorageType"`
-
 	// Administrator password secret used by the deployed instance
 	//+operator-sdk:csv:customresourcedefinitions:type=status
 	AdminPasswordSecret string `json:"adminPasswordSecret"`
-
-	// Database configuration secret used by the deployed instance
-	//+operator-sdk:csv:customresourcedefinitions:type=status
-	DatabaseConfigSecret string `json:"databaseConfigurationSecret"`
-
-	// Objectstorage configuration secret used by the deployed instance
-	//+operator-sdk:csv:customresourcedefinitions:type=status
-	StorageSecret string `json:"storageSecret"`
-
-	// DB fields encryption configuration secret used by deployed instance
-	//+operator-sdk:csv:customresourcedefinitions:type=status
-	DBFieldsEncryptionSecret string `json:"dbFieldsEncryptionSecret"`
-
-	// Container token configuration secret used by the deployed instance
-	//+operator-sdk:csv:customresourcedefinitions:type=status
-	ContainerTokenSecret string `json:"containerTokenSecret"`
 }
 
 //+kubebuilder:object:root=true

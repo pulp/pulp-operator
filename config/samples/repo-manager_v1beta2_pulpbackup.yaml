@@ -7,6 +7,5 @@ spec:
   deployment_name: galaxy-example
   deployment_type: galaxy
   backup_storage_class: standard
-  instance_name: pulp
   admin_password_secret: example-pulp-admin-password
   postgres_configuration_secret: galaxy-example-postgres-configuration

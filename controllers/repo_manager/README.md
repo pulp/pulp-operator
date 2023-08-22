@@ -5,7 +5,6 @@
 
 ### Sub Resources
 
-* [Affinity](#affinity)
 * [Api](#api)
 * [Cache](#cache)
 * [Content](#content)
@@ -15,21 +14,9 @@
 * [PulpList](#pulplist)
 * [PulpSpec](#pulpspec)
 * [PulpStatus](#pulpstatus)
-* [Redis](#redis)
-* [ResourceManager](#resourcemanager)
 * [Telemetry](#telemetry)
 * [Web](#web)
 * [Worker](#worker)
-
-#### Affinity
-
-[DEPRECATED] Temporarily adding to keep compatibility with ansible version
-
-| Field | Description | Scheme | Required |
-| ----- | ----------- | ------ | -------- |
-| node_affinity |  | *corev1.NodeAffinity | false |
-
-[Back to Custom Resources](#custom-resources)
 
 #### Api
 
@@ -49,7 +36,6 @@ Api defines desired state of pulpcore-api resources
 | livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
 | pdb | PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods | *policy.PodDisruptionBudgetSpec | false |
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
-| log_level | [TODO] I couldnt find a reference for this var in ansible [DEPRECATED?] Temporarily adding to keep compatibility with ansible version. | string | false |
 | init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [PulpContainer](#pulpcontainer) | false |
 
 [Back to Custom Resources](#custom-resources)
@@ -94,7 +80,6 @@ Content defines desired state of pulpcore-content resources
 | livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
 | pdb | PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods | *policy.PodDisruptionBudgetSpec | false |
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
-| log_level | [TODO] Implement this like in ansible version [DEPRECATED?] Temporarily adding to keep compatibility with ansible version. | string | false |
 | init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [PulpContainer](#pulpcontainer) | false |
 
 [Back to Custom Resources](#custom-resources)
@@ -187,7 +172,6 @@ PulpSpec defines the desired state of Pulp
 | db_fields_encryption_secret | Secret where the Fernet symmetric encryption key is stored. Default: <operators's name>-\"-db-fields-encryption\" | string | false |
 | signing_secret | Secret where the signing certificates are stored. Default: <operators's name>-\"-signing-scripts\" | string | false |
 | signing_scripts_configmap | ConfigMap where the signing scripts are stored. Default: <operators's name>-\"-signing-scripts\" | string | false |
-| storage_type | Configuration for the storage type utilized in the backup | string | false |
 | ingress_type | The ingress type to use to reach the deployed instance. Default: none (will not expose the service) | string | false |
 | ingress_annotations | Annotations for the Ingress | map[string]string | false |
 | ingress_class_name | IngressClassName is used to inform the operator which ingressclass should be used to provision the ingress. Default: \"\" (will use the default ingress class) | string | false |
@@ -230,40 +214,9 @@ PulpSpec defines the desired state of Pulp
 | admin_password_job | Job to reset pulp admin password | [PulpJob](#pulpjob) | false |
 | migration_job | Job to run django migrations | [PulpJob](#pulpjob) | false |
 | pulp_secret_key | Name of the Secret to provide Django cryptographic signing. Default: \"pulp-secret-key\" | string | false |
-| image_pull_secret | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Image pull secret for container images. Default: \"\" | string | false |
-| affinity | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Affinity is a group of affinity scheduling rules. | *[Affinity](#affinity) | false |
-| redis_image | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. The image name for the redis image. Default: \"redis:latest\" | string | false |
-| redis_storage_class | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Storage class to use for the Redis PVC | string | false |
-| redis | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Redis defines desired state of cache resources | [Redis](#redis) | false |
-| redis_storage_size | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Storage size to use for the Redis PVC | string | false |
-| postgres_initdb_args | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Arguments to pass to PostgreSQL initdb command when creating a new cluster. Default: \"--auth-host=scram-sha-256\" | string | false |
-| postgres_host_auth_method | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. PostgreSQL host authentication method. Default: \"scram-sha-256\" | string | false |
-| postgres_image | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. PostgreSQL container image. Default: \"postgres:13\" | string | false |
-| postgres_storage_requirements | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Storage resource requirements for the database container. | *corev1.ResourceRequirements | false |
-| postgres_resource_requirements | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Resource requirements for the database container. | *corev1.ResourceRequirements | false |
-| postgres_storage_class | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Name of the StorageClass required by the claim. | *string | false |
-| postgres_data_path | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Registry path to the PostgreSQL container to use. Default: \"/var/lib/postgresql/data/pgdata\" | string | false |
-| postgres_extra_args | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Arguments to pass to postgres process | []string | false |
-| gunicorn_api_workers | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. The number of gunicorn workers to use for the api. | int | false |
-| gunicorn_content_workers | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. The number of gunicorn workers to use for the api. | int | false |
-| gunicorn_timeout | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. The timeout for the gunicorn process. | int | false |
-| node_selector | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. NodeSelector for the Pulp pods. | map[string]string | false |
-| tolerations | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Node tolerations for the Pulp pods. | []corev1.Toleration | false |
-| postgres_tolerations | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Node tolerations for the Database pods. | []corev1.Toleration | false |
-| topology_spread_constraints | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Topology rule(s) for the pods. | []corev1.TopologySpreadConstraint | false |
-| postgres_configuration_secret | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Custom configuration secret of database pods | string | false |
-| postgres_selector | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. NodeSelector for the database pod. | map[string]string | false |
-| hostname | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Ingress DNS host | string | false |
-| service_annotations | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. pulp-web service annotations | string | false |
-| route_tls_termination_mechanism | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. The secure TLS termination mechanism to use in pulp-web pods. Default: \"edge\" | string | false |
 | loadbalancer_protocol | Protocol used by pulp-web service when ingress_type==loadbalancer | string | false |
 | loadbalancer_port | Port exposed by pulp-web service when ingress_type==loadbalancer | int32 | false |
-| postgres_migrant_configuration_secret | [TODO] Pending implementation, added just to keep compatibility [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Secret where the old database configuration can be found for data migration | string | false |
-| postgres_label_selector | [TODO] Pending implementation, added just to keep compatibility [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Label selector used to identify postgres pod for executing migration | string | false |
-| postgres_keep_pvc_after_upgrade | [TODO] Pending implementation, added just to keep compatibility [DEPRECATED] Temporarily adding to keep compatibility with ansible version. Specify whether or not to keep the old PVC after PostgreSQL upgrades | bool | false |
-| no_log | Configure no_log for no_log tasks | bool | false |
 | telemetry | Telemetry defines the OpenTelemetry configuration | [Telemetry](#telemetry) | false |
-| resource_manager |  | [ResourceManager](#resourcemanager) | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -286,43 +239,6 @@ PulpStatus defines the observed state of Pulp
 | external_cache_secret | Name of the secret with the parameters to connect to an external Redis cluster | string | false |
 | telemetry_enabled | Pulp metrics collection enabled | bool | false |
 | pulp_secret_key | Name of the Secret to provide Django cryptographic signing. | string | false |
-| storagePersistentVolumeClaim | [DEPRECATED] Temporarily adding to keep compatibility with ansible version. | string | false |
-| webURL |  | string | false |
-| databaseConfigurationSecret |  | string | false |
-| storageType |  | string | false |
-| storageSecret |  | string | false |
-| deployedVersion |  | string | false |
-| deployedImage |  | string | false |
-| migrantDatabaseConfigurationSecret |  | string | false |
-| dbFieldsEncryptionSecret |  | string | false |
-| upgradedPostgresVersion |  | string | false |
-| migration_done |  | bool | false |
-
-[Back to Custom Resources](#custom-resources)
-
-#### Redis
-
-[DEPRECATED] Temporarily adding to keep compatibility with ansible version
-
-| Field | Description | Scheme | Required |
-| ----- | ----------- | ------ | -------- |
-| log_level | [TODO] Implement this like in ansible version [DEPRECATED?] Temporarily adding to keep compatibility with ansible version. | string | false |
-| replicas | [TODO] THIS SHOULD BE REMOVED SINCE WE WILL NOT SUPPORT REDIS CLUSTER Keeping it just as a matter of compatibility | int32 | true |
-| redis_resource_requirements |  | *corev1.ResourceRequirements | false |
-| resource_requirements |  | *corev1.ResourceRequirements | false |
-| strategy |  | *appsv1.DeploymentStrategy | false |
-
-[Back to Custom Resources](#custom-resources)
-
-#### ResourceManager
-
-[DEPRECATED] Temporarily adding to keep compatibility with ansible version
-
-| Field | Description | Scheme | Required |
-| ----- | ----------- | ------ | -------- |
-| replicas |  | int32 | true |
-| strategy |  | *appsv1.DeploymentStrategy | false |
-| resource_requirements |  | *corev1.ResourceRequirements | false |
 
 [Back to Custom Resources](#custom-resources)
 

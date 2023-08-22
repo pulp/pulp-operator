@@ -5,7 +5,6 @@ import (
 	"time"
 
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
-	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
@@ -256,17 +255,6 @@ func (r *RepoManagerRestoreReconciler) getBackupDir(ctx context.Context, pulpRes
 		return pulpBackup.Status.BackupDirectory, nil
 	}
 	return backupDir, nil
-}
-
-// isAnsibleBackup returns true if secrets.yaml file exists (a file generated only in ansible version)
-func (r *RepoManagerRestoreReconciler) isAnsibleBackup(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore, backupDir string, pod *corev1.Pod) (bool, error) {
-	execCmd := []string{
-		"stat", backupDir + "/secrets.yaml",
-	}
-	if _, err := controllers.ContainerExec(r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace); err != nil {
-		return false, err
-	}
-	return true, nil
 }
 
 // getDeploymentName returns the deployment_name

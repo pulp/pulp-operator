@@ -165,16 +165,6 @@ func (r *RepoManagerReconciler) databaseController(ctx context.Context, pulp *re
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "DatabaseReady", "All Database tasks ran successfully")
 	}
 
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Golang version will also manage the old service provisioned with ansible-based operator because
-	// we decided that it will be better to keep it to avoid having to update the secrets and configurations that
-	// depend on the old service address.
-	if pulp.Status.MigrationDone {
-		if err := reconcileOldService(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}); err != nil {
-			return ctrl.Result{}, err
-		}
-	}
-
 	return ctrl.Result{}, nil
 }
 
@@ -190,36 +180,24 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 		affinity = m.Spec.Database.Affinity
 	}
 
-	if m.Spec.Affinity != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		affinity.NodeAffinity = m.Spec.Affinity.NodeAffinity
-	}
-
 	nodeSelector := map[string]string{}
 	if m.Spec.Database.NodeSelector != nil {
 		nodeSelector = m.Spec.Database.NodeSelector
-	} else if m.Spec.PostgresSelector != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		nodeSelector = m.Spec.PostgresSelector
 	}
 
 	toleration := []corev1.Toleration{}
 	if m.Spec.Database.Tolerations != nil {
 		toleration = m.Spec.Database.Tolerations
-	} else if m.Spec.PostgresTolerations != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		toleration = m.Spec.PostgresTolerations
 	}
 
 	args := []string{}
 	if len(m.Spec.Database.PostgresExtraArgs) > 0 {
 		args = m.Spec.Database.PostgresExtraArgs
-	} else if len(m.Spec.PostgresExtraArgs) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		args = m.Spec.PostgresExtraArgs
 	}
 
 	postgresDataPath := ""
 	if m.Spec.Database.PostgresDataPath != "" {
 		postgresDataPath = m.Spec.Database.PostgresDataPath
-	} else if m.Spec.PostgresDataPath != "" { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		postgresDataPath = m.Spec.PostgresDataPath
 	} else {
 		postgresDataPath = "/var/lib/postgresql/data/pgdata"
 	}
@@ -227,8 +205,6 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 	postgresInitdbArgs := ""
 	if m.Spec.Database.PostgresInitdbArgs != "" {
 		postgresInitdbArgs = m.Spec.Database.PostgresInitdbArgs
-	} else if m.Spec.PostgresInitdbArgs != "" { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		postgresInitdbArgs = m.Spec.PostgresInitdbArgs
 	} else {
 		postgresInitdbArgs = "--auth-host=scram-sha-256"
 	}
@@ -236,18 +212,11 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 	postgresHostAuthMethod := ""
 	if m.Spec.Database.PostgresHostAuthMethod != "" {
 		postgresHostAuthMethod = m.Spec.Database.PostgresHostAuthMethod
-	} else if m.Spec.PostgresHostAuthMethod != "" { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		postgresHostAuthMethod = m.Spec.PostgresHostAuthMethod
-
 	} else {
 		postgresHostAuthMethod = "scram-sha-256"
 	}
 
 	postgresConfigurationSecret := m.Name + "-postgres-configuration"
-	if len(m.Spec.PostgresConfigurationSecret) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		postgresConfigurationSecret = m.Name + "-postgres-configuration"
-	}
-
 	envVars := []corev1.EnvVar{
 		{
 			Name: "POSTGRESQL_DATABASE",
@@ -325,9 +294,6 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 	_, storageType := controllers.MultiStorageConfigured(m, "Database")
 
 	storageClass := m.Spec.Database.PostgresStorageClass
-	if m.Spec.PostgresStorageClass != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		storageClass = m.Spec.PostgresStorageClass
-	}
 
 	// if SC defined, we should use the PVC claimed by STS
 	if storageType[0] == controllers.SCNameType {
@@ -342,9 +308,7 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 				corev1.ResourceName(corev1.ResourceStorage): postgresStorageSize,
 			},
 		}
-		if m.Spec.PostgresStorageRequirements != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-			storageRequirements = *m.Spec.PostgresStorageRequirements
-		}
+
 		pvc := corev1.PersistentVolumeClaim{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "postgres",
@@ -392,9 +356,6 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 	}
 
 	resources := m.Spec.Database.ResourceRequirements
-	if m.Spec.PostgresResourceRequirements != nil { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		resources = *m.Spec.PostgresResourceRequirements
-	}
 
 	livenessProbe := m.Spec.Database.LivenessProbe
 	if livenessProbe == nil {
@@ -441,8 +402,6 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 	postgresImage := os.Getenv("RELATED_IMAGE_PULP_POSTGRES")
 	if len(m.Spec.Database.PostgresImage) > 0 {
 		postgresImage = m.Spec.Database.PostgresImage
-	} else if len(m.Spec.PostgresImage) > 0 { // [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-		postgresImage = m.Spec.PostgresImage
 	} else if postgresImage == "" {
 		postgresImage = "docker.io/library/postgres:13"
 	}
@@ -579,70 +538,4 @@ func databaseConfigSecret(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Secr
 			"type":     "managed",
 		},
 	}
-}
-
-// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-// reconcileOldService will ensure the old (from ansible) postgresql svc is present
-func reconcileOldService(resources controllers.FunctionResources) error {
-	ctx := resources.Context
-	client := resources.Client
-	pulp := resources.Pulp
-	log := resources.Logger
-
-	// retrieve the old service name from postgres secret
-	oldSvcName, err := controllers.RetrieveSecretData(ctx, pulp.Name+"-postgres-configuration", pulp.Namespace, true, client, "host")
-	if err != nil {
-		return err
-	}
-
-	// old svc definition
-	serviceInternalTrafficPolicyCluster := corev1.ServiceInternalTrafficPolicyType("Cluster")
-	ipFamilyPolicyType := corev1.IPFamilyPolicyType("SingleStack")
-	serviceAffinity := corev1.ServiceAffinity("None")
-	servicePortProto := corev1.Protocol("TCP")
-	targetPort := intstr.IntOrString{IntVal: 5432}
-	serviceType := corev1.ServiceType("ClusterIP")
-	oldService := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      oldSvcName["host"],
-			Namespace: pulp.Namespace,
-		},
-		Spec: corev1.ServiceSpec{
-			ClusterIP:             "None",
-			ClusterIPs:            []string{"None"},
-			InternalTrafficPolicy: &serviceInternalTrafficPolicyCluster,
-			IPFamilies:            []corev1.IPFamily{"IPv4"},
-			IPFamilyPolicy:        &ipFamilyPolicyType,
-			Ports: []corev1.ServicePort{{
-				Port:       5432,
-				Protocol:   servicePortProto,
-				TargetPort: targetPort,
-			}},
-			Selector: map[string]string{
-				"app":     "postgresql",
-				"pulp_cr": pulp.Name,
-			},
-			SessionAffinity: serviceAffinity,
-			Type:            serviceType,
-		},
-	}
-	ctrl.SetControllerReference(pulp, oldService, resources.Scheme)
-
-	// Create the old svc if it is not found
-	dbSvc := &corev1.Service{}
-	if err := client.Get(ctx, types.NamespacedName{Name: oldSvcName["host"], Namespace: pulp.Namespace}, dbSvc); err != nil && errors.IsNotFound(err) {
-		log.Info("Recreating the old Database service has been modified! Reconciling ...")
-		if err := client.Create(ctx, oldService); err != nil {
-			return err
-		}
-	}
-
-	// Reconcile it
-	if !equality.Semantic.DeepDerivative(oldService.Spec, dbSvc.Spec) {
-		log.Info("The old Database service has been modified! Reconciling ...")
-		if err := client.Update(ctx, oldService); err != nil {
-			return err
-		}
-	}
-	return nil
 }

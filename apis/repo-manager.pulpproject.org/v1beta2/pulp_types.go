@@ -27,28 +27,6 @@ import (
 // PulpSpec defines the desired state of Pulp
 type PulpSpec struct {
 
-	/*
-		[TODO] List of fields from ansible not "translated" into golang version yet.
-
-		// golang has only pulp_settings defined as raw_settings, which will probably be
-		// compatible with ansible version (pending tests)
-		pulp_settings.debug
-		pulp_settings.GALAXY_FEATURE_FLAGS.execution_environments
-
-		// these seem to be used by migration and upgrade tasks, which are not implemented in go
-		// need to understand if these are needed and how they are used (they were added into
-		// the spec struct but are not in use yet)
-		postgres_migrant_configuration_secret
-		postgres_label_selector
-		postgres_keep_pvc_after_upgrade
-
-		no_log (not sure if this is useful in golang version)
-		resource_manager => need to confirm if this resource is deprecated
-	*/
-
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
 	// Define if the operator should stop managing Pulp resources.
 	// If set to true, the operator will not execute any task (it will be "disabled").
 	// Default: false
@@ -64,30 +42,30 @@ type PulpSpec struct {
 
 	// The size of the file storage; for example 100Gi.
 	// This field should be used only if file_storage_storage_class is provided
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	FileStorageSize string `json:"file_storage_size,omitempty"`
 
 	// The file storage access mode.
 	// This field should be used only if file_storage_storage_class is provided
 	// +kubebuilder:validation:Enum:=ReadWriteMany;ReadWriteOnce
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File","urn:alm:descriptor:com.tectonic.ui:select:ReadWriteMany"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden","urn:alm:descriptor:com.tectonic.ui:select:ReadWriteMany"}
 	FileStorageAccessMode string `json:"file_storage_access_mode,omitempty"`
 
 	// Storage class to use for the file persistentVolumeClaim
 	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:File","urn:alm:descriptor:io.kubernetes:StorageClass"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden","urn:alm:descriptor:io.kubernetes:StorageClass"}
 	FileStorageClass string `json:"file_storage_storage_class,omitempty"`
 
 	// The secret for Azure compliant object storage configuration.
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Azure secret"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:Azure"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:hidden"}
 	ObjectStorageAzureSecret string `json:"object_storage_azure_secret,omitempty"`
 
 	// The secret for S3 compliant object storage configuration.
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="S3 secret"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:fieldDependency:storage_type:S3"}
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:hidden"}
 	ObjectStorageS3Secret string `json:"object_storage_s3_secret,omitempty"`
 
 	// PersistenVolumeClaim name that will be used by Pulp pods.
@@ -115,12 +93,6 @@ type PulpSpec struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:ConfigMap","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	SigningScriptsConfigmap string `json:"signing_scripts_configmap,omitempty"`
-
-	// Configuration for the storage type utilized in the backup
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Enum:=none;File;file;S3;s3;Azure;azure
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:select:File","urn:alm:descriptor:com.tectonic.ui:select:S3","urn:alm:descriptor:com.tectonic.ui:select:Azure"}
-	StorageType string `json:"storage_type,omitempty"`
 
 	// The ingress type to use to reach the deployed instance.
 	// Default: none (will not expose the service)
@@ -366,170 +338,6 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	PulpSecretKey string `json:"pulp_secret_key,omitempty"`
 
-	/*
-	 DEPRECATED FIELDS FROM ANSIBLE VERSION
-	*/
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Image pull secret for container images.
-	// Default: ""
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	ImagePullSecret string `json:"image_pull_secret,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Affinity is a group of affinity scheduling rules.
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	Affinity *Affinity `json:"affinity,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// The image name for the redis image.
-	// Default: "redis:latest"
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	RedisImage string `json:"redis_image,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Storage class to use for the Redis PVC
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:StorageClass","urn:alm:descriptor:com.tectonic.ui:advanced"}
-	RedisStorageClass string `json:"redis_storage_class,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Redis defines desired state of cache resources
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	Redis Redis `json:"redis,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Storage size to use for the Redis PVC
-	RedisStorageSize string `json:"redis_storage_size,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Arguments to pass to PostgreSQL initdb command when creating a new cluster.
-	// Default: "--auth-host=scram-sha-256"
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	PostgresInitdbArgs string `json:"postgres_initdb_args,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// PostgreSQL host authentication method.
-	// Default: "scram-sha-256"
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	PostgresHostAuthMethod string `json:"postgres_host_auth_method,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// PostgreSQL container image.
-	// Default: "postgres:13"
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	PostgresImage string `json:"postgres_image,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Storage resource requirements for the database container.
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
-	PostgresStorageRequirements *corev1.ResourceRequirements `json:"postgres_storage_requirements,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Resource requirements for the database container.
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
-	PostgresResourceRequirements *corev1.ResourceRequirements `json:"postgres_resource_requirements,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Name of the StorageClass required by the claim.
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:StorageClass","urn:alm:descriptor:com.tectonic.ui:advanced"}
-	PostgresStorageClass *string `json:"postgres_storage_class,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Registry path to the PostgreSQL container to use.
-	// Default: "/var/lib/postgresql/data/pgdata"
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	PostgresDataPath string `json:"postgres_data_path,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Arguments to pass to postgres process
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	PostgresExtraArgs []string `json:"postgres_extra_args,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// The number of gunicorn workers to use for the api.
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number","urn:alm:descriptor:com.tectonic.ui:advanced"}
-	GunicornAPIWorkers int `json:"gunicorn_api_workers,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// The number of gunicorn workers to use for the api.
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number","urn:alm:descriptor:com.tectonic.ui:advanced"}
-	GunicornContentWorkers int `json:"gunicorn_content_workers,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// The timeout for the gunicorn process.
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number","urn:alm:descriptor:com.tectonic.ui:advanced"}
-	GunicornTimeout int `json:"gunicorn_timeout,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// NodeSelector for the Pulp pods.
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	NodeSelector map[string]string `json:"node_selector,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Node tolerations for the Pulp pods.
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Node tolerations for the Database pods.
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	PostgresTolerations []corev1.Toleration `json:"postgres_tolerations,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Topology rule(s) for the pods.
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	TopologySpreadConstraints []corev1.TopologySpreadConstraint `json:"topology_spread_constraints,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Custom configuration secret of database pods
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	PostgresConfigurationSecret string `json:"postgres_configuration_secret,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// NodeSelector for the database pod.
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	PostgresSelector map[string]string `json:"postgres_selector,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Ingress DNS host
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text","urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress"}
-	Hostname string `json:"hostname,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// pulp-web service annotations
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	ServiceAnnotations string `json:"service_annotations,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// The secure TLS termination mechanism to use in pulp-web pods.
-	// Default: "edge"
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Enum:=edge;Edge;passthrough;Passthrough
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	RouteTLSTerminationMechanism string `json:"route_tls_termination_mechanism,omitempty"`
-
 	// Protocol used by pulp-web service when ingress_type==loadbalancer
 	// +kubebuilder:validation:Enum:=http;https
 	// +kubebuilder:validation:Optional
@@ -541,37 +349,9 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	LoadbalancerPort int32 `json:"loadbalancer_port,omitempty"`
 
-	// [TODO] Pending implementation, added just to keep compatibility
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Secret where the old database configuration can be found for data migration
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	PostgresMigrantConfigurationSecret string `json:"postgres_migrant_configuration_secret,omitempty"`
-
-	// [TODO] Pending implementation, added just to keep compatibility
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Label selector used to identify postgres pod for executing migration
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	PostgresLabelSelector string `json:"postgres_label_selector,omitempty"`
-
-	// [TODO] Pending implementation, added just to keep compatibility
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	// Specify whether or not to keep the old PVC after PostgreSQL upgrades
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	PostgresKeepPvcAfterUpgrade bool `json:"postgres_keep_pvc_after_upgrade,omitempty"`
-
-	// Configure no_log for no_log tasks
-	// +kubebuilder:validation:Optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
-	NoLog bool `json:"no_log,omitempty"`
-
 	// Telemetry defines the OpenTelemetry configuration
 	// +kubebuilder:validation:Optional
 	Telemetry Telemetry `json:"telemetry,omitempty"`
-
-	ResourceManager ResourceManager `json:"resource_manager,omitempty"`
 }
 
 // Api defines desired state of pulpcore-api resources
@@ -647,10 +427,6 @@ type Api struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:updateStrategy","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	Strategy appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 
-	// [TODO] I couldnt find a reference for this var in ansible
-	// [DEPRECATED?] Temporarily adding to keep compatibility with ansible version.
-	LogLevel string `json:"log_level,omitempty"`
-
 	// InitContainer defines configuration of the init-containers that run in pulpcore pods
 	InitContainer PulpContainer `json:"init_container,omitempty"`
 }
@@ -725,10 +501,6 @@ type Content struct {
 	// +optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:updateStrategy","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	Strategy appsv1.DeploymentStrategy `json:"strategy,omitempty"`
-
-	// [TODO] Implement this like in ansible version
-	// [DEPRECATED?] Temporarily adding to keep compatibility with ansible version.
-	LogLevel string `json:"log_level,omitempty"`
 
 	// InitContainer defines configuration of the init-containers that run in pulpcore pods
 	InitContainer PulpContainer `json:"init_container,omitempty"`
@@ -1033,34 +805,6 @@ type Cache struct {
 	Strategy appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
-// [DEPRECATED] Temporarily adding to keep compatibility with ansible version
-type Affinity struct {
-	NodeAffinity *corev1.NodeAffinity `json:"node_affinity,omitempty"`
-}
-
-// [DEPRECATED] Temporarily adding to keep compatibility with ansible version
-type Redis struct {
-	// [TODO] Implement this like in ansible version
-	// [DEPRECATED?] Temporarily adding to keep compatibility with ansible version.
-	LogLevel string `json:"log_level,omitempty"`
-
-	// [TODO] THIS SHOULD BE REMOVED SINCE WE WILL NOT SUPPORT REDIS CLUSTER
-	// Keeping it just as a matter of compatibility
-	// +kubebuilder:default:=1
-	Replicas int32 `json:"replicas"`
-
-	RedisResourceRequirements *corev1.ResourceRequirements `json:"redis_resource_requirements,omitempty"`
-	ResourceRequirements      *corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
-	Strategy                  *appsv1.DeploymentStrategy   `json:"strategy,omitempty"`
-}
-
-// [DEPRECATED] Temporarily adding to keep compatibility with ansible version
-type ResourceManager struct {
-	Replicas             int32                        `json:"replicas"`
-	Strategy             *appsv1.DeploymentStrategy   `json:"strategy,omitempty"`
-	ResourceRequirements *corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
-}
-
 // Telemetry defines the configuration for OpenTelemetry used by Pulp
 type Telemetry struct {
 
@@ -1137,19 +881,6 @@ type PulpStatus struct {
 	TelemetryEnabled bool `json:"telemetry_enabled,omitempty"`
 	// Name of the Secret to provide Django cryptographic signing.
 	PulpSecretKey string `json:"pulp_secret_key,omitempty"`
-
-	// [DEPRECATED] Temporarily adding to keep compatibility with ansible version.
-	StoragePersistentVolumeClaim       string `json:"storagePersistentVolumeClaim,omitempty"`
-	WebURL                             string `json:"webURL,omitempty"`
-	DatabaseConfigurationSecret        string `json:"databaseConfigurationSecret,omitempty"`
-	StorageType                        string `json:"storageType,omitempty"`
-	StorageSecret                      string `json:"storageSecret,omitempty"`
-	DeployedVersion                    string `json:"deployedVersion,omitempty"`
-	DeployedImage                      string `json:"deployedImage,omitempty"`
-	MigrantDatabaseConfigurationSecret string `json:"migrantDatabaseConfigurationSecret,omitempty"`
-	DbFieldsEncryptionSecret           string `json:"dbFieldsEncryptionSecret,omitempty"`
-	UpgradedPostgresVersion            string `json:"upgradedPostgresVersion,omitempty"`
-	MigrationDone                      bool   `json:"migration_done,omitempty"`
 }
 
 // Pulp is the Schema for the pulps API

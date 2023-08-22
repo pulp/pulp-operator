@@ -11,7 +11,6 @@ spec:
   admin_password_secret: "example-pulp-admin-password"
   signing_secret: "signing-galaxy"
   signing_scripts_configmap: "signing-scripts"
-  storage_type: Azure
   ingress_type: nodeport
   nodeport_port: 30000
   object_storage_azure_secret: example-pulp-object-storage

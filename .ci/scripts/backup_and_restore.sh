@@ -4,8 +4,8 @@ set -euo pipefail
 echo "Set context"
 kubectl config set-context --current --namespace=pulp-operator-system
 
-BACKUP_RESOURCE=repo-manager_v1alpha1_pulpbackup.yaml
-RESTORE_RESOURCE=repo-manager_v1alpha1_pulprestore.yaml
+BACKUP_RESOURCE=repo-manager_v1beta2_pulpbackup.yaml
+RESTORE_RESOURCE=repo-manager_v1beta2_pulprestore.yaml
 
 if [[ "$CI_TEST" == "true" ]]; then
   CUSTOM_RESOURCE=simple.yaml
