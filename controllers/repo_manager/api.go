@@ -383,7 +383,7 @@ DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
 	// credentials from aws secret into settings.py
 	if storageType[0] == controllers.S3ObjType {
 		resources.Logger.V(1).Info("Retrieving S3 data from " + resources.Pulp.Spec.ObjectStorageS3Secret)
-		storageData, err := controllers.RetrieveSecretData(context, pulp.Spec.ObjectStorageS3Secret, pulp.Namespace, true, client, "s3-access-key-id", "s3-secret-access-key", "s3-bucket-name", "s3-region")
+		storageData, err := controllers.RetrieveSecretData(context, pulp.Spec.ObjectStorageS3Secret, pulp.Namespace, true, client, "s3-access-key-id", "s3-secret-access-key", "s3-bucket-name")
 		if err != nil {
 			logger.Error(err, "Secret Not Found!", "Secret.Namespace", pulp.Namespace, "Secret.Name", pulp.Spec.ObjectStorageS3Secret)
 			return &corev1.Secret{}
