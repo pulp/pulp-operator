@@ -7,14 +7,12 @@ import (
 	crypt_rand "crypto/rand"
 	"crypto/x509"
 	b64 "encoding/base64"
-	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"io"
 	"math/rand"
 	"reflect"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -93,39 +91,6 @@ func sortKeys(a map[string]interface{}) []string {
 	}
 	sort.Strings(keys)
 	return keys
-}
-
-// addCustomPulpSettings appends custom settings defined in Pulp CR to settings.py
-func addCustomPulpSettings(pulp *repomanagerpulpprojectorgv1beta2.Pulp, current_settings string) string {
-	settings := pulp.Spec.PulpSettings.Raw
-	var settingsJson map[string]interface{}
-	json.Unmarshal(settings, &settingsJson)
-
-	var convertedSettings string
-	sortedKeys := sortKeys(settingsJson)
-	for _, k := range sortedKeys {
-		if strings.Contains(current_settings, strings.ToUpper(k)) {
-			lines := strings.Split(current_settings, strings.ToUpper(k))
-			current_settings = lines[0] + strings.Join(strings.Split(lines[1], "\n")[1:], "\n")
-		}
-		switch settingsJson[k].(type) {
-		case map[string]interface{}:
-			rawMapping, _ := json.Marshal(settingsJson[k])
-			convertedSettings = convertedSettings + fmt.Sprintln(strings.ToUpper(k), "=", strings.Replace(string(rawMapping), "\"", "'", -1))
-		case []interface{}:
-			rawMapping, _ := json.Marshal(settingsJson[k])
-			convertedSettings = convertedSettings + fmt.Sprintln(strings.ToUpper(k), "=", string(rawMapping))
-		case bool:
-			// Pulp expects True or False, but golang boolean values are true or false
-			// so we are converting to string and changing to capital T or F
-			convertToString := cases.Title(language.English, cases.Compact).String(strconv.FormatBool(settingsJson[k].(bool)))
-			convertedSettings = convertedSettings + fmt.Sprintf("%v = %v\n", strings.ToUpper(k), convertToString)
-		default:
-			convertedSettings = convertedSettings + fmt.Sprintf("%v = \"%v\"\n", strings.ToUpper(k), settingsJson[k])
-		}
-	}
-
-	return current_settings + convertedSettings
 }
 
 func genTokenAuthKey() (string, string) {
@@ -547,14 +512,6 @@ func (r *RepoManagerReconciler) migrationDone(ctx context.Context, pulp *repoman
 
 	r.List(ctx, jobList, listOpts...)
 	return hasActiveJob(*jobList, pulp)
-}
-
-// jobActive returns true if there is at least one running pod for Job.
-// This is a workaround to identify if the Job is still running because, as of now,
-// it is not possible to filter - using client.ListOption - the list of Jobs using
-// something like client.MatchingFieldsSelector{ "state.running=true" }
-func jobActive(job batchv1.Job) bool {
-	return job.Status.Active >= 1
 }
 
 // jobImageEqualsCurrent verifies if the image used in migration job is the same

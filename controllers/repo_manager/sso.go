@@ -11,10 +11,15 @@ import (
 
 // ssoConfig sets the configurations needed to authenticate pulp through keycloak
 func ssoConfig(resource controllers.FunctionResources, pulpSettings *string) error {
+
 	log := resource.Logger
 	client := resource.Client
 	pulp := resource.Pulp
 	ctx := resource.Context
+
+	if len(pulp.Spec.SSOSecret) == 0 {
+		return nil
+	}
 
 	// Check for specified sso configuration secret
 	secret := &corev1.Secret{}
