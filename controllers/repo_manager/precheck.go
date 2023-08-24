@@ -209,7 +209,5 @@ func checkFileStorage(ctx context.Context, r *RepoManagerReconciler, pulp *repom
 
 // hasFileStorageDefinition returns true if any file_storage field is defined
 func hasFileStorageDefinition(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
-	// [TODO] check if we should also verify strings.ToLower(pulp.Spec.StorageType) == "file"
-	// not sure if we will deprecate the storageType field
 	return len(pulp.Spec.FileStorageAccessMode) > 0 || len(pulp.Spec.FileStorageSize) > 0
 }
