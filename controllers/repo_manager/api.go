@@ -390,6 +390,10 @@ DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
 			resources.Logger.Error(err, "Either s3-endpoint or s3-region needs to be specified", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Spec.ObjectStorageS3Secret)
 		}
 
+		if len(optionalKey["s3-endpoint"]) > 0 {
+			pulp_settings = pulp_settings + fmt.Sprintf("AWS_S3_ENDPOINT_URL = \"%v\"\n", optionalKey["s3-endpoint"])
+		}
+
 		if len(optionalKey["s3-region"]) > 0 {
 			pulp_settings = pulp_settings + fmt.Sprintf("AWS_S3_REGION_NAME = \"%v\"\n", optionalKey["s3-region"])
 		}

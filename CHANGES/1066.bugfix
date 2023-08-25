@@ -1,0 +1,1 @@
+Fixed a regression where handling of the `s3-endpoint` option was not possible
