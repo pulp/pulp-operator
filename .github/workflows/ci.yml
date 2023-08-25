@@ -187,11 +187,11 @@ jobs:
         run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
       - name: Install Pulp Operator
         run: |
-          make docker-build
+          make docker-build IMG=localhost/pulp-operator:devel
           kubectl create ns pulp-operator-system
           kubectl config set-context --current --namespace=pulp-operator-system
           helm repo add pulp-operator https://github.com/pulp/pulp-k8s-resources/raw/main/helm-charts/ --force-update
-          helm install --set namespace=pulp-operator-system pulp pulp-operator/pulp-operator
+          helm install --set namespace=pulp-operator-system --set image=localhost/pulp-operator:devel pulp pulp-operator/pulp-operator
           kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
           kubectl apply -f config/samples/simple.yaml
         shell: bash
