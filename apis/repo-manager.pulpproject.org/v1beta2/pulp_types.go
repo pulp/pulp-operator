@@ -338,6 +338,12 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	PulpSecretKey string `json:"pulp_secret_key,omitempty"`
 
+	// List of allowed checksum algorithms used to verify repository's integrity.
+	// Valid options: ["md5","sha1","sha256","sha512"].
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	AllowedContentChecksums []string `json:"allowed_content_checksums,omitempty"`
+
 	// Protocol used by pulp-web service when ingress_type==loadbalancer
 	// +kubebuilder:validation:Enum:=http;https
 	// +kubebuilder:validation:Optional
@@ -881,6 +887,10 @@ type PulpStatus struct {
 	TelemetryEnabled bool `json:"telemetry_enabled,omitempty"`
 	// Name of the Secret to provide Django cryptographic signing.
 	PulpSecretKey string `json:"pulp_secret_key,omitempty"`
+	// List of allowed checksum algorithms used to verify repository's integrity.
+	AllowedContentChecksums string `json:"allowed_content_checksums,omitempty"`
+	// Controller status to keep tracking of deployment updates
+	LastDeploymentUpdate string `json:"last_deployment_update,omitempty"`
 }
 
 // Pulp is the Schema for the pulps API

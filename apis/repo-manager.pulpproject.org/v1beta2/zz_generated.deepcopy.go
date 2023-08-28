@@ -573,6 +573,11 @@ func (in *PulpSpec) DeepCopyInto(out *PulpSpec) {
 	}
 	in.AdminPasswordJob.DeepCopyInto(&out.AdminPasswordJob)
 	in.MigrationJob.DeepCopyInto(&out.MigrationJob)
+	if in.AllowedContentChecksums != nil {
+		in, out := &in.AllowedContentChecksums, &out.AllowedContentChecksums
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	in.Telemetry.DeepCopyInto(&out.Telemetry)
 }
 

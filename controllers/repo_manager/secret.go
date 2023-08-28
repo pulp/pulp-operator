@@ -67,6 +67,9 @@ func pulpServerSecret(resources controllers.FunctionResources) client.Object {
 	// django SECRET_KEY
 	secretKeySettings(resources, &pulp_settings)
 
+	// allowed content checksum
+	allowedContentChecksumsSettings(resources, &pulp_settings)
+
 	// add custom settings to the secret
 	addCustomPulpSettings(pulp, &pulp_settings)
 
@@ -371,6 +374,16 @@ func secretKeySettings(resources controllers.FunctionResources, pulpSettings *st
 	}
 
 	*pulpSettings = *pulpSettings + fmt.Sprintln("SECRET_KEY = \""+secretKey["secret_key"]+"\"")
+}
+
+// allowedContentChecksumsSettings appends the allowed_content_checksums into pulpSettings
+func allowedContentChecksumsSettings(resources controllers.FunctionResources, pulpSettings *string) {
+	pulp := resources.Pulp
+	if len(pulp.Spec.AllowedContentChecksums) == 0 {
+		return
+	}
+	settings, _ := json.Marshal(pulp.Spec.AllowedContentChecksums)
+	*pulpSettings = *pulpSettings + fmt.Sprintln("ALLOWED_CONTENT_CHECKSUMS = ", string(settings))
 }
 
 // addCustomPulpSettings appends custom settings defined in Pulp CR into pulpSettings

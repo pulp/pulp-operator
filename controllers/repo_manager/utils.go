@@ -472,6 +472,9 @@ func (r *RepoManagerReconciler) findPulpDependentSecrets(secret client.Object) [
 	return []reconcile.Request{}
 }
 
+// [DEPRECATED] this is not working because the r.Patch modification will be
+// reconciled by the controller. The reconciliation is triggered because in
+// the expected deployment there isn't a "repo-manager.pulpproject.org/restartedAt" annotation.
 // restartPods modifies a deployment template field (`.annotations`) which will
 // start a new rollout of pods
 func (r *RepoManagerReconciler) restartPods(pulp *repomanagerpulpprojectorgv1beta2.Pulp, obj client.Object) {
@@ -485,6 +488,14 @@ func (r *RepoManagerReconciler) restartPods(pulp *repomanagerpulpprojectorgv1bet
 		obj.Spec.Template.ObjectMeta.Annotations["repo-manager.pulpproject.org/restartedAt"] = time.Now().Format(time.RFC3339)
 		r.Patch(context.TODO(), obj, patch)
 	}
+}
+
+// restartPulpCorePods will redeploy all pulpcore (API,content,worker) pods.
+func (r *RepoManagerReconciler) restartPulpCorePods(pulp *repomanagerpulpprojectorgv1beta2.Pulp) {
+	log := r.RawLogger
+	log.Info("Reprovisioning pulpcore pods to get the new settings ...")
+	pulp.Status.LastDeploymentUpdate = time.Now().Format(time.RFC3339)
+	r.Status().Update(context.TODO(), pulp)
 }
 
 // runMigration deploys a k8s Job to run django migrations in case of pulpcore image change
@@ -530,4 +541,55 @@ func hasActiveJob(jobList batchv1.JobList, pulp *repomanagerpulpprojectorgv1beta
 		}
 	}
 	return false
+}
+
+// validContentChecksums returns a map of the checksums algorithms supported and
+// required by Pulp (only sha256 is required in the current Pulp version).
+func validContentChecksums() map[string]bool {
+	return map[string]bool{
+		"md5":    false,
+		"sha1":   false,
+		"sha256": true,
+		"sha512": false,
+	}
+}
+
+// requiredContentChecksums verifies if all the required checksums are in the
+// checksums list provided and, if not, returns the list of missing checksums
+func requiredContentChecksums(cs []string) ([]string, bool) {
+	missing := []string{}
+	currentChecksums := map[string]bool{}
+	for _, v := range cs {
+		currentChecksums[v] = true
+	}
+
+	for checksum, required := range validContentChecksums() {
+		if !required {
+			continue
+		}
+		if _, ok := currentChecksums[checksum]; !ok {
+			missing = append(missing, checksum)
+		}
+	}
+
+	if len(missing) > 0 {
+		return missing, false
+	}
+	return []string{}, true
+}
+
+// deprecatedContentChecksum returns a map of the checksums algorithms that are
+// supported by Pulp but deprecated by some Pulp plugin.
+func deprecatedContentChecksum() map[string]bool {
+	return map[string]bool{
+		"md5":  true,
+		"sha1": true,
+	}
+}
+
+// verifyChecksum verifies if the provided checksum algorithm is supported and/or
+// deprecated (depending on the validateFunction provided).
+func verifyChecksum(checksum string, validateFunction func() map[string]bool) bool {
+	_, isValid := validateFunction()[checksum]
+	return isValid
 }

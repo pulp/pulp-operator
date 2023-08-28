@@ -173,6 +173,9 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// create the job to reset pulp admin password in case admin_password_secret has changed
 	r.updateAdminPasswordJob(ctx, pulp)
 
+	// create the job to update the allowed_content_checksums
+	r.updateContentChecksumsJob(ctx, pulp)
+
 	// if this is the first reconciliation loop (.status.ingress_type == "") OR
 	// if there is no update in ingressType field
 	if len(pulp.Status.IngressType) == 0 || pulp.Status.IngressType == pulp.Spec.IngressType {

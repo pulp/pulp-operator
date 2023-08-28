@@ -18,6 +18,7 @@ package repo_manager
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -70,6 +71,11 @@ func prechecks(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerp
 
 	// verify inconsistency in file_storage_* definition
 	if reconcile := checkFileStorage(ctx, r, pulp); reconcile != nil {
+		return reconcile, nil
+	}
+
+	// verify inconsistency in allowed_content_checksums definition
+	if reconcile := checkAllowedContentChecksums(ctx, r, pulp); reconcile != nil {
 		return reconcile, nil
 	}
 
@@ -210,4 +216,34 @@ func checkFileStorage(ctx context.Context, r *RepoManagerReconciler, pulp *repom
 // hasFileStorageDefinition returns true if any file_storage field is defined
 func hasFileStorageDefinition(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
 	return len(pulp.Spec.FileStorageAccessMode) > 0 || len(pulp.Spec.FileStorageSize) > 0
+}
+
+// checkAllowedContentChecksums verifies the following conditions for allowed_content_checksums:
+// * deprecated checksums algorithms
+// * mandatory checksums present (for now, only sha256 is required)
+// * checksums provided are valid
+func checkAllowedContentChecksums(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
+	logger := controllers.CustomZapLogger()
+
+	if len(pulp.Spec.AllowedContentChecksums) == 0 {
+		return nil
+	}
+
+	for _, v := range pulp.Spec.AllowedContentChecksums {
+		if ok := verifyChecksum(v, validContentChecksums); !ok {
+			logger.Error("Checksum " + v + " is not valid!")
+			return &ctrl.Result{}
+		}
+
+		if deprecated := verifyChecksum(v, deprecatedContentChecksum); deprecated {
+			logger.Warn("Checksum " + v + " is deprecated by some Pulp plugins, it is not recommended using it in production.")
+		}
+	}
+
+	if missing, ok := requiredContentChecksums(pulp.Spec.AllowedContentChecksums); !ok {
+		missingJson, _ := json.Marshal(missing)
+		logger.Error("Missing required checksum(s): " + string(missingJson))
+		return &ctrl.Result{}
+	}
+	return nil
 }

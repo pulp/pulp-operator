@@ -101,6 +101,12 @@ spec:
                 description: 'Secret where the administrator password can be found.
                   Default: <operator''s name> + "-admin-password"'
                 type: string
+              allowed_content_checksums:
+                description: 'List of allowed checksum algorithms used to verify repository''s
+                  integrity. Valid options: ["md5","sha1","sha256","sha512"].'
+                items:
+                  type: string
+                type: array
               api:
                 default:
                   replicas: 1
@@ -8627,6 +8633,10 @@ spec:
               admin_password_secret:
                 description: Secret where the administrator password can be found
                 type: string
+              allowed_content_checksums:
+                description: List of allowed checksum algorithms used to verify repository's
+                  integrity.
+                type: string
               conditions:
                 items:
                   description: "Condition contains details for one aspect of the current
@@ -8717,6 +8727,9 @@ spec:
                 type: string
               ingress_type:
                 description: The ingress type to use to reach the deployed instance
+                type: string
+              last_deployment_update:
+                description: Controller status to keep tracking of deployment updates
                 type: string
               object_storage_azure_secret:
                 description: The secret for Azure compliant object storage configuration.

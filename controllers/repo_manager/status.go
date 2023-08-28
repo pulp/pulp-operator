@@ -251,6 +251,12 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 		r.Status().Update(ctx, pulp)
 	}
 
+	// remove .status.allowed_content_checksums field in case it is not defined anymore
+	if len(pulp.Spec.AllowedContentChecksums) == 0 {
+		pulp.Status.AllowedContentChecksums = ""
+		r.Status().Update(ctx, pulp)
+	}
+
 	return ctrl.Result{}, nil
 }
 
