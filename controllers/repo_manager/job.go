@@ -18,13 +18,17 @@ package repo_manager
 
 import (
 	"context"
+	"encoding/json"
+	"reflect"
+	"time"
 
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
-	jobs "k8s.io/api/batch/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -56,13 +60,13 @@ func (r *RepoManagerReconciler) updateAdminPasswordJob(ctx context.Context, pulp
 	jobTTL := int32(3600)
 
 	// job definition
-	job := &jobs.Job{
+	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "reset-admin-password-",
 			Namespace:    pulp.Namespace,
 			Labels:       labels,
 		},
-		Spec: jobs.JobSpec{
+		Spec: batchv1.JobSpec{
 			BackoffLimit:            &backOffLimit,
 			TTLSecondsAfterFinished: &jobTTL,
 			Template: corev1.PodTemplateSpec{
@@ -214,13 +218,13 @@ func (r *RepoManagerReconciler) migrationJob(ctx context.Context, pulp *repomana
 	jobTTL := int32(3600)
 
 	// job definition
-	job := &jobs.Job{
+	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "pulpcore-migration-",
 			Namespace:    pulp.Namespace,
 			Labels:       labels,
 		},
-		Spec: jobs.JobSpec{
+		Spec: batchv1.JobSpec{
 			BackoffLimit:            &backOffLimit,
 			TTLSecondsAfterFinished: &jobTTL,
 			Template: corev1.PodTemplateSpec{
@@ -273,5 +277,115 @@ func jobLabels(pulp repomanagerpulpprojectorgv1beta2.Pulp) map[string]string {
 	return map[string]string{
 		"app.kubernetes.io/managed-by": pulp.Spec.DeploymentType + "-operator",
 		"pulp_cr":                      pulp.Name,
+	}
+}
+
+// updateContentChecksumsJob creates a k8s Job to update the list of allowed content checksums
+func (r *RepoManagerReconciler) updateContentChecksumsJob(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) {
+	log := r.RawLogger
+
+	if !contentChecksumsModified(pulp) {
+		return
+	}
+
+	labels := jobLabels(*pulp)
+	labels["app.kubernetes.io/component"] = "allowed-content-checksums"
+	containers := []corev1.Container{contentChecksumsContainer(pulp)}
+	volumes := pulpcoreVolumes(pulp, "")
+	backOffLimit := int32(2)
+	jobTTL := int32(60)
+
+	// job definition
+	job := &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "update-content-checksums-",
+			Namespace:    pulp.Namespace,
+			Labels:       labels,
+		},
+		Spec: batchv1.JobSpec{
+			BackoffLimit:            &backOffLimit,
+			TTLSecondsAfterFinished: &jobTTL,
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					RestartPolicy:      "Never",
+					Containers:         containers,
+					Volumes:            volumes,
+					ServiceAccountName: pulp.Name,
+				},
+			},
+		},
+	}
+
+	// create the Job
+	log.Info("Creating a new update content checksums Job")
+	if err := r.Create(ctx, job); err != nil {
+		log.Error(err, "Failed to create update content checksums Job!")
+	}
+
+	// update .status
+	settings, _ := json.Marshal(pulp.Spec.AllowedContentChecksums)
+	pulp.Status.AllowedContentChecksums = string(settings)
+	r.Status().Update(ctx, pulp)
+}
+
+// contentChecksumsContainer defines the container spec for the updateContentChecksums Job
+func contentChecksumsContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) corev1.Container {
+	// env vars
+	envVars := controllers.GetPostgresEnvVars(*pulp)
+
+	// volume mounts
+	volumeMounts := pulpcoreVolumeMounts(pulp)
+
+	// resource requirements
+	resources := pulp.Spec.MigrationJob.PulpContainer.ResourceRequirements
+
+	return corev1.Container{
+		Name:            "update-checksum",
+		Image:           pulp.Spec.Image + ":" + pulp.Spec.ImageVersion,
+		ImagePullPolicy: "Always",
+		Env:             envVars,
+		Command:         []string{"/bin/sh"},
+		Args: []string{
+			"-c",
+			`/usr/bin/wait_on_postgres.py
+			/usr/bin/wait_on_database_migrations.sh
+			pulpcore-manager handle-artifact-checksums`,
+		},
+		Resources:    resources,
+		VolumeMounts: volumeMounts,
+	}
+}
+
+// contentChecksumsModified returns true if
+// .status.AllowedContentChecksums != pulp.Spec.AllowedContentChecksums
+func contentChecksumsModified(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
+	var statusAllowedChecksum []string
+	json.Unmarshal([]byte(pulp.Status.AllowedContentChecksums), &statusAllowedChecksum)
+	return !reflect.DeepEqual(pulp.Spec.AllowedContentChecksums, statusAllowedChecksum)
+}
+
+// waitJobFinishes wait until content-checksums job completes
+func waitJobFinishes(resources RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp, timeout time.Duration) {
+	labels := map[string]string{
+		"app.kubernetes.io/component": "allowed-content-checksums",
+	}
+	listOpts := []client.ListOption{
+		client.InNamespace(pulp.Namespace),
+		client.MatchingLabels(labels),
+	}
+
+TIMEOUT:
+	for i := 0; i < int(timeout.Seconds()); i++ {
+		jobList := &batchv1.JobList{}
+		if err := resources.Client.List(context.TODO(), jobList, listOpts...); err != nil {
+			resources.RawLogger.Error(err, "Failed to find content-checksum Jobs")
+			return
+		}
+		for _, p := range jobList.Items {
+			if p.Status.CompletionTime != nil {
+				break TIMEOUT
+			}
+		}
+		time.Sleep(time.Second)
 	}
 }

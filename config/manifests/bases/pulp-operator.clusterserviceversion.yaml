@@ -301,6 +301,12 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: 'List of allowed checksum algorithms used to verify repository''s
+          integrity. Valid options: ["md5","sha1","sha256","sha512"].'
+        displayName: Allowed Content Checksums
+        path: allowed_content_checksums
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Api defines desired state of pulpcore-api resources
         displayName: Api
         path: api

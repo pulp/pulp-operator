@@ -214,6 +214,7 @@ PulpSpec defines the desired state of Pulp
 | admin_password_job | Job to reset pulp admin password | [PulpJob](#pulpjob) | false |
 | migration_job | Job to run django migrations | [PulpJob](#pulpjob) | false |
 | pulp_secret_key | Name of the Secret to provide Django cryptographic signing. Default: \"pulp-secret-key\" | string | false |
+| allowed_content_checksums | List of allowed checksum algorithms used to verify repository's integrity. Valid options: [\"md5\",\"sha1\",\"sha256\",\"sha512\"]. | []string | false |
 | loadbalancer_protocol | Protocol used by pulp-web service when ingress_type==loadbalancer | string | false |
 | loadbalancer_port | Port exposed by pulp-web service when ingress_type==loadbalancer | int32 | false |
 | telemetry | Telemetry defines the OpenTelemetry configuration | [Telemetry](#telemetry) | false |
@@ -239,6 +240,8 @@ PulpStatus defines the observed state of Pulp
 | external_cache_secret | Name of the secret with the parameters to connect to an external Redis cluster | string | false |
 | telemetry_enabled | Pulp metrics collection enabled | bool | false |
 | pulp_secret_key | Name of the Secret to provide Django cryptographic signing. | string | false |
+| allowed_content_checksums | List of allowed checksum algorithms used to verify repository's integrity. | string | false |
+| last_deployment_update | Controller status to keep tracking of deployment updates | string | false |
 
 [Back to Custom Resources](#custom-resources)
 

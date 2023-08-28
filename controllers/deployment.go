@@ -949,6 +949,10 @@ func (d *CommonDeployment) setAnnotations(pulp repomanagerpulpprojectorgv1beta2.
 		"kubectl.kubernetes.io/default-container": strings.ToLower(pulpcoreType),
 	}
 
+	if pulp.Status.LastDeploymentUpdate != "" {
+		d.podAnnotations["repo-manager.pulpproject.org/restartedAt"] = pulp.Status.LastDeploymentUpdate
+	}
+
 	d.deploymentAnnotations = map[string]string{
 		"email": "pulp-dev@redhat.com",
 		"ignore-check.kube-linter.io/no-node-affinity": "Do not check node affinity",

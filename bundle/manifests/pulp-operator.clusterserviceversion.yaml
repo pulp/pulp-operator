@@ -164,7 +164,7 @@ metadata:
     capabilities: Full Lifecycle
     categories: Integration & Delivery
     containerImage: quay.io/pulp/pulp-operator:devel
-    createdAt: "2023-08-24T11:17:51Z"
+    createdAt: "2023-08-29T13:45:26Z"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
     operators.operatorframework.io/builder: operator-sdk-v1.29.0
@@ -300,6 +300,12 @@ spec:
         path: admin_password_secret
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: 'List of allowed checksum algorithms used to verify repository''s
+          integrity. Valid options: ["md5","sha1","sha256","sha512"].'
+        displayName: Allowed Content Checksums
+        path: allowed_content_checksums
+        x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Api defines desired state of pulpcore-api resources
         displayName: Api
