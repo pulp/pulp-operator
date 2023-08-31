@@ -84,7 +84,7 @@ func djangoKey() string {
 //
 //	TELEMETRY = "false"
 //	ALLOWED_IMPORT_PATHS = ["/tmp"]
-func sortKeys(a map[string]interface{}) []string {
+func sortKeys[V interface{} | []uint8](a map[string]V) []string {
 	keys := make([]string, 0, len(a))
 	for k := range a {
 		keys = append(keys, k)
@@ -131,6 +131,20 @@ func checkSecretsAvailable(funcResources controllers.FunctionResources) error {
 	if len(pulp.Spec.Cache.ExternalCacheSecret) != 0 {
 		secret := &corev1.Secret{}
 		if err := funcResources.Get(ctx, types.NamespacedName{Name: pulp.Spec.Cache.ExternalCacheSecret, Namespace: pulp.Namespace}, secret); err != nil {
+			return err
+		}
+	}
+
+	// LDAP Secrets
+	if len(pulp.Spec.LDAP.Config) != 0 {
+		secret := &corev1.Secret{}
+		if err := funcResources.Get(ctx, types.NamespacedName{Name: pulp.Spec.LDAP.Config, Namespace: pulp.Namespace}, secret); err != nil {
+			return err
+		}
+	}
+	if len(pulp.Spec.LDAP.CA) != 0 {
+		secret := &corev1.Secret{}
+		if err := funcResources.Get(ctx, types.NamespacedName{Name: pulp.Spec.LDAP.CA, Namespace: pulp.Namespace}, secret); err != nil {
 			return err
 		}
 	}
@@ -509,7 +523,7 @@ func (r *RepoManagerReconciler) runMigration(ctx context.Context, pulp *repomana
 // needsMigration verifies if the pulpcore image has changed and no migration
 // has been done yet.
 func (r *RepoManagerReconciler) needsMigration(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
-	return controllers.ImageChanged(pulp) && !r.migrationDone(ctx, pulp)
+	return controllers.ImageChanged(pulp) && !r.migrationDone(ctx, pulp) && !pulp.Spec.DisableMigrations
 }
 
 // migrationDone checks if there is a migration Job with the expected image

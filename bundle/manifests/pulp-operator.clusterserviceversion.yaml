@@ -164,7 +164,7 @@ metadata:
     capabilities: Full Lifecycle
     categories: Integration & Delivery
     containerImage: quay.io/pulp/pulp-operator:devel
-    createdAt: "2023-09-05T18:55:57Z"
+    createdAt: "2023-09-08T21:28:56Z"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
     operators.operatorframework.io/builder: operator-sdk-v1.29.0
@@ -277,7 +277,8 @@ spec:
       - displayName: Postgres Secret
         path: postgres_secret
       version: v1beta2
-    - displayName: Pulp
+    - description: Pulp is the Schema for the pulps API
+      displayName: Pulp
       kind: Pulp
       name: pulps.repo-manager.pulpproject.org
       specDescriptors:
@@ -695,6 +696,13 @@ spec:
         path: deployment_type
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: Disable database migrations. Useful for situations in which we
+          don't want to automatically run the database migrations, for example, during
+          restore.
+        displayName: Disable Migrations
+        path: disable_migrations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: 'Name of the ConfigMap with the list of Execution Environments
           that should be synchronized. Default: ee-default-images'
         displayName: EEDefaults
@@ -809,6 +817,16 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Ingress
+      - description: The name of the Secret with the CA chain to connect to ldap server.
+        displayName: CA
+        path: ldap.ca
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: The name of the Secret with ldap config.
+        displayName: Config
+        path: ldap.config
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Port exposed by pulp-web service when ingress_type==loadbalancer
         displayName: Loadbalancer Port
         path: loadbalancer_port

@@ -55,6 +55,7 @@ nav:
       - Galaxy: configuring/galaxy.md
       - Telemetry: configuring/telemetry.md
       - Content Checksums: configuring/content_checksums.md
+      - LDAP Authentication: configuring/ldap.md
   - Backup and Restore:
       - Overview: backup_and_restore/overview.md
       - Configuring and Running: backup_and_restore/config_running.md

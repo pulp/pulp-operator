@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/client-go/kubernetes/scheme"
 )
 
 type adminPassword struct {
@@ -44,6 +45,7 @@ type storageObjectSecret struct {
 	S3AccessKeyId         string `json:"s3-access-key-id"`
 	S3BucketName          string `json:"s3-bucket-name"`
 	S3Region              string `json:"s3-region"`
+	S3Endpoint            string `json:"s3-endpoint"`
 	S3SecretAccessKey     string `json:"s3-secret-access-key"`
 	StorageSecret         string `json:"storage_secret"`
 	AzureAccountName      string `json:"azure-account-name"`
@@ -86,6 +88,7 @@ const (
 	resourceTypeContainerToken     = "ContainerToken"
 	resourceTypeSSOSecret          = "SSO"
 	resourceTypeDBFieldsEncryption = "DBFieldsEncryption"
+	resourceTypeLDAP               = "LDAPSecret"
 )
 
 // restoreSecret restores the operator secrets created by pulpbackup CR
@@ -139,6 +142,14 @@ func (r *RepoManagerRestoreReconciler) restoreSecret(ctx context.Context, pulpRe
 	// restore sso secret
 	// this secret is not mandatory. If the backup file is not found is not an error
 	if found, err := r.secret(ctx, resourceTypeSSOSecret, "sso_secret", backupDir, "sso_secret.yaml", pod, pulpRestore); found && err != nil {
+		return err
+	}
+
+	// restore ldap secret(s)
+	if found, err := r.restoreLDAPSecrets(ctx, resourceTypeLDAP, "ldap_secret", backupDir, "ldap_secret.yaml", pod, pulpRestore); found && err != nil {
+		return err
+	}
+	if found, err := r.restoreLDAPSecrets(ctx, resourceTypeLDAP, "ldap_ca_secret", backupDir, "ldap_ca_secret.yaml", pod, pulpRestore); found && err != nil {
 		return err
 	}
 
@@ -277,4 +288,54 @@ func setStatusField(fieldName, fieldValue string, pulpRestore *repomanagerpulppr
 	}
 
 	return nil
+}
+
+// restoreLDAPSecrets restores the Secret from a YAML file.
+// Since we don't need to keep compatibility with ansible version anymore, this
+// method does not need to follow an specific struct and should work with any Secret.
+func (r *RepoManagerRestoreReconciler) restoreLDAPSecrets(ctx context.Context, resourceType, secretNameKey, backupDir, backupFile string, pod *corev1.Pod, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore) (bool, error) {
+
+	log := r.RawLogger
+	ldapSecretFile := backupDir + "/" + backupFile
+	execCmd := []string{
+		"test", "-f", ldapSecretFile,
+	}
+	_, err := controllers.ContainerExec(r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
+
+	// if no ldap secret found there is nothing to be restored
+	if err != nil {
+		return false, nil
+	}
+	execCmd = []string{
+		"cat", ldapSecretFile,
+	}
+	cmdOutput, err := controllers.ContainerExec(r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
+	if err != nil {
+		log.Error(err, "Failed to get "+backupFile+"!")
+		r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Failed to get "+backupFile, "FailedGet"+resourceType+"Secret")
+		return true, err
+	}
+
+	decode := scheme.Codecs.UniversalDeserializer().Decode
+	obj, _, _ := decode([]byte(cmdOutput), nil, nil)
+	secret := obj.(*corev1.Secret)
+
+	// "removing" fields from backup to avoid errors
+	secret.ObjectMeta.ResourceVersion = ""
+	secret.ObjectMeta.ManagedFields = []metav1.ManagedFieldsEntry{}
+
+	// we'll recreate the secret only if it was not found
+	// in situations like during a pulpRestore reconcile loop (because of an error) the secret could have been previously created
+	// this will avoid an infinite reconciliation loop trying to recreate a resource that already exists
+	if err := r.Get(ctx, types.NamespacedName{Name: secret.Name, Namespace: pulpRestore.Namespace}, secret); err != nil && errors.IsNotFound(err) {
+		if err := r.Create(ctx, secret); err != nil {
+			log.Error(err, "Failed to create "+resourceType+" secret!")
+			r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Error trying to restore "+resourceType+" secret!", "FailedCreate"+resourceType+"Secret")
+			return true, err
+		}
+		log.Info(resourceType + " secret restored")
+		r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", resourceType+" secret restored", resourceType+"SecretRestored")
+	}
+
+	return true, nil
 }

@@ -26,8 +26,10 @@ import (
 	"github.com/pulp/pulp-operator/controllers"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -76,6 +78,11 @@ func prechecks(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerp
 
 	// verify inconsistency in allowed_content_checksums definition
 	if reconcile := checkAllowedContentChecksums(ctx, r, pulp); reconcile != nil {
+		return reconcile, nil
+	}
+
+	// verify if LDAP CA is provided in case settings.py expects it
+	if reconcile := checkLDAPCA(ctx, r, pulp); reconcile != nil {
 		return reconcile, nil
 	}
 
@@ -243,6 +250,40 @@ func checkAllowedContentChecksums(ctx context.Context, r *RepoManagerReconciler,
 	if missing, ok := requiredContentChecksums(pulp.Spec.AllowedContentChecksums); !ok {
 		missingJson, _ := json.Marshal(missing)
 		logger.Error("Missing required checksum(s): " + string(missingJson))
+		return &ctrl.Result{}
+	}
+	return nil
+}
+
+// checkLDAPCA verifies if there is a file provided in auth_ldap_ca_file (from pulp.Spec.LDAP.Config) field and if it does
+// we need to ensure that .spec.LDAP.CA is provided
+func checkLDAPCA(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
+	if len(pulp.Spec.LDAP.Config) == 0 {
+		return nil
+	}
+
+	// retrieve the cert mountPoint from LDAP config Secret
+	secretName := pulp.Spec.LDAP.Config
+	secret := &corev1.Secret{}
+	r.Get(ctx, types.NamespacedName{Name: secretName, Namespace: pulp.Namespace}, secret)
+	_, caDefined := secret.Data["auth_ldap_ca_file"]
+
+	// if auth_ldap_ca is defined, but .spec.ldap.ca is not, abort because it
+	// would fail to find the mount point and break the operator execution
+	if !caDefined && len(pulp.Spec.LDAP.CA) > 0 {
+		r.RawLogger.Error(nil, "auth_ldap_cafile is defined in "+pulp.Spec.LDAP.Config+" Secret, but no .spec.ldap.ca was found! Provide both values or none to avoid error in Pulp execution.")
+		return &ctrl.Result{}
+	}
+
+	// if there is no CA definition we don't need more checks
+	if !caDefined {
+		return nil
+	}
+
+	// if there is a CA definition, we need to ensure that Pulp CR is defined
+	// with the Secret to get it
+	if len(pulp.Spec.LDAP.CA) == 0 {
+		r.RawLogger.Error(nil, "The "+pulp.Spec.LDAP.Config+" Secret provided a configuration for the LDAP CA file (auth_ldap_ca_file field), but Pulp CR(.spec.LDAP.CA) does not have the Secret name to get it!")
 		return &ctrl.Result{}
 	}
 	return nil

@@ -332,6 +332,12 @@ type PulpSpec struct {
 	// Job to run django migrations
 	MigrationJob PulpJob `json:"migration_job,omitempty"`
 
+	// Disable database migrations. Useful for situations in which we don't want
+	// to automatically run the database migrations, for example, during restore.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	DisableMigrations bool `json:"disable_migrations,omitempty"`
+
 	// Name of the Secret to provide Django cryptographic signing.
 	// Default: "pulp-secret-key"
 	// +kubebuilder:validation:Optional
@@ -358,6 +364,10 @@ type PulpSpec struct {
 	// Telemetry defines the OpenTelemetry configuration
 	// +kubebuilder:validation:Optional
 	Telemetry Telemetry `json:"telemetry,omitempty"`
+
+	// LDAP defines the ldap resources used by pulpcore containers to integrate Pulp with LDAP authentication
+	// +kubebuilder:validation:Optional
+	LDAP LDAP `json:"ldap,omitempty"`
 }
 
 // Api defines desired state of pulpcore-api resources
@@ -859,6 +869,20 @@ type PulpJob struct {
 	PulpContainer PulpContainer `json:"container,omitempty"`
 }
 
+// LDAP defines the ldap resources used by pulpcore containers to integrate Pulp with LDAP authentication
+type LDAP struct {
+
+	// The name of the Secret with ldap config.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	Config string `json:"config,omitempty"`
+
+	// The name of the Secret with the CA chain to connect to ldap server.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	CA string `json:"ca,omitempty"`
+}
+
 // PulpStatus defines the observed state of Pulp
 type PulpStatus struct {
 	//+operator-sdk:csv:customresourcedefinitions:type=status,xDescriptors={"urn:alm:descriptor:io.kubernetes.conditions"}
@@ -893,11 +917,11 @@ type PulpStatus struct {
 	LastDeploymentUpdate string `json:"last_deployment_update,omitempty"`
 }
 
-// Pulp is the Schema for the pulps API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 //+kubebuilder:storageversion
 
+// Pulp is the Schema for the pulps API
 type Pulp struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

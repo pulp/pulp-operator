@@ -1,14 +1,15 @@
 package repo_manager_backup
 
 import (
+	"bytes"
 	"context"
-
-	"gopkg.in/yaml.v3"
 
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
+	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/cli-runtime/pkg/printers"
 )
 
 // secretType contains all the information needed to make the backup of the secret
@@ -117,6 +118,21 @@ func (r *RepoManagerBackupReconciler) backupSecret(ctx context.Context, pulpBack
 		log.Info("SSO secret backup finished")
 	}
 
+	// LDAP CONFIG SECRET
+	if len(pulp.Spec.LDAP.Config) > 0 {
+		if err := r.backupLDAPSecret(ctx, secretType{"ldap_secret", pulpBackup, backupDir, "ldap_secret.yaml", pulp.Spec.LDAP.Config, pod}); err != nil {
+			return err
+		}
+		log.Info("LDAP secret backup finished")
+	}
+	// LDAP CA SECRET
+	if len(pulp.Spec.LDAP.CA) > 0 {
+		if err := r.backupLDAPSecret(ctx, secretType{"ldap_ca_secret", pulpBackup, backupDir, "ldap_ca_secret.yaml", pulp.Spec.LDAP.CA, pod}); err != nil {
+			return err
+		}
+		log.Info("LDAP CA secret backup finished")
+	}
+
 	return nil
 }
 
@@ -150,5 +166,34 @@ func (r *RepoManagerBackupReconciler) createBackupFile(ctx context.Context, secr
 	}
 
 	log.Info("Container token secret backup finished")
+	return nil
+}
+
+// backupLDAPSecret stores a copy of the LDAP Secrets in YAML format.
+// Since we don't need to keep compatibility with ansible version anymore, this
+// method does not need to follow an specific struct and should work with any Secret.
+func (r *RepoManagerBackupReconciler) backupLDAPSecret(ctx context.Context, secretType secretType) error {
+	log := r.RawLogger
+	secret := &corev1.Secret{}
+	err := r.Get(ctx, types.NamespacedName{Name: secretType.secretName, Namespace: secretType.pulpBackup.Namespace}, secret)
+	if err != nil {
+		log.Error(err, "Error trying to find "+secretType.secretName+" secret")
+		return err
+	}
+
+	secretYaml := new(bytes.Buffer)
+	ymlPrinter := printers.YAMLPrinter{}
+	ymlPrinter.PrintObj(secret, secretYaml)
+
+	execCmd := []string{
+		"bash", "-c", "echo '" + secretYaml.String() + "' > " + secretType.backupDir + "/" + secretType.backupFile,
+	}
+	_, err = controllers.ContainerExec(r, secretType.pod, execCmd, secretType.pulpBackup.Name+"-backup-manager", secretType.pod.Namespace)
+	if err != nil {
+		log.Error(err, "Failed to backup "+secretType.secretName+" secret")
+		return err
+	}
+
+	log.Info("LDAP Secret " + secretType.secretName + " backup finished")
 	return nil
 }
