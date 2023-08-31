@@ -62,6 +62,7 @@ func (r *RepoManagerRestoreReconciler) restorePulpCR(ctx context.Context, pulpRe
 		pulp.Spec.Content.Replicas = 0
 		pulp.Spec.Worker.Replicas = 0
 		pulp.Spec.Web.Replicas = 0
+		pulp.Spec.DisableMigrations = true
 
 		if err = r.Create(ctx, &pulp); err != nil {
 			log.Error(err, "Error trying to restore "+pulpRestore.Spec.DeploymentName+" CR!")
@@ -102,6 +103,7 @@ func (r *RepoManagerRestoreReconciler) scaleDeployments(ctx context.Context, pul
 			pulp.Spec.Web.Replicas = 1
 		}
 	}
+	pulp.Spec.DisableMigrations = false
 
 	if err := r.Update(ctx, pulp); err != nil {
 		log.Error(err, "Failed to scale up deployment replicas!")

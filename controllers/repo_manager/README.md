@@ -9,6 +9,7 @@
 * [Cache](#cache)
 * [Content](#content)
 * [Database](#database)
+* [LDAP](#ldap)
 * [PulpContainer](#pulpcontainer)
 * [PulpJob](#pulpjob)
 * [PulpList](#pulplist)
@@ -111,9 +112,20 @@ Database defines desired state of postgres
 
 [Back to Custom Resources](#custom-resources)
 
+#### LDAP
+
+LDAP defines the ldap resources used by pulpcore containers to integrate Pulp with LDAP authentication
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| config | The name of the Secret with ldap config. | string | false |
+| ca | The name of the Secret with the CA chain to connect to ldap server. | string | false |
+
+[Back to Custom Resources](#custom-resources)
+
 #### Pulp
 
-
+Pulp is the Schema for the pulps API
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
@@ -213,11 +225,13 @@ PulpSpec defines the desired state of Pulp
 | ee_defaults | Name of the ConfigMap with the list of Execution Environments that should be synchronized. Default: ee-default-images | string | false |
 | admin_password_job | Job to reset pulp admin password | [PulpJob](#pulpjob) | false |
 | migration_job | Job to run django migrations | [PulpJob](#pulpjob) | false |
+| disable_migrations | Disable database migrations. Useful for situations in which we don't want to automatically run the database migrations, for example, during restore. | bool | false |
 | pulp_secret_key | Name of the Secret to provide Django cryptographic signing. Default: \"pulp-secret-key\" | string | false |
 | allowed_content_checksums | List of allowed checksum algorithms used to verify repository's integrity. Valid options: [\"md5\",\"sha1\",\"sha256\",\"sha512\"]. | []string | false |
 | loadbalancer_protocol | Protocol used by pulp-web service when ingress_type==loadbalancer | string | false |
 | loadbalancer_port | Port exposed by pulp-web service when ingress_type==loadbalancer | int32 | false |
 | telemetry | Telemetry defines the OpenTelemetry configuration | [Telemetry](#telemetry) | false |
+| ldap | LDAP defines the ldap resources used by pulpcore containers to integrate Pulp with LDAP authentication | [LDAP](#ldap) | false |
 
 [Back to Custom Resources](#custom-resources)
 

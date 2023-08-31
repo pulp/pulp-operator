@@ -70,6 +70,9 @@ func pulpServerSecret(resources controllers.FunctionResources) client.Object {
 	// allowed content checksum
 	allowedContentChecksumsSettings(resources, &pulp_settings)
 
+	// ldap auth config
+	ldapSettings(resources, &pulp_settings)
+
 	// add custom settings to the secret
 	addCustomPulpSettings(pulp, &pulp_settings)
 

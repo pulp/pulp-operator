@@ -259,7 +259,7 @@ func migrationContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) corev1.Cont
 	return corev1.Container{
 		Name:            "migration",
 		Image:           pulp.Spec.Image + ":" + pulp.Spec.ImageVersion,
-		ImagePullPolicy: "Always",
+		ImagePullPolicy: "IfNotPresent",
 		Env:             envVars,
 		Command:         []string{"/bin/sh"},
 		Args: []string{
@@ -342,7 +342,7 @@ func contentChecksumsContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) core
 	return corev1.Container{
 		Name:            "update-checksum",
 		Image:           pulp.Spec.Image + ":" + pulp.Spec.ImageVersion,
-		ImagePullPolicy: "Always",
+		ImagePullPolicy: "IfNotPresent",
 		Env:             envVars,
 		Command:         []string{"/bin/sh"},
 		Args: []string{

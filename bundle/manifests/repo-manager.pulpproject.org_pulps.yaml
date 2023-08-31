@@ -17,6 +17,7 @@ spec:
   - name: v1beta2
     schema:
       openAPIV3Schema:
+        description: Pulp is the Schema for the pulps API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -6118,6 +6119,11 @@ spec:
                 - pulp
                 - galaxy
                 type: string
+              disable_migrations:
+                description: Disable database migrations. Useful for situations in
+                  which we don't want to automatically run the database migrations,
+                  for example, during restore.
+                type: boolean
               ee_defaults:
                 description: 'Name of the ConfigMap with the list of Execution Environments
                   that should be synchronized. Default: ee-default-images'
@@ -6214,6 +6220,18 @@ spec:
                   to grant a ClusterRole (to do a get into the IngressClass and verify
                   the controller). Default: false'
                 type: boolean
+              ldap:
+                description: LDAP defines the ldap resources used by pulpcore containers
+                  to integrate Pulp with LDAP authentication
+                properties:
+                  ca:
+                    description: The name of the Secret with the CA chain to connect
+                      to ldap server.
+                    type: string
+                  config:
+                    description: The name of the Secret with ldap config.
+                    type: string
+                type: object
               loadbalancer_port:
                 description: Port exposed by pulp-web service when ingress_type==loadbalancer
                 format: int32

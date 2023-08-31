@@ -255,6 +255,12 @@ func indexerFunc(obj client.Object) []string {
 	if pulp.Spec.Cache.ExternalCacheSecret != "" {
 		keys = append(keys, pulp.Spec.Cache.ExternalCacheSecret)
 	}
+	if pulp.Spec.LDAP.Config != "" {
+		keys = append(keys, pulp.Spec.LDAP.Config)
+	}
+	if pulp.Spec.LDAP.CA != "" {
+		keys = append(keys, pulp.Spec.LDAP.CA)
+	}
 	return keys
 }
 

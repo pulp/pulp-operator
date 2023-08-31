@@ -27,6 +27,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -1007,6 +1008,48 @@ func AddHashLabel(r FunctionResources, deployment *appsv1.Deployment) {
 	}
 }
 
+func (d *CommonDeployment) setLDAPConfigs(resources any) {
+	pulp := resources.(FunctionResources).Pulp
+	if len(pulp.Spec.LDAP.CA) == 0 {
+		return
+	}
+
+	ctx := resources.(FunctionResources).Context
+	client := resources.(FunctionResources).Client
+
+	// add the CA Secret as a volume
+	volumeName := "ldap-cert"
+	volume := corev1.Volume{
+		Name: volumeName,
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: pulp.Spec.LDAP.CA,
+				Items: []corev1.KeyToPath{{
+					Key:  "ca.crt",
+					Path: "ca.crt",
+				}},
+			},
+		},
+	}
+	d.volumes = append(d.volumes, volume)
+
+	// retrieve the cert mountPoint from LDAP config Secret
+	secretName := pulp.Spec.LDAP.Config
+	secret := &corev1.Secret{}
+	client.Get(ctx, types.NamespacedName{Name: secretName, Namespace: pulp.Namespace}, secret)
+	mountPoint := string(secret.Data["auth_ldap_ca_file"])
+
+	// mount the CA Secret
+	volumeMount := corev1.VolumeMount{
+		Name:      volumeName,
+		MountPath: mountPoint,
+		SubPath:   "ca.crt",
+		ReadOnly:  true,
+	}
+	d.volumeMounts = append(d.volumeMounts, volumeMount)
+
+}
+
 // build constructs the fields used in the deployment specification
 func (d *CommonDeployment) build(resources any, pulpcoreType string) {
 	pulp := resources.(FunctionResources).Pulp
@@ -1030,6 +1073,7 @@ func (d *CommonDeployment) build(resources any, pulpcoreType string) {
 	d.setInitContainerImage(*pulp, pulpcoreType)
 	d.setInitContainerVolumeMounts(*pulp)
 	d.setInitContainerEnvVars(resources)
+	d.setLDAPConfigs(resources)
 	d.setInitContainers(*pulp, pulpcoreType)
 	d.setContainers(*pulp, pulpcoreType)
 	d.setRestartPolicy()
