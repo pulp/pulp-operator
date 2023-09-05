@@ -13,6 +13,40 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+1.0.0-beta.1 (2023-09-05)
+=========================
+
+
+Features
+--------
+
+- Added a job to handle `ALLOWED_CONTENT_CHECKSUMS` modifications.
+  [#1060](https://github.com/pulp/pulp-operator/issues/1060)
+- Mofified k8s jobs resource names to avoid name colision if multiple Pulp CRs are created in the same namespace.
+  [#1074](https://github.com/pulp/pulp-operator/issues/1074)
+
+
+Bugfixes
+--------
+
+- Fixed a regression where the `s3-region` was defined as a required `Secret` field.
+  [#1057](https://github.com/pulp/pulp-operator/issues/1057)
+- Fixed a regression where handling of the `s3-endpoint` option was not possible
+  [#1066](https://github.com/pulp/pulp-operator/issues/1066)
+
+
+Deprecations and Removals
+-------------------------
+
+- Removed unused fields from CRD.
+  [#817](https://github.com/pulp/pulp-operator/issues/817)
+- Removed CRD fields from old ansible version of the operator.
+  [#1044](https://github.com/pulp/pulp-operator/issues/1044)
+
+
+----
+
+
 1.0.0-alpha.9 (2023-08-21)
 ==========================
 

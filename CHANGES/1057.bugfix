@@ -1,1 +1,0 @@
-Fixed a regression where the `s3-region` was defined as a required `Secret` field.
