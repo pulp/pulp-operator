@@ -62,7 +62,7 @@ func (r *RepoManagerReconciler) updateAdminPasswordJob(ctx context.Context, pulp
 	// job definition
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: "reset-admin-password-",
+			GenerateName: pulp.Name + "-reset-admin-password-",
 			Namespace:    pulp.Namespace,
 			Labels:       labels,
 		},
@@ -220,7 +220,7 @@ func (r *RepoManagerReconciler) migrationJob(ctx context.Context, pulp *repomana
 	// job definition
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: "pulpcore-migration-",
+			GenerateName: pulp.Name + "-pulpcore-migration-",
 			Namespace:    pulp.Namespace,
 			Labels:       labels,
 		},
@@ -298,7 +298,7 @@ func (r *RepoManagerReconciler) updateContentChecksumsJob(ctx context.Context, p
 	// job definition
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: "update-content-checksums-",
+			GenerateName: pulp.Name + "-update-content-checksums-",
 			Namespace:    pulp.Namespace,
 			Labels:       labels,
 		},
