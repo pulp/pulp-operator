@@ -1,0 +1,1 @@
+Modified pulpcore containers entrypoints to support `pulp-minimal:3.33` image.
