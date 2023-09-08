@@ -38,7 +38,17 @@ func telemetryConfig(resources any, envVars []corev1.EnvVar, containers []corev1
 	// when telemetry is enabled we need to modify the entrypoint from container image
 	containers[0].Command = []string{"/bin/sh", "-c"}
 	containers[0].Args = []string{
-		`exec /usr/local/bin/opentelemetry-instrument --service_name pulp-api gunicorn --bind '[::]:24817' pulpcore.app.wsgi:application --name pulp-api --timeout "${PULP_GUNICORN_TIMEOUT}" --workers "${PULP_API_WORKERS}"`,
+		`if which pulpcore-api
+then
+  PULP_API_ENTRYPOINT=("pulpcore-api")
+else
+  PULP_API_ENTRYPOINT=("gunicorn" "pulpcore.app.wsgi:application" "--bind" "[::]:24817" "--name" "pulp-api" "--access-logformat" "pulp [%({correlation-id}o)s]: %(h)s %(l)s %(u)s %(t)s \"%(r)s\" %(s)s %(b)s \"%(f)s\" \"%(a)s\"")
+fi
+
+exec  /usr/local/bin/opentelemetry-instrument --service_name pulp-api "${PULP_API_ENTRYPOINT[@]}" \
+--timeout "${PULP_GUNICORN_TIMEOUT}" \
+--workers "${PULP_API_WORKERS}" \
+--access-logfile -`,
 	}
 
 	// create a volume using the otelconfigmap as source

@@ -878,7 +878,17 @@ func (d *CommonDeployment) setContainers(pulp repomanagerpulpprojectorgv1beta2.P
 				Command:         []string{"/bin/sh"},
 				Args: []string{
 					"-c",
-					`exec gunicorn --bind '[::]:24817' pulpcore.app.wsgi:application --name pulp-api --timeout "${PULP_GUNICORN_TIMEOUT}" --workers "${PULP_API_WORKERS}"`,
+					`if which pulpcore-api
+then
+  PULP_API_ENTRYPOINT=("pulpcore-api")
+else
+  PULP_API_ENTRYPOINT=("gunicorn" "pulpcore.app.wsgi:application" "--bind" "[::]:24817" "--name" "pulp-api" "--access-logformat" "pulp [%({correlation-id}o)s]: %(h)s %(l)s %(u)s %(t)s \"%(r)s\" %(s)s %(b)s \"%(f)s\" \"%(a)s\"")
+fi
+
+exec "${PULP_API_ENTRYPOINT[@]}" \
+--timeout "${PULP_GUNICORN_TIMEOUT}" \
+--workers "${PULP_API_WORKERS}" \
+--access-logfile -`,
 				},
 				Env: d.envVars,
 				Ports: []corev1.ContainerPort{{
@@ -899,7 +909,18 @@ func (d *CommonDeployment) setContainers(pulp repomanagerpulpprojectorgv1beta2.P
 			Command:         []string{"/bin/sh"},
 			Args: []string{
 				"-c",
-				`exec gunicorn pulpcore.content:server --name pulp-content --bind '[::]:24816' --worker-class 'aiohttp.GunicornWebWorker' --timeout "${PULP_GUNICORN_TIMEOUT}" --workers "${PULP_CONTENT_WORKERS}" --access-logfile -`,
+				`if which pulpcore-content
+then
+  PULP_CONTENT_ENTRYPOINT=("pulpcore-content")
+else
+  PULP_CONTENT_ENTRYPOINT=("gunicorn" "pulpcore.content:server" "--worker-class" "aiohttp.GunicornWebWorker" "--name" "pulp-content" "--bind" "[::]:24816")
+fi
+
+exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
+--timeout "${PULP_GUNICORN_TIMEOUT}" \
+--workers "${PULP_CONTENT_WORKERS}" \
+--access-logfile -
+`,
 			},
 			Resources: d.resourceRequirements,
 			Env:       d.envVars,
@@ -919,19 +940,9 @@ func (d *CommonDeployment) setContainers(pulp repomanagerpulpprojectorgv1beta2.P
 			Command:         []string{"/bin/sh"},
 			Args: []string{
 				"-c",
-				`NEW_TASKING_SYSTEM=$(python3 -c "from packaging.version import parse; from pulpcore.app.apps import PulpAppConfig; print('yes' if parse(PulpAppConfig.version) >= parse('3.13.0.dev0') else 'no')")
-echo $NEW_TASKING_SYSTEM
-
-if [[ "$NEW_TASKING_SYSTEM" == "no" ]]; then
-  # TODO: Set ${PULP_WORKER_NUMBER} to the Pod Number
-  # In the meantime, the hostname provides uniqueness.
-  exec rq worker --url "redis://${REDIS_SERVICE_HOST}:${REDIS_SERVICE_PORT}" -w "pulpcore.tasking.worker.PulpWorker" -c "pulpcore.rqconfig"
-else
-  export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
-  export PULP_SETTINGS=/etc/pulp/settings.py
-  export PATH=/usr/local/bin:/usr/bin/
-  exec pulpcore-worker
-fi`,
+				`export PULP_SETTINGS=/etc/pulp/settings.py
+export PATH=/usr/local/bin:/usr/bin/
+exec pulpcore-worker`,
 			},
 			Env:            d.envVars,
 			LivenessProbe:  d.livenessProbe,
