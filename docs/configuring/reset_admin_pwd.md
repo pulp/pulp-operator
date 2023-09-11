@@ -57,5 +57,5 @@ Successfully set password for "admin" user.   <------- password updated!
 
 
 !!! WARNING
-    We don't recommend running the `pulpcore-manager reset-admin-password` command manually.  
+    We don't recommend running the `pulpcore-manager reset-admin-password` command nor updating the password via `/api/v3/users` endpoint.  
     Any modification in `admin_password_secret` `Secret` will override Pulp admin password.
