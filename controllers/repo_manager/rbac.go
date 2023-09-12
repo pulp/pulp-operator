@@ -63,12 +63,12 @@ func (r *RepoManagerReconciler) CreateServiceAccount(ctx context.Context, pulp *
 		expectedSA.ImagePullSecrets = append([]corev1.LocalObjectReference{{Name: internalRegistrySecret}}, expectedSA.ImagePullSecrets...)
 	}
 
-	// Check and reconcile pulp-sa imagePullSecrets
-	if !reflect.DeepEqual(sa.ImagePullSecrets, expectedSA.ImagePullSecrets) {
-		log.Info("The imagePullSecrets from SA has been modified! Reconciling ...")
+	// Check and reconcile pulp-sa
+	if saModified(sa, expectedSA) {
+		log.Info("The " + sa.Name + " SA has been modified! Reconciling ...")
 		err = r.Update(ctx, expectedSA)
 		if err != nil {
-			log.Error(err, "Error trying to update the imagePullSecrets from SA object ... ")
+			log.Error(err, "Error trying to update "+sa.Name+" SA!")
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{Requeue: true}, nil
@@ -136,14 +136,20 @@ func (r *RepoManagerReconciler) pulpSA(m *repomanagerpulpprojectorgv1beta2.Pulp)
 		imagePullSecrets = append(imagePullSecrets, corev1.LocalObjectReference{Name: pullSecret})
 	}
 
+	annotations := m.Spec.SAAnnotations
+	labels := m.Spec.SALabels
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	labels["app.kubernetes.io/name"] = m.Name + "-sa"
+	labels["app.kubernetes.io/part-of"] = m.Spec.DeploymentType
+
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name,
-			Namespace: m.Namespace,
-			Labels: map[string]string{
-				"app.kubernetes.io/name":    m.Name + "-sa",
-				"app.kubernetes.io/part-of": m.Spec.DeploymentType,
-			},
+			Name:        m.Name,
+			Namespace:   m.Namespace,
+			Labels:      labels,
+			Annotations: annotations,
 		},
 		ImagePullSecrets: imagePullSecrets,
 	}
@@ -226,4 +232,11 @@ func (r *RepoManagerReconciler) pulpRoleBinding(m *repomanagerpulpprojectorgv1be
 // getConditionType returns a string with the .status.conditions.type from API resource
 func getApiConditionType(m *repomanagerpulpprojectorgv1beta2.Pulp) string {
 	return cases.Title(language.English, cases.Compact).String(m.Spec.DeploymentType) + "-API-Ready"
+}
+
+// saModified returns true if some specific fields from a SA differs from the expected
+func saModified(currentSA, expectedSA *corev1.ServiceAccount) bool {
+	return !reflect.DeepEqual(currentSA.ImagePullSecrets, expectedSA.ImagePullSecrets) ||
+		!reflect.DeepEqual(currentSA.ObjectMeta.Annotations, expectedSA.ObjectMeta.Annotations) ||
+		!reflect.DeepEqual(currentSA.ObjectMeta.Labels, expectedSA.ObjectMeta.Labels)
 }

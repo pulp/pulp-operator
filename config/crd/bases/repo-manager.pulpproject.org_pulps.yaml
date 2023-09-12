@@ -6374,6 +6374,18 @@ spec:
                 description: Name of the secret with the certificates/keys used by
                   route encryption
                 type: string
+              sa_annotations:
+                additionalProperties:
+                  type: string
+                description: ServiceAccount.metadata.annotations that will be used
+                  in Pulp pods.
+                type: object
+              sa_labels:
+                additionalProperties:
+                  type: string
+                description: ServiceAccount.metadata.labels that will be used in Pulp
+                  pods.
+                type: object
               signing_scripts_configmap:
                 description: 'ConfigMap where the signing scripts are stored. Default:
                   <operators''s name>-"-signing-scripts"'
