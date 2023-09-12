@@ -164,7 +164,7 @@ metadata:
     capabilities: Full Lifecycle
     categories: Integration & Delivery
     containerImage: quay.io/pulp/pulp-operator:devel
-    createdAt: "2023-09-08T21:28:56Z"
+    createdAt: "2023-09-12T18:49:15Z"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
     operators.operatorframework.io/builder: operator-sdk-v1.29.0
@@ -950,6 +950,17 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:ingress_type:Route
+      - description: ServiceAccount.metadata.annotations that will be used in Pulp
+          pods.
+        displayName: SAAnnotations
+        path: sa_annotations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: ServiceAccount.metadata.labels that will be used in Pulp pods.
+        displayName: SALabels
+        path: sa_labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: 'ConfigMap where the signing scripts are stored. Default: <operators''s
           name>-"-signing-scripts"'
         displayName: Signing Scripts Configmap

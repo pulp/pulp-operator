@@ -219,6 +219,8 @@ PulpSpec defines the desired state of Pulp
 | image_web_version | The image version for the pulp webserver image. Default: \"stable\" | string | false |
 | admin_password_secret | Secret where the administrator password can be found. Default: <operator's name> + \"-admin-password\" | string | false |
 | image_pull_secrets | Image pull secrets for container images. Default: [] | []string | false |
+| sa_annotations | ServiceAccount.metadata.annotations that will be used in Pulp pods. | map[string]string | false |
+| sa_labels | ServiceAccount.metadata.labels that will be used in Pulp pods. | map[string]string | false |
 | sso_secret | Secret where Single Sign-on configuration can be found | string | false |
 | mount_trusted_ca | Define if the operator should or should not mount the custom CA certificates added to the cluster via cluster-wide proxy config. Default: false | bool | false |
 | deploy_ee_defaults | Define if the operator should or should not deploy the default Execution Environments. Default: false | bool | false |

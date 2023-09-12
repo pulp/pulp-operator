@@ -302,6 +302,16 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ImagePullSecrets []string `json:"image_pull_secrets,omitempty"`
 
+	// ServiceAccount.metadata.annotations that will be used in Pulp pods.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	SAAnnotations map[string]string `json:"sa_annotations,omitempty"`
+
+	// ServiceAccount.metadata.labels that will be used in Pulp pods.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	SALabels map[string]string `json:"sa_labels,omitempty"`
+
 	// Secret where Single Sign-on configuration can be found
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}

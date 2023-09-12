@@ -586,6 +586,20 @@ func (in *PulpSpec) DeepCopyInto(out *PulpSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.SAAnnotations != nil {
+		in, out := &in.SAAnnotations, &out.SAAnnotations
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.SALabels != nil {
+		in, out := &in.SALabels, &out.SALabels
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	in.AdminPasswordJob.DeepCopyInto(&out.AdminPasswordJob)
 	in.MigrationJob.DeepCopyInto(&out.MigrationJob)
 	if in.AllowedContentChecksums != nil {
