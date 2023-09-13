@@ -25,6 +25,7 @@ import (
 	"github.com/go-logr/logr"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
+	"github.com/pulp/pulp-operator/controllers/settings"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
@@ -44,48 +45,49 @@ func (r *RepoManagerReconciler) databaseController(ctx context.Context, pulp *re
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Database-Ready"
 
+	secretName := settings.DefaultDBSecret(pulp.Name)
 	// Create pulp-postgres-configuration secret
 	pgConfigSecret := &corev1.Secret{}
-	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-postgres-configuration", Namespace: pulp.Namespace}, pgConfigSecret)
-
+	err := r.Get(ctx, types.NamespacedName{Name: secretName, Namespace: pulp.Namespace}, pgConfigSecret)
 	expected_secret := databaseConfigSecret(pulp)
 
 	// Create the secret in case it is not found
 	if err != nil && errors.IsNotFound(err) {
-		log.Info("Creating a new pulp-postgres-configuration secret", "Secret.Namespace", expected_secret.Namespace, "Secret.Name", expected_secret.Name)
-		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingDatabasePostgresSecret", "Creating "+pulp.Name+"-postgres-configuration secret resource")
+		log.Info("Creating a new "+secretName+" Secret", "Secret.Namespace", expected_secret.Namespace, "Secret.Name", secretName)
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingDatabasePostgresSecret", "Creating "+secretName+" Secret resource")
 		// Set Pulp instance as the owner and controller
 		ctrl.SetControllerReference(pulp, expected_secret, r.Scheme)
 		err = r.Create(ctx, expected_secret)
 		if err != nil {
-			log.Error(err, "Failed to create new pulp-postgres-configuration secret secret", "Secret.Namespace", expected_secret.Namespace, "Secret.Name", expected_secret.Name)
-			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingDatabasePostgresSecret", "Failed to create "+pulp.Name+"-postgres-configuration secret resource: "+err.Error())
-			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new postgres-configuration secret")
+			log.Error(err, "Failed to create "+secretName+" Secret", "Secret.Namespace", expected_secret.Namespace, "Secret.Name", secretName)
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingDatabasePostgresSecret", "Failed to create "+secretName+" Secret resource: "+err.Error())
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create "+secretName+" Secret")
 			return ctrl.Result{}, err
 		}
 		// Secret created successfully - return and requeue
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", "Postgres-configuration secret created")
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", secretName+" Secret created")
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
-		log.Error(err, "Failed to get pulp-postgres-configuration secret")
+		log.Error(err, "Failed to get "+secretName+" Secret")
 		return ctrl.Result{}, err
 	}
 
 	// StatefulSet
+	statefulSetName := settings.DefaultDBStatefulSet(pulp.Name)
 	pgSts := &appsv1.StatefulSet{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-database", Namespace: pulp.Namespace}, pgSts)
+	err = r.Get(ctx, types.NamespacedName{Name: statefulSetName, Namespace: pulp.Namespace}, pgSts)
 	expected_sts := statefulSetForDatabase(pulp)
 
 	if err != nil && errors.IsNotFound(err) {
-		log.Info("Creating a new Database StatefulSet", "StatefulSet.Namespace", pgSts.Namespace, "StatefulSet.Name", pgSts.Name)
-		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingDatabaseSts", "Creating "+pulp.Name+"-database statefulset resource")
+		log.Info("Creating a new Database StatefulSet", "StatefulSet.Namespace", pgSts.Namespace, "StatefulSet.Name", statefulSetName)
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingDatabaseSts", "Creating "+statefulSetName+" StatefulSet resource")
 		controllers.CheckEmptyDir(pulp, controllers.DatabaseResource)
 		// Set Pulp instance as the owner and controller
 		ctrl.SetControllerReference(pulp, expected_sts, r.Scheme)
 		err = r.Create(ctx, expected_sts)
 		if err != nil {
-			log.Error(err, "Failed to create new Database StatefulSet", "StatefulSet.Namespace", expected_sts.Namespace, "StatefulSet.Name", expected_sts.Name)
-			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingDatabaseSts", "Failed to create "+pulp.Name+"-database statefulset resource: "+err.Error())
+			log.Error(err, "Failed to create new Database StatefulSet", "StatefulSet.Namespace", expected_sts.Namespace, "StatefulSet.Name", statefulSetName)
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingDatabaseSts", "Failed to create "+statefulSetName+" Statefulset resource: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create database StatefulSet")
 			return ctrl.Result{}, err
 		}
@@ -99,38 +101,39 @@ func (r *RepoManagerReconciler) databaseController(ctx context.Context, pulp *re
 
 	// Reconcile StatefulSet
 	if !equality.Semantic.DeepDerivative(expected_sts.Spec, pgSts.Spec) {
-		log.Info("The Database StatefulSet has been modified! Reconciling ...")
-		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "UpdatingDatabaseSts", "Reconciling "+pulp.Name+"-database statefulset resource")
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling database StatefulSet")
+		log.Info("The " + statefulSetName + " StatefulSet has been modified! Reconciling ...")
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "UpdatingDatabaseSts", "Reconciling "+statefulSetName+" Statefulset resource")
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling "+statefulSetName+" StatefulSet")
 		// Set Pulp instance as the owner and controller
 		// not sure if this is the best way to do this, but every time that
 		// a reconciliation occurred the object lost the owner reference
 		ctrl.SetControllerReference(pulp, expected_sts, r.Scheme)
 		err = r.Update(ctx, expected_sts)
 		if err != nil {
-			log.Error(err, "Error trying to update the Database StatefulSet object ... ")
-			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingDatabaseSts", "Failed to reconcile "+pulp.Name+"-database statefulset resource")
-			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile database StatefulSet")
+			log.Error(err, "Error trying to update the "+statefulSetName+" StatefulSet object ... ")
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingDatabaseSts", "Failed to reconcile "+statefulSetName+" Statefulset resource")
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile "+statefulSetName+" StatefulSet")
 			return ctrl.Result{}, err
 		}
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "Database StatefulSet reconciled")
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", statefulSetName+" StatefulSet reconciled")
 		return ctrl.Result{Requeue: true, RequeueAfter: time.Minute}, nil
 	}
 
 	// SERVICE
+	svcName := settings.DBService(pulp.Name)
 	dbSvc := &corev1.Service{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-database-svc", Namespace: pulp.Namespace}, dbSvc)
+	err = r.Get(ctx, types.NamespacedName{Name: svcName, Namespace: pulp.Namespace}, dbSvc)
 	expected_svc := serviceForDatabase(pulp)
 
 	if err != nil && errors.IsNotFound(err) {
-		log.Info("Creating a new Database Service", "Service.Namespace", expected_svc.Namespace, "Service.Name", expected_svc.Name)
-		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingDatabaseService", "Creating "+pulp.Name+"-database-svc service resource")
+		log.Info("Creating a new Database Service", "Service.Namespace", expected_svc.Namespace, "Service.Name", svcName)
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingDatabaseService", "Creating "+svcName+" Service resource")
 		// Set Pulp instance as the owner and controller
 		ctrl.SetControllerReference(pulp, expected_svc, r.Scheme)
 		err = r.Create(ctx, expected_svc)
 		if err != nil {
-			log.Error(err, "Failed to create new Database Service", "Service.Namespace", expected_svc.Namespace, "Service.Name", expected_svc.Name)
-			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingDatabaseService", "Failed to create "+pulp.Name+"-database-svc service resource: "+err.Error())
+			log.Error(err, "Failed to create new Database Service", "Service.Namespace", expected_svc.Namespace, "Service.Name", svcName)
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingDatabaseService", "Failed to create "+svcName+" Service resource: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create database service")
 			return ctrl.Result{}, err
 		}
@@ -145,13 +148,13 @@ func (r *RepoManagerReconciler) databaseController(ctx context.Context, pulp *re
 	// Reconcile Service
 	if !equality.Semantic.DeepDerivative(expected_svc.Spec, dbSvc.Spec) {
 		log.Info("The Database service has been modified! Reconciling ...")
-		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "UpdatingDatabaseService", "Reconciling "+pulp.Name+"-database-svc service resource")
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "UpdatingDatabaseService", "Reconciling "+svcName+" Service resource")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling database service")
 		ctrl.SetControllerReference(pulp, expected_svc, r.Scheme)
 		err = r.Update(ctx, expected_svc)
 		if err != nil {
 			log.Error(err, "Error trying to update the Database Service object ... ")
-			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingDatabaseService", "Failed to reconcile "+pulp.Name+"-database-svc service resource: "+err.Error())
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingDatabaseService", "Failed to reconcile "+svcName+" Service resource: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile database service")
 			return ctrl.Result{}, err
 		}
@@ -216,7 +219,7 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 		postgresHostAuthMethod = "scram-sha-256"
 	}
 
-	postgresConfigurationSecret := m.Name + "-postgres-configuration"
+	postgresConfigurationSecret := settings.DefaultDBSecret(m.Name)
 	envVars := []corev1.EnvVar{
 		{
 			Name: "POSTGRESQL_DATABASE",
@@ -295,6 +298,7 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 
 	storageClass := m.Spec.Database.PostgresStorageClass
 
+	volumeName := settings.DefaultDBPVC(m.Name)
 	// if SC defined, we should use the PVC claimed by STS
 	if storageType[0] == controllers.SCNameType {
 
@@ -311,7 +315,7 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 
 		pvc := corev1.PersistentVolumeClaim{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "postgres",
+				Name: volumeName,
 			},
 			Spec: corev1.PersistentVolumeClaimSpec{
 				AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
@@ -324,7 +328,7 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 		// if .spec.Database.PVC defined we should use the PVC provisioned by user
 	} else if storageType[0] == controllers.PVCType {
 		volume := corev1.Volume{
-			Name: "postgres",
+			Name: volumeName,
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 					ClaimName: m.Spec.Database.PVC,
@@ -337,7 +341,7 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 	} else if storageType[0] == controllers.EmptyDirType {
 		emptyDir := []corev1.Volume{
 			{
-				Name: "postgres",
+				Name: volumeName,
 				VolumeSource: corev1.VolumeSource{
 					EmptyDir: &corev1.EmptyDirVolumeSource{},
 				},
@@ -349,7 +353,7 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 	pgDataMountPath := filepath.Dir(postgresDataPath)
 	volumeMounts := []corev1.VolumeMount{
 		{
-			Name:      "postgres",
+			Name:      volumeName,
 			MountPath: pgDataMountPath,
 			SubPath:   filepath.Base(pgDataMountPath),
 		},
@@ -415,7 +419,7 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 
 	return &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name + "-database",
+			Name:      settings.DefaultDBStatefulSet(m.Name),
 			Namespace: m.Namespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/name":       "postgres",
@@ -439,7 +443,7 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 					Affinity:           affinity,
 					NodeSelector:       nodeSelector,
 					Tolerations:        toleration,
-					ServiceAccountName: m.Name,
+					ServiceAccountName: settings.PulpServiceAccount(m.Name),
 					Containers: []corev1.Container{{
 						Image: postgresImage,
 						Name:  "postgres",
@@ -489,7 +493,7 @@ func serviceForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Servic
 	return &corev1.Service{
 
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name + "-database-svc",
+			Name:      settings.DBService(m.Name),
 			Namespace: m.Namespace,
 		},
 		Spec: corev1.ServiceSpec{
@@ -525,7 +529,7 @@ func databaseConfigSecret(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Secr
 
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name + "-postgres-configuration",
+			Name:      settings.DefaultDBSecret(m.Name),
 			Namespace: m.Namespace,
 		},
 		StringData: map[string]string{

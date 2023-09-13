@@ -23,6 +23,7 @@ import (
 	"github.com/go-logr/logr"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
+	"github.com/pulp/pulp-operator/controllers/settings"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
@@ -52,7 +53,8 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 	// pulp-file-storage
 	// the PVC will be created only if a StorageClassName is provided
 	if storageClassProvided(pulp) {
-		requeue, err := r.createPulpResource(ResourceDefinition{ctx, &corev1.PersistentVolumeClaim{}, pulp.Name + "-file-storage", "FileStorage", conditionType, pulp}, fileStoragePVC)
+		pvcName := settings.DefaultPulpFileStorage(pulp.Name)
+		requeue, err := r.createPulpResource(ResourceDefinition{ctx, &corev1.PersistentVolumeClaim{}, pvcName, "FileStorage", conditionType, pulp}, fileStoragePVC)
 		if err != nil {
 			return ctrl.Result{}, err
 		} else if requeue {
@@ -61,16 +63,16 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 
 		// Reconcile PVC
 		pvcFound := &corev1.PersistentVolumeClaim{}
-		r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-file-storage", Namespace: pulp.Namespace}, pvcFound)
+		r.Get(ctx, types.NamespacedName{Name: pvcName, Namespace: pulp.Namespace}, pvcFound)
 		expected_pvc := fileStoragePVC(funcResources)
 		if !equality.Semantic.DeepDerivative(expected_pvc.(*corev1.PersistentVolumeClaim).Spec, pvcFound.Spec) {
 			log.Info("The PVC has been modified! Reconciling ...")
-			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "UpdatingFileStoragePVC", "Reconciling "+pulp.Name+"-file-storage PVC resource")
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "UpdatingFileStoragePVC", "Reconciling "+pvcName+" PVC resource")
 			r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling file storage PVC")
 			err = r.Update(ctx, expected_pvc.(*corev1.PersistentVolumeClaim))
 			if err != nil {
 				log.Error(err, "Error trying to update the PVC object ... ")
-				controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingFileStoragePVC", "Failed to reconcile "+pulp.Name+"-file-storage PVC resource")
+				controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingFileStoragePVC", "Failed to reconcile "+pvcName+" PVC resource")
 				r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile file storage PVC")
 				return ctrl.Result{}, err
 			}
@@ -80,7 +82,7 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 	}
 
 	// if .spec.admin_password_secret is not defined, operator will default to pulp-admin-password
-	adminSecretName := pulp.Name + "-admin-password"
+	adminSecretName := settings.DefaultAdminPassword(pulp.Name)
 	if len(pulp.Spec.AdminPasswordSecret) > 1 {
 		adminSecretName = pulp.Spec.AdminPasswordSecret
 	}
@@ -90,50 +92,63 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 	}
 
 	// if .spec.pulp_secret_key is not defined, operator will default to "pulp-secret-key"
-	djangoKey := pulp.Name + "-secret-key"
+	djangoKey := settings.DefaultDjangoSecretKey(pulp.Name)
 	if len(pulp.Spec.PulpSecretKey) > 0 {
 		djangoKey = pulp.Spec.PulpSecretKey
 	}
 	// update pulp CR pulp_secret_key secret with default name
-	// we need to set this field "early" because it will be used to populate
-	// pulp-server-secret with its value
 	if err := controllers.UpdateCRField(ctx, r.Client, pulp, "PulpSecretKey", djangoKey); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	// update pulp CR with container_token_secret secret value
-	if len(pulp.Spec.ContainerTokenSecret) == 0 {
-		patch := client.MergeFrom(pulp.DeepCopy())
-		pulp.Spec.ContainerTokenSecret = pulp.Name + "-container-auth"
-		r.Patch(ctx, pulp, patch)
+	// update pulp CR with default values
+	dbFieldsEncryptionSecret := settings.DefaultDBFieldsEncryptionSecret(pulp.Name)
+	if len(pulp.Spec.DBFieldsEncryptionSecret) > 0 {
+		dbFieldsEncryptionSecret = pulp.Spec.DBFieldsEncryptionSecret
+	}
+	if err := controllers.UpdateCRField(ctx, r.Client, pulp, "DBFieldsEncryptionSecret", dbFieldsEncryptionSecret); err != nil {
+		return ctrl.Result{}, err
 	}
 
+	// update pulp CR with container_token_secret secret value
+	containerTokenSecret := settings.DefaultContainerTokenSecret(pulp.Name)
+	if len(pulp.Spec.ContainerTokenSecret) > 0 {
+		containerTokenSecret = pulp.Spec.ContainerTokenSecret
+	}
+	if err := controllers.UpdateCRField(ctx, r.Client, pulp, "ContainerTokenSecret", containerTokenSecret); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	serverSecretName := settings.PulpServerSecret(pulp.Name)
 	// define the k8s Deployment function based on k8s distribution and deployment type
 	deploymentForPulpApi := initDeployment(API_DEPLOYMENT).Deploy
+
+	deploymentName := settings.API.DeploymentName(pulp.Name)
+	serviceName := settings.ApiService(pulp.Name)
 
 	// list of pulp-api resources that should be provisioned
 	resources := []ApiResource{
 		// pulp-secret-key secret
 		{ResourceDefinition{ctx, &corev1.Secret{}, djangoKey, "PulpSecretKey", conditionType, pulp}, pulpDjangoKeySecret},
 		// pulp-server secret
-		{Definition: ResourceDefinition{Context: ctx, Type: &corev1.Secret{}, Name: pulp.Name + "-server", Alias: "Server", ConditionType: conditionType, Pulp: pulp}, Function: pulpServerSecret},
+		{Definition: ResourceDefinition{Context: ctx, Type: &corev1.Secret{}, Name: serverSecretName, Alias: "Server", ConditionType: conditionType, Pulp: pulp}, Function: pulpServerSecret},
 		// pulp-db-fields-encryption secret
-		{ResourceDefinition{ctx, &corev1.Secret{}, pulp.Name + "-db-fields-encryption", "DBFieldsEncryption", conditionType, pulp}, pulpDBFieldsEncryptionSecret},
+		{ResourceDefinition{ctx, &corev1.Secret{}, dbFieldsEncryptionSecret, "DBFieldsEncryptionSecret", conditionType, pulp}, pulpDBFieldsEncryptionSecret},
 		// pulp-admin-password secret
 		{ResourceDefinition{ctx, &corev1.Secret{}, adminSecretName, "AdminPassword", conditionType, pulp}, pulpAdminPasswordSecret},
 		// pulp-container-auth secret
-		{ResourceDefinition{ctx, &corev1.Secret{}, pulp.Spec.ContainerTokenSecret, "ContainerAuth", conditionType, pulp}, pulpContainerAuth},
+		{ResourceDefinition{ctx, &corev1.Secret{}, containerTokenSecret, "ContainerTokenSecret", conditionType, pulp}, pulpContainerAuth},
 		// pulp-api deployment
-		{ResourceDefinition{ctx, &appsv1.Deployment{}, pulp.Name + "-api", "Api", conditionType, pulp}, deploymentForPulpApi},
+		{ResourceDefinition{ctx, &appsv1.Deployment{}, deploymentName, "Api", conditionType, pulp}, deploymentForPulpApi},
 		// pulp-api-svc service
-		{ResourceDefinition{ctx, &corev1.Service{}, pulp.Name + "-api-svc", "Api", conditionType, pulp}, serviceForAPI},
+		{ResourceDefinition{ctx, &corev1.Service{}, serviceName, "Api", conditionType, pulp}, serviceForAPI},
 	}
 
 	// create telemetry resources
 	if pulp.Spec.Telemetry.Enabled {
 		telemetry := []ApiResource{
-			{ResourceDefinition{ctx, &corev1.ConfigMap{}, controllers.OtelConfigName, "Telemetry", conditionType, pulp}, controllers.OtelConfigMap},
-			{ResourceDefinition{ctx, &corev1.Service{}, controllers.OtelServiceName, "Telemetry", conditionType, pulp}, controllers.ServiceOtel},
+			{ResourceDefinition{ctx, &corev1.ConfigMap{}, settings.OtelConfigMapName(pulp.Name), "Telemetry", conditionType, pulp}, controllers.OtelConfigMap},
+			{ResourceDefinition{ctx, &corev1.Service{}, settings.OtelServiceName(pulp.Name), "Telemetry", conditionType, pulp}, controllers.ServiceOtel},
 		}
 		resources = append(resources, telemetry...)
 	}
@@ -150,22 +165,15 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 
 	// Ensure the deployment spec is as expected
 	apiDeployment := &appsv1.Deployment{}
-	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, apiDeployment)
+	r.Get(ctx, types.NamespacedName{Name: deploymentName, Namespace: pulp.Namespace}, apiDeployment)
 	expected := deploymentForPulpApi(funcResources)
 	if requeue, err := controllers.ReconcileObject(funcResources, expected, apiDeployment, conditionType, controllers.PulpDeployment{}); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
-	// update pulp CR with default values
-	if len(pulp.Spec.DBFieldsEncryptionSecret) == 0 {
-		patch := client.MergeFrom(pulp.DeepCopy())
-		pulp.Spec.DBFieldsEncryptionSecret = pulp.Name + "-db-fields-encryption"
-		r.Patch(ctx, pulp, patch)
-	}
-
 	// Ensure the service spec is as expected
 	apiSvc := &corev1.Service{}
-	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-api-svc", Namespace: pulp.Namespace}, apiSvc)
+	r.Get(ctx, types.NamespacedName{Name: serviceName, Namespace: pulp.Namespace}, apiSvc)
 	expectedSvc := serviceForAPI(funcResources)
 	if requeue, err := controllers.ReconcileObject(funcResources, expectedSvc, apiSvc, conditionType, controllers.PulpService{}); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
@@ -173,7 +181,7 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 
 	// Ensure the secret data is as expected
 	serverSecret := &corev1.Secret{}
-	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-server", Namespace: pulp.Namespace}, serverSecret)
+	r.Get(ctx, types.NamespacedName{Name: serverSecretName, Namespace: pulp.Namespace}, serverSecret)
 	expectedServerSecret := pulpServerSecret(funcResources)
 	if requeue, err := controllers.ReconcileObject(funcResources, expectedServerSecret, serverSecret, conditionType, controllers.PulpSecret{}); err != nil || requeue {
 		// restart pulpcore pods if the secret has changed
@@ -185,7 +193,7 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 	if pulp.Spec.Telemetry.Enabled {
 		// Ensure otelConfigMap is as expected
 		telemetryConfigMap := &corev1.ConfigMap{}
-		r.Get(ctx, types.NamespacedName{Name: controllers.OtelConfigName, Namespace: pulp.Namespace}, telemetryConfigMap)
+		r.Get(ctx, types.NamespacedName{Name: settings.OtelConfigMapName(pulp.Name), Namespace: pulp.Namespace}, telemetryConfigMap)
 		expectedTelemetryConfigMap := controllers.OtelConfigMap(funcResources)
 		if requeue, err := controllers.ReconcileObject(funcResources, expectedTelemetryConfigMap, telemetryConfigMap, conditionType, controllers.PulpConfigMap{}); err != nil || requeue {
 			return ctrl.Result{Requeue: requeue}, err
@@ -193,7 +201,7 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 
 		// Ensure otelService is as expected
 		telemetryService := &corev1.Service{}
-		r.Get(ctx, types.NamespacedName{Name: controllers.OtelServiceName, Namespace: pulp.Namespace}, telemetryService)
+		r.Get(ctx, types.NamespacedName{Name: settings.OtelServiceName(pulp.Name), Namespace: pulp.Namespace}, telemetryService)
 		expectedTelemetryService := controllers.ServiceOtel(funcResources)
 		if requeue, err := controllers.ReconcileObject(funcResources, expectedTelemetryService, telemetryService, conditionType, controllers.PulpService{}); err != nil || requeue {
 			return ctrl.Result{Requeue: requeue}, err
@@ -210,7 +218,7 @@ func fileStoragePVC(resources controllers.FunctionResources) client.Object {
 	// Define the new PVC
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      pulp.Name + "-file-storage",
+			Name:      settings.DefaultPulpFileStorage(pulp.Name),
 			Namespace: pulp.Namespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/name":       pulp.Spec.DeploymentType + "-storage",
@@ -251,7 +259,7 @@ func serviceForAPI(resources controllers.FunctionResources) client.Object {
 func serviceAPIObject(name, namespace, deployment_type string) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name + "-api-svc",
+			Name:      settings.ApiService(name),
 			Namespace: namespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/name":       deployment_type + "-api",

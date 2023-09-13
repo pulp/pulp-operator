@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	"github.com/pulp/pulp-operator/controllers/settings"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,12 +32,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-)
-
-const (
-	api     string = "Api"
-	content string = "Content"
-	worker  string = "Worker"
 )
 
 // CommonDeployment has the common definition for all pulpcore deployments
@@ -72,14 +67,14 @@ type CommonDeployment struct {
 }
 
 // Deploy returns a common Deployment object that can be used by any pulpcore component
-func (d CommonDeployment) Deploy(resources any, pulpcoreType string) client.Object {
+func (d CommonDeployment) Deploy(resources any, pulpcoreType settings.PulpcoreType) client.Object {
 	pulp := resources.(FunctionResources).Pulp
 	d.build(resources, pulpcoreType)
 
 	// deployment definition
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        pulp.Name + "-" + strings.ToLower(pulpcoreType),
+			Name:        pulpcoreType.DeploymentName(pulp.Name),
 			Namespace:   pulp.Namespace,
 			Annotations: d.deploymentAnnotations,
 			Labels:      d.deploymentLabels,
@@ -101,7 +96,7 @@ func (d CommonDeployment) Deploy(resources any, pulpcoreType string) client.Obje
 					NodeSelector:                  d.nodeSelector,
 					Tolerations:                   d.toleration,
 					Volumes:                       d.volumes,
-					ServiceAccountName:            pulp.Name,
+					ServiceAccountName:            settings.PulpServiceAccount(pulp.Name),
 					TopologySpreadConstraints:     d.topologySpreadConstraint,
 					InitContainers:                d.initContainers,
 					Containers:                    d.containers,
@@ -127,7 +122,7 @@ type DeploymentAPICommon struct {
 
 // Deploy returns a pulp-api Deployment object
 func (d DeploymentAPICommon) Deploy(resources any) client.Object {
-	return d.CommonDeployment.Deploy(resources, api)
+	return d.CommonDeployment.Deploy(resources, settings.API)
 }
 
 // DeploymentContentCommon is the common pulpcore-content Deployment definition
@@ -137,7 +132,7 @@ type DeploymentContentCommon struct {
 
 // Deploy returns a pulp-content Deployment object
 func (d DeploymentContentCommon) Deploy(resources any) client.Object {
-	return d.CommonDeployment.Deploy(resources, content)
+	return d.CommonDeployment.Deploy(resources, settings.CONTENT)
 }
 
 // DeploymentWorkerCommon is the common pulpcore-worker Deployment definition
@@ -147,24 +142,24 @@ type DeploymentWorkerCommon struct {
 
 // Deploy returns a pulp-worker Deployment object
 func (d DeploymentWorkerCommon) Deploy(resources any) client.Object {
-	return d.CommonDeployment.Deploy(resources, worker)
+	return d.CommonDeployment.Deploy(resources, settings.WORKER)
 }
 
 // setReplicas defines the number of pod replicas
-func (d *CommonDeployment) setReplicas(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
-	d.replicas = int32(reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("Replicas").Int())
+func (d *CommonDeployment) setReplicas(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+	d.replicas = int32(reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("Replicas").Int())
 }
 
 // setLabels defines the pod and deployment labels
-func (d *CommonDeployment) setLabels(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
-	pulpcoreType = strings.ToLower(pulpcoreType)
+func (d *CommonDeployment) setLabels(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+	pulpType := strings.ToLower(string(pulpcoreType))
 	d.podLabels = map[string]string{
-		"app.kubernetes.io/name":       pulp.Spec.DeploymentType + "-" + pulpcoreType,
-		"app.kubernetes.io/instance":   pulp.Spec.DeploymentType + "-" + pulpcoreType + "-" + pulp.Name,
-		"app.kubernetes.io/component":  pulpcoreType,
+		"app.kubernetes.io/name":       pulp.Spec.DeploymentType + "-" + pulpType,
+		"app.kubernetes.io/instance":   pulp.Spec.DeploymentType + "-" + pulpType + "-" + pulp.Name,
+		"app.kubernetes.io/component":  pulpType,
 		"app.kubernetes.io/part-of":    pulp.Spec.DeploymentType,
 		"app.kubernetes.io/managed-by": pulp.Spec.DeploymentType + "-operator",
-		"app":                          "pulp-" + pulpcoreType,
+		"app":                          "pulp-" + pulpType,
 		"pulp_cr":                      pulp.Name,
 	}
 
@@ -176,9 +171,9 @@ func (d *CommonDeployment) setLabels(pulp repomanagerpulpprojectorgv1beta2.Pulp,
 }
 
 // setAffinity defines the affinity rules
-func (d *CommonDeployment) setAffinity(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
+func (d *CommonDeployment) setAffinity(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
 	affinity := &corev1.Affinity{}
-	specField := reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("Affinity").Interface().(*corev1.Affinity)
+	specField := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("Affinity").Interface().(*corev1.Affinity)
 	if specField != nil {
 		affinity = specField
 	}
@@ -186,11 +181,11 @@ func (d *CommonDeployment) setAffinity(pulp repomanagerpulpprojectorgv1beta2.Pul
 }
 
 // setStrategy defines the deployment strategy to use to replace existing pods with new ones
-func (d *CommonDeployment) setStrategy(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
+func (d *CommonDeployment) setStrategy(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
 	// if no strategy is defined in pulp CR we are setting `strategy.Type` with the
 	// default value ("RollingUpdate"), this will be helpful during the reconciliation
 	// when a strategy was previously defined and eventually the field is removed
-	strategy := reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("Strategy").Interface().(appsv1.DeploymentStrategy)
+	strategy := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("Strategy").Interface().(appsv1.DeploymentStrategy)
 	if strategy.Type == "" {
 		strategy.Type = "RollingUpdate"
 	}
@@ -209,9 +204,9 @@ func (d *CommonDeployment) setPodSecurityContext(pulp repomanagerpulpprojectorgv
 }
 
 // setNodeSelector defines the selectors to schedule the pod on a node
-func (d *CommonDeployment) setNodeSelector(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
+func (d *CommonDeployment) setNodeSelector(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
 	nodeSelector := map[string]string{}
-	specField := reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("NodeSelector").Interface().(map[string]string)
+	specField := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("NodeSelector").Interface().(map[string]string)
 	if specField != nil {
 		nodeSelector = specField
 	}
@@ -219,9 +214,9 @@ func (d *CommonDeployment) setNodeSelector(pulp repomanagerpulpprojectorgv1beta2
 }
 
 // setTolerations defines the pod tolerations
-func (d *CommonDeployment) setTolerations(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
+func (d *CommonDeployment) setTolerations(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
 	toleration := []corev1.Toleration{}
-	specField := reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("Tolerations").Interface().([]corev1.Toleration)
+	specField := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("Tolerations").Interface().([]corev1.Toleration)
 	if specField != nil {
 		toleration = specField
 	}
@@ -229,9 +224,9 @@ func (d *CommonDeployment) setTolerations(pulp repomanagerpulpprojectorgv1beta2.
 }
 
 // setTopologySpreadConstraints defines how to spread pods across topology
-func (d *CommonDeployment) setTopologySpreadConstraints(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
+func (d *CommonDeployment) setTopologySpreadConstraints(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
 	topologySpreadConstraint := []corev1.TopologySpreadConstraint{}
-	specField := reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("TopologySpreadConstraints").Interface().([]corev1.TopologySpreadConstraint)
+	specField := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("TopologySpreadConstraints").Interface().([]corev1.TopologySpreadConstraint)
 	if specField != nil {
 		topologySpreadConstraint = specField
 	}
@@ -239,13 +234,13 @@ func (d *CommonDeployment) setTopologySpreadConstraints(pulp repomanagerpulpproj
 }
 
 // setEnvVars defines the list of containers' environment variables
-func (d *CommonDeployment) setEnvVars(resources any, pulpcoreType string) {
+func (d *CommonDeployment) setEnvVars(resources any, pulpcoreType settings.PulpcoreType) {
 	pulp := resources.(FunctionResources).Pulp
-	pulpcoreTypeField := reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType)
+	pulpcoreTypeField := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType))
 
 	var envVars []corev1.EnvVar
 
-	if pulpcoreType != worker {
+	if pulpcoreType != settings.WORKER {
 		// gunicornWorkers definition
 		gunicornWorkers := strconv.FormatInt(pulpcoreTypeField.FieldByName("GunicornWorkers").Int(), 10)
 
@@ -254,7 +249,7 @@ func (d *CommonDeployment) setEnvVars(resources any, pulpcoreType string) {
 
 		envVars = []corev1.EnvVar{
 			{Name: "PULP_GUNICORN_TIMEOUT", Value: gunicornTimeout},
-			{Name: "PULP_" + strings.ToUpper(pulpcoreType) + "_WORKERS", Value: gunicornWorkers},
+			{Name: "PULP_" + strings.ToUpper(string(pulpcoreType)) + "_WORKERS", Value: gunicornWorkers},
 		}
 	}
 
@@ -402,11 +397,7 @@ func GetPostgresEnvVars(pulp repomanagerpulpprojectorgv1beta2.Pulp) (envVars []c
 
 // GetAdminSecretName retrieves pulp admin user password
 func GetAdminSecretName(pulp repomanagerpulpprojectorgv1beta2.Pulp) string {
-	adminSecretName := pulp.Name + "-admin-password"
-	if len(pulp.Spec.AdminPasswordSecret) > 1 {
-		adminSecretName = pulp.Spec.AdminPasswordSecret
-	}
-	return adminSecretName
+	return pulp.Spec.AdminPasswordSecret
 }
 
 // getStorageType retrieves the storage type defined in pulp CR
@@ -417,21 +408,18 @@ func getStorageType(pulp repomanagerpulpprojectorgv1beta2.Pulp) []string {
 
 // GetDBFieldsEncryptionSecret returns the name of DBFieldsEncryption Secret
 func GetDBFieldsEncryptionSecret(pulp repomanagerpulpprojectorgv1beta2.Pulp) string {
-	if pulp.Spec.DBFieldsEncryptionSecret == "" {
-		return pulp.Name + "-db-fields-encryption"
-	}
 	return pulp.Spec.DBFieldsEncryptionSecret
 }
 
 // setVolumes defines the list of pod volumes
-func (d *CommonDeployment) setVolumes(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
+func (d *CommonDeployment) setVolumes(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
 	dbFieldsEncryptionSecret := GetDBFieldsEncryptionSecret(pulp)
 	volumes := []corev1.Volume{
 		{
 			Name: pulp.Name + "-server",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: pulp.Name + "-server",
+					SecretName: settings.PulpServerSecret(pulp.Name),
 					Items: []corev1.KeyToPath{{
 						Key:  "settings.py",
 						Path: "settings.py",
@@ -454,7 +442,7 @@ func (d *CommonDeployment) setVolumes(pulp repomanagerpulpprojectorgv1beta2.Pulp
 	}
 
 	// only worker pods need to mount ansible dir
-	if pulpcoreType == worker {
+	if pulpcoreType == settings.WORKER {
 		ansibleVolume := corev1.Volume{
 			Name: pulp.Name + "-ansible-tmp",
 			VolumeSource: corev1.VolumeSource{
@@ -465,7 +453,7 @@ func (d *CommonDeployment) setVolumes(pulp repomanagerpulpprojectorgv1beta2.Pulp
 	}
 
 	// worker and content pods don't need to mount the admin secret
-	if pulpcoreType == api {
+	if pulpcoreType == settings.API {
 		adminSecretName := GetAdminSecretName(pulp)
 		volume := corev1.Volume{
 			Name: adminSecretName,
@@ -488,7 +476,7 @@ func (d *CommonDeployment) setVolumes(pulp repomanagerpulpprojectorgv1beta2.Pulp
 			Name: "file-storage",
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: pulp.Name + "-file-storage",
+					ClaimName: settings.DefaultPulpFileStorage(pulp.Name),
 				},
 			},
 		}
@@ -512,7 +500,7 @@ func (d *CommonDeployment) setVolumes(pulp repomanagerpulpprojectorgv1beta2.Pulp
 		}
 		volumes = append(volumes, emptyDir)
 		// only api pods need the assets-file-storage
-		if pulpcoreType == api {
+		if pulpcoreType == settings.API {
 			assetVolume := corev1.Volume{
 				Name: "assets-file-storage",
 				VolumeSource: corev1.VolumeSource{
@@ -558,13 +546,8 @@ func (d *CommonDeployment) setVolumes(pulp repomanagerpulpprojectorgv1beta2.Pulp
 	}
 
 	// only api pods need the container-auth-certs
-	if pulpcoreType == api {
-		var containerAuthSecretName string
-		if pulp.Spec.ContainerTokenSecret != "" {
-			containerAuthSecretName = pulp.Spec.ContainerTokenSecret
-		} else {
-			containerAuthSecretName = pulp.Name + "-container-auth"
-		}
+	if pulpcoreType == settings.API {
+		containerAuthSecretName := pulp.Spec.ContainerTokenSecret
 		containerTokenSecretVolume := corev1.Volume{
 			Name: pulp.Name + "-container-auth-certs",
 			VolumeSource: corev1.VolumeSource{
@@ -589,7 +572,7 @@ func (d *CommonDeployment) setVolumes(pulp repomanagerpulpprojectorgv1beta2.Pulp
 }
 
 // setVolumeMounts defines the list containers volumes mount points
-func (d *CommonDeployment) setVolumeMounts(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
+func (d *CommonDeployment) setVolumeMounts(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
 
 	volumeMounts := []corev1.VolumeMount{
 		{
@@ -607,13 +590,13 @@ func (d *CommonDeployment) setVolumeMounts(pulp repomanagerpulpprojectorgv1beta2
 	}
 
 	// only worker pods need to mount ansible dir
-	if pulpcoreType == worker {
+	if pulpcoreType == settings.WORKER {
 		ansibleVolume := corev1.VolumeMount{Name: pulp.Name + "-ansible-tmp", MountPath: "/.ansible/tmp"}
 		volumeMounts = append(volumeMounts, ansibleVolume)
 	}
 
 	// worker and content pods don't need to mount the admin secret
-	if pulpcoreType == api {
+	if pulpcoreType == settings.API {
 		adminSecretName := GetAdminSecretName(pulp)
 		adminSecret := corev1.VolumeMount{
 			Name:      adminSecretName,
@@ -635,7 +618,7 @@ func (d *CommonDeployment) setVolumeMounts(pulp repomanagerpulpprojectorgv1beta2
 	} else if storageType[0] == EmptyDirType { // if no file-storage nor object storage were provided we will mount the emptyDir
 		emptyDir := corev1.VolumeMount{Name: "tmp-file-storage", MountPath: "/var/lib/pulp/tmp"}
 		volumeMounts = append(volumeMounts, emptyDir)
-		if pulpcoreType == api { // worker and content pods don't need to mount the assets-file-storage secret
+		if pulpcoreType == settings.API { // worker and content pods don't need to mount the assets-file-storage secret
 			assetsVolume := corev1.VolumeMount{Name: "assets-file-storage", MountPath: "/var/lib/pulp/assets"}
 			volumeMounts = append(volumeMounts, assetsVolume)
 		}
@@ -665,7 +648,7 @@ func (d *CommonDeployment) setVolumeMounts(pulp repomanagerpulpprojectorgv1beta2
 		volumeMounts = append(volumeMounts, signingSecretMount...)
 	}
 
-	if pulpcoreType == api && pulp.Spec.ContainerTokenSecret != "" {
+	if pulpcoreType == settings.API && pulp.Spec.ContainerTokenSecret != "" {
 		containerTokenSecretMount := []corev1.VolumeMount{
 			{
 				Name:      pulp.Name + "-container-auth-certs",
@@ -719,20 +702,20 @@ func (d *CommonDeployment) setInitContainerVolumeMounts(pulp repomanagerpulpproj
 }
 
 // setResourceRequirements defines the container resources
-func (d *CommonDeployment) setResourceRequirements(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
-	d.resourceRequirements = reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("ResourceRequirements").Interface().(corev1.ResourceRequirements)
+func (d *CommonDeployment) setResourceRequirements(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+	d.resourceRequirements = reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("ResourceRequirements").Interface().(corev1.ResourceRequirements)
 }
 
 // setInitContainerResourceRequirements defines the init-container resources
-func (d *CommonDeployment) setInitContainerResourceRequirements(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
-	d.initContainerResourceRequirements = reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("InitContainer").FieldByName("ResourceRequirements").Interface().(corev1.ResourceRequirements)
+func (d *CommonDeployment) setInitContainerResourceRequirements(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+	d.initContainerResourceRequirements = reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("InitContainer").FieldByName("ResourceRequirements").Interface().(corev1.ResourceRequirements)
 }
 
 // setReadinessProbe defines the container readinessprobe
-func (d *CommonDeployment) setReadinessProbe(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
-	readinessProbe := reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("ReadinessProbe").Interface().(*corev1.Probe)
+func (d *CommonDeployment) setReadinessProbe(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+	readinessProbe := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("ReadinessProbe").Interface().(*corev1.Probe)
 	switch pulpcoreType {
-	case api:
+	case settings.API:
 		if readinessProbe == nil {
 			readinessProbe = &corev1.Probe{
 				ProbeHandler: corev1.ProbeHandler{
@@ -750,7 +733,7 @@ func (d *CommonDeployment) setReadinessProbe(pulp repomanagerpulpprojectorgv1bet
 				TimeoutSeconds:      10,
 			}
 		}
-	case content:
+	case settings.CONTENT:
 		if readinessProbe == nil {
 			readinessProbe = &corev1.Probe{
 				ProbeHandler: corev1.ProbeHandler{
@@ -768,7 +751,7 @@ func (d *CommonDeployment) setReadinessProbe(pulp repomanagerpulpprojectorgv1bet
 				TimeoutSeconds:      10,
 			}
 		}
-	case worker:
+	case settings.WORKER:
 		if readinessProbe == nil {
 			readinessProbe = &corev1.Probe{
 				ProbeHandler: corev1.ProbeHandler{
@@ -791,10 +774,10 @@ func (d *CommonDeployment) setReadinessProbe(pulp repomanagerpulpprojectorgv1bet
 }
 
 // setReadinessProbe defines the container livenessprobe
-func (d *CommonDeployment) setLivenessProbe(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
-	livenessProbe := reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("LivenessProbe").Interface().(*corev1.Probe)
+func (d *CommonDeployment) setLivenessProbe(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+	livenessProbe := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("LivenessProbe").Interface().(*corev1.Probe)
 	switch pulpcoreType {
-	case api:
+	case settings.API:
 		if livenessProbe == nil {
 			livenessProbe = &corev1.Probe{
 				FailureThreshold: 10,
@@ -829,21 +812,21 @@ func (d *CommonDeployment) setImage(pulp repomanagerpulpprojectorgv1beta2.Pulp) 
 }
 
 // setInitContainerImage defines pulpcore init-container image
-func (d *CommonDeployment) setInitContainerImage(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
-	d.initContainerImage = reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType).FieldByName("InitContainer").FieldByName("Image").String()
+func (d *CommonDeployment) setInitContainerImage(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+	d.initContainerImage = reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("InitContainer").FieldByName("Image").String()
 	if len(d.initContainerImage) == 0 {
 		d.initContainerImage = d.image
 	}
 }
 
 // setInitContainers defines initContainers specs
-func (d *CommonDeployment) setInitContainers(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
+func (d *CommonDeployment) setInitContainers(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
 	args := []string{
 		"-c",
 		`/usr/bin/wait_on_postgres.py
 /usr/bin/wait_on_database_migrations.sh`,
 	}
-	if pulpcoreType == api {
+	if pulpcoreType == settings.API {
 		args = []string{
 			"-c",
 			`mkdir -p /var/lib/pulp/{media,assets,tmp}
@@ -867,10 +850,10 @@ func (d *CommonDeployment) setInitContainers(pulp repomanagerpulpprojectorgv1bet
 }
 
 // setContainers defines pulpcore containers specs
-func (d *CommonDeployment) setContainers(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
+func (d *CommonDeployment) setContainers(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
 	var containers []corev1.Container
 	switch pulpcoreType {
-	case api:
+	case settings.API:
 		containers = []corev1.Container{
 			{
 				Name:            "api",
@@ -902,7 +885,7 @@ exec "${PULP_API_ENTRYPOINT[@]}" \
 				VolumeMounts:   d.volumeMounts,
 			},
 		}
-	case content:
+	case settings.CONTENT:
 		containers = []corev1.Container{{
 			Name:            "content",
 			Image:           d.image,
@@ -933,7 +916,7 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 			ReadinessProbe: d.readinessProbe,
 			VolumeMounts:   d.volumeMounts,
 		}}
-	case worker:
+	case settings.WORKER:
 		containers = []corev1.Container{{
 			Name:            "worker",
 			Image:           d.image,
@@ -956,9 +939,9 @@ exec pulpcore-worker`,
 }
 
 // setAnnotations defines the list of pods and deployments annotations
-func (d *CommonDeployment) setAnnotations(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType string) {
+func (d *CommonDeployment) setAnnotations(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
 	d.podAnnotations = map[string]string{
-		"kubectl.kubernetes.io/default-container": strings.ToLower(pulpcoreType),
+		"kubectl.kubernetes.io/default-container": strings.ToLower(string(pulpcoreType)),
 	}
 
 	if pulp.Status.LastDeploymentUpdate != "" {
@@ -993,7 +976,7 @@ func (d *CommonDeployment) setSchedulerName() {
 }
 
 // setTelemetryConfig defines the containers and volumes configuration if telemetry is enabled
-func (d *CommonDeployment) setTelemetryConfig(resources any, pulpcoreType string) {
+func (d *CommonDeployment) setTelemetryConfig(resources any, pulpcoreType settings.PulpcoreType) {
 	d.containers, d.volumes = telemetryConfig(resources, d.envVars, d.containers, d.volumes, pulpcoreType)
 }
 
@@ -1051,7 +1034,7 @@ func (d *CommonDeployment) setLDAPConfigs(resources any) {
 }
 
 // build constructs the fields used in the deployment specification
-func (d *CommonDeployment) build(resources any, pulpcoreType string) {
+func (d *CommonDeployment) build(resources any, pulpcoreType settings.PulpcoreType) {
 	pulp := resources.(FunctionResources).Pulp
 	d.setReplicas(*pulp, pulpcoreType)
 	d.setEnvVars(resources, pulpcoreType)

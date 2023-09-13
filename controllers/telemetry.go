@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/pulp/pulp-operator/controllers/settings"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,15 +15,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const OtelConfigName = "otel-collector-config"
-const OtelConfigFile = "otel-collector-config.yaml"
-const OtelServiceName = "otel-collector-svc"
-const otelContainerPort = 8889
-
 // telemetryConfig adds the otel container sidecar to containers' slice, an otelConfigMap as a new volume, and a pod annotation
-func telemetryConfig(resources any, envVars []corev1.EnvVar, containers []corev1.Container, volumes []corev1.Volume, pulpcoreType string) ([]corev1.Container, []corev1.Volume) {
+func telemetryConfig(resources any, envVars []corev1.EnvVar, containers []corev1.Container, volumes []corev1.Volume, pulpcoreType settings.PulpcoreType) ([]corev1.Container, []corev1.Volume) {
 	pulp := resources.(FunctionResources).Pulp
-	if !pulp.Spec.Telemetry.Enabled || pulpcoreType != api {
+	if !pulp.Spec.Telemetry.Enabled || pulpcoreType != settings.API {
 		return containers, volumes
 	}
 
@@ -51,13 +47,14 @@ exec  /usr/local/bin/opentelemetry-instrument --service_name pulp-api "${PULP_AP
 --access-logfile -`,
 	}
 
+	volumeName := "otel-collector-config"
 	// create a volume using the otelconfigmap as source
 	telemetryVolume := corev1.Volume{
-		Name: OtelConfigName,
+		Name: volumeName,
 		VolumeSource: corev1.VolumeSource{
 			ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{
-					Name: OtelConfigName,
+					Name: settings.OtelConfigMapName(pulp.Name),
 				},
 			},
 		},
@@ -66,9 +63,9 @@ exec  /usr/local/bin/opentelemetry-instrument --service_name pulp-api "${PULP_AP
 	// set the otel configmap mountpoint
 	telemetryVolMount := []corev1.VolumeMount{
 		{
-			Name:      OtelConfigName,
-			MountPath: "/etc/otelcol-contrib/" + OtelConfigFile,
-			SubPath:   OtelConfigFile,
+			Name:      volumeName,
+			MountPath: "/etc/otelcol-contrib/" + settings.OtelConfigFile,
+			SubPath:   settings.OtelConfigFile,
 			ReadOnly:  true,
 		},
 	}
@@ -82,11 +79,11 @@ exec  /usr/local/bin/opentelemetry-instrument --service_name pulp-api "${PULP_AP
 		Image:           telemetryImage,
 		ImagePullPolicy: corev1.PullPolicy(pulp.Spec.ImagePullPolicy),
 		Ports: []corev1.ContainerPort{{
-			ContainerPort: otelContainerPort,
+			ContainerPort: settings.OtelContainerPort,
 			Protocol:      "TCP",
 		}},
 		Args: []string{
-			"--config", "file:/etc/otelcol-contrib/" + OtelConfigFile,
+			"--config", "file:/etc/otelcol-contrib/" + settings.OtelConfigFile,
 		},
 		VolumeMounts: telemetryVolMount,
 		Resources:    requirements,
@@ -142,7 +139,7 @@ func setResourceRequirements(resources any) corev1.ResourceRequirements {
 func OtelConfigMap(resources FunctionResources) client.Object {
 
 	otelConfig := map[string]string{
-		OtelConfigFile: `
+		settings.OtelConfigFile: `
 receivers:
   otlp:
     protocols:
@@ -169,7 +166,7 @@ service:
 
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      OtelConfigName,
+			Name:      settings.OtelConfigMapName(resources.Name),
 			Namespace: resources.Namespace,
 		},
 		Data: otelConfig,
@@ -184,14 +181,14 @@ func ServiceOtel(resources FunctionResources) client.Object {
 	ipFamilyPolicyType := corev1.IPFamilyPolicyType("SingleStack")
 	serviceAffinity := corev1.ServiceAffinity("None")
 	servicePortProto := corev1.Protocol("TCP")
-	targetPort := intstr.IntOrString{IntVal: otelContainerPort}
+	targetPort := intstr.IntOrString{IntVal: settings.OtelContainerPort}
 	serviceType := corev1.ServiceType("ClusterIP")
 	deployment_type := resources.Pulp.Spec.DeploymentType
 	name := resources.Name
 
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      OtelServiceName,
+			Name:      settings.OtelServiceName(name),
 			Namespace: resources.Namespace,
 			Labels: map[string]string{
 				"otel": "",
@@ -202,8 +199,8 @@ func ServiceOtel(resources FunctionResources) client.Object {
 			IPFamilies:            []corev1.IPFamily{"IPv4"},
 			IPFamilyPolicy:        &ipFamilyPolicyType,
 			Ports: []corev1.ServicePort{{
-				Name:       "otel-" + strconv.Itoa(otelContainerPort),
-				Port:       otelContainerPort,
+				Name:       "otel-" + strconv.Itoa(settings.OtelContainerPort),
+				Port:       settings.OtelContainerPort,
 				Protocol:   servicePortProto,
 				TargetPort: targetPort,
 			}},
@@ -234,13 +231,13 @@ func RemoveTelemetryResources(resources FunctionResources) {
 
 	// remove otel configmap
 	otelConfigMap := &corev1.ConfigMap{}
-	if err := client.Get(ctx, types.NamespacedName{Name: OtelConfigName, Namespace: pulp.Namespace}, otelConfigMap); err == nil {
+	if err := client.Get(ctx, types.NamespacedName{Name: settings.OtelConfigMapName(pulp.Name), Namespace: pulp.Namespace}, otelConfigMap); err == nil {
 		client.Delete(ctx, otelConfigMap)
 	}
 
 	// remove otel service
 	otelService := &corev1.Service{}
-	if err := client.Get(ctx, types.NamespacedName{Name: OtelServiceName, Namespace: pulp.Namespace}, otelService); err == nil {
+	if err := client.Get(ctx, types.NamespacedName{Name: settings.OtelServiceName(pulp.Name), Namespace: pulp.Namespace}, otelService); err == nil {
 		client.Delete(ctx, otelService)
 	}
 

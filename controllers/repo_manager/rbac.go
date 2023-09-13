@@ -23,6 +23,7 @@ import (
 
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
+	"github.com/pulp/pulp-operator/controllers/settings"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	corev1 "k8s.io/api/core/v1"
@@ -36,39 +37,41 @@ import (
 func (r *RepoManagerReconciler) CreateServiceAccount(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) (ctrl.Result, error) {
 	log := r.RawLogger
 	conditionType := getApiConditionType(pulp)
+
+	serviceAccountName := settings.PulpServiceAccount(pulp.Name)
 	sa := &corev1.ServiceAccount{}
-	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name, Namespace: pulp.Namespace}, sa)
+	err := r.Get(ctx, types.NamespacedName{Name: serviceAccountName, Namespace: pulp.Namespace}, sa)
 	expectedSA := r.pulpSA(pulp)
 	if err != nil && errors.IsNotFound(err) {
-		log.Info("Creating a new "+pulp.Spec.DeploymentType+" ServiceAccount", "Namespace", expectedSA.Namespace, "Name", expectedSA.Name)
-		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingSA", "Creating "+pulp.Name+" SA resource")
+		log.Info("Creating "+serviceAccountName+" ServiceAccount", "Namespace", expectedSA.Namespace, "Name", serviceAccountName)
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingSA", "Creating "+serviceAccountName+" SA resource")
 		err = r.Create(ctx, expectedSA)
 		if err != nil {
-			log.Error(err, "Failed to create new "+pulp.Spec.DeploymentType+" ServiceAccount", "Namespace", expectedSA.Namespace, "Name", expectedSA.Name)
-			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingSA", "Failed to create "+pulp.Name+" SA: "+err.Error())
-			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new "+pulp.Spec.DeploymentType+" SA")
+			log.Error(err, "Failed to create "+serviceAccountName+" ServiceAccount", "Namespace", expectedSA.Namespace, "Name", serviceAccountName)
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingSA", "Failed to create "+serviceAccountName+" SA: "+err.Error())
+			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create "+serviceAccountName+" SA")
 			return ctrl.Result{}, err
 		}
 		// SA created successfully - return and requeue
-		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", pulp.Spec.DeploymentType+" SA created")
+		r.recorder.Event(pulp, corev1.EventTypeNormal, "Created", serviceAccountName+" SA created")
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
-		log.Error(err, "Failed to get "+pulp.Spec.DeploymentType+" SA")
+		log.Error(err, "Failed to get "+serviceAccountName+" SA")
 		return ctrl.Result{}, err
 	}
 
 	// add the internalRegistrySecret to the list of imagePullSecrets
-	internalRegistrySecret := r.getInternalRegistrySecret(ctx, pulp.Name, pulp.Namespace)
+	internalRegistrySecret := r.getInternalRegistrySecret(ctx, serviceAccountName, pulp.Namespace)
 	if internalRegistrySecret != "" {
 		expectedSA.ImagePullSecrets = append([]corev1.LocalObjectReference{{Name: internalRegistrySecret}}, expectedSA.ImagePullSecrets...)
 	}
 
 	// Check and reconcile pulp-sa
 	if saModified(sa, expectedSA) {
-		log.Info("The " + sa.Name + " SA has been modified! Reconciling ...")
+		log.Info("The " + serviceAccountName + " SA has been modified! Reconciling ...")
 		err = r.Update(ctx, expectedSA)
 		if err != nil {
-			log.Error(err, "Error trying to update "+sa.Name+" SA!")
+			log.Error(err, "Error trying to update "+serviceAccountName+" SA!")
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{Requeue: true}, nil
@@ -146,7 +149,7 @@ func (r *RepoManagerReconciler) pulpSA(m *repomanagerpulpprojectorgv1beta2.Pulp)
 
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        m.Name,
+			Name:        settings.PulpServiceAccount(m.Name),
 			Namespace:   m.Namespace,
 			Labels:      labels,
 			Annotations: annotations,
@@ -218,7 +221,7 @@ func (r *RepoManagerReconciler) pulpRoleBinding(m *repomanagerpulpprojectorgv1be
 		Subjects: []rbacv1.Subject{
 			{
 				Kind: "ServiceAccount",
-				Name: m.Name,
+				Name: settings.PulpServiceAccount(m.Name),
 			},
 		},
 		RoleRef: rbacv1.RoleRef{

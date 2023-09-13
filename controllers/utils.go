@@ -31,6 +31,7 @@ import (
 	"github.com/go-logr/logr"
 	routev1 "github.com/openshift/api/route/v1"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	"github.com/pulp/pulp-operator/controllers/settings"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/crypto/openpgp"
@@ -88,14 +89,6 @@ type FunctionResources struct {
 	*repomanagerpulpprojectorgv1beta2.Pulp
 	Scheme *runtime.Scheme
 	logr.Logger
-}
-
-// Deployer is an interface for the several deployment types:
-// - api deployment in vanilla k8s or ocp
-// - content deployment in vanilla k8s or ocp
-// - worker deployment in vanilla k8s or ocp
-type Deployer interface {
-	deploy() client.Object
 }
 
 // IgnoreUpdateCRStatusPredicate filters update events on pulpbackup CR status
@@ -687,7 +680,7 @@ func ReconcileObject(funcResources FunctionResources, expectedState, currentStat
 	// kubernetes will define a new nodeport automatically
 	// we need to do this check only for pulp-web-svc service because it is
 	// the only nodePort svc (this is an edge case)
-	if expectedState.GetName() == funcResources.Pulp.Name+"-web-svc" && funcResources.Pulp.Spec.NodePort == 0 {
+	if expectedState.GetName() == settings.PulpWebService(funcResources.Pulp.Name) && funcResources.Pulp.Spec.NodePort == 0 {
 		return false, nil
 	}
 
@@ -757,14 +750,14 @@ func RemovePulpWebResources(resources FunctionResources) error {
 
 	// remove pulp-web components
 	webDeployment := &appsv1.Deployment{}
-	if err := resources.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web", Namespace: pulp.Namespace}, webDeployment); err == nil {
+	if err := resources.Get(ctx, types.NamespacedName{Name: settings.WEB.DeploymentName(pulp.Name), Namespace: pulp.Namespace}, webDeployment); err == nil {
 		resources.Delete(ctx, webDeployment)
 	} else {
 		return err
 	}
 
 	webSvc := &corev1.Service{}
-	if err := resources.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web-svc", Namespace: pulp.Namespace}, webSvc); err == nil {
+	if err := resources.Get(ctx, types.NamespacedName{Name: settings.PulpWebService(pulp.Name), Namespace: pulp.Namespace}, webSvc); err == nil {
 		resources.Delete(ctx, webSvc)
 	} else {
 		return err

@@ -25,6 +25,7 @@ import (
 	"github.com/go-logr/logr"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
+	"github.com/pulp/pulp-operator/controllers/settings"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
@@ -43,8 +44,9 @@ func (r *RepoManagerReconciler) pulpWebController(ctx context.Context, pulp *rep
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Web-Ready"
 
 	// pulp-web Configmap
+	configMapName := settings.PulpWebConfigMapName(pulp.Name)
 	webConfigMap := &corev1.ConfigMap{}
-	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-configmap", Namespace: pulp.Namespace}, webConfigMap)
+	err := r.Get(ctx, types.NamespacedName{Name: configMapName, Namespace: pulp.Namespace}, webConfigMap)
 	newWebConfigMap := r.pulpWebConfigMap(pulp)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new Pulp Web ConfigMap", "ConfigMap.Namespace", newWebConfigMap.Namespace, "ConfigMap.Name", newWebConfigMap.Name)
@@ -65,16 +67,17 @@ func (r *RepoManagerReconciler) pulpWebController(ctx context.Context, pulp *rep
 	}
 
 	// pulp-web Deployment
+	deploymentName := settings.WEB.DeploymentName(pulp.Name)
 	webDeployment := &appsv1.Deployment{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web", Namespace: pulp.Namespace}, webDeployment)
+	err = r.Get(ctx, types.NamespacedName{Name: deploymentName, Namespace: pulp.Namespace}, webDeployment)
 	newWebDeployment := r.deploymentForPulpWeb(pulp, funcResources)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new Pulp Web Deployment", "Deployment.Namespace", newWebDeployment.Namespace, "Deployment.Name", newWebDeployment.Name)
-		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingWebDeployment", "Creating "+pulp.Name+"-web deployment resource")
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingWebDeployment", "Creating "+deploymentName+" Deployment resource")
 		err = r.Create(ctx, newWebDeployment)
 		if err != nil {
 			log.Error(err, "Failed to create new Pulp Web Deployment", "Deployment.Namespace", newWebDeployment.Namespace, "Deployment.Name", newWebDeployment.Name)
-			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingWebDeployment", "Failed to create "+pulp.Name+"-web deployment resource: "+err.Error())
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingWebDeployment", "Failed to create "+deploymentName+" Deployment resource: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new Web Deployment")
 			return ctrl.Result{}, err
 		}
@@ -89,12 +92,12 @@ func (r *RepoManagerReconciler) pulpWebController(ctx context.Context, pulp *rep
 	// Reconcile Deployment
 	if controllers.CheckDeploymentSpec(*newWebDeployment, *webDeployment, funcResources) {
 		log.Info("The Web Deployment has been modified! Reconciling ...")
-		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "UpdatingWebDeployment", "Reconciling "+pulp.Name+"-web deployment resource")
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "UpdatingWebDeployment", "Reconciling "+deploymentName+" Deployment resource")
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling Web Deployment")
 		err = r.Update(ctx, newWebDeployment)
 		if err != nil {
 			log.Error(err, "Error trying to update the Web Deployment object ... ")
-			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingWebDeployment", "Failed to reconcile "+pulp.Name+"-web deployment resource: "+err.Error())
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingWebDeployment", "Failed to reconcile "+deploymentName+" Deployment resource: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile Web Deployment")
 			return ctrl.Result{}, err
 		}
@@ -103,17 +106,18 @@ func (r *RepoManagerReconciler) pulpWebController(ctx context.Context, pulp *rep
 	}
 
 	// SERVICE
+	serviceName := settings.PulpWebService(pulp.Name)
 	webSvc := &corev1.Service{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web-svc", Namespace: pulp.Namespace}, webSvc)
+	err = r.Get(ctx, types.NamespacedName{Name: serviceName, Namespace: pulp.Namespace}, webSvc)
 	newWebSvc := serviceForPulpWeb(pulp)
 	if err != nil && errors.IsNotFound(err) {
 		ctrl.SetControllerReference(pulp, newWebSvc, r.Scheme)
 		log.Info("Creating a new Web Service", "Service.Namespace", newWebSvc.Namespace, "Service.Name", newWebSvc.Name)
-		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingWebService", "Creating "+pulp.Name+"-web-svc service resource")
+		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingWebService", "Creating "+serviceName+" Service resource")
 		err = r.Create(ctx, newWebSvc)
 		if err != nil {
 			log.Error(err, "Failed to create new Web Service", "Service.Namespace", newWebSvc.Namespace, "Service.Name", newWebSvc.Name)
-			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingWebDService", "Failed to create "+pulp.Name+"-web-svc service resource: "+err.Error())
+			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorCreatingWebDService", "Failed to create "+serviceName+" Service resource: "+err.Error())
 			r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to create new Web Service")
 			return ctrl.Result{}, err
 		}
@@ -183,12 +187,12 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name + "-web",
+			Name:      settings.WEB.DeploymentName(m.Name),
 			Namespace: m.Namespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/name":       "nginx",
 				"app.kubernetes.io/instance":   "nginx-" + m.Name,
-				"app.kubernetes.io/component":  "webserver",
+				"app.kubernetes.io/component":  "web",
 				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
 				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
 				"owner":                        "pulp-dev",
@@ -206,7 +210,7 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 				},
 				Spec: corev1.PodSpec{
 					NodeSelector:       nodeSelector,
-					ServiceAccountName: m.Name,
+					ServiceAccountName: settings.PulpServiceAccount(m.Name),
 					Containers: []corev1.Container{{
 						Image:     ImageWeb,
 						Name:      "web",
@@ -243,7 +247,7 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 							VolumeSource: corev1.VolumeSource{
 								ConfigMap: &corev1.ConfigMapVolumeSource{
 									LocalObjectReference: corev1.LocalObjectReference{
-										Name: m.Name + "-configmap",
+										Name: settings.PulpWebConfigMapName(m.Name),
 									},
 									Items: []corev1.KeyToPath{
 										{Key: "nginx.conf", Path: "nginx.conf"},
@@ -269,7 +273,7 @@ func labelsForPulpWeb(m *repomanagerpulpprojectorgv1beta2.Pulp) map[string]strin
 	return map[string]string{
 		"app.kubernetes.io/name":       "nginx",
 		"app.kubernetes.io/instance":   "nginx-" + m.Name,
-		"app.kubernetes.io/component":  "webserver",
+		"app.kubernetes.io/component":  "web",
 		"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
 		"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
 		"pulp_cr":                      m.Name,
@@ -337,7 +341,7 @@ func serviceForPulpWeb(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Service
 
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        m.Name + "-web-svc",
+			Name:        settings.PulpWebService(m.Name),
 			Namespace:   m.Namespace,
 			Labels:      labelsForPulpWeb(m),
 			Annotations: annotations,
@@ -441,11 +445,11 @@ func (r *RepoManagerReconciler) pulpWebConfigMap(m *repomanagerpulpprojectorgv1b
 		types_hash_max_size 4096;
 
 		upstream pulp-content {
-			server ` + m.Name + `-content-svc:24816;
+			server ` + settings.ContentService(m.Name) + `:24816;
 		}
 
 		upstream pulp-api {
-			server ` + m.Name + `-api-svc:24817;
+			server ` + settings.ApiService(m.Name) + `:24817;
 		}
 ` + serverConfig + `
 
@@ -516,7 +520,7 @@ func (r *RepoManagerReconciler) pulpWebConfigMap(m *repomanagerpulpprojectorgv1b
 
 	sec := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name + "-configmap",
+			Name:      settings.PulpWebConfigMapName(m.Name),
 			Namespace: m.Namespace,
 		},
 		Data: data,

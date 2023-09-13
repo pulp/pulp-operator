@@ -24,6 +24,7 @@ import (
 	"github.com/go-logr/logr"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
+	"github.com/pulp/pulp-operator/controllers/settings"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
@@ -60,23 +61,23 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 	time.Sleep(time.Millisecond * 200)
 	pulpResources := []pulpResource{
 		{
-			Type:          "content",
-			Name:          pulp.Name + "-content",
+			Type:          string(settings.CONTENT),
+			Name:          settings.CONTENT.DeploymentName(pulp.Name),
 			ConditionType: cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Content-Ready",
 		},
 		{
-			Type:          "api",
-			Name:          pulp.Name + "-api",
+			Type:          string(settings.API),
+			Name:          settings.API.DeploymentName(pulp.Name),
 			ConditionType: cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-API-Ready",
 		},
 		{
-			Type:          "worker",
-			Name:          pulp.Name + "-worker",
+			Type:          string(settings.WORKER),
+			Name:          settings.WORKER.DeploymentName(pulp.Name),
 			ConditionType: cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Worker-Ready",
 		},
 		{
-			Type:          "web",
-			Name:          pulp.Name + "-web",
+			Type:          string(settings.WEB),
+			Name:          settings.WEB.DeploymentName(pulp.Name),
 			ConditionType: cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Web-Ready",
 		},
 	}
@@ -89,7 +90,7 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 		wg.Add(1)
 
 		// if route or ingress we should do nothing
-		if resource.Type == "web" {
+		if resource.Type == string(settings.WEB) {
 			if isRoute(pulp) || r.isNginxIngress(pulp) {
 				wg.Done()
 				continue
@@ -110,14 +111,14 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 			typeCapitalized := cases.Title(language.English, cases.Compact).String(resource.Type)
 			if err := r.Get(ctx, types.NamespacedName{Name: resource.Name, Namespace: pulp.Namespace}, deployment); err == nil {
 				if !isDeploymentReady(deployment) {
-					log.Info(pulp.Spec.DeploymentType + " " + resource.Type + " not ready yet ...")
+					log.Info(resource.Name + " pods not ready yet ...")
 					controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, resource.ConditionType, "Updating"+typeCapitalized+"Deployment", typeCapitalized+" deployment not ready yet")
 				} else if v1.IsStatusConditionFalse(pulp.Status.Conditions, resource.ConditionType) {
 					controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionTrue, resource.ConditionType, typeCapitalized+"TasksFinished", "All "+typeCapitalized+" tasks ran successfully")
 					r.recorder.Event(pulp, corev1.EventTypeNormal, typeCapitalized+"Ready", "All "+typeCapitalized+" tasks ran successfully")
 				}
 			} else {
-				log.Error(err, "Failed to get Pulp "+typeCapitalized+" Deployment")
+				log.Error(err, "Failed to get Pulp "+resource.Name+" Deployment")
 			}
 		}(resource)
 	}
@@ -146,7 +147,7 @@ func (r *RepoManagerReconciler) pulpStatus(ctx context.Context, pulp *repomanage
 			log.V(1).Info("Failed to update pulp status", "error", err)
 			return ctrl.Result{Requeue: true}, nil
 		}
-		log.Info(pulp.Spec.DeploymentType + " operator finished execution ...")
+		log.Info(pulp.Name + " finished execution ...")
 	}
 
 	/*

@@ -21,6 +21,7 @@ import (
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
 	pulp_ocp "github.com/pulp/pulp-operator/controllers/ocp"
+	"github.com/pulp/pulp-operator/controllers/settings"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
@@ -285,12 +286,12 @@ func (r *RepoManagerReconciler) updateIngressClass(ctx context.Context, pulp *re
 
 		// remove pulp-web components
 		webDeployment := &appsv1.Deployment{}
-		if err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web", Namespace: pulp.Namespace}, webDeployment); err == nil {
+		if err := r.Get(ctx, types.NamespacedName{Name: settings.WEB.DeploymentName(pulp.Name), Namespace: pulp.Namespace}, webDeployment); err == nil {
 			r.Delete(ctx, webDeployment)
 		}
 
 		webSvc := &corev1.Service{}
-		if err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-web-svc", Namespace: pulp.Namespace}, webSvc); err == nil {
+		if err := r.Get(ctx, types.NamespacedName{Name: settings.PulpWebService(pulp.Name), Namespace: pulp.Namespace}, webSvc); err == nil {
 			r.Delete(ctx, webSvc)
 		}
 		webConditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Web-Ready"
@@ -445,7 +446,7 @@ func getRootURL(resource controllers.FunctionResources) string {
 		return "https://" + pulp_ocp.GetRouteHost(resource.Pulp)
 	}
 
-	return "http://" + resource.Pulp.Name + "-web-svc." + resource.Pulp.Namespace + ".svc.cluster.local:24880"
+	return "http://" + settings.PulpWebService(resource.Pulp.Name) + "." + resource.Pulp.Namespace + ".svc.cluster.local:24880"
 }
 
 // ignoreUpdateCRStatusPredicate filters update events on pulpbackup CR status
@@ -484,24 +485,6 @@ func (r *RepoManagerReconciler) findPulpDependentSecrets(secret client.Object) [
 	}
 
 	return []reconcile.Request{}
-}
-
-// [DEPRECATED] this is not working because the r.Patch modification will be
-// reconciled by the controller. The reconciliation is triggered because in
-// the expected deployment there isn't a "repo-manager.pulpproject.org/restartedAt" annotation.
-// restartPods modifies a deployment template field (`.annotations`) which will
-// start a new rollout of pods
-func (r *RepoManagerReconciler) restartPods(pulp *repomanagerpulpprojectorgv1beta2.Pulp, obj client.Object) {
-	switch obj := obj.(type) {
-	case *appsv1.Deployment:
-
-		patch := client.MergeFrom(obj.DeepCopy())
-		if obj.Spec.Template.ObjectMeta.Annotations == nil {
-			obj.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
-		}
-		obj.Spec.Template.ObjectMeta.Annotations["repo-manager.pulpproject.org/restartedAt"] = time.Now().Format(time.RFC3339)
-		r.Patch(context.TODO(), obj, patch)
-	}
 }
 
 // restartPulpCorePods will redeploy all pulpcore (API,content,worker) pods.

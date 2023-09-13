@@ -71,17 +71,8 @@ type RepoManagerReconciler struct {
 func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.RawLogger
 
-	isOpenShift, _ := controllers.IsOpenShift()
-	if isOpenShift {
-		log.V(1).Info("Running on OpenShift cluster")
-		if err := pulp_ocp.CreateRHOperatorPullSecret(r.Client, ctx, req.NamespacedName.Namespace); err != nil {
-			return ctrl.Result{}, err
-		}
-	}
-
 	pulp := &repomanagerpulpprojectorgv1beta2.Pulp{}
 	err := r.Get(ctx, req.NamespacedName, pulp)
-
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -93,6 +84,14 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		// Error reading the object - requeue the request.
 		log.Error(err, "Failed to get Pulp")
 		return ctrl.Result{}, err
+	}
+
+	isOpenShift, _ := controllers.IsOpenShift()
+	if isOpenShift {
+		log.V(1).Info("Running on OpenShift cluster")
+		if err := pulp_ocp.CreateRHOperatorPullSecret(r.Client, ctx, req.NamespacedName.Namespace, pulp.Name); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 
 	// if Unmanaged the operator should do nothing
