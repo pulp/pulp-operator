@@ -22,6 +22,7 @@ import (
 	"github.com/go-logr/logr"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
+	"github.com/pulp/pulp-operator/controllers/settings"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
@@ -48,12 +49,15 @@ func (r *RepoManagerReconciler) pulpContentController(ctx context.Context, pulp 
 	// define the k8s Deployment function based on k8s distribution and deployment type
 	deploymentForPulpContent := initDeployment(CONTENT_DEPLOYMENT).Deploy
 
+	deploymentName := settings.CONTENT.DeploymentName(pulp.Name)
+	serviceName := settings.ContentService(pulp.Name)
+
 	// list of pulp-content resources that should be provisioned
 	resources := []ContentResource{
 		// pulp-content deployment
-		{ResourceDefinition{ctx, &appsv1.Deployment{}, pulp.Name + "-content", "Content", conditionType, pulp}, deploymentForPulpContent},
+		{ResourceDefinition{ctx, &appsv1.Deployment{}, deploymentName, "Content", conditionType, pulp}, deploymentForPulpContent},
 		// pulp-content-svc service
-		{ResourceDefinition{ctx, &corev1.Service{}, pulp.Name + "-content-svc", "Content", conditionType, pulp}, serviceForContent},
+		{ResourceDefinition{ctx, &corev1.Service{}, serviceName, "Content", conditionType, pulp}, serviceForContent},
 	}
 
 	// create pulp-content resources
@@ -68,7 +72,7 @@ func (r *RepoManagerReconciler) pulpContentController(ctx context.Context, pulp 
 
 	// Reconcile Deployment
 	deployment := &appsv1.Deployment{}
-	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-content", Namespace: pulp.Namespace}, deployment)
+	r.Get(ctx, types.NamespacedName{Name: deploymentName, Namespace: pulp.Namespace}, deployment)
 	expected := deploymentForPulpContent(funcResources)
 	if requeue, err := controllers.ReconcileObject(funcResources, expected, deployment, conditionType, controllers.PulpDeployment{}); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
@@ -76,7 +80,7 @@ func (r *RepoManagerReconciler) pulpContentController(ctx context.Context, pulp 
 
 	// Reconcile Service
 	cntSvc := &corev1.Service{}
-	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-content-svc", Namespace: pulp.Namespace}, cntSvc)
+	r.Get(ctx, types.NamespacedName{Name: serviceName, Namespace: pulp.Namespace}, cntSvc)
 	newCntSvc := serviceForContent(funcResources)
 	if requeue, err := controllers.ReconcileObject(funcResources, newCntSvc, cntSvc, conditionType, controllers.PulpService{}); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
@@ -99,7 +103,7 @@ func serviceForContent(resources controllers.FunctionResources) client.Object {
 func serviceContentObject(name, namespace, deployment_type string) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name + "-content-svc",
+			Name:      settings.ContentService(name),
 			Namespace: namespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/name":       deployment_type + "-content",

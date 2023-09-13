@@ -8,4 +8,5 @@
     ".ci/scripts/prepare-object-storage.sh",
     "containers/compose/certs/database_fields.symmetric.key",
     ".github/workflows/ci.yml",
+    "controllers/settings/secrets.go",
   ]

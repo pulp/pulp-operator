@@ -8,6 +8,7 @@ import (
 	"github.com/go-logr/logr"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
+	"github.com/pulp/pulp-operator/controllers/settings"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
@@ -30,8 +31,9 @@ func (r *RepoManagerReconciler) pulpCacheController(ctx context.Context, pulp *r
 	// pulp-redis-data PVC
 	// the PVC will be created only if a StorageClassName is provided
 	if _, storageType := controllers.MultiStorageConfigured(pulp, "Cache"); storageType[0] == controllers.SCNameType {
+		pvcName := settings.DefaultCachePVC(pulp.Name)
 		pvcFound := &corev1.PersistentVolumeClaim{}
-		err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-redis-data", Namespace: pulp.Namespace}, pvcFound)
+		err := r.Get(ctx, types.NamespacedName{Name: pvcName, Namespace: pulp.Namespace}, pvcFound)
 		pvc := redisDataPVC(pulp)
 		if err != nil && errors.IsNotFound(err) {
 			ctrl.SetControllerReference(pulp, pvc, r.Scheme)
@@ -67,8 +69,9 @@ func (r *RepoManagerReconciler) pulpCacheController(ctx context.Context, pulp *r
 	}
 
 	// redis-svc Service
+	svcName := settings.CacheService(pulp.Name)
 	svcFound := &corev1.Service{}
-	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-redis-svc", Namespace: pulp.Namespace}, svcFound)
+	err := r.Get(ctx, types.NamespacedName{Name: svcName, Namespace: pulp.Namespace}, svcFound)
 	svc := redisSvc(pulp)
 	if err != nil && errors.IsNotFound(err) {
 		ctrl.SetControllerReference(pulp, svc, r.Scheme)
@@ -103,8 +106,9 @@ func (r *RepoManagerReconciler) pulpCacheController(ctx context.Context, pulp *r
 	}
 
 	// redis Deployment
+	deploymentName := settings.CACHE.DeploymentName(pulp.Name)
 	deploymentFound := &appsv1.Deployment{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-redis", Namespace: pulp.Namespace}, deploymentFound)
+	err = r.Get(ctx, types.NamespacedName{Name: deploymentName, Namespace: pulp.Namespace}, deploymentFound)
 	dep := redisDeployment(pulp, funcResources)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new Pulp Redis Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
@@ -145,7 +149,7 @@ func redisDataPVC(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.PersistentVo
 	// Define the new PVC
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name + "-redis-data",
+			Name:      settings.DefaultCachePVC(m.Name),
 			Namespace: m.Namespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/name":       "redis",
@@ -181,7 +185,7 @@ func redisSvc(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Service {
 
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name + "-redis-svc",
+			Name:      settings.CacheService(m.Name),
 			Namespace: m.Namespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/name":       "redis",
@@ -243,7 +247,7 @@ func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp, funcResources con
 	if storageType[0] == controllers.SCNameType {
 		volumeSource = corev1.VolumeSource{
 			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-				ClaimName: m.Name + "-redis-data",
+				ClaimName: settings.DefaultCachePVC(m.Name),
 			},
 		}
 
@@ -333,7 +337,7 @@ func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp, funcResources con
 	// deployment definition
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name + "-redis",
+			Name:      settings.CACHE.DeploymentName(m.Name),
 			Namespace: m.Namespace,
 			Annotations: map[string]string{
 				"email": "pulp-dev@redhat.com",
@@ -375,7 +379,7 @@ func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp, funcResources con
 					Affinity:           affinity,
 					NodeSelector:       nodeSelector,
 					Tolerations:        toleration,
-					ServiceAccountName: m.Name,
+					ServiceAccountName: settings.PulpServiceAccount(m.Name),
 					Containers: []corev1.Container{{
 						Name:            "redis",
 						Image:           redisImage,
@@ -416,18 +420,20 @@ func removeStorageDefinition(resources *corev1.ResourceRequirements) {
 // or in case of a new definition with an external Redis instance
 func (r *RepoManagerReconciler) deprovisionCache(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, log logr.Logger) (ctrl.Result, error) {
 	// redis-svc Service
+	svcName := settings.CacheService(pulp.Name)
 	svcFound := &corev1.Service{}
-	err := r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-redis-svc", Namespace: pulp.Namespace}, svcFound)
+	err := r.Get(ctx, types.NamespacedName{Name: svcName, Namespace: pulp.Namespace}, svcFound)
 	if !errors.IsNotFound(err) {
-		log.Info("Removing Redis service", "Service.Namespace", pulp.Namespace, "Service.Name", pulp.Name+"-redis-svc")
+		log.Info("Removing Redis service", "Service.Namespace", pulp.Namespace, "Service.Name", svcName)
 		r.Delete(ctx, svcFound)
 	}
 
 	// redis Deployment
+	deploymentName := settings.CACHE.DeploymentName(pulp.Name)
 	deploymentFound := &appsv1.Deployment{}
-	err = r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-redis", Namespace: pulp.Namespace}, deploymentFound)
+	err = r.Get(ctx, types.NamespacedName{Name: deploymentName, Namespace: pulp.Namespace}, deploymentFound)
 	if !errors.IsNotFound(err) {
-		log.Info("Removing Redis deployment", "Deployment.Namespace", pulp.Namespace, "Deployment.Name", pulp.Name+"-redis")
+		log.Info("Removing Redis deployment", "Deployment.Namespace", pulp.Namespace, "Deployment.Name", deploymentName)
 		r.Delete(ctx, deploymentFound)
 	}
 

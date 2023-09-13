@@ -689,7 +689,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: [containerized, components, galaxy]
-    if: github.event_name != 'pull_request'
+    if: |
+      github.event_name != 'pull_request' &&
+      github.repository_owner == 'pulp'
     steps:
       - uses: actions/checkout@v3
         with:

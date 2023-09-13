@@ -17,6 +17,7 @@ limitations under the License.
 package controllers
 
 import (
+	"github.com/pulp/pulp-operator/controllers/settings"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -46,7 +47,7 @@ func IngressDefaults(resources any, plugins []IngressPlugin) (*netv1.Ingress, er
 		PathType: &pathType,
 		Backend: netv1.IngressBackend{
 			Service: &netv1.IngressServiceBackend{
-				Name: pulp.Name + "-web-svc",
+				Name: settings.PulpWebService(pulp.Name),
 				Port: netv1.ServiceBackendPort{
 					Number: 24880,
 				},

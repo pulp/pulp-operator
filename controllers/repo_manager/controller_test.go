@@ -34,6 +34,7 @@ const (
 	ApiName       = PulpName + "-api"
 	ContentName   = PulpName + "-content"
 	WorkerName    = PulpName + "-worker"
+	DBVolumeName  = PulpName + "-postgres"
 
 	timeout  = time.Minute
 	interval = time.Second
@@ -194,7 +195,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 
 	volumeMountsSts := []corev1.VolumeMount{
 		{
-			Name:      "postgres",
+			Name:      DBVolumeName,
 			MountPath: "/var/lib/postgresql/data",
 			SubPath:   "data",
 		},
@@ -509,7 +510,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 
 	volumeClaimTemplate := []corev1.PersistentVolumeClaim{{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "postgres",
+			Name: DBVolumeName,
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
 			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
@@ -991,7 +992,7 @@ exec pulpcore-worker`,
 			By("Checking if sts template is configured to use emptyDir volume")
 			var found bool
 			for _, volume := range createdSts.Spec.Template.Spec.Volumes {
-				if volume.Name == "postgres" && reflect.DeepEqual(volume.VolumeSource.EmptyDir, &corev1.EmptyDirVolumeSource{}) {
+				if volume.Name == DBVolumeName && reflect.DeepEqual(volume.VolumeSource.EmptyDir, &corev1.EmptyDirVolumeSource{}) {
 					found = true
 					break
 				}

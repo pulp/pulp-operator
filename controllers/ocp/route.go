@@ -24,6 +24,7 @@ import (
 	"github.com/go-logr/logr"
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/pulp/pulp-operator/controllers"
+	"github.com/pulp/pulp-operator/controllers/settings"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	corev1 "k8s.io/api/core/v1"
@@ -119,25 +120,25 @@ func PulpRouteController(resources controllers.FunctionResources, restClient res
 			Name:        pulp.Name + "-content",
 			Path:        controllers.GetPulpSetting(pulp, "content_path_prefix"),
 			TargetPort:  "content-24816",
-			ServiceName: pulp.Name + "-content-svc",
+			ServiceName: settings.ContentService(pulp.Name),
 		},
 		{
 			Name:        pulp.Name + "-api-v3",
 			Path:        controllers.GetPulpSetting(pulp, "api_root") + "api/v3/",
 			TargetPort:  "api-24817",
-			ServiceName: pulp.Name + "-api-svc",
+			ServiceName: settings.ApiService(pulp.Name),
 		},
 		{
 			Name:        pulp.Name + "-auth",
 			Path:        "/auth/login/",
 			TargetPort:  "api-24817",
-			ServiceName: pulp.Name + "-api-svc",
+			ServiceName: settings.ApiService(pulp.Name),
 		},
 		{
 			Name:        pulp.Name,
 			Path:        "/",
 			TargetPort:  "api-24817",
-			ServiceName: pulp.Name + "-api-svc",
+			ServiceName: settings.ApiService(pulp.Name),
 		},
 	}
 	routeHost := GetRouteHost(pulp)

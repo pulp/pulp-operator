@@ -26,6 +26,7 @@ import (
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
 	pulp_ocp "github.com/pulp/pulp-operator/controllers/ocp"
+	"github.com/pulp/pulp-operator/controllers/settings"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	corev1 "k8s.io/api/core/v1"
@@ -92,25 +93,25 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 			Name:        pulp.Name + "-content",
 			Path:        controllers.GetPulpSetting(pulp, "content_path_prefix"),
 			TargetPort:  "content-24816",
-			ServiceName: pulp.Name + "-content-svc",
+			ServiceName: settings.ContentService(pulp.Name),
 		},
 		{
 			Name:        pulp.Name + "-api-v3",
 			Path:        controllers.GetPulpSetting(pulp, "api_root") + "api/v3/",
 			TargetPort:  "api-24817",
-			ServiceName: pulp.Name + "-api-svc",
+			ServiceName: settings.ApiService(pulp.Name),
 		},
 		{
 			Name:        pulp.Name + "-auth",
 			Path:        "/auth/login/",
 			TargetPort:  "api-24817",
-			ServiceName: pulp.Name + "-api-svc",
+			ServiceName: settings.ApiService(pulp.Name),
 		},
 		{
 			Name:        pulp.Name,
 			Path:        "/",
 			TargetPort:  "api-24817",
-			ServiceName: pulp.Name + "-api-svc",
+			ServiceName: settings.ApiService(pulp.Name),
 		},
 	}
 	pulpPlugins = append(defaultPlugins, pulpPlugins...)

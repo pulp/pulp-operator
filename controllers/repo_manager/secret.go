@@ -24,6 +24,7 @@ import (
 
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
+	"github.com/pulp/pulp-operator/controllers/settings"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	corev1 "k8s.io/api/core/v1"
@@ -78,7 +79,7 @@ func pulpServerSecret(resources controllers.FunctionResources) client.Object {
 
 	sec := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      pulp.Name + "-server",
+			Name:      settings.PulpServerSecret(pulp.Name),
 			Namespace: pulp.Namespace,
 		},
 		StringData: map[string]string{
@@ -96,7 +97,7 @@ func pulpDBFieldsEncryptionSecret(resources controllers.FunctionResources) clien
 	pulp := resources.Pulp
 	sec := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      pulp.Name + "-db-fields-encryption",
+			Name:      pulp.Spec.DBFieldsEncryptionSecret,
 			Namespace: pulp.Namespace,
 		},
 		StringData: map[string]string{

@@ -20,19 +20,14 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
-	"time"
 
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
+	"github.com/pulp/pulp-operator/controllers/settings"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-)
-
-const (
-	adminPasswordSecretName = "admin-password"
 )
 
 // updateAdminPasswordJob creates a k8s job if the admin-password secret has changed
@@ -42,7 +37,7 @@ func (r *RepoManagerReconciler) updateAdminPasswordJob(ctx context.Context, pulp
 	adminSecretName := controllers.GetAdminSecretName(*pulp)
 	adminSecret := &corev1.Secret{}
 	if err := r.Get(ctx, types.NamespacedName{Name: adminSecretName, Namespace: pulp.Namespace}, adminSecret); err != nil {
-		log.Error(err, "Failed to find "+adminPasswordSecretName+" Secret!")
+		log.Error(err, "Failed to find "+adminSecretName+" Secret!")
 	}
 
 	// if the secret didn't change there is nothing to do
@@ -52,6 +47,7 @@ func (r *RepoManagerReconciler) updateAdminPasswordJob(ctx context.Context, pulp
 		return
 	}
 
+	jobName := settings.ResetAdminPwdJob(pulp.Name)
 	labels := jobLabels(*pulp)
 	labels["app.kubernetes.io/component"] = "reset-admin-password"
 	containers := []corev1.Container{resetAdminPasswordContainer(pulp)}
@@ -62,7 +58,7 @@ func (r *RepoManagerReconciler) updateAdminPasswordJob(ctx context.Context, pulp
 	// job definition
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: pulp.Name + "-reset-admin-password-",
+			GenerateName: jobName,
 			Namespace:    pulp.Namespace,
 			Labels:       labels,
 		},
@@ -74,23 +70,23 @@ func (r *RepoManagerReconciler) updateAdminPasswordJob(ctx context.Context, pulp
 					RestartPolicy:      "Never",
 					Containers:         containers,
 					Volumes:            volumes,
-					ServiceAccountName: pulp.Name,
+					ServiceAccountName: settings.PulpServiceAccount(pulp.Name),
 				},
 			},
 		},
 	}
 
 	// create job
-	log.Info("Creating a new " + adminPasswordSecretName + " reset Job")
+	log.Info("Creating " + jobName + "* Job")
 	if err := r.Create(ctx, job); err != nil {
-		log.Error(err, "Failed to create "+adminPasswordSecretName+" Job!")
+		log.Error(err, "Failed to create "+jobName+"* Job!")
 	}
 
 	// update secret hash label
-	log.V(1).Info("Updating " + adminPasswordSecretName + " hash label ...")
+	log.V(1).Info("Updating " + adminSecretName + " hash label ...")
 	controllers.SetHashLabel(calculatedHash, adminSecret)
 	if err := r.Update(ctx, adminSecret); err != nil {
-		log.Error(err, "Failed to update "+adminPasswordSecretName+" Secret label!")
+		log.Error(err, "Failed to update "+adminSecretName+" Secret label!")
 	}
 }
 
@@ -103,7 +99,7 @@ func pulpcoreVolumes(pulp *repomanagerpulpprojectorgv1beta2.Pulp, adminSecretNam
 			Name: pulp.Name + "-server",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: pulp.Name + "-server",
+					SecretName: settings.PulpServerSecret(pulp.Name),
 					Items: []corev1.KeyToPath{{
 						Key:  "settings.py",
 						Path: "settings.py",
@@ -220,7 +216,7 @@ func (r *RepoManagerReconciler) migrationJob(ctx context.Context, pulp *repomana
 	// job definition
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: pulp.Name + "-pulpcore-migration-",
+			GenerateName: settings.MigrationJob(pulp.Name),
 			Namespace:    pulp.Namespace,
 			Labels:       labels,
 		},
@@ -232,7 +228,7 @@ func (r *RepoManagerReconciler) migrationJob(ctx context.Context, pulp *repomana
 					RestartPolicy:      "Never",
 					Containers:         containers,
 					Volumes:            volumes,
-					ServiceAccountName: pulp.Name,
+					ServiceAccountName: settings.PulpServiceAccount(pulp.Name),
 				},
 			},
 		},
@@ -288,6 +284,7 @@ func (r *RepoManagerReconciler) updateContentChecksumsJob(ctx context.Context, p
 		return
 	}
 
+	jobName := settings.UpdateChecksumsJob(pulp.Name)
 	labels := jobLabels(*pulp)
 	labels["app.kubernetes.io/component"] = "allowed-content-checksums"
 	containers := []corev1.Container{contentChecksumsContainer(pulp)}
@@ -298,7 +295,7 @@ func (r *RepoManagerReconciler) updateContentChecksumsJob(ctx context.Context, p
 	// job definition
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: pulp.Name + "-update-content-checksums-",
+			GenerateName: jobName,
 			Namespace:    pulp.Namespace,
 			Labels:       labels,
 		},
@@ -310,16 +307,16 @@ func (r *RepoManagerReconciler) updateContentChecksumsJob(ctx context.Context, p
 					RestartPolicy:      "Never",
 					Containers:         containers,
 					Volumes:            volumes,
-					ServiceAccountName: pulp.Name,
+					ServiceAccountName: settings.PulpServiceAccount(pulp.Name),
 				},
 			},
 		},
 	}
 
 	// create the Job
-	log.Info("Creating a new update content checksums Job")
+	log.Info("Creating a new " + jobName + "* Job")
 	if err := r.Create(ctx, job); err != nil {
-		log.Error(err, "Failed to create update content checksums Job!")
+		log.Error(err, "Failed to create "+jobName+"* Job!")
 	}
 
 	// update .status
@@ -362,30 +359,4 @@ func contentChecksumsModified(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool 
 	var statusAllowedChecksum []string
 	json.Unmarshal([]byte(pulp.Status.AllowedContentChecksums), &statusAllowedChecksum)
 	return !reflect.DeepEqual(pulp.Spec.AllowedContentChecksums, statusAllowedChecksum)
-}
-
-// waitJobFinishes wait until content-checksums job completes
-func waitJobFinishes(resources RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp, timeout time.Duration) {
-	labels := map[string]string{
-		"app.kubernetes.io/component": "allowed-content-checksums",
-	}
-	listOpts := []client.ListOption{
-		client.InNamespace(pulp.Namespace),
-		client.MatchingLabels(labels),
-	}
-
-TIMEOUT:
-	for i := 0; i < int(timeout.Seconds()); i++ {
-		jobList := &batchv1.JobList{}
-		if err := resources.Client.List(context.TODO(), jobList, listOpts...); err != nil {
-			resources.RawLogger.Error(err, "Failed to find content-checksum Jobs")
-			return
-		}
-		for _, p := range jobList.Items {
-			if p.Status.CompletionTime != nil {
-				break TIMEOUT
-			}
-		}
-		time.Sleep(time.Second)
-	}
 }

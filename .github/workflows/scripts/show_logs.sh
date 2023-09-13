@@ -75,11 +75,11 @@ kubectl logs --timestamps -l app.kubernetes.io/component=worker --tail=10000
 echo ::endgroup::
 
 echo ::group::PULP_WEB_PODS
-kubectl describe pods -l app.kubernetes.io/component=webserver
+kubectl describe pods -l app.kubernetes.io/component=web
 echo ::endgroup::
 
 echo ::group::PULP_WEB_LOGS
-kubectl logs -l app.kubernetes.io/component=webserver --tail=10000
+kubectl logs -l app.kubernetes.io/component=web --tail=10000
 echo ::endgroup::
 
 echo ::group::POSTGRES

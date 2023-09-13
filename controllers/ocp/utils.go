@@ -22,6 +22,7 @@ import (
 	"github.com/go-logr/logr"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
+	"github.com/pulp/pulp-operator/controllers/settings"
 	corev1 "k8s.io/api/core/v1"
 	k8s_errors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,24 +32,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	rhOperatorPullSecretName = "redhat-operators-pull-secret"
-	caConfigMapName          = "user-ca-bundle"
-)
-
 // CreateRHOperatorPullSecret creates a default secret called redhat-operators-pull-secret
-func CreateRHOperatorPullSecret(r client.Client, ctx context.Context, namespace string) error {
+func CreateRHOperatorPullSecret(r client.Client, ctx context.Context, namespace, pulpName string) error {
 	log := logr.Logger{}
 
+	secretName := settings.RedHatOperatorPullSecret(pulpName)
 	// Get redhat-operators-pull-secret
 	defaultSecret := &corev1.Secret{}
-	err := r.Get(ctx, types.NamespacedName{Name: rhOperatorPullSecretName, Namespace: namespace}, defaultSecret)
+	err := r.Get(ctx, types.NamespacedName{Name: secretName, Namespace: namespace}, defaultSecret)
 
 	// Create the secret in case it is not found
 	if err != nil && k8s_errors.IsNotFound(err) {
 		defaultSecret = &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      rhOperatorPullSecretName,
+				Name:      secretName,
 				Namespace: namespace,
 			},
 			StringData: map[string]string{
@@ -57,7 +54,7 @@ func CreateRHOperatorPullSecret(r client.Client, ctx context.Context, namespace 
 		}
 		r.Create(ctx, defaultSecret)
 	} else if err != nil {
-		log.Error(err, "Failed to get "+rhOperatorPullSecretName)
+		log.Error(err, "Failed to get "+secretName)
 		return err
 	}
 	return nil
@@ -67,12 +64,13 @@ func CreateRHOperatorPullSecret(r client.Client, ctx context.Context, namespace 
 // inject custom CA into containers
 func CreateEmptyConfigMap(r client.Client, scheme *runtime.Scheme, ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, log logr.Logger) (ctrl.Result, error) {
 
+	configMapName := settings.EmptyCAConfigMapName(pulp.Name)
 	configMap := &corev1.ConfigMap{}
-	err := r.Get(ctx, types.NamespacedName{Name: caConfigMapName, Namespace: pulp.Namespace}, configMap)
+	err := r.Get(ctx, types.NamespacedName{Name: configMapName, Namespace: pulp.Namespace}, configMap)
 
 	expected_cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      caConfigMapName,
+			Name:      configMapName,
 			Namespace: pulp.Namespace,
 			Labels: map[string]string{
 				"config.openshift.io/inject-trusted-cabundle": "true",
@@ -110,7 +108,7 @@ func mountCASpec(pulp *repomanagerpulpprojectorgv1beta2.Pulp, volumes []corev1.V
 			VolumeSource: corev1.VolumeSource{
 				ConfigMap: &corev1.ConfigMapVolumeSource{
 					LocalObjectReference: corev1.LocalObjectReference{
-						Name: caConfigMapName,
+						Name: settings.EmptyCAConfigMapName(pulp.Name),
 					},
 					Items: []corev1.KeyToPath{
 						{Key: "ca-bundle.crt", Path: "tls-ca-bundle.pem"},

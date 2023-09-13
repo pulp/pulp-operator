@@ -22,6 +22,7 @@ import (
 	"github.com/go-logr/logr"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
 	"github.com/pulp/pulp-operator/controllers"
+	"github.com/pulp/pulp-operator/controllers/settings"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
@@ -40,15 +41,16 @@ func (r *RepoManagerReconciler) pulpWorkerController(ctx context.Context, pulp *
 
 	// define the k8s Deployment function based on k8s distribution and deployment type
 	deploymentForPulpWorker := initDeployment(WORKER_DEPLOYMENT).Deploy
+	deploymentName := settings.WORKER.DeploymentName(pulp.Name)
 
 	// Create Worker Deployment
-	if requeue, err := r.createPulpResource(ResourceDefinition{ctx, &appsv1.Deployment{}, pulp.Name + "-worker", "Worker", conditionType, pulp}, deploymentForPulpWorker); err != nil || requeue {
+	if requeue, err := r.createPulpResource(ResourceDefinition{ctx, &appsv1.Deployment{}, deploymentName, "Worker", conditionType, pulp}, deploymentForPulpWorker); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
 	// Reconcile Deployment
 	found := &appsv1.Deployment{}
-	r.Get(ctx, types.NamespacedName{Name: pulp.Name + "-worker", Namespace: pulp.Namespace}, found)
+	r.Get(ctx, types.NamespacedName{Name: deploymentName, Namespace: pulp.Namespace}, found)
 	expected := deploymentForPulpWorker(funcResources)
 	if requeue, err := controllers.ReconcileObject(funcResources, expected, found, conditionType, controllers.PulpDeployment{}); err != nil || requeue {
 		return ctrl.Result{Requeue: requeue}, err
