@@ -7,7 +7,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.12.0
 	github.com/onsi/gomega v1.27.10
 	github.com/openshift/api v0.0.0-20220825183227-75c111537c4d
-	go.uber.org/zap v1.25.0
+	go.uber.org/zap v1.26.0
 	golang.org/x/crypto v0.13.0
 	golang.org/x/text v0.13.0
 	gopkg.in/yaml.v3 v3.0.1
