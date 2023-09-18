@@ -37,6 +37,7 @@ nav:
   - Installing:
       - Helm Chart: install/helm.md
       - OpenShift: install/ocp.md
+      - Highly Available Pulp: install/ha.md
   - Configuring:
       - Database: configuring/database.md
       - Storage: configuring/storage.md
