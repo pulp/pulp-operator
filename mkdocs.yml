@@ -60,6 +60,7 @@ nav:
   - Backup and Restore:
       - Overview: backup_and_restore/overview.md
       - Configuring and Running: backup_and_restore/config_running.md
+      - Scheduling backups: backup_and_restore/cronjob.md
   - Changelog: CHANGES.md
   - FAQ: faq.md
   - Troubleshooting:
