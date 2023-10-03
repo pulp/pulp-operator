@@ -55,7 +55,7 @@ func (r *RepoManagerBackupReconciler) backupSecret(ctx context.Context, pulpBack
 	containerTokenSecret := getContainerTokenSecret(ctx, pulpBackup, pulp)
 
 	// PULP-SECRET-KEY
-	if err := r.createBackupFile(ctx, secretType{"pulp_secret_key", pulpBackup, backupDir, "pulp_secret_key.yaml", pulpSecretKey, pod}); err != nil {
+	if err := r.createSecretBackupFile(ctx, secretType{"pulp_secret_key", pulpBackup, backupDir, "pulp_secret_key.yaml", pulpSecretKey, pod}); err != nil {
 		return err
 	}
 	log.Info("PulpSecretKey secret backup finished")
@@ -120,14 +120,14 @@ func (r *RepoManagerBackupReconciler) backupSecret(ctx context.Context, pulpBack
 
 	// LDAP CONFIG SECRET
 	if len(pulp.Spec.LDAP.Config) > 0 {
-		if err := r.backupLDAPSecret(ctx, secretType{"ldap_secret", pulpBackup, backupDir, "ldap_secret.yaml", pulp.Spec.LDAP.Config, pod}); err != nil {
+		if err := r.createSecretBackupFile(ctx, secretType{"ldap_secret", pulpBackup, backupDir, "ldap_secret.yaml", pulp.Spec.LDAP.Config, pod}); err != nil {
 			return err
 		}
 		log.Info("LDAP secret backup finished")
 	}
 	// LDAP CA SECRET
 	if len(pulp.Spec.LDAP.CA) > 0 {
-		if err := r.backupLDAPSecret(ctx, secretType{"ldap_ca_secret", pulpBackup, backupDir, "ldap_ca_secret.yaml", pulp.Spec.LDAP.CA, pod}); err != nil {
+		if err := r.createSecretBackupFile(ctx, secretType{"ldap_ca_secret", pulpBackup, backupDir, "ldap_ca_secret.yaml", pulp.Spec.LDAP.CA, pod}); err != nil {
 			return err
 		}
 		log.Info("LDAP CA secret backup finished")
@@ -169,10 +169,10 @@ func (r *RepoManagerBackupReconciler) createBackupFile(ctx context.Context, secr
 	return nil
 }
 
-// backupLDAPSecret stores a copy of the LDAP Secrets in YAML format.
+// createSecretBackupFile stores a copy of the Secrets in YAML format.
 // Since we don't need to keep compatibility with ansible version anymore, this
 // method does not need to follow an specific struct and should work with any Secret.
-func (r *RepoManagerBackupReconciler) backupLDAPSecret(ctx context.Context, secretType secretType) error {
+func (r *RepoManagerBackupReconciler) createSecretBackupFile(ctx context.Context, secretType secretType) error {
 	log := r.RawLogger
 	secret := &corev1.Secret{}
 	err := r.Get(ctx, types.NamespacedName{Name: secretType.secretName, Namespace: secretType.pulpBackup.Namespace}, secret)
