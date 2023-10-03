@@ -102,7 +102,7 @@ func (r *RepoManagerRestoreReconciler) restoreSecret(ctx context.Context, pulpRe
 	r.RawLogger.V(1).Info("Restoring from golang backup version")
 
 	// restore pulp-secret-key secret
-	if _, err := r.secret(ctx, resourceTypePulpSecretKey, "pulp_secret_key", backupDir, "pulp_secret_key.yaml", pod, pulpRestore); err != nil {
+	if _, err := r.restoreSecretFromYaml(ctx, resourceTypePulpSecretKey, "secret_key", backupDir, "pulp_secret_key.yaml", pod, pulpRestore); err != nil {
 		return err
 	}
 
@@ -146,10 +146,10 @@ func (r *RepoManagerRestoreReconciler) restoreSecret(ctx context.Context, pulpRe
 	}
 
 	// restore ldap secret(s)
-	if found, err := r.restoreLDAPSecrets(ctx, resourceTypeLDAP, "ldap_secret", backupDir, "ldap_secret.yaml", pod, pulpRestore); found && err != nil {
+	if found, err := r.restoreSecretFromYaml(ctx, resourceTypeLDAP, "ldap_secret", backupDir, "ldap_secret.yaml", pod, pulpRestore); found && err != nil {
 		return err
 	}
-	if found, err := r.restoreLDAPSecrets(ctx, resourceTypeLDAP, "ldap_ca_secret", backupDir, "ldap_ca_secret.yaml", pod, pulpRestore); found && err != nil {
+	if found, err := r.restoreSecretFromYaml(ctx, resourceTypeLDAP, "ldap_ca_secret", backupDir, "ldap_ca_secret.yaml", pod, pulpRestore); found && err != nil {
 		return err
 	}
 
@@ -290,10 +290,10 @@ func setStatusField(fieldName, fieldValue string, pulpRestore *repomanagerpulppr
 	return nil
 }
 
-// restoreLDAPSecrets restores the Secret from a YAML file.
+// restoreSecretFromYaml restores the Secret from a YAML file.
 // Since we don't need to keep compatibility with ansible version anymore, this
 // method does not need to follow an specific struct and should work with any Secret.
-func (r *RepoManagerRestoreReconciler) restoreLDAPSecrets(ctx context.Context, resourceType, secretNameKey, backupDir, backupFile string, pod *corev1.Pod, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore) (bool, error) {
+func (r *RepoManagerRestoreReconciler) restoreSecretFromYaml(ctx context.Context, resourceType, secretNameKey, backupDir, backupFile string, pod *corev1.Pod, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore) (bool, error) {
 
 	log := r.RawLogger
 	ldapSecretFile := backupDir + "/" + backupFile
