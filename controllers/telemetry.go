@@ -85,8 +85,9 @@ exec  /usr/local/bin/opentelemetry-instrument --service_name pulp-api "${PULP_AP
 		Args: []string{
 			"--config", "file:/etc/otelcol-contrib/" + settings.OtelConfigFile,
 		},
-		VolumeMounts: telemetryVolMount,
-		Resources:    requirements,
+		VolumeMounts:    telemetryVolMount,
+		Resources:       requirements,
+		SecurityContext: setDefaultSecurityContext(),
 	}
 
 	containers = append(containers, sidecarTelemetryContainer)
