@@ -23,4 +23,4 @@ echo "WORKING DIR:"
 pwd
 ls -la
 make sdkbin OPERATOR_SDK_VERSION=v1.29.0 LOCALBIN=/tmp
-echo $(shell which operator-sdk)
+echo $(which operator-sdk)
