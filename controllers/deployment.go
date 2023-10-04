@@ -819,6 +819,21 @@ func (d *CommonDeployment) setInitContainerImage(pulp repomanagerpulpprojectorgv
 	}
 }
 
+// setDefaultSecurityContext defines the container security configuration to be in compliance with PodSecurity "restricted:v1.24"
+func setDefaultSecurityContext() *corev1.SecurityContext {
+	allowPrivilegeEscalation, runAsNonRoot := false, true
+	return &corev1.SecurityContext{
+		AllowPrivilegeEscalation: &allowPrivilegeEscalation,
+		Capabilities: &corev1.Capabilities{
+			Drop: []corev1.Capability{"ALL"},
+		},
+		RunAsNonRoot: &runAsNonRoot,
+		SeccompProfile: &corev1.SeccompProfile{
+			Type: corev1.SeccompProfileTypeRuntimeDefault,
+		},
+	}
+}
+
 // setInitContainers defines initContainers specs
 func (d *CommonDeployment) setInitContainers(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
 	args := []string{
@@ -837,13 +852,14 @@ func (d *CommonDeployment) setInitContainers(pulp repomanagerpulpprojectorgv1bet
 
 	initContainers := []corev1.Container{
 		{
-			Name:         "init-container",
-			Image:        d.initContainerImage,
-			Env:          d.initContainerEnvVars,
-			Command:      []string{"/bin/sh"},
-			Args:         args,
-			VolumeMounts: d.initContainerVolumeMounts,
-			Resources:    d.initContainerResourceRequirements,
+			Name:            "init-container",
+			Image:           d.initContainerImage,
+			Env:             d.initContainerEnvVars,
+			Command:         []string{"/bin/sh"},
+			Args:            args,
+			VolumeMounts:    d.initContainerVolumeMounts,
+			Resources:       d.initContainerResourceRequirements,
+			SecurityContext: setDefaultSecurityContext(),
 		},
 	}
 	d.initContainers = append([]corev1.Container(nil), initContainers...)
@@ -851,6 +867,7 @@ func (d *CommonDeployment) setInitContainers(pulp repomanagerpulpprojectorgv1bet
 
 // setContainers defines pulpcore containers specs
 func (d *CommonDeployment) setContainers(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+	securityContext := setDefaultSecurityContext()
 	var containers []corev1.Container
 	switch pulpcoreType {
 	case settings.API:
@@ -879,10 +896,11 @@ exec "${PULP_API_ENTRYPOINT[@]}" \
 					ContainerPort: 24817,
 					Protocol:      "TCP",
 				}},
-				LivenessProbe:  d.livenessProbe,
-				ReadinessProbe: d.readinessProbe,
-				Resources:      d.resourceRequirements,
-				VolumeMounts:   d.volumeMounts,
+				LivenessProbe:   d.livenessProbe,
+				ReadinessProbe:  d.readinessProbe,
+				Resources:       d.resourceRequirements,
+				VolumeMounts:    d.volumeMounts,
+				SecurityContext: securityContext,
 			},
 		}
 	case settings.CONTENT:
@@ -912,9 +930,10 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 				ContainerPort: 24816,
 				Protocol:      "TCP",
 			}},
-			LivenessProbe:  d.livenessProbe,
-			ReadinessProbe: d.readinessProbe,
-			VolumeMounts:   d.volumeMounts,
+			LivenessProbe:   d.livenessProbe,
+			ReadinessProbe:  d.readinessProbe,
+			VolumeMounts:    d.volumeMounts,
+			SecurityContext: securityContext,
 		}}
 	case settings.WORKER:
 		containers = []corev1.Container{{
@@ -928,11 +947,12 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 export PATH=/usr/local/bin:/usr/bin/
 exec pulpcore-worker`,
 			},
-			Env:            d.envVars,
-			LivenessProbe:  d.livenessProbe,
-			ReadinessProbe: d.readinessProbe,
-			VolumeMounts:   d.volumeMounts,
-			Resources:      d.resourceRequirements,
+			Env:             d.envVars,
+			LivenessProbe:   d.livenessProbe,
+			ReadinessProbe:  d.readinessProbe,
+			VolumeMounts:    d.volumeMounts,
+			Resources:       d.resourceRequirements,
+			SecurityContext: securityContext,
 		}}
 	}
 	d.containers = append([]corev1.Container(nil), containers...)
