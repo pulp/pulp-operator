@@ -136,10 +136,7 @@ spec:
 ...
 ```
 
-and restart the API pods to get the new configuration.
-```
-$ kubectl -n $PULP_NAMESPACE delete pod -l app.kubernetes.io/component=api
-```
+After that, Pulp Operator will automatically update the `settings.py` config file and redeploy pulpcore pods to get the new configuration.
 
 ### Configure AWS S3
 
@@ -180,10 +177,7 @@ spec:
 ...
 ```
 
-and restart the API pods to get the new configuration.
-```
-$ kubectl -n $PULP_NAMESPACE delete pod -l app.kubernetes.io/component=api
-```
+After that, Pulp Operator will automatically update the `settings.py` config file and redeploy pulpcore pods to get the new configuration.
 
 
 ## Configuring Pulp Operator in non-production clusters
