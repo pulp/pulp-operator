@@ -109,6 +109,50 @@ jobs:
         run: |
           /tmp/operator-sdk run bundle-upgrade --use-http localhost:5001/pulp-operator-bundle:new
         shell: bash
+  two-deployments:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup Go environment
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - name: Install kind
+        run: |
+          .ci/scripts/kind_with_registry.sh
+        shell: bash
+      - name: Install OLM
+        run: |
+          make sdkbin OPERATOR_SDK_VERSION=v1.29.0 LOCALBIN=/tmp
+          /tmp/operator-sdk olm install
+        shell: bash
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install Pulp CRD
+        run: |
+          make install
+        shell: bash
+      - name: Build bundle image
+        run: |
+          make bundle-build bundle-push BUNDLE_IMG=localhost:5001/pulp-operator-bundle:testing
+        shell: bash
+      - name: Install the operator
+        run: |
+          /tmp/operator-sdk run bundle --skip-tls localhost:5001/pulp-operator-bundle:testing
+        shell: bash
+      - name: Deploy example-pulp and test-pulp
+        run: |
+          kubectl apply -f config/samples/simple-with-reduced-migration-cpu.yaml
+          kubectl apply -f config/samples/simple-test.yaml
+      - name: Check and wait for example-pulp deployment
+        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
+        shell: bash
+      - name: Check and wait for test-pulp deployment
+        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/test-pulp --timeout=900s
   envtest:
     runs-on: ubuntu-latest
     steps:
