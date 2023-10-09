@@ -151,13 +151,7 @@ func redisDataPVC(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.PersistentVo
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      settings.DefaultCachePVC(m.Name),
 			Namespace: m.Namespace,
-			Labels: map[string]string{
-				"app.kubernetes.io/name":       "redis",
-				"app.kubernetes.io/instance":   "redis-" + m.Name,
-				"app.kubernetes.io/component":  "cache",
-				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
-				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
-			},
+			Labels:    labelsForCache(m),
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
 			Resources: corev1.ResourceRequirements{
@@ -183,26 +177,15 @@ func redisSvc(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Service {
 		port = 6379
 	}
 
+	labels := labelsForCache(m)
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      settings.CacheService(m.Name),
 			Namespace: m.Namespace,
-			Labels: map[string]string{
-				"app.kubernetes.io/name":       "redis",
-				"app.kubernetes.io/instance":   "redis-" + m.Name,
-				"app.kubernetes.io/component":  "cache",
-				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
-				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
-			},
+			Labels:    labels,
 		},
 		Spec: corev1.ServiceSpec{
-			Selector: map[string]string{
-				"app.kubernetes.io/name":       "redis",
-				"app.kubernetes.io/instance":   "redis-" + m.Name,
-				"app.kubernetes.io/component":  "cache",
-				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
-				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
-			},
+			Selector: labels,
 			Ports: []corev1.ServicePort{{
 				Port:       int32(port),
 				Protocol:   servicePortProto,
@@ -217,7 +200,7 @@ func redisSvc(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Service {
 func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp, funcResources controllers.FunctionResources) *appsv1.Deployment {
 
 	replicas := int32(1)
-
+	ls := labelsForCache(m)
 	affinity := &corev1.Affinity{}
 	if m.Spec.Cache.Affinity != nil {
 		affinity = m.Spec.Cache.Affinity
@@ -345,35 +328,17 @@ func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp, funcResources con
 				"ignore-check.kube-linter.io/unset-memory-requirements": "Temporarily disabled",
 				"ignore-check.kube-linter.io/no-node-affinity":          "Do not check node affinity",
 			},
-			Labels: map[string]string{
-				"app.kubernetes.io/name":       "redis",
-				"app.kubernetes.io/instance":   "redis-" + m.Name,
-				"app.kubernetes.io/component":  "cache",
-				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
-				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
-			},
+			Labels: ls,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Strategy: strategy,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app.kubernetes.io/name":       "redis",
-					"app.kubernetes.io/instance":   "redis-" + m.Name,
-					"app.kubernetes.io/component":  "cache",
-					"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
-					"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
-				},
+				MatchLabels: ls,
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"app.kubernetes.io/name":       "redis",
-						"app.kubernetes.io/instance":   "redis-" + m.Name,
-						"app.kubernetes.io/component":  "cache",
-						"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
-						"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
-					},
+					Labels: ls,
 				},
 				Spec: corev1.PodSpec{
 					Affinity:           affinity,
@@ -438,4 +403,10 @@ func (r *RepoManagerReconciler) deprovisionCache(ctx context.Context, pulp *repo
 	}
 
 	return ctrl.Result{}, nil
+}
+
+// labelsForCache returns the labels for selecting the resources
+// belonging to the given pulp CR name.
+func labelsForCache(m *repomanagerpulpprojectorgv1beta2.Pulp) map[string]string {
+	return settings.PulpcoreLabels(*m, "cache")
 }

@@ -33,8 +33,11 @@ import (
 )
 
 // CreateRHOperatorPullSecret creates a default secret called redhat-operators-pull-secret
-func CreateRHOperatorPullSecret(r client.Client, ctx context.Context, namespace, pulpName string) error {
+func CreateRHOperatorPullSecret(r client.Client, ctx context.Context, pulp repomanagerpulpprojectorgv1beta2.Pulp) error {
 	log := logr.Logger{}
+
+	pulpName := pulp.Name
+	namespace := pulp.Namespace
 
 	secretName := settings.RedHatOperatorPullSecret(pulpName)
 	// Get redhat-operators-pull-secret
@@ -47,6 +50,7 @@ func CreateRHOperatorPullSecret(r client.Client, ctx context.Context, namespace,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      secretName,
 				Namespace: namespace,
+				Labels:    settings.CommonLabels(pulp),
 			},
 			StringData: map[string]string{
 				"operator": "pulp",
@@ -68,13 +72,13 @@ func CreateEmptyConfigMap(r client.Client, scheme *runtime.Scheme, ctx context.C
 	configMap := &corev1.ConfigMap{}
 	err := r.Get(ctx, types.NamespacedName{Name: configMapName, Namespace: pulp.Namespace}, configMap)
 
+	labels := settings.CommonLabels(*pulp)
+	labels["config.openshift.io/inject-trusted-cabundle"] = "true"
 	expected_cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,
 			Namespace: pulp.Namespace,
-			Labels: map[string]string{
-				"config.openshift.io/inject-trusted-cabundle": "true",
-			},
+			Labels:    labels,
 		},
 		Data: map[string]string{},
 	}

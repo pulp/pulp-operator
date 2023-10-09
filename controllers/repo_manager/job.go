@@ -66,6 +66,7 @@ func (r *RepoManagerReconciler) updateAdminPasswordJob(ctx context.Context, pulp
 			BackoffLimit:            &backOffLimit,
 			TTLSecondsAfterFinished: &jobTTL,
 			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{Labels: labels},
 				Spec: corev1.PodSpec{
 					RestartPolicy:      "Never",
 					Containers:         containers,
@@ -224,6 +225,7 @@ func (r *RepoManagerReconciler) migrationJob(ctx context.Context, pulp *repomana
 			BackoffLimit:            &backOffLimit,
 			TTLSecondsAfterFinished: &jobTTL,
 			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{Labels: labels},
 				Spec: corev1.PodSpec{
 					RestartPolicy:      "Never",
 					Containers:         containers,
@@ -270,10 +272,7 @@ func migrationContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) corev1.Cont
 
 // jobLabels defines the common labels used in Jobs
 func jobLabels(pulp repomanagerpulpprojectorgv1beta2.Pulp) map[string]string {
-	return map[string]string{
-		"app.kubernetes.io/managed-by": pulp.Spec.DeploymentType + "-operator",
-		"pulp_cr":                      pulp.Name,
-	}
+	return settings.CommonLabels(pulp)
 }
 
 // updateContentChecksumsJob creates a k8s Job to update the list of allowed content checksums
@@ -303,6 +302,7 @@ func (r *RepoManagerReconciler) updateContentChecksumsJob(ctx context.Context, p
 			BackoffLimit:            &backOffLimit,
 			TTLSecondsAfterFinished: &jobTTL,
 			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{Labels: labels},
 				Spec: corev1.PodSpec{
 					RestartPolicy:      "Never",
 					Containers:         containers,

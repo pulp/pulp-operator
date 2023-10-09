@@ -81,6 +81,7 @@ func pulpServerSecret(resources controllers.FunctionResources) client.Object {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      settings.PulpServerSecret(pulp.Name),
 			Namespace: pulp.Namespace,
+			Labels:    settings.CommonLabels(*pulp),
 		},
 		StringData: map[string]string{
 			"settings.py": pulp_settings,
@@ -99,6 +100,7 @@ func pulpDBFieldsEncryptionSecret(resources controllers.FunctionResources) clien
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      pulp.Spec.DBFieldsEncryptionSecret,
 			Namespace: pulp.Namespace,
+			Labels:    settings.CommonLabels(*pulp),
 		},
 		StringData: map[string]string{
 			"database_fields.symmetric.key": createFernetKey(),
@@ -115,6 +117,7 @@ func pulpAdminPasswordSecret(resources controllers.FunctionResources) client.Obj
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      pulp.Spec.AdminPasswordSecret,
 			Namespace: pulp.Namespace,
+			Labels:    settings.CommonLabels(*pulp),
 		},
 		StringData: map[string]string{
 			"password": createPwd(32),
@@ -132,6 +135,7 @@ func pulpDjangoKeySecret(resources controllers.FunctionResources) client.Object 
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      pulp.Spec.PulpSecretKey,
 			Namespace: pulp.Namespace,
+			Labels:    settings.CommonLabels(*pulp),
 		},
 		StringData: map[string]string{
 			"secret_key": djangoKey(),
@@ -149,6 +153,7 @@ func pulpContainerAuth(resources controllers.FunctionResources) client.Object {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      pulp.Spec.ContainerTokenSecret,
 			Namespace: pulp.Namespace,
+			Labels:    settings.CommonLabels(*pulp),
 		},
 		StringData: map[string]string{
 			"container_auth_private_key.pem": privKey,

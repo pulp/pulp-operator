@@ -89,7 +89,7 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	isOpenShift, _ := controllers.IsOpenShift()
 	if isOpenShift {
 		log.V(1).Info("Running on OpenShift cluster")
-		if err := pulp_ocp.CreateRHOperatorPullSecret(r.Client, ctx, req.NamespacedName.Namespace, pulp.Name); err != nil {
+		if err := pulp_ocp.CreateRHOperatorPullSecret(r.Client, ctx, *pulp); err != nil {
 			return ctrl.Result{}, err
 		}
 	}

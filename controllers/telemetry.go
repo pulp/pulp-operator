@@ -169,6 +169,7 @@ service:
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      settings.OtelConfigMapName(resources.Name),
 			Namespace: resources.Namespace,
+			Labels:    settings.CommonLabels(*resources.Pulp),
 		},
 		Data: otelConfig,
 	}
@@ -184,16 +185,13 @@ func ServiceOtel(resources FunctionResources) client.Object {
 	servicePortProto := corev1.Protocol("TCP")
 	targetPort := intstr.IntOrString{IntVal: settings.OtelContainerPort}
 	serviceType := corev1.ServiceType("ClusterIP")
-	deployment_type := resources.Pulp.Spec.DeploymentType
 	name := resources.Name
 
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      settings.OtelServiceName(name),
 			Namespace: resources.Namespace,
-			Labels: map[string]string{
-				"otel": "",
-			},
+			Labels:    settings.CommonLabels(*resources.Pulp),
 		},
 		Spec: corev1.ServiceSpec{
 			InternalTrafficPolicy: &serviceInternalTrafficPolicyCluster,
@@ -205,15 +203,7 @@ func ServiceOtel(resources FunctionResources) client.Object {
 				Protocol:   servicePortProto,
 				TargetPort: targetPort,
 			}},
-			Selector: map[string]string{
-				"app.kubernetes.io/name":       deployment_type + "-api",
-				"app.kubernetes.io/instance":   deployment_type + "-api-" + name,
-				"app.kubernetes.io/component":  "api",
-				"app.kubernetes.io/part-of":    deployment_type,
-				"app.kubernetes.io/managed-by": deployment_type + "-operator",
-				"app":                          "pulp-api",
-				"pulp_cr":                      name,
-			},
+			Selector:                 settings.PulpcoreLabels(*resources.Pulp, "api"),
 			SessionAffinity:          serviceAffinity,
 			Type:                     serviceType,
 			PublishNotReadyAddresses: true,
