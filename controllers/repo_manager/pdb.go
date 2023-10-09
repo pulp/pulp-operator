@@ -59,16 +59,15 @@ func (r *RepoManagerReconciler) pdbController(ctx context.Context, pulp *repoman
 			// add label selector to PDBSpec
 			// even though it is possible to pass a selector through PodDisruptionBudgetSpec we will overwrite
 			// any config passed through pulp CR with the following
+			labels := settings.PulpcoreLabels(*pulp, strings.ToLower(string(component)))
 			pdb.Selector = &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app.kubernetes.io/component": strings.ToLower(string(component)),
-					"pulp_cr":                     pulp.Name,
-				},
+				MatchLabels: labels,
 			}
 			expectedPDB := &policy.PodDisruptionBudget{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      pdbName,
 					Namespace: pulp.Namespace,
+					Labels:    labels,
 				},
 				Spec: *pdb,
 			}

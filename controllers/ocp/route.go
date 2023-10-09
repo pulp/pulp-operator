@@ -72,12 +72,7 @@ func PulpRouteController(resources controllers.FunctionResources, restClient res
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Route-Ready"
 
 	podList := &corev1.PodList{}
-	labels := map[string]string{
-		"app.kubernetes.io/part-of":    pulp.Spec.DeploymentType,
-		"app.kubernetes.io/managed-by": pulp.Spec.DeploymentType + "-operator",
-		"app.kubernetes.io/instance":   pulp.Spec.DeploymentType + "-worker-" + pulp.Name,
-		"app.kubernetes.io/component":  "worker",
-	}
+	labels := settings.PulpcoreLabels(*pulp, "worker")
 	listOpts := []client.ListOption{
 		client.InNamespace(pulp.Namespace),
 		client.MatchingLabels(labels),
@@ -227,9 +222,7 @@ func PulpRouteObject(ctx context.Context, resources controllers.FunctionResource
 		annotation["haproxy.router.openshift.io/rewrite-target"] = p.Rewrite
 	}
 
-	labels := map[string]string{}
-	labels["pulp_cr"] = resources.Pulp.Name
-	labels["owner"] = "pulp-dev"
+	labels := settings.CommonLabels(*resources.Pulp)
 	for k, v := range resources.Pulp.Spec.RouteLabels {
 		labels[k] = v
 	}

@@ -45,12 +45,7 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Ingress-Ready"
 
 	podList := &corev1.PodList{}
-	labels := map[string]string{
-		"app.kubernetes.io/part-of":    pulp.Spec.DeploymentType,
-		"app.kubernetes.io/managed-by": pulp.Spec.DeploymentType + "-operator",
-		"app.kubernetes.io/instance":   pulp.Spec.DeploymentType + "-content-" + pulp.Name,
-		"app.kubernetes.io/component":  "content",
-	}
+	labels := settings.PulpcoreLabels(*pulp, "content")
 	listOpts := []client.ListOption{
 		client.InNamespace(pulp.Namespace),
 		client.MatchingLabels(labels),

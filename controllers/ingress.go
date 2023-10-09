@@ -83,15 +83,7 @@ func IngressDefaults(resources any, plugins []IngressPlugin) (*netv1.Ingress, er
 			},
 		}
 	}
-	labels := map[string]string{
-		"app.kubernetes.io/name":       "ingress",
-		"app.kubernetes.io/instance":   "ingress-" + pulp.Name,
-		"app.kubernetes.io/component":  "ingress",
-		"app.kubernetes.io/part-of":    pulp.Spec.DeploymentType,
-		"app.kubernetes.io/managed-by": pulp.Spec.DeploymentType + "-operator",
-		"pulp_cr":                      pulp.Name,
-		"owner":                        "pulp-dev",
-	}
+	labels := settings.CommonLabels(*pulp)
 
 	ingress := &netv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{

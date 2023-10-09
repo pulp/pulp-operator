@@ -206,10 +206,7 @@ func (r *RepoManagerReconciler) updateIngressType(ctx context.Context, pulp *rep
 	if strings.ToLower(pulp.Status.IngressType) == "route" && !isRoute(pulp) {
 
 		route := &routev1.Route{}
-		routesLabelSelector := map[string]string{
-			"pulp_cr": pulp.Name,
-			"owner":   "pulp-dev",
-		}
+		routesLabelSelector := settings.CommonLabels(*pulp)
 		listOpts := []client.DeleteAllOfOption{
 			client.InNamespace(pulp.Namespace),
 			client.MatchingLabels(routesLabelSelector),
@@ -231,10 +228,7 @@ func (r *RepoManagerReconciler) updateIngressType(ctx context.Context, pulp *rep
 	if strings.ToLower(pulp.Status.IngressType) == "ingress" && strings.ToLower(pulp.Spec.IngressType) != "ingress" {
 
 		ingress := &netv1.Ingress{}
-		ingresssLabelSelector := map[string]string{
-			"pulp_cr": pulp.Name,
-			"owner":   "pulp-dev",
-		}
+		ingresssLabelSelector := settings.CommonLabels(*pulp)
 		listOpts := []client.DeleteAllOfOption{
 			client.InNamespace(pulp.Namespace),
 			client.MatchingLabels(ingresssLabelSelector),

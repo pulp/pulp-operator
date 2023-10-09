@@ -46,13 +46,12 @@ var _ = Describe("Pulp controller", Ordered, func() {
 	format.MaxLength = 0
 
 	labelsSts := map[string]string{
-		"app.kubernetes.io/name":       "postgres",
-		"app.kubernetes.io/instance":   "postgres-" + PulpName,
+		"app.kubernetes.io/name":       OperatorType + "-database",
+		"app.kubernetes.io/instance":   OperatorType + "-database-" + PulpName,
 		"app.kubernetes.io/component":  "database",
 		"app.kubernetes.io/part-of":    OperatorType,
-		"app.kubernetes.io/managed-by": PulpName,
-		"owner":                        "pulp-dev",
-		"app":                          "postgresql",
+		"app.kubernetes.io/managed-by": OperatorType + "-operator",
+		"app":                          "pulp-database",
 		"pulp_cr":                      PulpName,
 	}
 
@@ -529,12 +528,13 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			Name:      StsName,
 			Namespace: PulpNamespace,
 			Labels: map[string]string{
-				"app.kubernetes.io/name":       "postgres",
-				"app.kubernetes.io/instance":   "postgres-" + PulpName,
+				"app.kubernetes.io/name":       OperatorType + "-database",
+				"app.kubernetes.io/instance":   OperatorType + "-database-" + PulpName,
 				"app.kubernetes.io/component":  "database",
 				"app.kubernetes.io/part-of":    OperatorType,
-				"app.kubernetes.io/managed-by": PulpName,
-				"owner":                        "pulp-dev",
+				"app.kubernetes.io/managed-by": OperatorType + "-operator",
+				"app":                          "pulp-database",
+				"pulp_cr":                      PulpName,
 			},
 		},
 		Spec: appsv1.StatefulSetSpec{

@@ -93,34 +93,28 @@ func (r *RepoManagerReconciler) pulpContentController(ctx context.Context, pulp 
 func serviceForContent(resources controllers.FunctionResources) client.Object {
 
 	pulp := resources.Pulp
-	svc := serviceContentObject(pulp.Name, pulp.Namespace, pulp.Spec.DeploymentType)
+	svc := serviceContentObject(*pulp)
 
 	// Set Pulp instance as the owner and controller
 	ctrl.SetControllerReference(pulp, svc, resources.Scheme)
 	return svc
 }
 
-func serviceContentObject(name, namespace, deployment_type string) *corev1.Service {
+func serviceContentObject(pulp repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Service {
+	name := pulp.Name
+	namespace := pulp.Namespace
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      settings.ContentService(name),
 			Namespace: namespace,
-			Labels: map[string]string{
-				"app.kubernetes.io/name":       deployment_type + "-content",
-				"app.kubernetes.io/instance":   deployment_type + "-content-" + name,
-				"app.kubernetes.io/component":  "content",
-				"app.kubernetes.io/part-of":    deployment_type,
-				"app.kubernetes.io/managed-by": deployment_type + "-operator",
-				"app":                          "pulp-content",
-				"pulp_cr":                      name,
-			},
+			Labels:    settings.PulpcoreLabels(pulp, "content"),
 		},
-		Spec: serviceContentSpec(name, namespace, deployment_type),
+		Spec: serviceContentSpec(pulp),
 	}
 }
 
 // content service spec
-func serviceContentSpec(name, namespace, deployment_type string) corev1.ServiceSpec {
+func serviceContentSpec(pulp repomanagerpulpprojectorgv1beta2.Pulp) corev1.ServiceSpec {
 
 	serviceInternalTrafficPolicyCluster := corev1.ServiceInternalTrafficPolicyType("Cluster")
 	ipFamilyPolicyType := corev1.IPFamilyPolicyType("SingleStack")
@@ -139,15 +133,7 @@ func serviceContentSpec(name, namespace, deployment_type string) corev1.ServiceS
 			Protocol:   servicePortProto,
 			TargetPort: targetPort,
 		}},
-		Selector: map[string]string{
-			"app.kubernetes.io/name":       deployment_type + "-content",
-			"app.kubernetes.io/instance":   deployment_type + "-content-" + name,
-			"app.kubernetes.io/component":  "content",
-			"app.kubernetes.io/part-of":    deployment_type,
-			"app.kubernetes.io/managed-by": deployment_type + "-operator",
-			"app":                          "pulp-content",
-			"pulp_cr":                      name,
-		},
+		Selector:        settings.PulpcoreLabels(pulp, "content"),
 		SessionAffinity: serviceAffinity,
 		Type:            serviceType,
 	}

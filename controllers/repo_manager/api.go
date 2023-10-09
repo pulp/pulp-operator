@@ -215,18 +215,14 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 func fileStoragePVC(resources controllers.FunctionResources) client.Object {
 
 	pulp := resources.Pulp
+	labels := settings.CommonLabels(*pulp)
+	labels["app.kubernetes.io/component"] = "storage"
 	// Define the new PVC
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      settings.DefaultPulpFileStorage(pulp.Name),
 			Namespace: pulp.Namespace,
-			Labels: map[string]string{
-				"app.kubernetes.io/name":       pulp.Spec.DeploymentType + "-storage",
-				"app.kubernetes.io/instance":   pulp.Spec.DeploymentType + "-storage-" + pulp.Name,
-				"app.kubernetes.io/component":  "storage",
-				"app.kubernetes.io/part-of":    pulp.Spec.DeploymentType,
-				"app.kubernetes.io/managed-by": pulp.Spec.DeploymentType + "-operator",
-			},
+			Labels:    labels,
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
 			Resources: corev1.ResourceRequirements{
@@ -249,34 +245,29 @@ func fileStoragePVC(resources controllers.FunctionResources) client.Object {
 // serviceForAPI returns a service object for pulp-api
 func serviceForAPI(resources controllers.FunctionResources) client.Object {
 	pulp := resources.Pulp
-	svc := serviceAPIObject(pulp.Name, pulp.Namespace, pulp.Spec.DeploymentType)
+	svc := serviceAPIObject(*pulp)
 
 	// Set Pulp instance as the owner and controller
 	ctrl.SetControllerReference(pulp, svc, resources.Scheme)
 	return svc
 }
 
-func serviceAPIObject(name, namespace, deployment_type string) *corev1.Service {
+func serviceAPIObject(pulp repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Service {
+	name := pulp.Name
+	namespace := pulp.Namespace
+
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      settings.ApiService(name),
 			Namespace: namespace,
-			Labels: map[string]string{
-				"app.kubernetes.io/name":       deployment_type + "-api",
-				"app.kubernetes.io/instance":   deployment_type + "-api-" + name,
-				"app.kubernetes.io/component":  "api",
-				"app.kubernetes.io/part-of":    deployment_type,
-				"app.kubernetes.io/managed-by": deployment_type + "-operator",
-				"app":                          "pulp-api",
-				"pulp_cr":                      name,
-			},
+			Labels:    settings.PulpcoreLabels(pulp, "api"),
 		},
-		Spec: serviceAPISpec(name, namespace, deployment_type),
+		Spec: serviceAPISpec(pulp),
 	}
 }
 
 // api service spec
-func serviceAPISpec(name, namespace, deployment_type string) corev1.ServiceSpec {
+func serviceAPISpec(pulp repomanagerpulpprojectorgv1beta2.Pulp) corev1.ServiceSpec {
 
 	serviceInternalTrafficPolicyCluster := corev1.ServiceInternalTrafficPolicyType("Cluster")
 	ipFamilyPolicyType := corev1.IPFamilyPolicyType("SingleStack")
@@ -295,15 +286,7 @@ func serviceAPISpec(name, namespace, deployment_type string) corev1.ServiceSpec 
 			Protocol:   servicePortProto,
 			TargetPort: targetPort,
 		}},
-		Selector: map[string]string{
-			"app.kubernetes.io/name":       deployment_type + "-api",
-			"app.kubernetes.io/instance":   deployment_type + "-api-" + name,
-			"app.kubernetes.io/component":  "api",
-			"app.kubernetes.io/part-of":    deployment_type,
-			"app.kubernetes.io/managed-by": deployment_type + "-operator",
-			"app":                          "pulp-api",
-			"pulp_cr":                      name,
-		},
+		Selector:        settings.PulpcoreLabels(pulp, "api"),
 		SessionAffinity: serviceAffinity,
 		Type:            serviceType,
 	}

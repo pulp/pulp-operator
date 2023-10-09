@@ -189,14 +189,7 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      settings.WEB.DeploymentName(m.Name),
 			Namespace: m.Namespace,
-			Labels: map[string]string{
-				"app.kubernetes.io/name":       "nginx",
-				"app.kubernetes.io/instance":   "nginx-" + m.Name,
-				"app.kubernetes.io/component":  "web",
-				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
-				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
-				"owner":                        "pulp-dev",
-			},
+			Labels:    ls,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
@@ -270,14 +263,7 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 // labelsForPulpWeb returns the labels for selecting the resources
 // belonging to the given pulp CR name.
 func labelsForPulpWeb(m *repomanagerpulpprojectorgv1beta2.Pulp) map[string]string {
-	return map[string]string{
-		"app.kubernetes.io/name":       "nginx",
-		"app.kubernetes.io/instance":   "nginx-" + m.Name,
-		"app.kubernetes.io/component":  "web",
-		"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
-		"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
-		"pulp_cr":                      m.Name,
-	}
+	return settings.PulpcoreLabels(*m, "web")
 }
 
 // serviceForPulpWeb returns a service object for pulp-web
@@ -522,6 +508,7 @@ func (r *RepoManagerReconciler) pulpWebConfigMap(m *repomanagerpulpprojectorgv1b
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      settings.PulpWebConfigMapName(m.Name),
 			Namespace: m.Namespace,
+			Labels:    settings.CommonLabels(*m),
 		},
 		Data: data,
 	}

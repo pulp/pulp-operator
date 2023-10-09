@@ -36,8 +36,7 @@ kubectl delete -f config/samples/$CUSTOM_RESOURCE
 # deleting resources that have no operator owerReference to better validate that
 # restore controller will recreate them instead of "reusing" the older ones
 kubectl delete secrets --all
-kubectl delete pvc -l "app.kubernetes.io/component=storage"
-kubectl delete pvc -l "owner=pulp-dev"
+kubectl delete pvc -l pulp_cr=galaxy-example
 kubectl wait --for=delete --timeout=300s -f config/samples/$CUSTOM_RESOURCE
 
 kubectl apply -f config/samples/$RESTORE_RESOURCE

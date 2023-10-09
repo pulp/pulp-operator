@@ -152,22 +152,11 @@ func (d *CommonDeployment) setReplicas(pulp repomanagerpulpprojectorgv1beta2.Pul
 
 // setLabels defines the pod and deployment labels
 func (d *CommonDeployment) setLabels(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
-	pulpType := strings.ToLower(string(pulpcoreType))
-	d.podLabels = map[string]string{
-		"app.kubernetes.io/name":       pulp.Spec.DeploymentType + "-" + pulpType,
-		"app.kubernetes.io/instance":   pulp.Spec.DeploymentType + "-" + pulpType + "-" + pulp.Name,
-		"app.kubernetes.io/component":  pulpType,
-		"app.kubernetes.io/part-of":    pulp.Spec.DeploymentType,
-		"app.kubernetes.io/managed-by": pulp.Spec.DeploymentType + "-operator",
-		"app":                          "pulp-" + pulpType,
-		"pulp_cr":                      pulp.Name,
-	}
-
+	d.podLabels = settings.PulpcoreLabels(pulp, strings.ToLower(string(pulpcoreType)))
 	d.deploymentLabels = make(map[string]string)
 	for k, v := range d.podLabels {
 		d.deploymentLabels[k] = v
 	}
-	d.deploymentLabels["owner"] = "pulp-dev"
 }
 
 // setAffinity defines the affinity rules

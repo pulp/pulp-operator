@@ -421,14 +421,7 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      settings.DefaultDBStatefulSet(m.Name),
 			Namespace: m.Namespace,
-			Labels: map[string]string{
-				"app.kubernetes.io/name":       "postgres",
-				"app.kubernetes.io/instance":   "postgres-" + m.Name,
-				"app.kubernetes.io/component":  "database",
-				"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
-				"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
-				"owner":                        "pulp-dev",
-			},
+			Labels:    ls,
 		},
 		Spec: appsv1.StatefulSetSpec{
 			Replicas: &replicas,
@@ -469,16 +462,7 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 // labelsForDatabase returns the labels for selecting the resources
 // belonging to the given pulp CR name.
 func labelsForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) map[string]string {
-	return map[string]string{
-		"app.kubernetes.io/name":       "postgres",
-		"app.kubernetes.io/instance":   "postgres-" + m.Name,
-		"app.kubernetes.io/component":  "database",
-		"app.kubernetes.io/part-of":    m.Spec.DeploymentType,
-		"app.kubernetes.io/managed-by": m.Spec.DeploymentType + "-operator",
-		"owner":                        "pulp-dev",
-		"app":                          "postgresql",
-		"pulp_cr":                      m.Name,
-	}
+	return settings.PulpcoreLabels(*m, "database")
 }
 
 // serviceForDatabase returns a service object for postgres pods
@@ -495,6 +479,7 @@ func serviceForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Servic
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      settings.DBService(m.Name),
 			Namespace: m.Namespace,
+			Labels:    labelsForDatabase(m),
 		},
 		Spec: corev1.ServiceSpec{
 			ClusterIP:             "None",
@@ -507,10 +492,7 @@ func serviceForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Servic
 				Protocol:   servicePortProto,
 				TargetPort: targetPort,
 			}},
-			Selector: map[string]string{
-				"app":     "postgresql",
-				"pulp_cr": m.Name,
-			},
+			Selector:        labelsForDatabase(m),
 			SessionAffinity: serviceAffinity,
 			Type:            serviceType,
 		},
@@ -531,6 +513,7 @@ func databaseConfigSecret(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Secr
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      settings.DefaultDBSecret(m.Name),
 			Namespace: m.Namespace,
+			Labels:    settings.CommonLabels(*m),
 		},
 		StringData: map[string]string{
 			"password": createPwd(32),
