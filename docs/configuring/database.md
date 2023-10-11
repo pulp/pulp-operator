@@ -64,3 +64,110 @@ spec:
 !!! warning
     The current version of Pulp backup operator does not support the backup of external databases.
     Only the backup of databases deployed by the operator was tested.
+
+## Encrypting sensitive fields
+
+Pulp uses a url-safe base64-encoded string of 32 random bytes to encrypt sensitive fields in the database. It is stored as a `Secret` defined in `.spec.db_fields_encryption_secret`. If the `db_fields_encryption_secret` field is not defined during installation, Pulp Operator will create a default one:
+```yaml
+$ kubectl get pulp -oyaml
+...
+spec:
+  db_fields_encryption_secret: pulp-db-fields-encryption
+...
+
+
+$ kubectl get secret/pulp-db-fields-encryption -oyaml
+apiVersion: v1
+data:
+  database_fields.symmetric.key: RmRWL3...
+kind: Secret
+metadata:
+  name: pulp-db-fields-encryption
+...
+type: Opaque
+```
+
+The key can be generated independently but it must be a url-safe base64-encoded string of 32 random bytes.
+To generate a key with openssl:
+```sh
+openssl rand -base64 32
+```
+
+### Rotating the fields encryption key
+
+
+The process of updating the database fields encryption `Secret` is manual because it requires manipulating sensitive data that the operator could not (or should not) have access (for example, if the `Secret` is stored in an external vault).
+
+The `Secret` can contain multiple such keys (one per line). The key in the first line will be used for encryption but all others will still be attempted to decrypt old tokens. This can help you to rotate this key in the following way:
+
+!!! WARNING
+    Before proceeding, make sure to have a backup of Pulp database and the current fields encryption `Secret`.
+
+
+* Shut down all Pulp services (api, content and worker pods).
+```sh
+$ PULP_CR=pulp
+$ kubectl patch pulp $PULP_CR --type merge -p '{"spec": { "api": {"replicas":0},"content":{"replicas":0},"worker":{"replicas":0}}}'
+```
+
+* Add a new key at the top of the `Secret` key (modify the `NEW_SECRET` env var with your base64 encoded new encryption secret)
+```sh
+$ DB_ENCR_SECRET=$(kubectl get pulp $PULP_CR -ojsonpath='{.spec.db_fields_encryption_secret}')
+$ OLD_SECRET=$(kubectl get secret $DB_ENCR_SECRET -ogo-template='{{index .data "database_fields.symmetric.key"}}')
+$ NEW_SECRET=$(openssl rand -base64 32)
+$ MERGE_SECRETS=$(printf "%s\n%s\n" "$NEW_SECRET" "$OLD_SECRET"|base64 -w0)
+$ kubectl patch secret $DB_ENCR_SECRET --type merge -p "{\"data\": {\"database_fields.symmetric.key\": \"${MERGE_SECRETS}\"}}"
+```
+
+* Create a job to run `pulpcore-manager rotate-db-key`.
+```yaml
+$ kubectl apply -f-<<EOF
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rotate-db-key
+spec:
+  template:
+    spec:
+      restartPolicy: "Never"
+      containers:
+      - name: pulpcore
+        image: quay.io/pulp/pulp-minimal
+        command: ["pulpcore-manager",  "rotate-db-key"]
+        volumeMounts:
+        - mountPath: /etc/pulp/settings.py
+          name: pulp-server
+          readOnly: true
+          subPath: settings.py
+        - mountPath: /etc/pulp/keys/database_fields.symmetric.key
+          name: pulp-db-fields-encryption
+          readOnly: true
+          subPath: database_fields.symmetric.key
+      volumes:
+      - name: pulp-server
+        secret:
+          defaultMode: 420
+          items:
+          - key: settings.py
+            path: settings.py
+          secretName: pulp-server
+      - name: pulp-db-fields-encryption
+        secret:
+          defaultMode: 420
+          items:
+          - key: database_fields.symmetric.key
+            path: database_fields.symmetric.key
+          secretName: pulp-db-fields-encryption
+EOF
+```
+
+* Remove the old key (on the second line) from the `Secret`
+```sh
+$ MERGE_SECRETS=$(printf "%s\n" "$NEW_SECRET"|base64 -w0)
+$ kubectl patch secret $DB_ENCR_SECRET --type merge -p "{\"data\": {\"database_fields.symmetric.key\": \"${MERGE_SECRETS}\"}}"
+```
+
+* Start the Pulp services again (make sure to adjust the number of replicas with the desired amount of pods)
+```sh
+$ kubectl patch pulp $PULP_CR --type merge -p '{"spec": { "api": {"replicas":1},"content":{"replicas":1},"worker":{"replicas":1}}}'
+```
