@@ -865,22 +865,8 @@ func (d *CommonDeployment) setContainers(pulp repomanagerpulpprojectorgv1beta2.P
 				Name:            "api",
 				Image:           d.image,
 				ImagePullPolicy: corev1.PullPolicy(pulp.Spec.ImagePullPolicy),
-				Command:         []string{"/bin/sh"},
-				Args: []string{
-					"-c",
-					`if which pulpcore-api
-then
-  PULP_API_ENTRYPOINT=("pulpcore-api")
-else
-  PULP_API_ENTRYPOINT=("gunicorn" "pulpcore.app.wsgi:application" "--bind" "[::]:24817" "--name" "pulp-api" "--access-logformat" "pulp [%({correlation-id}o)s]: %(h)s %(l)s %(u)s %(t)s \"%(r)s\" %(s)s %(b)s \"%(f)s\" \"%(a)s\"")
-fi
-
-exec "${PULP_API_ENTRYPOINT[@]}" \
---timeout "${PULP_GUNICORN_TIMEOUT}" \
---workers "${PULP_API_WORKERS}" \
---access-logfile -`,
-				},
-				Env: d.envVars,
+				Command:         []string{"/usr/bin/pulp-api"},
+				Env:             d.envVars,
 				Ports: []corev1.ContainerPort{{
 					ContainerPort: 24817,
 					Protocol:      "TCP",
@@ -897,24 +883,9 @@ exec "${PULP_API_ENTRYPOINT[@]}" \
 			Name:            "content",
 			Image:           d.image,
 			ImagePullPolicy: corev1.PullPolicy(pulp.Spec.ImagePullPolicy),
-			Command:         []string{"/bin/sh"},
-			Args: []string{
-				"-c",
-				`if which pulpcore-content
-then
-  PULP_CONTENT_ENTRYPOINT=("pulpcore-content")
-else
-  PULP_CONTENT_ENTRYPOINT=("gunicorn" "pulpcore.content:server" "--worker-class" "aiohttp.GunicornWebWorker" "--name" "pulp-content" "--bind" "[::]:24816")
-fi
-
-exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
---timeout "${PULP_GUNICORN_TIMEOUT}" \
---workers "${PULP_CONTENT_WORKERS}" \
---access-logfile -
-`,
-			},
-			Resources: d.resourceRequirements,
-			Env:       d.envVars,
+			Command:         []string{"/usr/bin/pulp-content"},
+			Resources:       d.resourceRequirements,
+			Env:             d.envVars,
 			Ports: []corev1.ContainerPort{{
 				ContainerPort: 24816,
 				Protocol:      "TCP",
@@ -929,13 +900,7 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 			Name:            "worker",
 			Image:           d.image,
 			ImagePullPolicy: corev1.PullPolicy(pulp.Spec.ImagePullPolicy),
-			Command:         []string{"/bin/sh"},
-			Args: []string{
-				"-c",
-				`export PULP_SETTINGS=/etc/pulp/settings.py
-export PATH=/usr/local/bin:/usr/bin/
-exec pulpcore-worker`,
-			},
+			Command:         []string{"/usr/bin/pulp-worker"},
 			Env:             d.envVars,
 			LivenessProbe:   d.livenessProbe,
 			ReadinessProbe:  d.readinessProbe,
