@@ -1,2 +1,0 @@
-Updated the `reset-admin-password` warning message to also don't reset the  
-password via `/api/v3/users` endpoint.

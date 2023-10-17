@@ -13,6 +13,49 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+1.0.0-beta.2 (2023-10-17)
+=========================
+
+
+Features
+--------
+
+- Added support to configure LDAP with Pulp.
+  [#1042](https://github.com/pulp/pulp-operator/issues/1042)
+- Added capability to customize annotations of serviceAccount created by operator.
+  [#1079](https://github.com/pulp/pulp-operator/issues/1079)
+
+
+Bugfixes
+--------
+
+- Modified pulpcore containers entrypoints to support `pulp-minimal:3.33` image.
+  [#1081](https://github.com/pulp/pulp-operator/issues/1081)
+- Fixed a backup issue in pulp-secret-key with special chars.
+  [#1098](https://github.com/pulp/pulp-operator/issues/1098)
+- Fixed the KubeAPIWarningLogger PodSecurity warning messages.
+  [#1102](https://github.com/pulp/pulp-operator/issues/1102)
+
+
+Improved Documentation
+----------------------
+
+- Added doc steps to rotate database fields encryption key.
+  [#742](https://github.com/pulp/pulp-operator/issues/742)
+- Updated the `reset-admin-password` warning message to also don't reset the  
+  password via `/api/v3/users` endpoint.
+  [#1078](https://github.com/pulp/pulp-operator/issues/1078)
+
+
+Misc
+----
+
+- [#1101](https://github.com/pulp/pulp-operator/issues/1101)
+
+
+----
+
+
 1.0.0-beta.1 (2023-09-05)
 =========================
 

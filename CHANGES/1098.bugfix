@@ -1,1 +1,0 @@
-Fixed a backup issue in pulp-secret-key with special chars.
