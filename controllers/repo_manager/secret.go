@@ -19,6 +19,7 @@ package repo_manager
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -421,7 +422,13 @@ func addCustomPulpSettings(pulp *repomanagerpulpprojectorgv1beta2.Pulp, pulpSett
 			convertToString := cases.Title(language.English, cases.Compact).String(strconv.FormatBool(settingsJson[k].(bool)))
 			convertedSettings = convertedSettings + fmt.Sprintf("%v = %v\n", strings.ToUpper(k), convertToString)
 		default:
-			convertedSettings = convertedSettings + fmt.Sprintf("%v = \"%v\"\n", strings.ToUpper(k), settingsJson[k])
+			// if it is a tuple, we should not parse it as a string (do not add the quotes)
+			r, _ := regexp.Compile(`\(.*\)`)
+			if r.MatchString(settingsJson[k].(string)) {
+				convertedSettings = convertedSettings + fmt.Sprintf("%v = %v\n", strings.ToUpper(k), settingsJson[k])
+			} else {
+				convertedSettings = convertedSettings + fmt.Sprintf("%v = \"%v\"\n", strings.ToUpper(k), settingsJson[k])
+			}
 		}
 	}
 
