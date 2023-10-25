@@ -28,6 +28,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 // updateAdminPasswordJob creates a k8s job if the admin-password secret has changed
@@ -77,6 +78,7 @@ func (r *RepoManagerReconciler) updateAdminPasswordJob(ctx context.Context, pulp
 		},
 	}
 
+	ctrl.SetControllerReference(pulp, job, r.Scheme)
 	// create job
 	log.Info("Creating " + jobName + "* Job")
 	if err := r.Create(ctx, job); err != nil {
@@ -236,6 +238,7 @@ func (r *RepoManagerReconciler) migrationJob(ctx context.Context, pulp *repomana
 		},
 	}
 
+	ctrl.SetControllerReference(pulp, job, r.Scheme)
 	// create the Job
 	log.Info("Creating a new pulpcore migration Job")
 	if err := r.Create(ctx, job); err != nil {
@@ -313,6 +316,7 @@ func (r *RepoManagerReconciler) updateContentChecksumsJob(ctx context.Context, p
 		},
 	}
 
+	ctrl.SetControllerReference(pulp, job, r.Scheme)
 	// create the Job
 	log.Info("Creating a new " + jobName + "* Job")
 	if err := r.Create(ctx, job); err != nil {
