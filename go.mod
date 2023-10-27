@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/go-logr/logr v1.3.0
 	github.com/onsi/ginkgo/v2 v2.13.0
-	github.com/onsi/gomega v1.28.1
+	github.com/onsi/gomega v1.29.0
 	github.com/openshift/api v0.0.0-20220825183227-75c111537c4d
 	go.uber.org/zap v1.26.0
 	golang.org/x/crypto v0.14.0
