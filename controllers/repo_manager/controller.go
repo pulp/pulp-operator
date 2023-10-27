@@ -225,9 +225,8 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	log.V(1).Info("Running status tasks")
-	pulpController, err = r.pulpStatus(ctx, pulp, log)
-	if needsRequeue(err, pulpController) {
-		return pulpController, err
+	if reconcile := r.pulpStatus(ctx, pulp, log); reconcile != nil {
+		return *reconcile, nil
 	}
 
 	// If we get into here it means that there is no reconciliation

@@ -77,9 +77,9 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 	}
 	cmdOutput, err := controllers.ContainerExec(r, &pod, execCmd, "content", pod.Namespace)
 	if err != nil {
-		log.Error(err, "Failed to get ingresss from "+pod.Name)
+		controllers.CustomZapLogger().Warn(err.Error() + " Failed to get ingresss from " + pod.Name)
 		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "Failed to get ingresss!", "FailedGet"+pod.Name)
-		return ctrl.Result{}, err
+		return ctrl.Result{Requeue: true}, nil
 	}
 	var pulpPlugins []controllers.IngressPlugin
 	json.Unmarshal([]byte(cmdOutput), &pulpPlugins)
