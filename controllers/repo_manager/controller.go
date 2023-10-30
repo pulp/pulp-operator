@@ -40,7 +40,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
@@ -86,14 +85,6 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
-	isOpenShift, _ := controllers.IsOpenShift()
-	if isOpenShift {
-		log.V(1).Info("Running on OpenShift cluster")
-		if err := pulp_ocp.CreateRHOperatorPullSecret(r.Client, ctx, *pulp); err != nil {
-			return ctrl.Result{}, err
-		}
-	}
-
 	// if Unmanaged the operator should do nothing
 	// this is useful in situations where we don't want the operator to do reconciliation
 	// for example, during a troubleshooting or for testing
@@ -101,72 +92,116 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
+	// create RH pull secret and CA configmap (if needed)
+	if reconcile, err := ocpTasks(ctx, pulp, *r); err != nil || reconcile != nil {
+		return *reconcile, err
+	}
+
 	// run multiple validations before deploying pulp resources
 	if reconcile, err := prechecks(ctx, r, pulp); err != nil || reconcile != nil {
 		return *reconcile, err
 	}
 
-	var pulpController reconcile.Result
-
-	// Create an empty ConfigMap in which CNO will inject custom CAs
-	if isOpenShift && pulp.Spec.TrustedCa {
-		pulpController, err = pulp_ocp.CreateEmptyConfigMap(r.Client, r.Scheme, ctx, pulp, log)
-		if needsRequeue(err, pulpController) {
-			return pulpController, err
-		}
-	}
-
 	// Create ServiceAccount
-	pulpController, err = r.CreateServiceAccount(ctx, pulp)
-	if needsRequeue(err, pulpController) {
-		return pulpController, err
+	if reconcile, err := r.CreateServiceAccount(ctx, pulp); needsRequeue(err, reconcile) {
+		return reconcile, err
 	}
+
+	if reconcile, err := databaseTasks(ctx, pulp, *r); err != nil || reconcile != nil {
+		return *reconcile, err
+	}
+
+	if reconcile, err := cacheTasks(ctx, pulp, *r); err != nil || reconcile != nil {
+		return *reconcile, err
+	}
+
+	if reconcile, err := pulpCoreTasks(ctx, pulp, *r); err != nil || reconcile != nil {
+		return *reconcile, err
+	}
+
+	log.V(1).Info("Running status tasks")
+	if reconcile := r.pulpStatus(ctx, pulp, log); reconcile != nil {
+		return *reconcile, nil
+	}
+
+	// If we get into here it means that there is no reconciliation
+	// nor controller tasks pending
+	log.Info("Operator tasks synced")
+	return ctrl.Result{}, nil
+}
+
+func ocpTasks(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, r RepoManagerReconciler) (*ctrl.Result, error) {
+	if isOpenShift, _ := controllers.IsOpenShift(); !isOpenShift {
+		return nil, nil
+	}
+
+	if err := createRHPullSecret(ctx, pulp, r); err != nil {
+		return &ctrl.Result{}, err
+	}
+
+	if reconcile, err := injectCertificates(ctx, pulp, r); err != nil || reconcile != nil {
+		return reconcile, err
+	}
+
+	return nil, nil
+}
+
+func createRHPullSecret(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, r RepoManagerReconciler) error {
+	r.RawLogger.V(1).Info("Running on OpenShift cluster")
+	if err := pulp_ocp.CreateRHOperatorPullSecret(r.Client, ctx, *pulp); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func injectCertificates(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, r RepoManagerReconciler) (*ctrl.Result, error) {
+	if !pulp.Spec.TrustedCa {
+		return nil, nil
+	}
+
+	pulpController, err := pulp_ocp.CreateEmptyConfigMap(r.Client, r.Scheme, ctx, pulp, r.RawLogger)
+	if needsRequeue(err, pulpController) {
+		return &pulpController, err
+	}
+
+	return nil, nil
+}
+
+func databaseTasks(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, r RepoManagerReconciler) (*ctrl.Result, error) {
+	log := r.RawLogger
 
 	// Do not provision postgres resources if using external DB
-	if len(pulp.Spec.Database.ExternalDBSecret) == 0 {
-		log.V(1).Info("Running database tasks")
-		pulpController, err = r.databaseController(ctx, pulp, log)
-		if needsRequeue(err, pulpController) {
-			return pulpController, err
-		}
+	if len(pulp.Spec.Database.ExternalDBSecret) != 0 {
+		return nil, nil
 	}
 
-	// Provision redis resources only if
-	// - no external cache cluster provided
-	// - cache is enabled
-	if len(pulp.Spec.Cache.ExternalCacheSecret) == 0 && pulp.Spec.Cache.Enabled {
-		log.V(1).Info("Running cache tasks")
-		pulpController, err = r.pulpCacheController(ctx, pulp, log)
-		if needsRequeue(err, pulpController) {
-			return pulpController, err
-		}
-
-		// remove redis resources if cache is not enabled
-	} else {
-		pulpController, err = r.deprovisionCache(ctx, pulp, log)
-		if needsRequeue(err, pulpController) {
-			return pulpController, err
-		}
-	}
-
-	log.V(1).Info("Running API tasks")
-	pulpController, err = r.pulpApiController(ctx, pulp, log)
+	log.V(1).Info("Running database tasks")
+	pulpController, err := r.databaseController(ctx, pulp, log)
 	if needsRequeue(err, pulpController) {
-		return pulpController, err
+		return &pulpController, err
+	}
+	return nil, nil
+}
+
+func pulpCoreTasks(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, r RepoManagerReconciler) (*ctrl.Result, error) {
+	log := r.RawLogger
+	log.V(1).Info("Running API tasks")
+	if pulpController, err := r.pulpApiController(ctx, pulp, log); needsRequeue(err, pulpController) {
+		return &pulpController, err
 	}
 
 	// create the job to run django migrations
 	r.runMigration(ctx, pulp)
 
 	log.V(1).Info("Running content tasks")
-	pulpController, err = r.pulpContentController(ctx, pulp, log)
-	if needsRequeue(err, pulpController) {
-		return pulpController, err
+	if pulpController, err := r.pulpContentController(ctx, pulp, log); needsRequeue(err, pulpController) {
+		return &pulpController, err
 	}
+
 	log.V(1).Info("Running worker tasks")
-	pulpController, err = r.pulpWorkerController(ctx, pulp, log)
-	if needsRequeue(err, pulpController) {
-		return pulpController, err
+	if pulpController, err := r.pulpWorkerController(ctx, pulp, log); needsRequeue(err, pulpController) {
+		return &pulpController, err
 	}
 
 	// create the job to reset pulp admin password in case admin_password_secret has changed
@@ -180,43 +215,42 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if len(pulp.Status.IngressType) == 0 || pulp.Status.IngressType == pulp.Spec.IngressType {
 		if isRoute(pulp) {
 			log.V(1).Info("Running route tasks")
-			pulpController, err = pulp_ocp.PulpRouteController(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}, r.RESTClient, r.RESTConfig)
+			pulpController, err := pulp_ocp.PulpRouteController(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}, r.RESTClient, r.RESTConfig)
 			if needsRequeue(err, pulpController) {
-				return pulpController, err
+				return &pulpController, err
 			}
 		} else if isIngress(pulp) {
 			log.V(1).Info("Running ingress tasks")
-			pulpController, err = r.pulpIngressController(ctx, pulp, log)
+			pulpController, err := r.pulpIngressController(ctx, pulp, log)
 			if needsRequeue(err, pulpController) {
-				return pulpController, err
+				return &pulpController, err
 			}
 		} else {
 			log.V(1).Info("Running web tasks")
-			pulpController, err = r.pulpWebController(ctx, pulp, log)
+			pulpController, err := r.pulpWebController(ctx, pulp, log)
 			if needsRequeue(err, pulpController) {
-				return pulpController, err
+				return &pulpController, err
 			}
 		}
 	} else {
 		r.updateIngressType(ctx, pulp)
-		return ctrl.Result{Requeue: true}, nil
+		return &ctrl.Result{Requeue: true}, nil
 	}
 
 	// if this is the first reconciliation loop (.status.ingress_class_name == "") OR
 	// if there is no update in ingressType field
 	if !strings.EqualFold(pulp.Status.IngressClassName, pulp.Spec.IngressClassName) {
 		r.updateIngressClass(ctx, pulp)
-		return ctrl.Result{Requeue: true}, nil
+		return &ctrl.Result{Requeue: true}, nil
 	}
 
 	log.V(1).Info("Running PDB tasks")
-	pulpController, err = r.pdbController(ctx, pulp, log)
-	if needsRequeue(err, pulpController) {
-		return pulpController, err
+	if pulpController, err := r.pdbController(ctx, pulp, log); needsRequeue(err, pulpController) {
+		return &pulpController, err
 	}
 
 	if pulpController, err := r.galaxy(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}); needsRequeue(err, pulpController) {
-		return pulpController, err
+		return &pulpController, err
 	}
 
 	// remove telemetry resources in case it is not enabled anymore
@@ -224,15 +258,31 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		controllers.RemoveTelemetryResources(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log})
 	}
 
-	log.V(1).Info("Running status tasks")
-	if reconcile := r.pulpStatus(ctx, pulp, log); reconcile != nil {
-		return *reconcile, nil
+	return nil, nil
+}
+
+func cacheTasks(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, r RepoManagerReconciler) (*ctrl.Result, error) {
+	log := r.RawLogger
+
+	// Provision redis resources only if
+	// - no external cache cluster provided
+	// - cache is enabled
+	if len(pulp.Spec.Cache.ExternalCacheSecret) == 0 && pulp.Spec.Cache.Enabled {
+		log.V(1).Info("Running cache tasks")
+		pulpController, err := r.pulpCacheController(ctx, pulp, log)
+		if needsRequeue(err, pulpController) {
+			return &pulpController, err
+		}
+
+		// remove redis resources if cache is not enabled
+	} else {
+		pulpController, err := r.deprovisionCache(ctx, pulp, log)
+		if needsRequeue(err, pulpController) {
+			return &pulpController, err
+		}
 	}
 
-	// If we get into here it means that there is no reconciliation
-	// nor controller tasks pending
-	log.Info("Operator tasks synced")
-	return ctrl.Result{}, nil
+	return nil, nil
 }
 
 // indexerFunc knows how to take an object and turn it into a series of non-namespaced keys
