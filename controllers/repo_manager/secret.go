@@ -173,9 +173,7 @@ GALAXY_CONTAINER_SIGNING_SERVICE = "container-default"
 ANSIBLE_API_HOSTNAME = "` + rootUrl + `"
 ANSIBLE_CERTS_DIR = "/etc/pulp/keys/"
 CONTENT_ORIGIN = "` + rootUrl + `"
-GALAXY_FEATURE_FLAGS = {
-  'execution_environments': 'True',
-}
+GALAXY_FEATURE_FLAGS = {'execution_environments': 'True', 'ai_deny_index': 'True'}
 PRIVATE_KEY_PATH = "/etc/pulp/keys/container_auth_private_key.pem"
 PUBLIC_KEY_PATH = "/etc/pulp/keys/container_auth_public_key.pem"
 STATIC_ROOT = "/var/lib/operator/static/"
