@@ -25,6 +25,9 @@ spec:
       - /tmp
     aws_s3_endpoint_url: http://pulp_minio:9000
     analytics: false
+    galaxy_feature_flags:
+      execution_environments: True
+      ai_deny_index: True
   api:
     replicas: 1
   content:

@@ -168,12 +168,9 @@ func defaultPulpSettings(resources controllers.FunctionResources, pulpSettings *
 	rootUrl := getRootURL(resources)
 	*pulpSettings = *pulpSettings + controllers.DotNotEditMessage + `
 DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
-GALAXY_COLLECTION_SIGNING_SERVICE = "ansible-default"
-GALAXY_CONTAINER_SIGNING_SERVICE = "container-default"
 ANSIBLE_API_HOSTNAME = "` + rootUrl + `"
 ANSIBLE_CERTS_DIR = "/etc/pulp/keys/"
 CONTENT_ORIGIN = "` + rootUrl + `"
-GALAXY_FEATURE_FLAGS = {'execution_environments': 'True', 'ai_deny_index': 'True'}
 PRIVATE_KEY_PATH = "/etc/pulp/keys/container_auth_private_key.pem"
 PUBLIC_KEY_PATH = "/etc/pulp/keys/container_auth_public_key.pem"
 STATIC_ROOT = "/var/lib/operator/static/"
@@ -394,6 +391,51 @@ func allowedContentChecksumsSettings(resources controllers.FunctionResources, pu
 	*pulpSettings = *pulpSettings + fmt.Sprintln("ALLOWED_CONTENT_CHECKSUMS = ", string(settings))
 }
 
+func convertSettings(key string, settings interface{}) string {
+	var converted string
+	switch s := settings.(type) {
+
+	case map[string]interface{}:
+		var settingsJson map[string]interface{}
+		settingsMarshalled, _ := json.Marshal(s)
+		json.Unmarshal(settingsMarshalled, &settingsJson)
+
+		sortedKeys := sortKeys(settingsJson)
+		converted = converted + fmt.Sprintf("%v = {\n", strings.ToUpper(key))
+		for _, k := range sortedKeys {
+			rc, _ := regexp.Compile(`(?s)(.*) = (.*)\n`)
+			rp := rc.ReplaceAllString(convertSettings(k, settingsJson[k]), `'$1': $2`)
+			converted = converted + fmt.Sprintf("  %v,\n", rp)
+		}
+		converted = fmt.Sprintf("%v}\n", converted)
+	case []interface{}:
+		converted = fmt.Sprintf("%v = [\n", strings.ToUpper(key))
+		for i := range s {
+			rc, _ := regexp.Compile(`(?s)(.*) = (.*)\n`)
+			rp := rc.ReplaceAllString(convertSettings(key, s[i]), `$2`)
+			converted = converted + fmt.Sprintf("  %v,\n", rp)
+		}
+		converted = fmt.Sprintf("%v]\n", converted)
+	case bool:
+		// Pulp expects True or False, but golang boolean values are true or false
+		// so we are converting to string and changing to capital T or F
+		convertToString := cases.Title(language.English, cases.Compact).String(strconv.FormatBool(s))
+		converted = converted + fmt.Sprintf("%v = %v\n", strings.ToUpper(key), convertToString)
+	case float32, float64:
+		converted = converted + fmt.Sprintf("%v = %v\n", strings.ToUpper(key), s)
+	default:
+		// if it is a tuple, we should not parse it as a string (do not add the quotes)
+		r, _ := regexp.Compile(`\(.*\)`)
+		if r.MatchString(s.(string)) {
+			converted = converted + fmt.Sprintf("%v = %v\n", strings.ToUpper(key), s)
+		} else {
+			converted = converted + fmt.Sprintf("%v = \"%v\"\n", strings.ToUpper(key), s)
+		}
+	}
+
+	return converted
+}
+
 // addCustomPulpSettings appends custom settings defined in Pulp CR into pulpSettings
 func addCustomPulpSettings(pulp *repomanagerpulpprojectorgv1beta2.Pulp, pulpSettings *string) {
 	settings := pulp.Spec.PulpSettings.Raw
@@ -403,31 +445,7 @@ func addCustomPulpSettings(pulp *repomanagerpulpprojectorgv1beta2.Pulp, pulpSett
 	var convertedSettings string
 	sortedKeys := sortKeys(settingsJson)
 	for _, k := range sortedKeys {
-		if strings.Contains(*pulpSettings, strings.ToUpper(k)) {
-			lines := strings.Split(*pulpSettings, strings.ToUpper(k))
-			*pulpSettings = lines[0] + strings.Join(strings.Split(lines[1], "\n")[1:], "\n")
-		}
-		switch settingsJson[k].(type) {
-		case map[string]interface{}:
-			rawMapping, _ := json.Marshal(settingsJson[k])
-			convertedSettings = convertedSettings + fmt.Sprintln(strings.ToUpper(k), "=", strings.Replace(string(rawMapping), "\"", "'", -1))
-		case []interface{}:
-			rawMapping, _ := json.Marshal(settingsJson[k])
-			convertedSettings = convertedSettings + fmt.Sprintln(strings.ToUpper(k), "=", string(rawMapping))
-		case bool:
-			// Pulp expects True or False, but golang boolean values are true or false
-			// so we are converting to string and changing to capital T or F
-			convertToString := cases.Title(language.English, cases.Compact).String(strconv.FormatBool(settingsJson[k].(bool)))
-			convertedSettings = convertedSettings + fmt.Sprintf("%v = %v\n", strings.ToUpper(k), convertToString)
-		default:
-			// if it is a tuple, we should not parse it as a string (do not add the quotes)
-			r, _ := regexp.Compile(`\(.*\)`)
-			if r.MatchString(settingsJson[k].(string)) {
-				convertedSettings = convertedSettings + fmt.Sprintf("%v = %v\n", strings.ToUpper(k), settingsJson[k])
-			} else {
-				convertedSettings = convertedSettings + fmt.Sprintf("%v = \"%v\"\n", strings.ToUpper(k), settingsJson[k])
-			}
-		}
+		convertedSettings = convertedSettings + convertSettings(k, settingsJson[k])
 	}
 
 	*pulpSettings = *pulpSettings + convertedSettings

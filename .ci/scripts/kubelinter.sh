@@ -4,7 +4,7 @@
 set -euo pipefail
 
 RELEASE_INFO=$(curl --silent --show-error --fail https://api.github.com/repos/stackrox/kube-linter/releases/latest)
-RELEASE_NAME=$(echo "${RELEASE_INFO}" | jq --raw-output ".name")
+RELEASE_NAME=$(echo "${RELEASE_INFO}" | jq --raw-output ".name"|tr -d '[:space:]')
 LOCATION=$(echo "${RELEASE_INFO}" \
   | jq --raw-output ".assets[].browser_download_url" \
   | grep --fixed-strings kube-linter-linux.tar.gz)
