@@ -1,0 +1,1 @@
+Modified how `pulp_settings` field is parsed to better handle generic configs.

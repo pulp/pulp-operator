@@ -29,6 +29,9 @@ spec:
     allowed_import_paths:
       - /tmp
     analytics: false
+    galaxy_feature_flags:
+      execution_environments: True
+      ai_deny_index: True
   database:
     postgres_storage_class: standard
   api:
