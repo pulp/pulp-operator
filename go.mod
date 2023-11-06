@@ -9,7 +9,7 @@ require (
 	github.com/openshift/api v0.0.0-20220825183227-75c111537c4d
 	go.uber.org/zap v1.26.0
 	golang.org/x/crypto v0.14.0
-	golang.org/x/text v0.13.0
+	golang.org/x/text v0.14.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.26.3
 	k8s.io/apimachinery v0.28.0-alpha.0.0.20231013002001-194b6f8ddf62
