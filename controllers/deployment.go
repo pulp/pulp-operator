@@ -843,6 +843,7 @@ func (d *CommonDeployment) setInitContainers(pulp repomanagerpulpprojectorgv1bet
 		{
 			Name:            "init-container",
 			Image:           d.initContainerImage,
+			ImagePullPolicy: corev1.PullPolicy(pulp.Spec.ImagePullPolicy),
 			Env:             d.initContainerEnvVars,
 			Command:         []string{"/bin/sh"},
 			Args:            args,
