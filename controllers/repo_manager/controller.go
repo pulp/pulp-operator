@@ -186,6 +186,12 @@ func databaseTasks(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.P
 
 func pulpCoreTasks(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, r RepoManagerReconciler) (*ctrl.Result, error) {
 	log := r.RawLogger
+
+	log.V(1).Info("Running secrets tasks ...")
+	if pulpController, err := r.createSecrets(ctx, pulp); pulpController != nil || err != nil {
+		return pulpController, err
+	}
+
 	log.V(1).Info("Running API tasks")
 	if pulpController, err := r.pulpApiController(ctx, pulp, log); needsRequeue(err, pulpController) {
 		return &pulpController, err
