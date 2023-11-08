@@ -17,6 +17,7 @@ limitations under the License.
 package repo_manager
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -30,13 +31,93 @@ import (
 	"golang.org/x/text/language"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// [TODO] move the pending secrets tasks (for ex, create/reconcile) from api.go
-// to here. Since there is no need to keep the same "struct" as of in ansible
-// version, we can now do a better organization of the resources.
+func (r *RepoManagerReconciler) createSecrets(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) (*ctrl.Result, error) {
+
+	// conditionType is used to update .status.conditions with the current resource state
+	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-API-Ready"
+
+	// if .spec.admin_password_secret is not defined, operator will default to pulp-admin-password
+	adminSecretName := settings.DefaultAdminPassword(pulp.Name)
+	if len(pulp.Spec.AdminPasswordSecret) > 1 {
+		adminSecretName = pulp.Spec.AdminPasswordSecret
+	}
+	// update pulp CR admin-password secret with default name
+	if err := controllers.UpdateCRField(ctx, r.Client, pulp, "AdminPasswordSecret", adminSecretName); err != nil {
+		return &ctrl.Result{}, err
+	}
+
+	// if .spec.pulp_secret_key is not defined, operator will default to "pulp-secret-key"
+	djangoKey := settings.DefaultDjangoSecretKey(pulp.Name)
+	if len(pulp.Spec.PulpSecretKey) > 0 {
+		djangoKey = pulp.Spec.PulpSecretKey
+	}
+	// update pulp CR pulp_secret_key secret with default name
+	if err := controllers.UpdateCRField(ctx, r.Client, pulp, "PulpSecretKey", djangoKey); err != nil {
+		return &ctrl.Result{}, err
+	}
+
+	// update pulp CR with default values
+	dbFieldsEncryptionSecret := settings.DefaultDBFieldsEncryptionSecret(pulp.Name)
+	if len(pulp.Spec.DBFieldsEncryptionSecret) > 0 {
+		dbFieldsEncryptionSecret = pulp.Spec.DBFieldsEncryptionSecret
+	}
+	if err := controllers.UpdateCRField(ctx, r.Client, pulp, "DBFieldsEncryptionSecret", dbFieldsEncryptionSecret); err != nil {
+		return &ctrl.Result{}, err
+	}
+
+	// update pulp CR with container_token_secret secret value
+	containerTokenSecret := settings.DefaultContainerTokenSecret(pulp.Name)
+	if len(pulp.Spec.ContainerTokenSecret) > 0 {
+		containerTokenSecret = pulp.Spec.ContainerTokenSecret
+	}
+	if err := controllers.UpdateCRField(ctx, r.Client, pulp, "ContainerTokenSecret", containerTokenSecret); err != nil {
+		return &ctrl.Result{}, err
+	}
+
+	serverSecretName := settings.PulpServerSecret(pulp.Name)
+
+	// list of pulp-api resources that should be provisioned
+	resources := []ApiResource{
+		// pulp-secret-key secret
+		{ResourceDefinition{ctx, &corev1.Secret{}, djangoKey, "PulpSecretKey", conditionType, pulp}, pulpDjangoKeySecret},
+		// pulp-server secret
+		{Definition: ResourceDefinition{Context: ctx, Type: &corev1.Secret{}, Name: serverSecretName, Alias: "Server", ConditionType: conditionType, Pulp: pulp}, Function: pulpServerSecret},
+		// pulp-db-fields-encryption secret
+		{ResourceDefinition{ctx, &corev1.Secret{}, dbFieldsEncryptionSecret, "DBFieldsEncryptionSecret", conditionType, pulp}, pulpDBFieldsEncryptionSecret},
+		// pulp-admin-password secret
+		{ResourceDefinition{ctx, &corev1.Secret{}, adminSecretName, "AdminPassword", conditionType, pulp}, pulpAdminPasswordSecret},
+		// pulp-container-auth secret
+		{ResourceDefinition{ctx, &corev1.Secret{}, containerTokenSecret, "ContainerTokenSecret", conditionType, pulp}, pulpContainerAuth},
+	}
+
+	// create the secrets
+	for _, resource := range resources {
+		requeue, err := r.createPulpResource(resource.Definition, resource.Function)
+		if err != nil {
+			return &ctrl.Result{}, err
+		} else if requeue {
+			return &ctrl.Result{Requeue: true}, nil
+		}
+	}
+
+	// Ensure the secret data is as expected
+	funcResources := controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: r.RawLogger}
+	serverSecret := &corev1.Secret{}
+	r.Get(ctx, types.NamespacedName{Name: serverSecretName, Namespace: pulp.Namespace}, serverSecret)
+	expectedServerSecret := pulpServerSecret(funcResources)
+	if requeue, err := controllers.ReconcileObject(funcResources, expectedServerSecret, serverSecret, conditionType, controllers.PulpSecret{}); err != nil || requeue {
+		// restart pulpcore pods if the secret has changed
+		r.restartPulpCorePods(pulp)
+		return &ctrl.Result{Requeue: requeue}, err
+	}
+
+	return nil, nil
+}
 
 // pulpServerSecret creates the pulp-server secret object which is used to
 // populate the /etc/pulp/settings.py config file

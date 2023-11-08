@@ -81,45 +81,6 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 		}
 	}
 
-	// if .spec.admin_password_secret is not defined, operator will default to pulp-admin-password
-	adminSecretName := settings.DefaultAdminPassword(pulp.Name)
-	if len(pulp.Spec.AdminPasswordSecret) > 1 {
-		adminSecretName = pulp.Spec.AdminPasswordSecret
-	}
-	// update pulp CR admin-password secret with default name
-	if err := controllers.UpdateCRField(ctx, r.Client, pulp, "AdminPasswordSecret", adminSecretName); err != nil {
-		return ctrl.Result{}, err
-	}
-
-	// if .spec.pulp_secret_key is not defined, operator will default to "pulp-secret-key"
-	djangoKey := settings.DefaultDjangoSecretKey(pulp.Name)
-	if len(pulp.Spec.PulpSecretKey) > 0 {
-		djangoKey = pulp.Spec.PulpSecretKey
-	}
-	// update pulp CR pulp_secret_key secret with default name
-	if err := controllers.UpdateCRField(ctx, r.Client, pulp, "PulpSecretKey", djangoKey); err != nil {
-		return ctrl.Result{}, err
-	}
-
-	// update pulp CR with default values
-	dbFieldsEncryptionSecret := settings.DefaultDBFieldsEncryptionSecret(pulp.Name)
-	if len(pulp.Spec.DBFieldsEncryptionSecret) > 0 {
-		dbFieldsEncryptionSecret = pulp.Spec.DBFieldsEncryptionSecret
-	}
-	if err := controllers.UpdateCRField(ctx, r.Client, pulp, "DBFieldsEncryptionSecret", dbFieldsEncryptionSecret); err != nil {
-		return ctrl.Result{}, err
-	}
-
-	// update pulp CR with container_token_secret secret value
-	containerTokenSecret := settings.DefaultContainerTokenSecret(pulp.Name)
-	if len(pulp.Spec.ContainerTokenSecret) > 0 {
-		containerTokenSecret = pulp.Spec.ContainerTokenSecret
-	}
-	if err := controllers.UpdateCRField(ctx, r.Client, pulp, "ContainerTokenSecret", containerTokenSecret); err != nil {
-		return ctrl.Result{}, err
-	}
-
-	serverSecretName := settings.PulpServerSecret(pulp.Name)
 	// define the k8s Deployment function based on k8s distribution and deployment type
 	deploymentForPulpApi := initDeployment(API_DEPLOYMENT).Deploy
 
@@ -128,16 +89,6 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 
 	// list of pulp-api resources that should be provisioned
 	resources := []ApiResource{
-		// pulp-secret-key secret
-		{ResourceDefinition{ctx, &corev1.Secret{}, djangoKey, "PulpSecretKey", conditionType, pulp}, pulpDjangoKeySecret},
-		// pulp-server secret
-		{Definition: ResourceDefinition{Context: ctx, Type: &corev1.Secret{}, Name: serverSecretName, Alias: "Server", ConditionType: conditionType, Pulp: pulp}, Function: pulpServerSecret},
-		// pulp-db-fields-encryption secret
-		{ResourceDefinition{ctx, &corev1.Secret{}, dbFieldsEncryptionSecret, "DBFieldsEncryptionSecret", conditionType, pulp}, pulpDBFieldsEncryptionSecret},
-		// pulp-admin-password secret
-		{ResourceDefinition{ctx, &corev1.Secret{}, adminSecretName, "AdminPassword", conditionType, pulp}, pulpAdminPasswordSecret},
-		// pulp-container-auth secret
-		{ResourceDefinition{ctx, &corev1.Secret{}, containerTokenSecret, "ContainerTokenSecret", conditionType, pulp}, pulpContainerAuth},
 		// pulp-api deployment
 		{ResourceDefinition{ctx, &appsv1.Deployment{}, deploymentName, "Api", conditionType, pulp}, deploymentForPulpApi},
 		// pulp-api-svc service
@@ -176,16 +127,6 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 	r.Get(ctx, types.NamespacedName{Name: serviceName, Namespace: pulp.Namespace}, apiSvc)
 	expectedSvc := serviceForAPI(funcResources)
 	if requeue, err := controllers.ReconcileObject(funcResources, expectedSvc, apiSvc, conditionType, controllers.PulpService{}); err != nil || requeue {
-		return ctrl.Result{Requeue: requeue}, err
-	}
-
-	// Ensure the secret data is as expected
-	serverSecret := &corev1.Secret{}
-	r.Get(ctx, types.NamespacedName{Name: serverSecretName, Namespace: pulp.Namespace}, serverSecret)
-	expectedServerSecret := pulpServerSecret(funcResources)
-	if requeue, err := controllers.ReconcileObject(funcResources, expectedServerSecret, serverSecret, conditionType, controllers.PulpSecret{}); err != nil || requeue {
-		// restart pulpcore pods if the secret has changed
-		r.restartPulpCorePods(pulp)
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
