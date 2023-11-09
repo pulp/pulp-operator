@@ -18,7 +18,6 @@ package repo_manager
 
 import (
 	"context"
-	"time"
 
 	"github.com/go-logr/logr"
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
@@ -28,8 +27,6 @@ import (
 	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/equality"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -49,37 +46,6 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-API-Ready"
 	funcResources := controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}
-
-	// pulp-file-storage
-	// the PVC will be created only if a StorageClassName is provided
-	if storageClassProvided(pulp) {
-		pvcName := settings.DefaultPulpFileStorage(pulp.Name)
-		requeue, err := r.createPulpResource(ResourceDefinition{ctx, &corev1.PersistentVolumeClaim{}, pvcName, "FileStorage", conditionType, pulp}, fileStoragePVC)
-		if err != nil {
-			return ctrl.Result{}, err
-		} else if requeue {
-			return ctrl.Result{Requeue: true}, nil
-		}
-
-		// Reconcile PVC
-		pvcFound := &corev1.PersistentVolumeClaim{}
-		r.Get(ctx, types.NamespacedName{Name: pvcName, Namespace: pulp.Namespace}, pvcFound)
-		expected_pvc := fileStoragePVC(funcResources)
-		if !equality.Semantic.DeepDerivative(expected_pvc.(*corev1.PersistentVolumeClaim).Spec, pvcFound.Spec) {
-			log.Info("The PVC has been modified! Reconciling ...")
-			controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "UpdatingFileStoragePVC", "Reconciling "+pvcName+" PVC resource")
-			r.recorder.Event(pulp, corev1.EventTypeNormal, "Updating", "Reconciling file storage PVC")
-			err = r.Update(ctx, expected_pvc.(*corev1.PersistentVolumeClaim))
-			if err != nil {
-				log.Error(err, "Error trying to update the PVC object ... ")
-				controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "ErrorUpdatingFileStoragePVC", "Failed to reconcile "+pvcName+" PVC resource")
-				r.recorder.Event(pulp, corev1.EventTypeWarning, "Failed", "Failed to reconcile file storage PVC")
-				return ctrl.Result{}, err
-			}
-			r.recorder.Event(pulp, corev1.EventTypeNormal, "Updated", "File storage PVC reconciled")
-			return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, nil
-		}
-	}
 
 	// define the k8s Deployment function based on k8s distribution and deployment type
 	deploymentForPulpApi := initDeployment(API_DEPLOYMENT).Deploy
@@ -152,37 +118,6 @@ func (r *RepoManagerReconciler) pulpApiController(ctx context.Context, pulp *rep
 	return ctrl.Result{}, nil
 }
 
-// fileStoragePVC returns a PVC object
-func fileStoragePVC(resources controllers.FunctionResources) client.Object {
-
-	pulp := resources.Pulp
-	labels := settings.CommonLabels(*pulp)
-	labels["app.kubernetes.io/component"] = "storage"
-	// Define the new PVC
-	pvc := &corev1.PersistentVolumeClaim{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      settings.DefaultPulpFileStorage(pulp.Name),
-			Namespace: pulp.Namespace,
-			Labels:    labels,
-		},
-		Spec: corev1.PersistentVolumeClaimSpec{
-			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceName(corev1.ResourceStorage): resource.MustParse(pulp.Spec.FileStorageSize),
-				},
-			},
-			AccessModes: []corev1.PersistentVolumeAccessMode{
-				corev1.PersistentVolumeAccessMode(pulp.Spec.FileStorageAccessMode),
-			},
-			StorageClassName: &pulp.Spec.FileStorageClass,
-		},
-	}
-
-	// Set Pulp instance as the owner and controller
-	ctrl.SetControllerReference(pulp, pvc, resources.Scheme)
-	return pvc
-}
-
 // serviceForAPI returns a service object for pulp-api
 func serviceForAPI(resources controllers.FunctionResources) client.Object {
 	pulp := resources.Pulp
@@ -231,10 +166,4 @@ func serviceAPISpec(pulp repomanagerpulpprojectorgv1beta2.Pulp) corev1.ServiceSp
 		SessionAffinity: serviceAffinity,
 		Type:            serviceType,
 	}
-}
-
-// storageClassProvided returns true if a StorageClass is provided in Pulp CR
-func storageClassProvided(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
-	_, storageType := controllers.MultiStorageConfigured(pulp, "Pulp")
-	return storageType[0] == controllers.SCNameType
 }
