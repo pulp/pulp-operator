@@ -85,6 +85,7 @@ const (
 	resourceTypePostgres           = "Postgres"
 	resourceTypeObjectStorage      = "ObjectStorage"
 	resourceTypeSigningSecret      = "Signing"
+	resourceTypeSigningScripts     = "SigningScripts"
 	resourceTypeContainerToken     = "ContainerToken"
 	resourceTypeSSOSecret          = "SSO"
 	resourceTypeDBFieldsEncryption = "DBFieldsEncryption"
@@ -136,6 +137,9 @@ func (r *RepoManagerRestoreReconciler) restoreSecret(ctx context.Context, pulpRe
 	// restore signing secret
 	// this secret is not mandatory. If the backup file is not found is not an error
 	if found, err := r.secret(ctx, resourceTypeSigningSecret, "signing_secret", backupDir, "signing_secret.yaml", pod, pulpRestore); found && err != nil {
+		return err
+	}
+	if found, err := r.restoreSecretFromYaml(ctx, resourceTypeSigningScripts, "signing_scripts", backupDir, "signing_scripts.yaml", pod, pulpRestore); found && err != nil {
 		return err
 	}
 

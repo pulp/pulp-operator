@@ -205,6 +205,12 @@ func pulpCoreTasks(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.P
 	// create the job to run django migrations
 	r.runMigration(ctx, pulp)
 
+	// create the job to store the metadata signing scripts
+	r.runSigningScriptJob(ctx, pulp)
+	if pulpController := r.runSigningSecretTasks(ctx, pulp); pulpController != nil {
+		return pulpController, nil
+	}
+
 	log.V(1).Info("Running content tasks")
 	if pulpController, err := r.pulpContentController(ctx, pulp, log); needsRequeue(err, pulpController) {
 		return &pulpController, err
@@ -301,7 +307,7 @@ func indexerFunc(obj client.Object) []string {
 	pulp := obj.(*repomanagerpulpprojectorgv1beta2.Pulp)
 	var keys []string
 
-	secrets := []string{"ObjectStorageAzureSecret", "ObjectStorageS3Secret", "SSOSecret", "AdminPasswordSecret", "PulpSecretKey"}
+	secrets := []string{"ObjectStorageAzureSecret", "ObjectStorageS3Secret", "SSOSecret", "AdminPasswordSecret", "PulpSecretKey", "SigningScripts", "SigningSecret"}
 	for _, secretField := range secrets {
 		structField := reflect.Indirect(reflect.ValueOf(pulp)).FieldByName("Spec").FieldByName(secretField).String()
 		if structField != "" {

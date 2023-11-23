@@ -546,7 +546,7 @@ jobs:
           kubectl config set-context --current --namespace=pulp-operator-system
           kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
           kubectl apply -f .ci/assets/kubernetes/galaxy_sign.secret.yaml
-          kubectl apply -f .ci/assets/kubernetes/signing_scripts.configmap.yaml
+          kubectl apply -f .ci/assets/kubernetes/signing_scripts.yaml
           if [[ "$CI_TEST_STORAGE" == "azure" ]]; then
             kubectl apply -f .ci/assets/kubernetes/pulp-object-storage.azure.secret.yaml
             kubectl apply -f config/samples/galaxy.azure.ci.yaml

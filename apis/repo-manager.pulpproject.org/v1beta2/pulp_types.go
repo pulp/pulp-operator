@@ -82,17 +82,22 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	DBFieldsEncryptionSecret string `json:"db_fields_encryption_secret,omitempty"`
 
-	// Secret where the signing certificates are stored.
-	// Default: <operators's name>-"-signing-scripts"
+	// Name of the Secret where the gpg key is stored.
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	SigningSecret string `json:"signing_secret,omitempty"`
 
-	// ConfigMap where the signing scripts are stored.
-	// Default: <operators's name>-"-signing-scripts"
+	// [DEPRECATED] ConfigMap where the signing scripts are stored.
+	// This field is deprecated and will be removed in the future, use the
+	// signing_scripts field instead.
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:ConfigMap","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	SigningScriptsConfigmap string `json:"signing_scripts_configmap,omitempty"`
+
+	// Name of the Secret where the signing scripts are stored.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
+	SigningScripts string `json:"signing_scripts,omitempty"`
 
 	// The ingress type to use to reach the deployed instance.
 	// Default: none (will not expose the service)
@@ -341,6 +346,9 @@ type PulpSpec struct {
 
 	// Job to run django migrations
 	MigrationJob PulpJob `json:"migration_job,omitempty"`
+
+	// Job to store signing metadata scripts
+	SigningJob PulpJob `json:"signing_job,omitempty"`
 
 	// Disable database migrations. Useful for situations in which we don't want
 	// to automatically run the database migrations, for example, during restore.

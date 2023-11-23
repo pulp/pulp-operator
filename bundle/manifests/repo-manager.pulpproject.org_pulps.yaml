@@ -6385,13 +6385,80 @@ spec:
                 description: ServiceAccount.metadata.labels that will be used in Pulp
                   pods.
                 type: object
+              signing_job:
+                description: Job to store signing metadata scripts
+                properties:
+                  container:
+                    description: PulpContainer defines configuration of the "auxiliary"
+                      containers that run in pulpcore pods
+                    properties:
+                      image:
+                        description: 'The image name for the container. By default,
+                          if not provided, it will use the same image from .Spec.Image.
+                          WARN: defining a different image than the one used by API
+                          pods can cause unexpected behaviors!'
+                        type: string
+                      resource_requirements:
+                        description: Resource requirements for pulpcore aux container.
+                        properties:
+                          claims:
+                            description: "Claims lists the names of resources, defined
+                              in spec.resourceClaims, that are used by this container.
+                              \n This is an alpha field and requires enabling the
+                              DynamicResourceAllocation feature gate. \n This field
+                              is immutable. It can only be set for containers."
+                            items:
+                              description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                              properties:
+                                name:
+                                  description: Name must match the name of one entry
+                                    in pod.spec.resourceClaims of the Pod where this
+                                    field is used. It makes that resource available
+                                    inside a container.
+                                  type: string
+                              required:
+                              - name
+                              type: object
+                            type: array
+                            x-kubernetes-list-map-keys:
+                            - name
+                            x-kubernetes-list-type: map
+                          limits:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: 'Limits describes the maximum amount of compute
+                              resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                            type: object
+                          requests:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: 'Requests describes the minimum amount of
+                              compute resources required. If Requests is omitted for
+                              a container, it defaults to Limits if that is explicitly
+                              specified, otherwise to an implementation-defined value.
+                              More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                            type: object
+                        type: object
+                    type: object
+                type: object
+              signing_scripts:
+                description: Name of the Secret where the signing scripts are stored.
+                type: string
               signing_scripts_configmap:
-                description: 'ConfigMap where the signing scripts are stored. Default:
-                  <operators''s name>-"-signing-scripts"'
+                description: '[DEPRECATED] ConfigMap where the signing scripts are
+                  stored. This field is deprecated and will be removed in the future,
+                  use the signing_scripts field instead.'
                 type: string
               signing_secret:
-                description: 'Secret where the signing certificates are stored. Default:
-                  <operators''s name>-"-signing-scripts"'
+                description: Name of the Secret where the gpg key is stored.
                 type: string
               sso_secret:
                 description: Secret where Single Sign-on configuration can be found

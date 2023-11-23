@@ -86,6 +86,11 @@ func prechecks(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerp
 		return reconcile, nil
 	}
 
+	// verify the metadata signing definitions
+	if reconcile := checkSigningScripts(ctx, r, pulp); reconcile != nil {
+		return reconcile, nil
+	}
+
 	return nil, nil
 }
 
@@ -286,5 +291,19 @@ func checkLDAPCA(ctx context.Context, r *RepoManagerReconciler, pulp *repomanage
 		r.RawLogger.Error(nil, "The "+pulp.Spec.LDAP.Config+" Secret provided a configuration for the LDAP CA file (auth_ldap_ca_file field), but Pulp CR(.spec.LDAP.CA) does not have the Secret name to get it!")
 		return &ctrl.Result{}
 	}
+	return nil
+}
+
+// checkSigningScripts verifies if signing_script and/or signing_secret is/are defined
+func checkSigningScripts(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
+	if len(pulp.Spec.SigningScripts) > 0 && len(pulp.Spec.SigningSecret) == 0 {
+		r.RawLogger.Error(nil, "spec.signing_scripts is defined but spec.signing_secret was not found! Provide both values or none to avoid error in Pulp execution.")
+		return &ctrl.Result{}
+	}
+	if len(pulp.Spec.SigningScripts) == 0 && len(pulp.Spec.SigningSecret) > 0 {
+		r.RawLogger.Error(nil, "spec.signing_secret is defined but spec.signing_scripts was not found! Provide both values or none to avoid error in Pulp execution.")
+		return &ctrl.Result{}
+	}
+
 	return nil
 }

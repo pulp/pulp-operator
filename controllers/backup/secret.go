@@ -86,6 +86,9 @@ func (r *RepoManagerBackupReconciler) backupSecret(ctx context.Context, pulpBack
 			return err
 		}
 		log.Info("Signing secret backup finished")
+		if err := r.createSecretBackupFile(ctx, secretType{"signing_scripts", pulpBackup, backupDir, "signing_scripts.yaml", pulp.Spec.SigningScripts, pod}); err != nil {
+			return err
+		}
 	}
 
 	// CONTAINER TOKEN SECRET
@@ -194,6 +197,6 @@ func (r *RepoManagerBackupReconciler) createSecretBackupFile(ctx context.Context
 		return err
 	}
 
-	log.Info("LDAP Secret " + secretType.secretName + " backup finished")
+	log.Info("Secret " + secretType.secretName + " backup finished")
 	return nil
 }

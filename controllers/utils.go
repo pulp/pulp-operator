@@ -349,7 +349,7 @@ func GetPulpSetting(pulp *repomanagerpulpprojectorgv1beta2.Pulp, key string) str
 }
 
 // getSigningKeyFingerprint returns the signing key fingerprint from secret object
-func getSigningKeyFingerprint(r client.Client, secretName, secretNamespace string) (string, error) {
+func GetSigningKeyFingerprint(r client.Client, secretName, secretNamespace string) (string, error) {
 
 	ctx := context.TODO()
 	secretData, err := RetrieveSecretData(ctx, secretName, secretNamespace, true, r, "signing_service.gpg")
