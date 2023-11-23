@@ -961,15 +961,34 @@ spec:
         path: sa_labels
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - description: 'ConfigMap where the signing scripts are stored. Default: <operators''s
-          name>-"-signing-scripts"'
+      - description: 'The image name for the container. By default, if not provided,
+          it will use the same image from .Spec.Image. WARN: defining a different
+          image than the one used by API pods can cause unexpected behaviors!'
+        displayName: Image
+        path: signing_job.container.image
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Resource requirements for pulpcore aux container.
+        displayName: Resource Requirements
+        path: signing_job.container.resource_requirements
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Name of the Secret where the signing scripts are stored.
+        displayName: Signing Scripts
+        path: signing_scripts
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: '[DEPRECATED] ConfigMap where the signing scripts are stored.
+          This field is deprecated and will be removed in the future, use the signing_scripts
+          field instead.'
         displayName: Signing Scripts Configmap
         path: signing_scripts_configmap
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:ConfigMap
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: 'Secret where the signing certificates are stored. Default: <operators''s
-          name>-"-signing-scripts"'
+      - description: Name of the Secret where the gpg key is stored.
         displayName: Signing Secret
         path: signing_secret
         x-descriptors:

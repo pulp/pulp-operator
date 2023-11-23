@@ -584,3 +584,54 @@ func verifyChecksum(checksum string, validateFunction func() map[string]bool) bo
 	_, isValid := validateFunction()[checksum]
 	return isValid
 }
+
+// runSigningScriptJob deploys a k8s Job to store the metadata signing scripts
+func (r *RepoManagerReconciler) runSigningScriptJob(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) {
+	if len(pulp.Spec.SigningScripts) == 0 {
+		return
+	}
+
+	if !r.secretModified(ctx, pulp.Spec.SigningScripts, pulp.Namespace) {
+		return
+	}
+	r.signingScriptJob(ctx, pulp)
+}
+
+// secretModified verifies if the secret has been modified based on the hash stored
+func (r *RepoManagerReconciler) secretModified(ctx context.Context, secretName, namespace string) bool {
+	secret := &corev1.Secret{}
+	if err := r.Get(ctx, types.NamespacedName{Name: secretName, Namespace: namespace}, secret); err != nil {
+		r.RawLogger.Error(err, "Failed to find "+secretName+" Secret!")
+	}
+
+	calculatedHash := controllers.CalculateHash(secret.Data)
+	currentHash := controllers.GetCurrentHash(secret)
+	return currentHash != calculatedHash
+}
+
+// runSigningSecretTasks restart pulpcore pods if the signing secret has been modified
+func (r *RepoManagerReconciler) runSigningSecretTasks(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
+	secretName := pulp.Spec.SigningSecret
+	if len(secretName) == 0 {
+		return nil
+	}
+
+	if !r.secretModified(ctx, secretName, pulp.Namespace) {
+		return nil
+	}
+
+	r.restartPulpCorePods(pulp)
+	secret := &corev1.Secret{}
+	if err := r.Get(ctx, types.NamespacedName{Name: secretName, Namespace: pulp.Namespace}, secret); err != nil {
+		r.RawLogger.Error(err, "Failed to find "+secretName+" Secret!")
+	}
+
+	r.RawLogger.V(1).Info("Updating " + secretName + " hash label ...")
+	calculatedHash := controllers.CalculateHash(secret.Data)
+	controllers.SetHashLabel(calculatedHash, secret)
+	if err := r.Update(ctx, secret); err != nil {
+		r.RawLogger.Error(err, "Failed to update "+secretName+" Secret label!")
+	}
+
+	return &ctrl.Result{Requeue: true}
+}

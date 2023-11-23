@@ -182,8 +182,9 @@ PulpSpec defines the desired state of Pulp
 | object_storage_s3_secret | The secret for S3 compliant object storage configuration. | string | false |
 | pvc | PersistenVolumeClaim name that will be used by Pulp pods. If defined, the PVC must be provisioned by the user and the operator will only configure the deployment to use it | string | false |
 | db_fields_encryption_secret | Secret where the Fernet symmetric encryption key is stored. Default: <operators's name>-\"-db-fields-encryption\" | string | false |
-| signing_secret | Secret where the signing certificates are stored. Default: <operators's name>-\"-signing-scripts\" | string | false |
-| signing_scripts_configmap | ConfigMap where the signing scripts are stored. Default: <operators's name>-\"-signing-scripts\" | string | false |
+| signing_secret | Name of the Secret where the gpg key is stored. | string | false |
+| signing_scripts_configmap | [DEPRECATED] ConfigMap where the signing scripts are stored. This field is deprecated and will be removed in the future, use the signing_scripts field instead. | string | false |
+| signing_scripts | Name of the Secret where the signing scripts are stored. | string | false |
 | ingress_type | The ingress type to use to reach the deployed instance. Default: none (will not expose the service) | string | false |
 | ingress_annotations | Annotations for the Ingress | map[string]string | false |
 | ingress_class_name | IngressClassName is used to inform the operator which ingressclass should be used to provision the ingress. Default: \"\" (will use the default ingress class) | string | false |
@@ -227,6 +228,7 @@ PulpSpec defines the desired state of Pulp
 | ee_defaults | Name of the ConfigMap with the list of Execution Environments that should be synchronized. Default: ee-default-images | string | false |
 | admin_password_job | Job to reset pulp admin password | [PulpJob](#pulpjob) | false |
 | migration_job | Job to run django migrations | [PulpJob](#pulpjob) | false |
+| signing_job | Job to store signing metadata scripts | [PulpJob](#pulpjob) | false |
 | disable_migrations | Disable database migrations. Useful for situations in which we don't want to automatically run the database migrations, for example, during restore. | bool | false |
 | pulp_secret_key | Name of the Secret to provide Django cryptographic signing. Default: \"pulp-secret-key\" | string | false |
 | allowed_content_checksums | List of allowed checksum algorithms used to verify repository's integrity. Valid options: [\"md5\",\"sha1\",\"sha256\",\"sha512\"]. | []string | false |

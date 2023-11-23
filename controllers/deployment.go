@@ -27,6 +27,7 @@ import (
 	"github.com/pulp/pulp-operator/controllers/settings"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -316,12 +317,11 @@ func (d *CommonDeployment) setEnvVars(resources any, pulpcoreType settings.Pulpc
 	if pulp.Spec.SigningSecret != "" {
 
 		// for now, we are just dumping the error, but we should handle it
-		signingKeyFingerprint, _ := getSigningKeyFingerprint(resources.(FunctionResources).Client, pulp.Spec.SigningSecret, pulp.Namespace)
+		signingKeyFingerprint, _ := GetSigningKeyFingerprint(resources.(FunctionResources).Client, pulp.Spec.SigningSecret, pulp.Namespace)
 
 		signingKeyEnvVars := []corev1.EnvVar{
 			{Name: "PULP_SIGNING_KEY_FINGERPRINT", Value: signingKeyFingerprint},
-			{Name: "COLLECTION_SIGNING_SERVICE", Value: GetPulpSetting(pulp, "galaxy_collection_signing_service")},
-			{Name: "CONTAINER_SIGNING_SERVICE", Value: GetPulpSetting(pulp, "galaxy_container_signing_service")},
+			{Name: "HOME", Value: "/var/lib/pulp"},
 		}
 		envVars = append(envVars, signingKeyEnvVars...)
 	}
@@ -501,30 +501,30 @@ func (d *CommonDeployment) setVolumes(pulp repomanagerpulpprojectorgv1beta2.Pulp
 	}
 
 	if pulp.Spec.SigningSecret != "" {
+		if storageType[0] != SCNameType && storageType[0] != PVCType {
+			ephemeralGpg := corev1.Volume{
+				Name: "ephemeral-gpg",
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{},
+				},
+			}
+			volumes = append(volumes, ephemeralGpg)
+		}
+
 		signingSecretVolume := []corev1.Volume{
 			{
-				Name: pulp.Name + "-signing-scripts",
-				VolumeSource: corev1.VolumeSource{
-					ConfigMap: &corev1.ConfigMapVolumeSource{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: pulp.Spec.SigningScriptsConfigmap,
-						},
-					},
-				},
-			},
-			{
-				Name: pulp.Name + "-signing-galaxy",
+				Name: "gpg-keys",
 				VolumeSource: corev1.VolumeSource{
 					Secret: &corev1.SecretVolumeSource{
 						SecretName: pulp.Spec.SigningSecret,
 						Items: []corev1.KeyToPath{
 							{
 								Key:  "signing_service.gpg",
-								Path: "signing_serivce.gpg",
+								Path: "signing_service.gpg",
 							},
 							{
 								Key:  "signing_service.asc",
-								Path: "signing_serivce.asc",
+								Path: "signing_service.asc",
 							},
 						},
 					},
@@ -614,27 +614,13 @@ func (d *CommonDeployment) setVolumeMounts(pulp repomanagerpulpprojectorgv1beta2
 	}
 
 	if pulp.Spec.SigningSecret != "" {
-		signingSecretMount := []corev1.VolumeMount{
-			{
-				Name:      pulp.Name + "-signing-scripts",
-				MountPath: "/var/lib/pulp/scripts",
-				SubPath:   "scripts",
-				ReadOnly:  true,
-			},
-			{
-				Name:      pulp.Name + "-signing-galaxy",
-				MountPath: "/etc/pulp/keys/signing_service.gpg",
-				SubPath:   "signing_service.gpg",
-				ReadOnly:  true,
-			},
-			{
-				Name:      pulp.Name + "-signing-galaxy",
-				MountPath: "/etc/pulp/keys/singing_service.asc",
-				SubPath:   "signing_service.asc",
-				ReadOnly:  true,
-			},
+		if storageType[0] != SCNameType && storageType[0] != PVCType {
+			signingSecretMount := corev1.VolumeMount{
+				Name:      "ephemeral-gpg",
+				MountPath: "/var/lib/pulp/.gnupg",
+			}
+			volumeMounts = append(volumeMounts, signingSecretMount)
 		}
-		volumeMounts = append(volumeMounts, signingSecretMount...)
 	}
 
 	if pulpcoreType == settings.API && pulp.Spec.ContainerTokenSecret != "" {
@@ -824,7 +810,7 @@ func setDefaultSecurityContext() *corev1.SecurityContext {
 }
 
 // setInitContainers defines initContainers specs
-func (d *CommonDeployment) setInitContainers(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setInitContainers(resources any, pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
 	args := []string{
 		"-c",
 		`/usr/bin/wait_on_postgres.py
@@ -852,7 +838,84 @@ func (d *CommonDeployment) setInitContainers(pulp repomanagerpulpprojectorgv1bet
 			SecurityContext: setDefaultSecurityContext(),
 		},
 	}
-	d.initContainers = append([]corev1.Container(nil), initContainers...)
+
+	if len(pulp.Spec.SigningSecret) > 0 {
+		initContainers = append(initContainers, setGpgInitContainer(resources, pulp))
+	}
+	d.initContainers = initContainers
+}
+
+// setGpgInitContainer returns the definition of a container used to store the gpg keys in the keyring
+func setGpgInitContainer(resources any, pulp repomanagerpulpprojectorgv1beta2.Pulp) corev1.Container {
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      "gpg-keys",
+			MountPath: "/etc/pulp/keys/signing_service.gpg",
+			SubPath:   "signing_service.gpg",
+			ReadOnly:  true,
+		},
+		{
+			Name:      "gpg-keys",
+			MountPath: "/etc/pulp/keys/signing_service.asc",
+			SubPath:   "signing_service.asc",
+			ReadOnly:  true,
+		},
+	}
+
+	storageType := getStorageType(pulp)
+	if storageType[0] == SCNameType || storageType[0] == PVCType {
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "file-storage",
+			ReadOnly:  false,
+			MountPath: "/var/lib/pulp",
+		})
+	} else {
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "ephemeral-gpg",
+			MountPath: "/var/lib/pulp/.gnupg",
+		})
+	}
+
+	// resource requirements
+	resourceRequirements := corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("50m"),
+			corev1.ResourceMemory: resource.MustParse("128Mi"),
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("50m"),
+			corev1.ResourceMemory: resource.MustParse("128Mi"),
+		},
+	}
+
+	signingKeyFingerprint, _ := GetSigningKeyFingerprint(resources.(FunctionResources).Client, pulp.Spec.SigningSecret, pulp.Namespace)
+
+	// env vars
+	envVars := []corev1.EnvVar{{Name: "PULP_SIGNING_KEY_FINGERPRINT", Value: signingKeyFingerprint}}
+	envVars = append(envVars, corev1.EnvVar{Name: "HOME", Value: "/var/lib/pulp"})
+
+	args := []string{
+		`gpg --batch --import /etc/pulp/keys/signing_service.gpg
+echo "${PULP_SIGNING_KEY_FINGERPRINT}:6" | gpg --import-ownertrust
+`,
+	}
+
+	image := pulp.Spec.SigningJob.PulpContainer.Image
+	if len(image) == 0 {
+		image = pulp.Spec.Image + ":" + pulp.Spec.ImageVersion
+	}
+
+	return corev1.Container{
+		Name:            "gpg-config",
+		Image:           image,
+		ImagePullPolicy: corev1.PullPolicy(pulp.Spec.ImagePullPolicy),
+		Env:             envVars,
+		Command:         []string{"/bin/sh", "-c"},
+		Args:            args,
+		Resources:       resourceRequirements,
+		VolumeMounts:    volumeMounts,
+		SecurityContext: setDefaultSecurityContext(),
+	}
 }
 
 // setContainers defines pulpcore containers specs
@@ -1032,7 +1095,7 @@ func (d *CommonDeployment) build(resources any, pulpcoreType settings.PulpcoreTy
 	d.setInitContainerVolumeMounts(*pulp)
 	d.setInitContainerEnvVars(resources)
 	d.setLDAPConfigs(resources)
-	d.setInitContainers(*pulp, pulpcoreType)
+	d.setInitContainers(resources, *pulp, pulpcoreType)
 	d.setContainers(*pulp, pulpcoreType)
 	d.setRestartPolicy()
 	d.setTerminationPeriod()

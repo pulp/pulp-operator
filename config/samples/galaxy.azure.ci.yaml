@@ -10,7 +10,7 @@ spec:
   image_web_version: 4.6.3
   admin_password_secret: "example-pulp-admin-password"
   signing_secret: "signing-galaxy"
-  signing_scripts_configmap: "signing-scripts"
+  signing_scripts: "signing-scripts"
   ingress_type: nodeport
   nodeport_port: 30000
   object_storage_azure_secret: example-pulp-object-storage

@@ -9,9 +9,12 @@
 package settings
 
 const (
-	migrationJob       = "pulpcore-migration-"
-	resetAdminPwdJob   = "reset-admin-password-"
-	updateChecksumsJob = "update-content-checksums-"
+	migrationJob                = "pulpcore-migration-"
+	resetAdminPwdJob            = "reset-admin-password-"
+	updateChecksumsJob          = "update-content-checksums-"
+	signingScriptJob            = "signing-metadata-"
+	ContainerSigningScriptName  = "container_script.sh"
+	CollectionSigningScriptName = "collection_script.sh"
 )
 
 func MigrationJob(pulpName string) string {
@@ -22,4 +25,7 @@ func ResetAdminPwdJob(pulpName string) string {
 }
 func UpdateChecksumsJob(pulpName string) string {
 	return pulpName + "-" + updateChecksumsJob
+}
+func SigningScriptJob(pulpName string) string {
+	return pulpName + "-" + signingScriptJob
 }
