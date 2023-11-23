@@ -27,7 +27,7 @@ If you want to evaluate Pulp quickly, try [Pulp in One Container](https://pulppr
 
 See our documentation on [Pulp Operator page](https://docs.pulpproject.org/pulp_operator/).
 
-Pulp Operator is in alpha stage and under active development, with the goal to provide a scalable and robust cluster for Pulp 3.
+Pulp Operator is in beta stage and under active development, with the goal to provide a scalable and robust cluster for Pulp 3.
 If you find any problem, please check our [issue page](https://github.com/pulp/pulp-operator/issues?q=is%3Aissue+is%3Aopen+label%3Ago-alpha) with the current known issues or feel free to fill a new bug or rfe in case it is not addressed yet.
 
 Note that Pulp operator works with three different types of service containers (the operator itself, the main service and the web service):
