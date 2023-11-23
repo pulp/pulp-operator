@@ -146,9 +146,16 @@ receivers:
     protocols:
       http:
 
+processors:
+		batch:
+  	memory_limiter:
+    	check_interval: 1s
+    	limit_mib: 128
+		
 exporters:
   prometheus:
     endpoint: "0.0.0.0:8889"
+    namespace: pulp
   otlp:
     endpoint: localhost:4317
 
@@ -156,11 +163,11 @@ service:
   pipelines:
     metrics:
       receivers: [otlp]
-      processors: []
+      processors: [memory_limiter, batch]
       exporters: [prometheus]
     traces:
       receivers: [otlp]
-      processors: []
+      processors: [memory_limiter, batch]
       exporters: [otlp]
 `,
 	}
