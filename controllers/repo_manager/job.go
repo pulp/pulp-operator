@@ -57,26 +57,16 @@ func (r *RepoManagerReconciler) updateAdminPasswordJob(ctx context.Context, pulp
 	jobTTL := int32(3600)
 
 	// job definition
-	job := &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: jobName,
-			Namespace:    pulp.Namespace,
-			Labels:       labels,
-		},
-		Spec: batchv1.JobSpec{
-			BackoffLimit:            &backOffLimit,
-			TTLSecondsAfterFinished: &jobTTL,
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{Labels: labels},
-				Spec: corev1.PodSpec{
-					RestartPolicy:      "Never",
-					Containers:         containers,
-					Volumes:            volumes,
-					ServiceAccountName: settings.PulpServiceAccount(pulp.Name),
-				},
-			},
-		},
-	}
+	job := commonJob(pulpJobConfig{
+		jobName,
+		pulp.Namespace,
+		settings.PulpServiceAccount(pulp.Name),
+		labels,
+		&backOffLimit,
+		&jobTTL,
+		containers,
+		volumes,
+	})
 
 	ctrl.SetControllerReference(pulp, job, r.Scheme)
 	// create job
@@ -217,26 +207,16 @@ func (r *RepoManagerReconciler) migrationJob(ctx context.Context, pulp *repomana
 	jobTTL := int32(3600)
 
 	// job definition
-	job := &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: settings.MigrationJob(pulp.Name),
-			Namespace:    pulp.Namespace,
-			Labels:       labels,
-		},
-		Spec: batchv1.JobSpec{
-			BackoffLimit:            &backOffLimit,
-			TTLSecondsAfterFinished: &jobTTL,
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{Labels: labels},
-				Spec: corev1.PodSpec{
-					RestartPolicy:      "Never",
-					Containers:         containers,
-					Volumes:            volumes,
-					ServiceAccountName: settings.PulpServiceAccount(pulp.Name),
-				},
-			},
-		},
-	}
+	job := commonJob(pulpJobConfig{
+		settings.MigrationJob(pulp.Name),
+		pulp.Namespace,
+		settings.PulpServiceAccount(pulp.Name),
+		labels,
+		&backOffLimit,
+		&jobTTL,
+		containers,
+		volumes,
+	})
 
 	ctrl.SetControllerReference(pulp, job, r.Scheme)
 	// create the Job
@@ -295,26 +275,16 @@ func (r *RepoManagerReconciler) updateContentChecksumsJob(ctx context.Context, p
 	jobTTL := int32(60)
 
 	// job definition
-	job := &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: jobName,
-			Namespace:    pulp.Namespace,
-			Labels:       labels,
-		},
-		Spec: batchv1.JobSpec{
-			BackoffLimit:            &backOffLimit,
-			TTLSecondsAfterFinished: &jobTTL,
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{Labels: labels},
-				Spec: corev1.PodSpec{
-					RestartPolicy:      "Never",
-					Containers:         containers,
-					Volumes:            volumes,
-					ServiceAccountName: settings.PulpServiceAccount(pulp.Name),
-				},
-			},
-		},
-	}
+	job := commonJob(pulpJobConfig{
+		jobName,
+		pulp.Namespace,
+		settings.PulpServiceAccount(pulp.Name),
+		labels,
+		&backOffLimit,
+		&jobTTL,
+		containers,
+		volumes,
+	})
 
 	ctrl.SetControllerReference(pulp, job, r.Scheme)
 	// create the Job
@@ -606,7 +576,7 @@ type pulpJobConfig struct {
 	volumes                 []corev1.Volume
 }
 
-// [TODO] modify the other functions to use this one
+// commonJob returns a k8s Job with a common resource definition
 func commonJob(jobConfig pulpJobConfig) *batchv1.Job {
 
 	securityContext := &corev1.PodSecurityContext{}
