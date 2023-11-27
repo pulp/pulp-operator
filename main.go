@@ -170,7 +170,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info("pulp-operator version: 1.0.10-beta.3")
+	setupLog.Info("pulp-operator version: 1.0.11-beta.3")
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
