@@ -40,7 +40,7 @@ func ldapSettings(resources controllers.FunctionResources, pulpSettings *string)
 	settings := `
 #### LDAP SETTINGS ####
 import ldap
-from django_auth_ldap.config import LDAPSearch, PosixGroupType
+from django_auth_ldap.config import *
 
 AUTHENTICATION_BACKENDS = [
   "django_auth_ldap.backend.LDAPBackend",
