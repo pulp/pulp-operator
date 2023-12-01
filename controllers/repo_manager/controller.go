@@ -40,7 +40,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // RepoManagerReconciler reconciles a Pulp object
@@ -352,7 +351,7 @@ func (r *RepoManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&batchv1.CronJob{}, builder.WithPredicates(ignoreCronjobStatus())).
 		Owns(&netv1.Ingress{}).
 		Watches(
-			&source.Kind{Type: &corev1.Secret{}},
+			&corev1.Secret{},
 			handler.EnqueueRequestsFromMapFunc(r.findPulpDependentSecrets),
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
 		)
