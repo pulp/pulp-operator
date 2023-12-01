@@ -186,12 +186,14 @@ func ServiceOtel(resources FunctionResources) client.Object {
 	targetPort := intstr.IntOrString{IntVal: settings.OtelContainerPort}
 	serviceType := corev1.ServiceType("ClusterIP")
 	name := resources.Name
+	labels := settings.CommonLabels(*resources.Pulp)
+	labels["otel"] = ""
 
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      settings.OtelServiceName(name),
 			Namespace: resources.Namespace,
-			Labels:    settings.CommonLabels(*resources.Pulp),
+			Labels:    labels,
 		},
 		Spec: corev1.ServiceSpec{
 			InternalTrafficPolicy: &serviceInternalTrafficPolicyCluster,
