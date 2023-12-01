@@ -459,7 +459,7 @@ func ignoreCronjobStatus() predicate.Predicate {
 
 // findPulpDependentSecrets will search for Pulp objects based on Secret names defined in Pulp CR.
 // It is used to "link" these Secrets (not "owned" by Pulp operator) with Pulp object
-func (r *RepoManagerReconciler) findPulpDependentSecrets(secret client.Object) []reconcile.Request {
+func (r *RepoManagerReconciler) findPulpDependentSecrets(ctx context.Context, secret client.Object) []reconcile.Request {
 
 	associatedPulp := repomanagerpulpprojectorgv1beta2.PulpList{}
 	opts := &client.ListOptions{
