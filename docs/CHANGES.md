@@ -13,6 +13,43 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+1.0.0-beta.3 (2023-12-01)
+=========================
+
+
+Bugfixes
+--------
+
+- Fixed the signing services issues.
+  [#939](https://github.com/pulp/pulp-operator/issues/939)
+- Fixed an error in wrong definition of tuples in `settings.py`.
+  [#1122](https://github.com/pulp/pulp-operator/issues/1122)
+- Modified how `pulp_settings` field is parsed to better handle generic configs.
+  [#1132](https://github.com/pulp/pulp-operator/issues/1132)
+- Updated the pulp-server `Secret` to import all funcs/vars from django-auth-ldap.
+  [#1154](https://github.com/pulp/pulp-operator/issues/1154)
+- Add "otel" label to Telemetry Service.
+  [#1165](https://github.com/pulp/pulp-operator/issues/1165)
+
+
+Improved Documentation
+----------------------
+
+- Added the steps to configure signing services.
+  [#1003](https://github.com/pulp/pulp-operator/issues/1003)
+- Updated the index page with a little bit more context of operators and fixes.
+  [#1145](https://github.com/pulp/pulp-operator/issues/1145)
+
+
+Misc
+----
+
+- [#1100](https://github.com/pulp/pulp-operator/issues/1100), [#1124](https://github.com/pulp/pulp-operator/issues/1124)
+
+
+----
+
+
 1.0.0-beta.2 (2023-10-17)
 =========================
 
