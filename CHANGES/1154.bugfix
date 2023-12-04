@@ -1,1 +1,0 @@
-Updated the pulp-server `Secret` to import all funcs/vars from django-auth-ldap.
