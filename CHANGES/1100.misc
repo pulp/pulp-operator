@@ -1,1 +1,0 @@
-Added an additional GHA job that tests deploying two Pulps in one namespace.
