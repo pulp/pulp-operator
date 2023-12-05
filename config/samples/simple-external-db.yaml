@@ -21,7 +21,7 @@ spec:
   file_storage_access_mode: "ReadWriteOnce"
   file_storage_size: "2Gi"
   signing_secret: "signing-galaxy"
-  signing_scripts_configmap: "signing-scripts"
+  signing_scripts: "signing-scripts"
   image_web: "quay.io/pulp/galaxy-web"
 
   ingress_type: nodeport
