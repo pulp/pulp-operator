@@ -10,7 +10,7 @@ spec:
   image_web_version: 4.6.3
   admin_password_secret: "example-pulp-admin-password"
   signing_secret: "signing-galaxy"
-  signing_scripts_configmap: "signing-scripts"
+  signing_scripts: "signing-scripts"
   ingress_type: route
   route_host: route_host_placeholder
   route_tls_termination_mechanism: edge

@@ -105,7 +105,7 @@ metadata:
               "content_origin": "http://nodeport.local:30000",
               "token_server": "http://nodeport.local:30000/token/"
             },
-            "signing_scripts_configmap": "signing-scripts",
+            "signing_scripts": "signing-scripts",
             "signing_secret": "signing-galaxy",
             "web": {
               "replicas": 1,
