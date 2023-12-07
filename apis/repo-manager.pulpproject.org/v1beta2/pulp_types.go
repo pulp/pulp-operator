@@ -463,6 +463,9 @@ type Api struct {
 
 	// InitContainer defines configuration of the init-containers that run in pulpcore pods
 	InitContainer PulpContainer `json:"init_container,omitempty"`
+
+	// Environment variables to add to pulpcore-api container
+	EnvVars []corev1.EnvVar `json:"env_vars,omitempty"`
 }
 
 // Content defines desired state of pulpcore-content resources
@@ -538,6 +541,9 @@ type Content struct {
 
 	// InitContainer defines configuration of the init-containers that run in pulpcore pods
 	InitContainer PulpContainer `json:"init_container,omitempty"`
+
+	// Environment variables to add to pulpcore-content container
+	EnvVars []corev1.EnvVar `json:"env_vars,omitempty"`
 }
 
 // Worker defines desired state of pulpcore-worker resources
@@ -599,6 +605,9 @@ type Worker struct {
 
 	// InitContainer defines configuration of the init-containers that run in pulpcore pods
 	InitContainer PulpContainer `json:"init_container,omitempty"`
+
+	// Environment variables to add to pulpcore-worker container
+	EnvVars []corev1.EnvVar `json:"env_vars,omitempty"`
 }
 
 // Web defines desired state of pulpcore-web (reverse-proxy) resources
@@ -654,6 +663,9 @@ type Web struct {
 	// +kubebuilder:validation:Enum:=edge;Edge;passthrough;Passthrough
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	TLSTerminationMechanism string `json:"tls_termination_mechanism,omitempty"`
+
+	// Environment variables to add to pulpcore-web container
+	EnvVars []corev1.EnvVar `json:"env_vars,omitempty"`
 }
 
 // Database defines desired state of postgres
@@ -880,6 +892,9 @@ type PulpContainer struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
+
+	// Environment variables to add to the container
+	EnvVars []corev1.EnvVar `json:"env_vars,omitempty"`
 }
 
 // PulpJob defines the jobs used by pulpcore containers to run single-shot administrative tasks

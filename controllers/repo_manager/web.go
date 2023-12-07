@@ -185,6 +185,18 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 		nodeSelector = m.Spec.Web.NodeSelector
 	}
 
+	envVars := []corev1.EnvVar{
+		{
+			Name: "NODE_IP",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					FieldPath: "status.hostIP",
+				},
+			},
+		},
+	}
+	envVars = append(envVars, m.Spec.Web.EnvVars...)
+
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      settings.WEB.DeploymentName(m.Name),
@@ -208,16 +220,7 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 						Image:     ImageWeb,
 						Name:      "web",
 						Resources: resources,
-						Env: []corev1.EnvVar{
-							{
-								Name: "NODE_IP",
-								ValueFrom: &corev1.EnvVarSource{
-									FieldRef: &corev1.ObjectFieldSelector{
-										FieldPath: "status.hostIP",
-									},
-								},
-							},
-						},
+						Env:       envVars,
 						Ports: []corev1.ContainerPort{{
 							ContainerPort: 8080,
 							Protocol:      "TCP",

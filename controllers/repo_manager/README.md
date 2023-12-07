@@ -38,6 +38,7 @@ Api defines desired state of pulpcore-api resources
 | pdb | PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods | *policy.PodDisruptionBudgetSpec | false |
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
 | init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [PulpContainer](#pulpcontainer) | false |
+| env_vars | Environment variables to add to pulpcore-api container | []corev1.EnvVar | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -82,6 +83,7 @@ Content defines desired state of pulpcore-content resources
 | pdb | PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods | *policy.PodDisruptionBudgetSpec | false |
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
 | init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [PulpContainer](#pulpcontainer) | false |
+| env_vars | Environment variables to add to pulpcore-content container | []corev1.EnvVar | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -143,6 +145,7 @@ PulpContainer defines configuration of the \"auxiliary\" containers that run in 
 | ----- | ----------- | ------ | -------- |
 | image | The image name for the container. By default, if not provided, it will use the same image from .Spec.Image. WARN: defining a different image than the one used by API pods can cause unexpected behaviors! | string | false |
 | resource_requirements | Resource requirements for pulpcore aux container. | corev1.ResourceRequirements | false |
+| env_vars | Environment variables to add to the container | []corev1.EnvVar | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -292,6 +295,7 @@ Web defines desired state of pulpcore-web (reverse-proxy) resources
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
 | service_annotations | Annotations for the service | map[string]string | false |
 | tls_termination_mechanism | The secure TLS termination mechanism to use Default: \"edge\" | string | false |
+| env_vars | Environment variables to add to pulpcore-web container | []corev1.EnvVar | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -312,5 +316,6 @@ Worker defines desired state of pulpcore-worker resources
 | pdb | PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods | *policy.PodDisruptionBudgetSpec | false |
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
 | init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [PulpContainer](#pulpcontainer) | false |
+| env_vars | Environment variables to add to pulpcore-worker container | []corev1.EnvVar | false |
 
 [Back to Custom Resources](#custom-resources)

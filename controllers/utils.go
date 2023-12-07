@@ -797,3 +797,58 @@ func HashFromMutated(dep *appsv1.Deployment, resources FunctionResources) string
 	resources.Update(context.TODO(), dep, client.DryRunAll)
 	return CalculateHash(dep.Spec)
 }
+
+// pulpcoreEnvVars retuns the list of variable names that are defined by pulp-operator
+func pulpcoreEnvVars() map[string]struct{} {
+	envVarNames := []string{
+		"PULP_GUNICORN_TIMEOUT", "PULP_API_WORKERS",
+		"PULP_CONTENT_WORKERS", "REDIS_SERVICE_HOST",
+		"REDIS_SERVICE_PORT", "REDIS_SERVICE_DB",
+		"REDIS_SERVICE_PASSWORD", "PULP_SIGNING_KEY_FINGERPRINT",
+		"POSTGRES_SERVICE_HOST", "POSTGRES_SERVICE_PORT",
+	}
+
+	envVars := map[string]struct{}{}
+	for _, v := range envVarNames {
+		envVars[v] = struct{}{}
+	}
+
+	return envVars
+}
+
+// isPulpcoreEnvVar return true if envVar is in the list of variables
+// managed/defined by pulp-operator
+func isPulpcoreEnvVar(envVar string) bool {
+	envVars := pulpcoreEnvVars()
+	if _, found := envVars[envVar]; found {
+		return true
+	}
+	return false
+}
+
+// setCustomEnvVars returns the list of custom environment variables defined in Pulp CR
+func SetCustomEnvVars(pulp repomanagerpulpprojectorgv1beta2.Pulp, component string) []corev1.EnvVar {
+	userDefinedVars := []corev1.EnvVar{}
+
+	switch component {
+	case string(settings.API), string(settings.WORKER), string(settings.CONTENT):
+		userDefinedVars = append(userDefinedVars, reflect.ValueOf(pulp.Spec).FieldByName(component).FieldByName("EnvVars").Interface().([]corev1.EnvVar)...)
+	default: // if it is not a pulpcore component it is a job
+		userDefinedVars = append(userDefinedVars, reflect.ValueOf(pulp.Spec).FieldByName(component).FieldByName("PulpContainer").FieldByName("EnvVars").Interface().([]corev1.EnvVar)...)
+	}
+
+	envVars := []corev1.EnvVar{}
+	for _, v := range userDefinedVars {
+		if isPulpcoreEnvVar(v.Name) {
+			CustomZapLogger().Warn("The " + v.Name + " env var is managed by pulp-operator and will be ignored!")
+			continue
+		}
+		envVars = append(envVars, v)
+	}
+	return envVars
+}
+
+// setPulpcoreCustomEnvVars returns the list of custom environment variables defined in Pulp CR
+func SetPulpcoreCustomEnvVars(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) []corev1.EnvVar {
+	return SetCustomEnvVars(pulp, string(pulpcoreType))
+}

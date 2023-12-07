@@ -58,6 +58,7 @@ nav:
       - Content Checksums: configuring/content_checksums.md
       - LDAP Authentication: configuring/ldap.md
       - Metadata Signing: configuring/metadata_signing.md
+      - Custom Environment Variables: configuring/custom_env_vars.md
   - Backup and Restore:
       - Overview: backup_and_restore/overview.md
       - Configuring and Running: backup_and_restore/config_running.md

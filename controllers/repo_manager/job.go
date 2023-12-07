@@ -155,6 +155,7 @@ func pulpcoreVolumeMounts(pulp *repomanagerpulpprojectorgv1beta2.Pulp) []corev1.
 func resetAdminPasswordContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) corev1.Container {
 	// env vars
 	envVars := controllers.GetPostgresEnvVars(*pulp)
+	envVars = append(envVars, controllers.SetCustomEnvVars(*pulp, "AdminPasswordJob")...)
 
 	// volume mounts
 	volumeMounts := pulpcoreVolumeMounts(pulp)
@@ -230,6 +231,7 @@ func (r *RepoManagerReconciler) migrationJob(ctx context.Context, pulp *repomana
 func migrationContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) corev1.Container {
 	// env vars
 	envVars := controllers.GetPostgresEnvVars(*pulp)
+	envVars = append(envVars, controllers.SetCustomEnvVars(*pulp, "MigrationJob")...)
 
 	// volume mounts
 	volumeMounts := pulpcoreVolumeMounts(pulp)
@@ -303,6 +305,7 @@ func (r *RepoManagerReconciler) updateContentChecksumsJob(ctx context.Context, p
 func contentChecksumsContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) corev1.Container {
 	// env vars
 	envVars := controllers.GetPostgresEnvVars(*pulp)
+	envVars = append(envVars, controllers.SetCustomEnvVars(*pulp, string(settings.API))...)
 
 	// volume mounts
 	volumeMounts := pulpcoreVolumeMounts(pulp)
@@ -390,6 +393,7 @@ func signingScriptContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp, scripts
 
 	// env vars
 	envVars := controllers.GetPostgresEnvVars(*pulp)
+	envVars = append(envVars, controllers.SetCustomEnvVars(*pulp, "SigningJob")...)
 	envVars = append(envVars, corev1.EnvVar{Name: "PULP_SIGNING_KEY_FINGERPRINT", Value: fingerprint})
 	envVars = append(envVars, corev1.EnvVar{Name: "HOME", Value: "/var/lib/pulp"})
 
@@ -525,6 +529,10 @@ func initContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp, resources corev1
 /usr/bin/wait_on_database_migrations.sh`,
 	}
 
+	// env vars
+	envVars := controllers.GetPostgresEnvVars(*pulp)
+	envVars = append(envVars, controllers.SetCustomEnvVars(*pulp, "SigningJob")...)
+
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      pulp.Name + "-server",
@@ -556,7 +564,7 @@ func initContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp, resources corev1
 		Name:            "init-container",
 		Image:           image,
 		ImagePullPolicy: corev1.PullPolicy(pulp.Spec.ImagePullPolicy),
-		Env:             controllers.GetPostgresEnvVars(*pulp),
+		Env:             envVars,
 		Command:         []string{"/bin/sh"},
 		Args:            args,
 		VolumeMounts:    volumeMounts,

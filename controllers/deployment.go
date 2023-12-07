@@ -228,7 +228,7 @@ func (d *CommonDeployment) setEnvVars(resources any, pulpcoreType settings.Pulpc
 	pulp := resources.(FunctionResources).Pulp
 	pulpcoreTypeField := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType))
 
-	var envVars []corev1.EnvVar
+	envVars := SetPulpcoreCustomEnvVars(*pulp, pulpcoreType)
 
 	if pulpcoreType != settings.WORKER {
 		// gunicornWorkers definition
@@ -237,10 +237,11 @@ func (d *CommonDeployment) setEnvVars(resources any, pulpcoreType settings.Pulpc
 		// gunicornTimeout definition
 		gunicornTimeout := strconv.FormatInt(pulpcoreTypeField.FieldByName("GunicornTimeout").Int(), 10)
 
-		envVars = []corev1.EnvVar{
+		gunicornEnvVars := []corev1.EnvVar{
 			{Name: "PULP_GUNICORN_TIMEOUT", Value: gunicornTimeout},
 			{Name: "PULP_" + strings.ToUpper(string(pulpcoreType)) + "_WORKERS", Value: gunicornWorkers},
 		}
+		envVars = append(envVars, gunicornEnvVars...)
 	}
 
 	// add postgres env vars
@@ -329,9 +330,9 @@ func (d *CommonDeployment) setEnvVars(resources any, pulpcoreType settings.Pulpc
 }
 
 // setInitContainerEnvVars defines the list of init-containers' environment variables
-func (d *CommonDeployment) setInitContainerEnvVars(resources any) {
+func (d *CommonDeployment) setInitContainerEnvVars(resources any, pulpcoreType settings.PulpcoreType) {
 	pulp := resources.(FunctionResources).Pulp
-	d.initContainerEnvVars = append([]corev1.EnvVar(nil), GetPostgresEnvVars(*pulp)...)
+	d.initContainerEnvVars = append(GetPostgresEnvVars(*pulp), SetPulpcoreCustomEnvVars(*pulp, pulpcoreType)...)
 }
 
 // GetPostgresEnvVars return the list of postgres environment variables to use in containers
@@ -1068,7 +1069,6 @@ func (d *CommonDeployment) setLDAPConfigs(resources any) {
 		ReadOnly:  true,
 	}
 	d.volumeMounts = append(d.volumeMounts, volumeMount)
-
 }
 
 // build constructs the fields used in the deployment specification
@@ -1093,7 +1093,7 @@ func (d *CommonDeployment) build(resources any, pulpcoreType settings.PulpcoreTy
 	d.setInitContainerResourceRequirements(*pulp, pulpcoreType)
 	d.setInitContainerImage(*pulp, pulpcoreType)
 	d.setInitContainerVolumeMounts(*pulp)
-	d.setInitContainerEnvVars(resources)
+	d.setInitContainerEnvVars(resources, pulpcoreType)
 	d.setLDAPConfigs(resources)
 	d.setInitContainers(resources, *pulp, pulpcoreType)
 	d.setContainers(*pulp, pulpcoreType)
