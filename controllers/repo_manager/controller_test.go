@@ -162,12 +162,15 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		{Name: "POSTGRES_HOST_AUTH_METHOD", Value: "scram-sha-256"},
 	}
 
+	customEnvVar := corev1.EnvVar{Name: "TEST", Value: "test ok"}
 	envVarsInitContainer := []corev1.EnvVar{
 		{Name: "POSTGRES_SERVICE_HOST", Value: PulpName + "-database-svc"},
 		{Name: "POSTGRES_SERVICE_PORT", Value: "5432"},
+		customEnvVar,
 	}
 
 	envVarsApi := []corev1.EnvVar{
+		customEnvVar,
 		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(90)},
 		{Name: "PULP_API_WORKERS", Value: strconv.Itoa(2)},
 		{Name: "POSTGRES_SERVICE_HOST", Value: PulpName + "-database-svc"},
@@ -177,6 +180,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 	}
 
 	envVarsContent := []corev1.EnvVar{
+		customEnvVar,
 		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(90)},
 		{Name: "PULP_CONTENT_WORKERS", Value: strconv.Itoa(2)},
 		{Name: "POSTGRES_SERVICE_HOST", Value: PulpName + "-database-svc"},
@@ -186,6 +190,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 	}
 
 	envVarsWorker := []corev1.EnvVar{
+		customEnvVar,
 		{Name: "POSTGRES_SERVICE_HOST", Value: PulpName + "-database-svc"},
 		{Name: "POSTGRES_SERVICE_PORT", Value: "5432"},
 		{Name: "REDIS_SERVICE_HOST", Value: PulpName + "-redis-svc." + PulpNamespace},
@@ -820,12 +825,15 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				ImageWebVersion: "latest",
 				Api: repomanagerpulpprojectorgv1beta2.Api{
 					Replicas: 1,
+					EnvVars:  []corev1.EnvVar{customEnvVar},
 				},
 				Content: repomanagerpulpprojectorgv1beta2.Content{
 					Replicas: 1,
+					EnvVars:  []corev1.EnvVar{customEnvVar},
 				},
 				Worker: repomanagerpulpprojectorgv1beta2.Worker{
 					Replicas: 1,
+					EnvVars:  []corev1.EnvVar{customEnvVar},
 				},
 				Web: repomanagerpulpprojectorgv1beta2.Web{
 					Replicas: 1,
