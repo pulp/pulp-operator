@@ -1,0 +1,4 @@
+# workaround to avoid an issue with git fetch
+#  The authenticity of host 'github.com (...)' can't be established.
+Host github.com
+  StrictHostKeyChecking no
