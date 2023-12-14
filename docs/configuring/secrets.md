@@ -41,8 +41,6 @@ The name of the `Secrets` can be different depending on the Pulp's `CR` name.
 ### pulp-server
 
 Will be used to populate `/etc/pulp/settings.py` configuration file.  
-It is managed by `pulp_settings` field in Pulp `CR`.
-Some fields from this `Secret` will be filled with other `CR` definitions.
 
 !!! warning
     Do not modify this `Secret`, the content will get overwritten by the operator.
@@ -88,7 +86,9 @@ REDIS_DB = ""
 
 ```
 
-For more information about Pulp Settings config file see [Pulpcore doc](https://docs.pulpproject.org/pulpcore/configuration/settings.html).
+For more information about Pulp Settings config file see [Pulpcore doc](https://docs.pulpproject.org/pulpcore/configuration/settings.html). <br/>
+For more information about how to configure `settings.py` file using Pulp
+Operator see [Pulp Settings](/pulp_operator/configuring/pulp_settings/).
 
 
 ### pulp-db-fields-encryption

@@ -39,6 +39,7 @@ nav:
       - OpenShift: install/ocp.md
       - Highly Available Pulp: install/ha.md
   - Configuring:
+      - Pulp Settings: configuring/pulp_settings.md
       - Database: configuring/database.md
       - Storage: configuring/storage.md
       - Cache: configuring/cache.md
