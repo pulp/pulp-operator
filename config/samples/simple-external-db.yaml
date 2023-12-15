@@ -1,11 +1,27 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: external-database
+data:
+  POSTGRES_HOST: cG9zdGdyZXMuZGIuc3Zj
+  POSTGRES_PORT: NTQzMg==
+  POSTGRES_USERNAME: cHVscC1hZG1pbg==
+  POSTGRES_PASSWORD: cGFzc3dvcmQ=
+  POSTGRES_DB_NAME: cHVscA==
+  POSTGRES_SSLMODE: cHJlZmVy
+
+---
 apiVersion: repo-manager.pulpproject.org/v1beta2
 kind: Pulp
 metadata:
-  name: pulp
+  name: example-pulp
 spec:
-  deployment_type: pulp
-  image_version: nightly
-  image_web_version: nightly
+  database:
+    external_db_secret: external-database
+
+  image_version: stable
+  image_web_version: stable
   api:
     replicas: 1
   content:
@@ -15,16 +31,12 @@ spec:
   web:
     replicas: 1
 
-  database:
-    external_db_secret: external-database
+  ingress_type: nodeport
+  nodeport_port: 30000
 
   file_storage_access_mode: "ReadWriteOnce"
   file_storage_size: "2Gi"
-  signing_secret: "signing-galaxy"
-  signing_scripts: "signing-scripts"
-  image_web: "quay.io/pulp/galaxy-web"
-
-  ingress_type: nodeport
+  file_storage_storage_class: standard
 
   pulp_settings:
     api_root: "/pulp/"
@@ -32,3 +44,7 @@ spec:
       - /tmp
     allowed_import_paths:
       - /tmp
+    telemetry: false
+    token_server: http://nodeport.local:30000/token/
+    content_origin: http://nodeport.local:30000
+    ansible_api_hostname: http://nodeport.local:30000
