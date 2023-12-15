@@ -366,6 +366,7 @@ jobs:
           - COMPONENT_TYPE: nodeport
           - COMPONENT_TYPE: telemetry
           - COMPONENT_TYPE: ldap
+          - COMPONENT_TYPE: external-db
     steps:
       - uses: actions/checkout@v3
         with:
@@ -455,6 +456,10 @@ jobs:
           elif [[ "$COMPONENT_TYPE" == "ldap" ]]; then
             .ci/scripts/ldap_config.sh
             kubectl apply -f config/samples/ldap.yaml
+          elif [[ "$COMPONENT_TYPE" == "external-db" ]]; then
+            kubectl create ns db
+            kubectl apply -f config/samples/external_db.yaml
+            kubectl apply -f config/samples/simple-external-db.yaml
           else
             kubectl apply -f config/samples/simple.yaml
           fi
