@@ -8,14 +8,14 @@ require (
 	github.com/onsi/gomega v1.30.0
 	github.com/openshift/api v0.0.0-20220825183227-75c111537c4d
 	go.uber.org/zap v1.26.0
-	golang.org/x/crypto v0.16.0
+	golang.org/x/crypto v0.17.0
 	golang.org/x/text v0.14.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.28.4
 	k8s.io/apimachinery v0.28.4
 	k8s.io/cli-runtime v0.28.4
 	k8s.io/client-go v0.28.4
-	k8s.io/kubernetes v1.28.4
+	k8s.io/kubernetes v1.15.0-alpha.0
 	sigs.k8s.io/controller-runtime v0.16.3
 )
 
