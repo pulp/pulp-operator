@@ -5,6 +5,7 @@ set -euo pipefail
 KUBE="k3s"
 SERVER=$(hostname)
 WEB_PORT="24817"
+SERVER=nodeport.local
 if [[ "$INGRESS_TYPE" == "ingress" ]]; then
   SERVER=ingress.local
   echo $(minikube ip) ingress.local | sudo tee -a /etc/hosts
@@ -15,6 +16,12 @@ elif [[ "${1-}" == "--minikube" ]] || [[ "${1-}" == "-m" ]]; then
     echo $(minikube ip) nodeport.local | sudo tee -a /etc/hosts
     WEB_PORT=30000
   fi
+elif [[ "${1-}" == "--kind" ]] || [[ "${1-}" == "-k" ]]; then
+  echo $(kubectl get nodes kind-control-plane -ojsonpath='{.status.addresses[0].address}') nodeport.local | sudo tee -a /etc/hosts
+  WEB_PORT=30000
+elif [[ "${1-}" == "--eks" ]] ; then
+  echo $(kubectl get nodes -l worker -ojsonpath='{.items[0].status.addresses[0].address}') nodeport.local | sudo tee -a /etc/hosts
+  WEB_PORT=30000
 fi
 
 # From the pulp-server/pulp-api config-map

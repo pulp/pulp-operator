@@ -1,0 +1,49 @@
+apiVersion: repo-manager.pulpproject.org/v1beta2
+kind: Pulp
+metadata:
+  name: example-pulp
+spec:
+  image_version: stable
+  image_web_version: stable
+
+  api:
+    replicas: 1
+  content:
+    replicas: 1
+  worker:
+    replicas: 1
+  web:
+    replicas: 1
+  database:
+    postgres_storage_class: standard
+    postgres_storage_requirements: "1Gi"
+  cache:
+    enabled: true
+    redis_storage_class: standard
+
+  migration_job:
+    container:
+      resource_requirements:
+        requests:
+          cpu: 1
+        limits:
+          cpu: 1
+
+  admin_password_secret: example-pulp-admin-password
+  file_storage_access_mode: "ReadWriteOnce"
+  file_storage_size: "2Gi"
+  file_storage_storage_class: standard
+
+  ingress_type: nodeport
+  nodeport_port: 30000
+
+  pulp_settings:
+    api_root: "/pulp/"
+    allowed_export_paths:
+      - /tmp
+    allowed_import_paths:
+      - /tmp
+    analytics: false
+    token_server: http://nodeport.local:30000/token/
+    content_origin: http://nodeport.local:30000
+    ansible_api_hostname: http://nodeport.local:30000

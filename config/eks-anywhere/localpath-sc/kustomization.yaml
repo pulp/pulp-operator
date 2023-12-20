@@ -1,0 +1,11 @@
+resources:
+- local-path-storage.yaml
+
+patches:
+- target:
+    kind: StorageClass
+    name: local-path
+  patch: |-
+    - op: replace
+      path: /metadata/name
+      value: standard
