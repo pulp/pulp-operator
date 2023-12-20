@@ -131,6 +131,10 @@ func (r *RepoManagerReconciler) pulpCacheController(ctx context.Context, pulp *r
 		return ctrl.Result{Requeue: requeue}, err
 	}
 
+	// Update managedCache status
+	pulp.Status.ManagedCacheEnabled = pulp.Spec.Cache.Enabled
+	r.Status().Update(ctx, pulp)
+
 	r.recorder.Event(pulp, corev1.EventTypeNormal, "RedisReady", "All Redis tasks ran successfully")
 	return ctrl.Result{}, nil
 
@@ -402,6 +406,10 @@ func (r *RepoManagerReconciler) deprovisionCache(ctx context.Context, pulp *repo
 		r.Delete(ctx, deploymentFound)
 	}
 
+	// Update managedCache status
+	pulp.Status.ManagedCacheEnabled = pulp.Spec.Cache.Enabled
+	r.Status().Update(ctx, pulp)
+
 	return ctrl.Result{}, nil
 }
 
@@ -409,4 +417,11 @@ func (r *RepoManagerReconciler) deprovisionCache(ctx context.Context, pulp *repo
 // belonging to the given pulp CR name.
 func labelsForCache(m *repomanagerpulpprojectorgv1beta2.Pulp) map[string]string {
 	return settings.PulpcoreLabels(*m, "cache")
+}
+
+// managedCacheDisabled returns true if
+// * there is no definition for external cache
+// * the managed cache (deployed by pulp-operator) has a different definition than the status
+func managedCacheDisabled(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
+	return len(pulp.Spec.Cache.ExternalCacheSecret) == 0 && pulp.Spec.Cache.Enabled != pulp.Status.ManagedCacheEnabled
 }

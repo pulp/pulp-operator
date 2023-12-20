@@ -290,8 +290,10 @@ func cacheTasks(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp
 			return &pulpController, err
 		}
 
-		// remove redis resources if cache is not enabled
-	} else {
+	}
+
+	// remove redis resources if cache is not enabled anymore
+	if managedCacheDisabled(pulp) {
 		pulpController, err := r.deprovisionCache(ctx, pulp, log)
 		if needsRequeue(err, pulpController) {
 			return &pulpController, err

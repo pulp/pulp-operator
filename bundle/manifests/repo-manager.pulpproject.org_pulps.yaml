@@ -10015,6 +10015,9 @@ spec:
               last_deployment_update:
                 description: Controller status to keep tracking of deployment updates
                 type: string
+              managed_cache_enabled:
+                description: Cache deployed by pulp-operator enabled
+                type: boolean
               object_storage_azure_secret:
                 description: The secret for Azure compliant object storage configuration.
                 type: string

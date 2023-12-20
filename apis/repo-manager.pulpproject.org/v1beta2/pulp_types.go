@@ -948,6 +948,8 @@ type PulpStatus struct {
 	AllowedContentChecksums string `json:"allowed_content_checksums,omitempty"`
 	// Controller status to keep tracking of deployment updates
 	LastDeploymentUpdate string `json:"last_deployment_update,omitempty"`
+	// Cache deployed by pulp-operator enabled
+	ManagedCacheEnabled bool `json:"managed_cache_enabled,omitempty"`
 }
 
 // +kubebuilder:object:root=true
