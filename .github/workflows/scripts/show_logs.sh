@@ -7,6 +7,8 @@ KUBE="minikube"
 if [[ "$1" == "--kind" ]] || [[ "$1" == "-k" ]]; then
   KUBE="kind"
   echo "Running $KUBE"
+elif [[ "$1" == "--eks" ]]; then
+  KUBE="eks"
 fi
 
 kubectl get pods -o wide
@@ -89,12 +91,15 @@ echo ::endgroup::
 if [[ "$KUBE" == "minikube" ]]; then
   echo ::group::METRICS
   kubectl top pods || true
-  kubectl describe node minikube || true
   echo ::endgroup::
   echo ::group::MINIKUBE_LOGS
   minikube logs -n 10000
   echo ::endgroup::
 fi
+
+echo ::group::NODES
+kubectl describe node
+echo ::endgroup::
 
 if [[ "$INGRESS_TYPE" == "ingress" ]]; then
     export BASE_ADDR="http://ingress.local"
