@@ -46,10 +46,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/dump"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
-	"k8s.io/kubernetes/pkg/util/hash"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -772,7 +772,9 @@ func RemovePulpWebResources(resources FunctionResources) error {
 // CalculateHash returns a string of the hashed value from obj
 func CalculateHash(obj any) string {
 	calculatedHash := fnv.New32a()
-	hash.DeepHashObject(calculatedHash, obj)
+	// This is equivalent to: `k8s.io/kubernetes/pkg/util/hash.DeepHashObject(calculatedHash, obj)`
+	// but avoids depending on k8s.io/kubernetes: https://github.com/kubernetes/kubernetes/issues/79384
+	_, _ = fmt.Fprintf(calculatedHash, "%v", dump.ForHash(obj))
 	return hex.EncodeToString(calculatedHash.Sum(nil))
 }
 
