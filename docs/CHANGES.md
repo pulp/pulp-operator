@@ -13,6 +13,35 @@ Changelog
 
 <!-- TOWNCRIER -->
 
+1.0.0-beta.4 (2024-01-18)
+=========================
+
+
+Features
+--------
+
+- Added `env_vars` field to define custom environment variables.
+  [#1161](https://github.com/pulp/pulp-operator/issues/1161)
+- Added support for annotating pulp-operator managed Deployments.
+  [#1190](https://github.com/pulp/pulp-operator/issues/1190)
+
+
+Improved Documentation
+----------------------
+
+- Added a section explaining how to add custom Pulp settings.
+  [#1163](https://github.com/pulp/pulp-operator/issues/1163)
+
+
+Misc
+----
+
+- [#1192](https://github.com/pulp/pulp-operator/issues/1192)
+
+
+----
+
+
 1.0.0-beta.3 (2023-12-04)
 =========================
 
