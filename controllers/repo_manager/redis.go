@@ -321,18 +321,23 @@ func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp, funcResources con
 
 	removeStorageDefinition(&resources)
 
+	deploymentAnnotations := map[string]string{}
+	if m.Spec.Cache.DeploymentAnnotations != nil {
+		deploymentAnnotations = m.Spec.Cache.DeploymentAnnotations
+	}
+	// set standard annotations that cannot be overridden by users
+	deploymentAnnotations["email"] = "pulp-dev@redhat.com"
+	deploymentAnnotations["ignore-check.kube-linter.io/unset-cpu-requirements"] = "Temporarily disabled"
+	deploymentAnnotations["ignore-check.kube-linter.io/unset-memory-requirements"] = "Temporarily disabled"
+	deploymentAnnotations["ignore-check.kube-linter.io/no-node-affinity"] = "Do not check node affinity"
+
 	// deployment definition
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      settings.CACHE.DeploymentName(m.Name),
-			Namespace: m.Namespace,
-			Annotations: map[string]string{
-				"email": "pulp-dev@redhat.com",
-				"ignore-check.kube-linter.io/unset-cpu-requirements":    "Temporarily disabled",
-				"ignore-check.kube-linter.io/unset-memory-requirements": "Temporarily disabled",
-				"ignore-check.kube-linter.io/no-node-affinity":          "Do not check node affinity",
-			},
-			Labels: ls,
+			Name:        settings.CACHE.DeploymentName(m.Name),
+			Namespace:   m.Namespace,
+			Annotations: deploymentAnnotations,
+			Labels:      ls,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,

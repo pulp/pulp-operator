@@ -1100,6 +1100,11 @@ spec:
                             type: array
                         type: object
                     type: object
+                  deployment_annotations:
+                    additionalProperties:
+                      type: string
+                    description: Annotations for the api deployment
+                    type: object
                   env_vars:
                     description: Environment variables to add to pulpcore-api container
                     items:
@@ -3003,6 +3008,11 @@ spec:
                             type: array
                         type: object
                     type: object
+                  deployment_annotations:
+                    additionalProperties:
+                      type: string
+                    description: Annotations for the cache deployment
+                    type: object
                   enabled:
                     default: true
                     description: 'Defines if cache should be enabled. Default: true'
@@ -4355,6 +4365,11 @@ spec:
                               type: object
                             type: array
                         type: object
+                    type: object
+                  deployment_annotations:
+                    additionalProperties:
+                      type: string
+                    description: Annotations for the content deployment
                     type: object
                   env_vars:
                     description: Environment variables to add to pulpcore-content
@@ -7376,6 +7391,11 @@ spec:
                 description: Web defines desired state of pulpcore-web (reverse-proxy)
                   resources
                 properties:
+                  deployment_annotations:
+                    additionalProperties:
+                      type: string
+                    description: Annotations for the web deployment
+                    type: object
                   env_vars:
                     description: Environment variables to add to pulpcore-web container
                     items:
@@ -8885,6 +8905,11 @@ spec:
                               type: object
                             type: array
                         type: object
+                    type: object
+                  deployment_annotations:
+                    additionalProperties:
+                      type: string
+                    description: Annotations for the worker deployment
                     type: object
                   env_vars:
                     description: Environment variables to add to pulpcore-worker container

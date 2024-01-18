@@ -316,6 +316,11 @@ spec:
         path: api.affinity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Annotations for the api deployment
+        displayName: Deployment Annotations
+        path: api.deployment_annotations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: 'The timeout for the gunicorn process. Default: 90'
         displayName: Gunicorn Timeout
         path: api.gunicorn_timeout
@@ -405,6 +410,11 @@ spec:
         path: cache.affinity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Annotations for the cache deployment
+        displayName: Deployment Annotations
+        path: cache.deployment_annotations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: 'Defines if cache should be enabled. Default: true'
         displayName: Enabled
         path: cache.enabled
@@ -505,6 +515,11 @@ spec:
         path: content.affinity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Annotations for the content deployment
+        displayName: Deployment Annotations
+        path: content.deployment_annotations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: 'The timeout for the gunicorn process. Default: 90'
         displayName: Gunicorn Timeout
         path: content.gunicorn_timeout
@@ -1018,6 +1033,11 @@ spec:
         path: web
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: Annotations for the web deployment
+        displayName: Deployment Annotations
+        path: web.deployment_annotations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: Periodic probe of container liveness. Container will be restarted
           if the probe fails.
         displayName: Liveness Probe
@@ -1079,6 +1099,11 @@ spec:
         path: worker.affinity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Annotations for the worker deployment
+        displayName: Deployment Annotations
+        path: worker.deployment_annotations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: 'The image name for the container. By default, if not provided,
           it will use the same image from .Spec.Image. WARN: defining a different
           image than the one used by API pods can cause unexpected behaviors!'
