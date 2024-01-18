@@ -1,1 +1,1 @@
-Allow annotating Deployments
+Added support for annotating pulp-operator managed Deployments.
