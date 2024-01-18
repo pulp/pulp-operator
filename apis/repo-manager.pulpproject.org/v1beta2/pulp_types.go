@@ -466,6 +466,11 @@ type Api struct {
 
 	// Environment variables to add to pulpcore-api container
 	EnvVars []corev1.EnvVar `json:"env_vars,omitempty"`
+
+	// Annotations for the api deployment
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	DeploymentAnnotations map[string]string `json:"deployment_annotations,omitempty"`
 }
 
 // Content defines desired state of pulpcore-content resources
@@ -544,6 +549,11 @@ type Content struct {
 
 	// Environment variables to add to pulpcore-content container
 	EnvVars []corev1.EnvVar `json:"env_vars,omitempty"`
+
+	// Annotations for the content deployment
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	DeploymentAnnotations map[string]string `json:"deployment_annotations,omitempty"`
 }
 
 // Worker defines desired state of pulpcore-worker resources
@@ -608,6 +618,11 @@ type Worker struct {
 
 	// Environment variables to add to pulpcore-worker container
 	EnvVars []corev1.EnvVar `json:"env_vars,omitempty"`
+
+	// Annotations for the worker deployment
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	DeploymentAnnotations map[string]string `json:"deployment_annotations,omitempty"`
 }
 
 // Web defines desired state of pulpcore-web (reverse-proxy) resources
@@ -666,6 +681,11 @@ type Web struct {
 
 	// Environment variables to add to pulpcore-web container
 	EnvVars []corev1.EnvVar `json:"env_vars,omitempty"`
+
+	// Annotations for the web deployment
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	DeploymentAnnotations map[string]string `json:"deployment_annotations,omitempty"`
 }
 
 // Database defines desired state of postgres
@@ -849,6 +869,11 @@ type Cache struct {
 	// +optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:updateStrategy","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	Strategy appsv1.DeploymentStrategy `json:"strategy,omitempty"`
+
+	// Annotations for the cache deployment
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	DeploymentAnnotations map[string]string `json:"deployment_annotations,omitempty"`
 }
 
 // Telemetry defines the configuration for OpenTelemetry used by Pulp

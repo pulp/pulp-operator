@@ -987,10 +987,16 @@ func (d *CommonDeployment) setAnnotations(pulp repomanagerpulpprojectorgv1beta2.
 		d.podAnnotations["repo-manager.pulpproject.org/restartedAt"] = pulp.Status.LastDeploymentUpdate
 	}
 
-	d.deploymentAnnotations = map[string]string{
-		"email": "pulp-dev@redhat.com",
-		"ignore-check.kube-linter.io/no-node-affinity": "Do not check node affinity",
+	deploymentAnnotations := map[string]string{}
+	specField := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("DeploymentAnnotations").Interface().(map[string]string)
+	if specField != nil {
+		deploymentAnnotations = specField
 	}
+	// set standard annotations that cannot be overridden by users
+	deploymentAnnotations["email"] = "pulp-dev@redhat.com"
+	deploymentAnnotations["ignore-check.kube-linter.io/no-node-affinity"] = "Do not check node affinity"
+
+	d.deploymentAnnotations = deploymentAnnotations
 }
 
 // setRestartPolicy defines the pod restart policy

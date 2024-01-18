@@ -199,9 +199,10 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      settings.WEB.DeploymentName(m.Name),
-			Namespace: m.Namespace,
-			Labels:    ls,
+			Name:        settings.WEB.DeploymentName(m.Name),
+			Namespace:   m.Namespace,
+			Labels:      ls,
+			Annotations: m.Spec.Web.DeploymentAnnotations,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,

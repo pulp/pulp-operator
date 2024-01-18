@@ -39,6 +39,7 @@ Api defines desired state of pulpcore-api resources
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
 | init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [PulpContainer](#pulpcontainer) | false |
 | env_vars | Environment variables to add to pulpcore-api container | []corev1.EnvVar | false |
+| deployment_annotations | Annotations for the api deployment | map[string]string | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -61,6 +62,7 @@ Cache defines desired state of redis resources
 | tolerations | Node tolerations for the Pulp pods. | []corev1.Toleration | false |
 | node_selector | NodeSelector for the Pulp pods. | map[string]string | false |
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
+| deployment_annotations | Annotations for the cache deployment | map[string]string | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -84,6 +86,7 @@ Content defines desired state of pulpcore-content resources
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
 | init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [PulpContainer](#pulpcontainer) | false |
 | env_vars | Environment variables to add to pulpcore-content container | []corev1.EnvVar | false |
+| deployment_annotations | Annotations for the content deployment | map[string]string | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -297,6 +300,7 @@ Web defines desired state of pulpcore-web (reverse-proxy) resources
 | service_annotations | Annotations for the service | map[string]string | false |
 | tls_termination_mechanism | The secure TLS termination mechanism to use Default: \"edge\" | string | false |
 | env_vars | Environment variables to add to pulpcore-web container | []corev1.EnvVar | false |
+| deployment_annotations | Annotations for the web deployment | map[string]string | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -318,5 +322,6 @@ Worker defines desired state of pulpcore-worker resources
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
 | init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [PulpContainer](#pulpcontainer) | false |
 | env_vars | Environment variables to add to pulpcore-worker container | []corev1.EnvVar | false |
+| deployment_annotations | Annotations for the worker deployment | map[string]string | false |
 
 [Back to Custom Resources](#custom-resources)
