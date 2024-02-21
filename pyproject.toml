@@ -1,6 +1,6 @@
 [tool.towncrier]
 package = "pulp-operator"
-filename = "docs/CHANGES.md"
+filename = "CHANGES.md"
 directory = "CHANGES/"
 title_format = "{version} ({project_date})"
 template = "CHANGES/.TEMPLATE.md"

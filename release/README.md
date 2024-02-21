@@ -106,7 +106,7 @@ $ git log --oneline upstream/main..
 8a7c783 Release version 1.0.0-beta.4
 ```
 
-The **release commit** should have the changes from towncrier (`CHANGES/*` files and `docs/CHANGES.md`). <br/>
+The **release commit** should have the changes from towncrier (`CHANGES/*` files and `CHANGES.md`). <br/>
 The **bump Makefile** commit should modify the following lines: `ref`, `VERSION`, `name`, `image`, `version`, `newTag`, and `pulp-operator version`.
 For example:
 ```diff
