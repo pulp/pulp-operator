@@ -1,4 +1,4 @@
-# Pulp Containers Images
+# Pulp Images
 
 ## Pulp
 
