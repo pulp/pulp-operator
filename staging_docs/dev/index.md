@@ -1,6 +1,10 @@
-# Contributing guide
+# Welcome to Pulp Operator for devs
 
-## Pull Request Checklist
+This is the section is designed to support contributions to Pulp Operator development.
+
+## Contributing guide
+
+### Pull Request Checklist
 
 1. Unless a change is small or doesn't affect users, create an issue on
 [github](https://github.com/pulp/pulp-operator/issues/new).
@@ -10,7 +14,7 @@ Make sure you reference and link to the issue.
 4. Push your branch to your fork and open a [Pull request across forks.](https://help.github.com/articles/creating-a-pull-request-from-a-fork/)
 5. Add GitHub labels as appropriate.
 
-## Test the code
+### Test the code
 
 The tests can be run with the following command:
 ```bash
@@ -23,7 +27,7 @@ you can do it by running:
 make testbin
 ```
 
-## Test the Docs
+### Test the Docs
 
 Cross-platform:
 ```
@@ -38,7 +42,7 @@ Click the link it outputs. As you save changes to files modified in your editor,
 the browser will automatically show the new content.
 
 
-## Debug the code 
+### Debug the code 
 
 1. Ensure you have a cluster
   ```bash

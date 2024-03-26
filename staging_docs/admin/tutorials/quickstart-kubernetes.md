@@ -1,8 +1,6 @@
-# Getting started
+# Quickstart with Kubernetes
 
-## Kubernetes
-
-### Basic Install
+## Basic Install
 
 This Kubernetes Operator is meant to be deployed in your Kubernetes cluster(s) and can manage one or more Pulp instances in any namespace.
 
@@ -146,49 +144,8 @@ yDL2Cx5Za94g9MvBP6B73nzVLlmfgPjR
 
 You just completed the most basic install of an Pulp instance via this operator. Congratulations!!!
 
-### OperatorHub
+## Further Reading
 
-Pulp can be installed from [OperatorHub](https://operatorhub.io) on the following link:
-[https://operatorhub.io/operator/pulp-operator](https://operatorhub.io/operator/pulp-operator)
+- [Install Pulp from OperatorHub](https://operatorhub.io/operator/pulp-operator)
+- [Install Pulp using Helm Charts](site:pulp-operator/docs/admin/guides/install/helm)
 
-### Helm Chart Install
-
-Pulp can also be installed using Helm Charts.  
-Check [Helm Chart](/pulp_operator/install/helm) section for more information.
-
-## OpenShift
-
-Pulp is available on `OperatorHub`, you can find it at the `Integration & Delivery` section:
-
-![OperatorHub tab](1.png "Pulp on OperatorHub tab")
-
-For installing it, click on: `Pulp Project` and then `Install`:
-![Installing pulp](2.png "Installing pulp operator")
-
-![Installing pulp](3.png "Installing pulp operator")
-
-Create a `Secret` with the `S3` credentials.
-Note that these should be valid credentials from an already configured S3 bucket:
-![S3 credentials Secret](4.png "S3 credentials Secret")
-
-Click `Pulp`:
-![Click on Pulp](5.png "Click on Pulp")
-
-Select `S3` as the storage type and, on `S3 storage secret`, enter the name of the storage you created before,
-e.g. `example-pulp-object-storage`:
-![S3 credentials on Pulp kind](6.png "S3 credentials on Pulp kind")
-
-Click `Advanced Configuration`,
-select `Route` as Ingress type, fill in the `Route DNS host`, select `Edge` as Route TLS termination mechanism, and click on `Create`:
-![Advanced Configuration](7.png "Advanced Configuration")
-
-Wait a few minutes for pulp-operator to be successfully deployed!
-
-You can check your `password` on `Secrets`, `example-pulp-admin-password`:
-![Admin password Secret](8.png "Admin password Secret")
-
-Verify your URL at `Networking > Routes`:
-![Route URL](9.png "Route URL")
-
-Use the URL from the previous step with `/pulp/api/v3/status/`path and verify Pulp was successfully deployed:
-![Pulp Status](10.png "Pulp Status")
