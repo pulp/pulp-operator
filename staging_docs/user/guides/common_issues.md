@@ -12,7 +12,7 @@ One of the reasons that we don't want to put the pod restart logic (to propagate
 
 The `Multi-Attach` error happens when the deployment is configured to mount a RWO volume and the scheduler tries to run a new pod in a different node. To fix the error and allow the new pod to be provisioned, delete the old pod so that the new one will be able to mount the volume.
 
-Another common scenario that this issue happens is if a node lose communication with the cluster and the controller tries to provision a new pod. Since the communication of the failing node with the cluster is lost, it is not possible to dettach the volume before trying to attach it again to the new pod.
+Another common scenario that this issue happens is if a node lose communication with the cluster and the controller tries to provision a new pod. Since the communication of the failing node with the cluster is lost, it is not possible to detach the volume before trying to attach it again to the new pod.
 
 To avoid this issue, it is recommended to use RWX volumes. If it is not possible, modify the `strategy` type from Pulp CR as `Recreate`.
 
@@ -50,5 +50,5 @@ All fields from `Spec` *should* be reconciled on *Deployments*, *Services*, *Rou
 
 ### **I created a new PulpRestore CR, but the restore procedure is not running again. Checking the operator logs I found the message "*PulpRestore lock ConfigMap found. No restore procedure will be executed!*"**
 
-After the Operator finishes executing a restore procedure it creates a `ConfigMap` called *`restore-lock`*. This `ConfigMap` is used to control the restore reconciliation loop and avoid it ovewriting all files or `Secrets` with data from an old backup.  
+After the Operator finishes executing a restore procedure it creates a `ConfigMap` called *`restore-lock`*. This `ConfigMap` is used to control the restore reconciliation loop and avoid it overwriting all files or `Secrets` with data from an old backup.  
 If you still want to run the restore, just delete the *`restore-lock`* `ConfigMap` and recreate the PulpRestore CR.

@@ -173,7 +173,7 @@ spec:
       is_spot_instance: "true"
 ```
 
-Anothe example of usage of `nodeSelectors` is to schedule Pulp pods in specific nodes, like run `API` pods on nodes with `beta.kubernetes.io/instance-type=t2.medium` label and `content` pods on `beta.kubernetes.io/instance-type=c7g.2xlarge`.
+Another example of usage of `nodeSelectors` is to schedule Pulp pods in specific nodes, like run `API` pods on nodes with `beta.kubernetes.io/instance-type=t2.medium` label and `content` pods on `beta.kubernetes.io/instance-type=c7g.2xlarge`.
 
 * Check the official k8s documentation for more information on `node labels` and `nodeSelector`: [https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#built-in-node-labels](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#built-in-node-labels)
 * For more information on how to configure `nodeSelector` in Pulp Operator check: [https://docs.pulpproject.org/pulp_operator/configuring/podPlacement/](https://docs.pulpproject.org/pulp_operator/configuring/podPlacement/)
