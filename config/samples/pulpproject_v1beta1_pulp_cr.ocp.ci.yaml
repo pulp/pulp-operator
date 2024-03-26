@@ -6,8 +6,7 @@ spec:
   deployment_type: pulp
   admin_password_secret: "example-pulp-admin-password"
   ingress_type: route
-  route_host: route_host_placeholder
-  route_tls_termination_mechanism: edge
+  route_host: example.com
   pulp_settings:
     api_root: "/pulp/"
     allowed_export_paths:
