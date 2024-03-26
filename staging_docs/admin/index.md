@@ -17,7 +17,7 @@ section before diving into the workflows and reference material.
 
 ## Get Help
 
-Here are some usefull links if you need some help:
+Here are some useful links if you need some help:
 
 - Issue Tracker: [https://github.com/pulp/pulp-operator/issues](https://github.com/pulp/pulp-operator/issues)
 - Forum: [https://discourse.pulpproject.org/](https://discourse.pulpproject.org/)
