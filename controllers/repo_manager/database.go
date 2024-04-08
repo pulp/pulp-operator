@@ -307,7 +307,7 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 		if m.Spec.Database.PostgresStorageRequirements != "" {
 			postgresStorageSize = resource.MustParse(m.Spec.Database.PostgresStorageRequirements)
 		}
-		storageRequirements := corev1.ResourceRequirements{
+		storageRequirements := corev1.VolumeResourceRequirements{
 			Requests: corev1.ResourceList{
 				corev1.ResourceName(corev1.ResourceStorage): postgresStorageSize,
 			},
