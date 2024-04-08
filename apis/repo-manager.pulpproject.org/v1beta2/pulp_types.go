@@ -33,6 +33,12 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	Unmanaged bool `json:"unmanaged,omitempty"`
 
+	// By default Pulp logs at INFO level, but enabling DEBUG logging can be a
+	// helpful thing to get more insight when things don’t go as expected.
+	// Default: false
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	EnableDebugging bool `json:"enable_debugging,omitempty"`
+
 	// Name of the deployment type.
 	// Default: "pulp"
 	// +kubebuilder:default:="pulp"

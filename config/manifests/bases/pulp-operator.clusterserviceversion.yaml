@@ -724,6 +724,13 @@ spec:
         path: ee_defaults
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: 'By default Pulp logs at INFO level, but enabling DEBUG logging
+          can be a helpful thing to get more insight when things don’t go as expected.
+          Default: false'
+        displayName: Enable Debugging
+        path: enable_debugging
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: The file storage access mode. This field should be used only
           if file_storage_storage_class is provided
         displayName: File Storage Access Mode
