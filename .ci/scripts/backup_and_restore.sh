@@ -95,6 +95,8 @@ base_url = "$BASE_ADDR"
 api_root = "$API_ROOT"
 verify_ssl = false
 format = "json"
+username = "admin"
+password = "password"
 EOF
 fi
 
