@@ -1,4 +1,3 @@
-# Pulp
 
 ### Custom Resources
 

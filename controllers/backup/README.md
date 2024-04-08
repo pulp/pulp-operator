@@ -1,4 +1,3 @@
-# Pulp Backup
 
 ### Custom Resources
 
