@@ -7397,6 +7397,11 @@ spec:
                 description: 'Name of the ConfigMap with the list of Execution Environments
                   that should be synchronized. Default: ee-default-images'
                 type: string
+              enable_debugging:
+                description: 'By default Pulp logs at INFO level, but enabling DEBUG
+                  logging can be a helpful thing to get more insight when things don’t
+                  go as expected. Default: false'
+                type: boolean
               file_storage_access_mode:
                 description: The file storage access mode. This field should be used
                   only if file_storage_storage_class is provided

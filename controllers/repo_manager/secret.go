@@ -129,6 +129,9 @@ func pulpServerSecret(resources controllers.FunctionResources) client.Object {
 	// default settings.py configuration
 	defaultPulpSettings(resources, &pulp_settings)
 
+	// pulpcore debug log
+	debugLogging(resources, &pulp_settings)
+
 	// db settings
 	databaseSettings(resources, &pulp_settings)
 
@@ -530,4 +533,12 @@ func addCustomPulpSettings(pulp *repomanagerpulpprojectorgv1beta2.Pulp, pulpSett
 	}
 
 	*pulpSettings = *pulpSettings + convertedSettings
+}
+
+// debugLogging will set the log level from Pulpcore pods to DEBUG
+func debugLogging(resources controllers.FunctionResources, pulpSettings *string) {
+
+	if resources.Pulp.Spec.EnableDebugging {
+		*pulpSettings = *pulpSettings + fmt.Sprintln("LOGGING = {'dynaconf_merge': True, 'loggers': {'': {'handlers': ['console'], 'level': 'DEBUG'}}}")
+	}
 }
