@@ -981,6 +981,8 @@ type PulpStatus struct {
 	LastDeploymentUpdate string `json:"last_deployment_update,omitempty"`
 	// Cache deployed by pulp-operator enabled
 	ManagedCacheEnabled bool `json:"managed_cache_enabled,omitempty"`
+	// Type of storage in use by pulpcore pods
+	StorageType string `json:"storage_type,omitempty"`
 }
 
 // +kubebuilder:object:root=true

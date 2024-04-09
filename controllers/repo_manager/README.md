@@ -268,6 +268,7 @@ PulpStatus defines the observed state of Pulp
 | allowed_content_checksums | List of allowed checksum algorithms used to verify repository's integrity. | string | false |
 | last_deployment_update | Controller status to keep tracking of deployment updates | string | false |
 | managed_cache_enabled | Cache deployed by pulp-operator enabled | bool | false |
+| storage_type | Type of storage in use by pulpcore pods | string | false |
 
 [Back to Custom Resources](#custom-resources)
 

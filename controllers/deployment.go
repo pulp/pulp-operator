@@ -390,12 +390,6 @@ func GetAdminSecretName(pulp repomanagerpulpprojectorgv1beta2.Pulp) string {
 	return pulp.Spec.AdminPasswordSecret
 }
 
-// getStorageType retrieves the storage type defined in pulp CR
-func getStorageType(pulp repomanagerpulpprojectorgv1beta2.Pulp) []string {
-	_, storageType := MultiStorageConfigured(&pulp, "Pulp")
-	return storageType
-}
-
 // GetDBFieldsEncryptionSecret returns the name of DBFieldsEncryption Secret
 func GetDBFieldsEncryptionSecret(pulp repomanagerpulpprojectorgv1beta2.Pulp) string {
 	return pulp.Spec.DBFieldsEncryptionSecret
@@ -460,7 +454,7 @@ func (d *CommonDeployment) setVolumes(pulp repomanagerpulpprojectorgv1beta2.Pulp
 		volumes = append(volumes, volume)
 	}
 
-	storageType := getStorageType(pulp)
+	storageType := GetStorageType(pulp)
 	if storageType[0] == SCNameType { // if SC defined, we should use the PVC provisioned by the operator
 		fileStorage := corev1.Volume{
 			Name: "file-storage",
@@ -597,7 +591,7 @@ func (d *CommonDeployment) setVolumeMounts(pulp repomanagerpulpprojectorgv1beta2
 		volumeMounts = append(volumeMounts, adminSecret)
 	}
 
-	storageType := getStorageType(pulp)
+	storageType := GetStorageType(pulp)
 	if storageType[0] == SCNameType || storageType[0] == PVCType { // we will mount file-storage if a storageclass or a pvc was provided
 		fileStorageMount := corev1.VolumeMount{
 			Name:      "file-storage",
@@ -662,7 +656,7 @@ func (d *CommonDeployment) setInitContainerVolumeMounts(pulp repomanagerpulpproj
 		},
 	}
 
-	storageType := getStorageType(pulp)
+	storageType := GetStorageType(pulp)
 	if storageType[0] == SCNameType || storageType[0] == PVCType { // we will mount file-storage if a storageclass or a pvc was provided
 		fileStorageMount := corev1.VolumeMount{
 			Name:      "file-storage",
@@ -863,7 +857,7 @@ func setGpgInitContainer(resources any, pulp repomanagerpulpprojectorgv1beta2.Pu
 		},
 	}
 
-	storageType := getStorageType(pulp)
+	storageType := GetStorageType(pulp)
 	if storageType[0] == SCNameType || storageType[0] == PVCType {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      "file-storage",
