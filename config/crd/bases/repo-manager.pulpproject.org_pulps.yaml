@@ -10878,6 +10878,9 @@ spec:
               pulp_secret_key:
                 description: Name of the Secret to provide Django cryptographic signing.
                 type: string
+              storage_type:
+                description: Type of storage in use by pulpcore pods
+                type: string
               telemetry_enabled:
                 description: Pulp metrics collection enabled
                 type: boolean

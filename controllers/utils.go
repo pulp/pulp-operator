@@ -59,7 +59,7 @@ import (
 const (
 	AzureObjType = "azure blob"
 	S3ObjType    = "s3"
-	SCNameType   = "StorageClassName"
+	SCNameType   = "StorageClass"
 	PVCType      = "PVC"
 	EmptyDirType = "emptyDir"
 
@@ -298,6 +298,13 @@ func ImageChanged(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
 	definedImage := pulp.Spec.Image + ":" + pulp.Spec.ImageVersion
 	currentImage := pulp.Status.Image
 	return currentImage != definedImage
+}
+
+// StorageTypeChanged verifies if the storage type has been modified
+func StorageTypeChanged(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
+	currentStorageType := pulp.Status.StorageType
+	definedStorageType := GetStorageType(*pulp)
+	return currentStorageType != definedStorageType[0]
 }
 
 // WaitAPIPods waits until all API pods are in a READY state
@@ -853,4 +860,10 @@ func SetCustomEnvVars(pulp repomanagerpulpprojectorgv1beta2.Pulp, component stri
 // setPulpcoreCustomEnvVars returns the list of custom environment variables defined in Pulp CR
 func SetPulpcoreCustomEnvVars(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) []corev1.EnvVar {
 	return SetCustomEnvVars(pulp, string(pulpcoreType))
+}
+
+// GetStorageType retrieves the storage type defined in pulp CR
+func GetStorageType(pulp repomanagerpulpprojectorgv1beta2.Pulp) []string {
+	_, storageType := MultiStorageConfigured(&pulp, "Pulp")
+	return storageType
 }

@@ -500,7 +500,23 @@ func (r *RepoManagerReconciler) runMigration(ctx context.Context, pulp *repomana
 // needsMigration verifies if the pulpcore image has changed and no migration
 // has been done yet.
 func (r *RepoManagerReconciler) needsMigration(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
-	return controllers.ImageChanged(pulp) && !r.migrationDone(ctx, pulp) && !pulp.Spec.DisableMigrations
+
+	// if migrations are disabled in spec, we should not run it even if
+	// the image has changed
+	if pulp.Spec.DisableMigrations {
+		return false
+	}
+
+	// run a migration if the storage type changed
+	if controllers.StorageTypeChanged(pulp) {
+		// we need to update the status now to avoid a new reconciliation
+		// recreating a new job
+		pulp.Status.StorageType = controllers.GetStorageType(*pulp)[0]
+		r.Status().Update(ctx, pulp)
+		return true
+	}
+
+	return controllers.ImageChanged(pulp) && !r.migrationDone(ctx, pulp)
 }
 
 // migrationDone checks if there is a migration Job with the expected image
