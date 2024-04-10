@@ -867,3 +867,15 @@ func GetStorageType(pulp repomanagerpulpprojectorgv1beta2.Pulp) []string {
 	_, storageType := MultiStorageConfigured(&pulp, "Pulp")
 	return storageType
 }
+
+// DeployCollectionSign returns true if signingScript secret is defined with a collection script
+func DeployCollectionSign(secret corev1.Secret) bool {
+	_, contains := secret.Data[settings.CollectionSigningScriptName]
+	return contains
+}
+
+// DeployContainerSign returns true if signingScript secret is defined with a container script
+func DeployContainerSign(secret corev1.Secret) bool {
+	_, contains := secret.Data[settings.ContainerSigningScriptName]
+	return contains
+}

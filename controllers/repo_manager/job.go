@@ -338,18 +338,6 @@ func contentChecksumsModified(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool 
 	return !reflect.DeepEqual(pulp.Spec.AllowedContentChecksums, statusAllowedChecksum)
 }
 
-// deployCollectionSign returns true if  signingScript secret is defined with a collection script
-func deployCollectionSign(secret corev1.Secret) bool {
-	_, contains := secret.Data[settings.CollectionSigningScriptName]
-	return contains
-}
-
-// deployContainerSign returns true if  signingScript secret is defined with a container script
-func deployContainerSign(secret corev1.Secret) bool {
-	_, contains := secret.Data[settings.ContainerSigningScriptName]
-	return contains
-}
-
 // signingScriptContainer returns the definition of the container used in signingScript Job
 func signingScriptContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp, scriptsSecret corev1.Secret, r RepoManagerReconciler) corev1.Container {
 	// volume mounts
@@ -402,12 +390,12 @@ func signingScriptContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp, scripts
 echo "${PULP_SIGNING_KEY_FINGERPRINT}:6" | gpg --import-ownertrust
 `,
 	}
-	if deployCollectionSign(scriptsSecret) {
+	if controllers.DeployCollectionSign(scriptsSecret) {
 		args[0] += "/usr/local/bin/pulpcore-manager remove-signing-service collection-signing-service\n"
 		args[0] += "/usr/local/bin/pulpcore-manager add-signing-service collection-signing-service /var/lib/pulp/scripts/" + settings.CollectionSigningScriptName + " " + fingerprint + "\n"
 		envVars = append(envVars, corev1.EnvVar{Name: "COLLECTION_SIGNING_SERVICE", Value: "collection-signing-service"})
 	}
-	if deployContainerSign(scriptsSecret) {
+	if controllers.DeployContainerSign(scriptsSecret) {
 		args[0] += "/usr/local/bin/pulpcore-manager remove-signing-service container-signing-service --class container:ManifestSigningService\n"
 		args[0] += "/usr/local/bin/pulpcore-manager add-signing-service container-signing-service /var/lib/pulp/scripts/" + settings.ContainerSigningScriptName + " " + fingerprint + " --class container:ManifestSigningService"
 		envVars = append(envVars, corev1.EnvVar{Name: "CONTAINER_SIGNING_SERVICE", Value: "container-signing-service"})
@@ -428,11 +416,11 @@ echo "${PULP_SIGNING_KEY_FINGERPRINT}:6" | gpg --import-ownertrust
 // signingScriptJobVolumes returns the list of volumes used by signingScript Job pod
 func signingScriptJobVolumes(pulp *repomanagerpulpprojectorgv1beta2.Pulp, secret corev1.Secret) []corev1.Volume {
 	secretItems := []corev1.KeyToPath{}
-	if deployCollectionSign(secret) {
+	if controllers.DeployCollectionSign(secret) {
 		item := corev1.KeyToPath{Key: settings.CollectionSigningScriptName, Path: settings.CollectionSigningScriptName}
 		secretItems = append(secretItems, item)
 	}
-	if deployContainerSign(secret) {
+	if controllers.DeployContainerSign(secret) {
 		item := corev1.KeyToPath{Key: settings.ContainerSigningScriptName, Path: settings.ContainerSigningScriptName}
 		secretItems = append(secretItems, item)
 	}

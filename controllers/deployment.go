@@ -396,7 +396,8 @@ func GetDBFieldsEncryptionSecret(pulp repomanagerpulpprojectorgv1beta2.Pulp) str
 }
 
 // setVolumes defines the list of pod volumes
-func (d *CommonDeployment) setVolumes(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setVolumes(resources any, pulpcoreType settings.PulpcoreType) {
+	pulp := *resources.(FunctionResources).Pulp
 	dbFieldsEncryptionSecret := GetDBFieldsEncryptionSecret(pulp)
 	volumes := []corev1.Volume{
 		{
@@ -495,39 +496,7 @@ func (d *CommonDeployment) setVolumes(pulp repomanagerpulpprojectorgv1beta2.Pulp
 		}
 	}
 
-	if pulp.Spec.SigningSecret != "" {
-		if storageType[0] != SCNameType && storageType[0] != PVCType {
-			ephemeralGpg := corev1.Volume{
-				Name: "ephemeral-gpg",
-				VolumeSource: corev1.VolumeSource{
-					EmptyDir: &corev1.EmptyDirVolumeSource{},
-				},
-			}
-			volumes = append(volumes, ephemeralGpg)
-		}
-
-		signingSecretVolume := []corev1.Volume{
-			{
-				Name: "gpg-keys",
-				VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						SecretName: pulp.Spec.SigningSecret,
-						Items: []corev1.KeyToPath{
-							{
-								Key:  "signing_service.gpg",
-								Path: "signing_service.gpg",
-							},
-							{
-								Key:  "signing_service.asc",
-								Path: "signing_service.asc",
-							},
-						},
-					},
-				},
-			},
-		}
-		volumes = append(volumes, signingSecretVolume...)
-	}
+	volumes = signingMetadataVolumes(resources, storageType, volumes)
 
 	// only api pods need the container-auth-certs
 	if pulpcoreType == settings.API {
@@ -553,6 +522,72 @@ func (d *CommonDeployment) setVolumes(pulp repomanagerpulpprojectorgv1beta2.Pulp
 		volumes = append(volumes, containerTokenSecretVolume)
 	}
 	d.volumes = append([]corev1.Volume(nil), volumes...)
+}
+
+// signingMetadataVolumes defines the volumes for the signing metadata services
+func signingMetadataVolumes(resources any, storageType []string, volumes []corev1.Volume) []corev1.Volume {
+	pulp := *resources.(FunctionResources).Pulp
+	if pulp.Spec.SigningSecret != "" {
+		if storageType[0] != SCNameType && storageType[0] != PVCType {
+			ephemeralGpg := corev1.Volume{
+				Name: "ephemeral-gpg",
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{},
+				},
+			}
+			volumes = append(volumes, ephemeralGpg)
+		}
+
+		ctx := resources.(FunctionResources).Context
+		client := resources.(FunctionResources).Client
+		secretName := pulp.Spec.SigningScripts
+		secret := &corev1.Secret{}
+		client.Get(ctx, types.NamespacedName{Name: secretName, Namespace: pulp.Namespace}, secret)
+
+		secretItems := []corev1.KeyToPath{}
+		if DeployCollectionSign(*secret) {
+			item := corev1.KeyToPath{Key: settings.CollectionSigningScriptName, Path: settings.CollectionSigningScriptName}
+			secretItems = append(secretItems, item)
+		}
+		if DeployContainerSign(*secret) {
+			item := corev1.KeyToPath{Key: settings.ContainerSigningScriptName, Path: settings.ContainerSigningScriptName}
+			secretItems = append(secretItems, item)
+		}
+		volumePermissions := int32(0755)
+		signingSecretVolume := []corev1.Volume{
+			{
+				Name: "gpg-keys",
+				VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						SecretName: pulp.Spec.SigningSecret,
+						Items: []corev1.KeyToPath{
+							{
+								Key:  "signing_service.gpg",
+								Path: "signing_service.gpg",
+							},
+							{
+								Key:  "signing_service.asc",
+								Path: "signing_service.asc",
+							},
+						},
+					},
+				},
+			},
+			{
+				Name: pulp.Name + "-signing-scripts",
+				VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						SecretName:  pulp.Spec.SigningScripts,
+						Items:       secretItems,
+						DefaultMode: &volumePermissions,
+					},
+				},
+			},
+		}
+		volumes = append(volumes, signingSecretVolume...)
+	}
+
+	return volumes
 }
 
 // setVolumeMounts defines the list containers volumes mount points
@@ -615,6 +650,21 @@ func (d *CommonDeployment) setVolumeMounts(pulp repomanagerpulpprojectorgv1beta2
 				MountPath: "/var/lib/pulp/.gnupg",
 			}
 			volumeMounts = append(volumeMounts, signingSecretMount)
+		}
+
+		for _, volume := range d.volumes {
+			if volume.Name == pulp.Name+"-signing-scripts" {
+				for _, script := range volume.VolumeSource.Secret.Items {
+					signingSecretMount := corev1.VolumeMount{
+						Name:      pulp.Name + "-signing-scripts",
+						MountPath: "/var/lib/pulp/scripts/" + script.Key,
+						SubPath:   script.Key,
+						ReadOnly:  true,
+					}
+					volumeMounts = append(volumeMounts, signingSecretMount)
+				}
+				break
+			}
 		}
 	}
 
@@ -1083,7 +1133,7 @@ func (d *CommonDeployment) build(resources any, pulpcoreType settings.PulpcoreTy
 	d.setPodSecurityContext(*pulp)
 	d.setNodeSelector(*pulp, pulpcoreType)
 	d.setTolerations(*pulp, pulpcoreType)
-	d.setVolumes(*pulp, pulpcoreType)
+	d.setVolumes(resources, pulpcoreType)
 	d.setVolumeMounts(*pulp, pulpcoreType)
 	d.setResourceRequirements(*pulp, pulpcoreType)
 	d.setLivenessProbe(*pulp, pulpcoreType)
