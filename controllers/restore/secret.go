@@ -57,7 +57,6 @@ type storageObjectSecret struct {
 
 type signingSecret struct {
 	SigninSecret      string `json:"signing_secret"`
-	SigninServiceASC  string `json:"signing_service.asc"`
 	SigningServiceGPG string `json:"signing_service.gpg"`
 }
 
