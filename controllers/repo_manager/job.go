@@ -362,12 +362,6 @@ func signingScriptContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp, scripts
 			ReadOnly:  true,
 		},
 		{
-			Name:      "gpg-keys",
-			MountPath: "/etc/pulp/keys/signing_service.asc",
-			SubPath:   "signing_service.asc",
-			ReadOnly:  true,
-		},
-		{
 			Name:      "ephemeral-gpg",
 			MountPath: "/var/lib/pulp/.gnupg",
 		},
@@ -443,7 +437,7 @@ func signingScriptJobVolumes(pulp *repomanagerpulpprojectorgv1beta2.Pulp, secret
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
 				SecretName: pulp.Spec.SigningSecret,
-				Items:      []corev1.KeyToPath{{Key: "signing_service.gpg", Path: "signing_service.gpg"}, {Key: "signing_service.asc", Path: "signing_service.asc"}},
+				Items:      []corev1.KeyToPath{{Key: "signing_service.gpg", Path: "signing_service.gpg"}},
 			},
 		},
 	}

@@ -565,10 +565,6 @@ func signingMetadataVolumes(resources any, storageType []string, volumes []corev
 								Key:  "signing_service.gpg",
 								Path: "signing_service.gpg",
 							},
-							{
-								Key:  "signing_service.asc",
-								Path: "signing_service.asc",
-							},
 						},
 					},
 				},
@@ -897,12 +893,6 @@ func setGpgInitContainer(resources any, pulp repomanagerpulpprojectorgv1beta2.Pu
 			Name:      "gpg-keys",
 			MountPath: "/etc/pulp/keys/signing_service.gpg",
 			SubPath:   "signing_service.gpg",
-			ReadOnly:  true,
-		},
-		{
-			Name:      "gpg-keys",
-			MountPath: "/etc/pulp/keys/signing_service.asc",
-			SubPath:   "signing_service.asc",
 			ReadOnly:  true,
 		},
 	}
