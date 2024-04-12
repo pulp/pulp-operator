@@ -1,0 +1,2 @@
+Added a check to not panic in case a file_storage_storage_class is provided but
+any of file_storage_size and/or file_storage_access_mode is/are missing.
