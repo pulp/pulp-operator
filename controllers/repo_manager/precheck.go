@@ -222,6 +222,13 @@ func checkFileStorage(ctx context.Context, r *RepoManagerReconciler, pulp *repom
 		r.RawLogger.Error(nil, "or remove all file_storage_* fields to deploy Pulp with emptyDir.")
 		return &ctrl.Result{}
 	}
+
+	if len(pulp.Spec.FileStorageClass) > 0 && (len(pulp.Spec.FileStorageAccessMode) == 0 || len(pulp.Spec.FileStorageSize) == 0) {
+		r.RawLogger.Error(nil, "file_storage_class provided but no file_storage_size and/or file_storage_access_mode defined!")
+		r.RawLogger.Error(nil, "Provide a file_storage_size and file_storage_access_mode fields to deploy Pulp with persistent data")
+		r.RawLogger.Error(nil, "or remove all file_storage_* fields to deploy Pulp with emptyDir.")
+		return &ctrl.Result{}
+	}
 	return nil
 }
 
