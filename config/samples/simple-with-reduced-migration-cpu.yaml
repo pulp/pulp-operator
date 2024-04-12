@@ -6,8 +6,8 @@ spec:
   telemetry:
     enabled: true
   deployment_type: pulp
-  image_version: nightly
-  image_web_version: nightly
+  image_version: stable
+  image_web_version: stable
   api:
     replicas: 1
   content:
