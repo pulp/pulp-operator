@@ -151,6 +151,14 @@ ifeq ($(shell which go 2>/dev/null), )
 	tar -C $(GOLANG_INSTALL_PATH) -xzf golang.tar.gz
 endif
 
+.PHONY: docs
+docs: ## Build unified docs
+	pulp-docs build
+
+.PHONY: servedocs
+servedocs: ## Build unified docs
+	pulp-docs serve
+
 ##@ Build
 
 .PHONY: build
