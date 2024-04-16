@@ -55,6 +55,8 @@ jobs:
         run: |
           make fmt vet
         shell: bash
+  docs:
+    uses: "./.github/workflows/docs-ci.yml"
   bundle:
     runs-on: ubuntu-latest
     steps:
