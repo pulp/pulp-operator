@@ -10,6 +10,7 @@ theme:
     - search.highlight
     - search.share
   name: material
+  custom_dir: "docs/overrides"
   logo: images/pulp_logo_big.png
   palette:
     - scheme: default
