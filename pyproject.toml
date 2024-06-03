@@ -2,7 +2,8 @@
 package = "pulp-operator"
 filename = "CHANGES.md"
 directory = "CHANGES/"
-title_format = "{version} ({project_date})"
+title_format = "## {version} ({project_date}) {{: #{version} }}"
 template = "CHANGES/.TEMPLATE.md"
 issue_format = "[#{issue}](https://github.com/pulp/pulp-operator/issues/{issue})"
 start_string = "<!-- TOWNCRIER -->\n"
+underlines = ["", "", ""]
