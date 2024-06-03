@@ -1,5 +1,4 @@
-Changelog
-=========
+# Changelog
 
 <!---
     You should *NOT* be adding new change log entries to this file, this
@@ -13,41 +12,29 @@ Changelog
 
 <!-- TOWNCRIER -->
 
-1.0.0-beta.4 (2024-01-18)
-=========================
+## 1.0.0-beta.4 (2024-01-18) {: #1.0.0-beta.4 }
 
-
-Features
---------
+#### Features
 
 - Added `env_vars` field to define custom environment variables.
   [#1161](https://github.com/pulp/pulp-operator/issues/1161)
 - Added support for annotating pulp-operator managed Deployments.
   [#1190](https://github.com/pulp/pulp-operator/issues/1190)
 
-
-Improved Documentation
-----------------------
+#### Improved Documentation
 
 - Added a section explaining how to add custom Pulp settings.
   [#1163](https://github.com/pulp/pulp-operator/issues/1163)
 
-
-Misc
-----
+#### Misc
 
 - [#1192](https://github.com/pulp/pulp-operator/issues/1192)
 
+______________________________________________________________________
 
-----
+## 1.0.0-beta.3 (2023-12-04) {: #1.0.0-beta.3 }
 
-
-1.0.0-beta.3 (2023-12-04)
-=========================
-
-
-Bugfixes
---------
+#### Bugfixes
 
 - Fixed the signing services issues.
   [#939](https://github.com/pulp/pulp-operator/issues/939)
@@ -58,40 +45,29 @@ Bugfixes
 - Updated the pulp-server `Secret` to import all funcs/vars from django-auth-ldap.
   [#1154](https://github.com/pulp/pulp-operator/issues/1154)
 
-
-Improved Documentation
-----------------------
+#### Improved Documentation
 
 - Added the steps to configure signing services.
   [#1003](https://github.com/pulp/pulp-operator/issues/1003)
 - Updated the index page with a little bit more context of operators and fixes.
   [#1145](https://github.com/pulp/pulp-operator/issues/1145)
 
-
-Misc
-----
+#### Misc
 
 - [#1100](https://github.com/pulp/pulp-operator/issues/1100), [#1124](https://github.com/pulp/pulp-operator/issues/1124)
 
+______________________________________________________________________
 
-----
+## 1.0.0-beta.2 (2023-10-17) {: #1.0.0-beta.2 }
 
-
-1.0.0-beta.2 (2023-10-17)
-=========================
-
-
-Features
---------
+#### Features
 
 - Added support to configure LDAP with Pulp.
   [#1042](https://github.com/pulp/pulp-operator/issues/1042)
 - Added capability to customize annotations of serviceAccount created by operator.
   [#1079](https://github.com/pulp/pulp-operator/issues/1079)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Modified pulpcore containers entrypoints to support `pulp-minimal:3.33` image.
   [#1081](https://github.com/pulp/pulp-operator/issues/1081)
@@ -100,66 +76,48 @@ Bugfixes
 - Fixed the KubeAPIWarningLogger PodSecurity warning messages.
   [#1102](https://github.com/pulp/pulp-operator/issues/1102)
 
-
-Improved Documentation
-----------------------
+#### Improved Documentation
 
 - Added doc steps to rotate database fields encryption key.
   [#742](https://github.com/pulp/pulp-operator/issues/742)
-- Updated the `reset-admin-password` warning message to also don't reset the  
+- Updated the `reset-admin-password` warning message to also don't reset the\
   password via `/api/v3/users` endpoint.
   [#1078](https://github.com/pulp/pulp-operator/issues/1078)
 
-
-Misc
-----
+#### Misc
 
 - [#1101](https://github.com/pulp/pulp-operator/issues/1101)
 
+______________________________________________________________________
 
-----
+## 1.0.0-beta.1 (2023-09-05) {: #1.0.0-beta.1 }
 
-
-1.0.0-beta.1 (2023-09-05)
-=========================
-
-
-Features
---------
+#### Features
 
 - Added a job to handle `ALLOWED_CONTENT_CHECKSUMS` modifications.
   [#1060](https://github.com/pulp/pulp-operator/issues/1060)
 - Mofified k8s jobs resource names to avoid name colision if multiple Pulp CRs are created in the same namespace.
   [#1074](https://github.com/pulp/pulp-operator/issues/1074)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Fixed a regression where the `s3-region` was defined as a required `Secret` field.
   [#1057](https://github.com/pulp/pulp-operator/issues/1057)
 - Fixed a regression where handling of the `s3-endpoint` option was not possible
   [#1066](https://github.com/pulp/pulp-operator/issues/1066)
 
-
-Deprecations and Removals
--------------------------
+#### Deprecations and Removals
 
 - Removed unused fields from CRD.
   [#817](https://github.com/pulp/pulp-operator/issues/817)
 - Removed CRD fields from old ansible version of the operator.
   [#1044](https://github.com/pulp/pulp-operator/issues/1044)
 
+______________________________________________________________________
 
-----
+## 1.0.0-alpha.9 (2023-08-21) {: #1.0.0-alpha.9 }
 
-
-1.0.0-alpha.9 (2023-08-21)
-==========================
-
-
-Features
---------
+#### Features
 
 - Added a check for missing file_storage_storage_class definition whenever
   file_storage_size or file_storage_access_mode is/are provided.
@@ -175,9 +133,7 @@ Features
 - Added the `pulp_secret_key` field to set the Django `SECRET_KEY`.
   [#1040](https://github.com/pulp/pulp-operator/issues/1040)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Fixed an issue in OCP clusters where every ingress would be created with the same configurations (regardless of ingressclass).
   [#917](https://github.com/pulp/pulp-operator/issues/917)
@@ -190,50 +146,34 @@ Bugfixes
 - Fixed a bug that caused the CONTENT_ORIGIN scheme to always be https.
   [#1048](https://github.com/pulp/pulp-operator/issues/1048)
 
-
-Improved Documentation
-----------------------
+#### Improved Documentation
 
 - Added a doc section with instructions to install pulp-operator using Helm.
   [#1008](https://github.com/pulp/pulp-operator/issues/1008)
 
-
-Deprecations and Removals
--------------------------
+#### Deprecations and Removals
 
 - The operator will not get the default ingress domain nor verify the ingressclass anymore to avoid the need of clusterroles.
   [#885](https://github.com/pulp/pulp-operator/issues/885)
 
-
-Misc
-----
+#### Misc
 
 - [#884](https://github.com/pulp/pulp-operator/issues/884), [#984](https://github.com/pulp/pulp-operator/issues/984), [#986](https://github.com/pulp/pulp-operator/issues/986), [#993](https://github.com/pulp/pulp-operator/issues/993), [#1041](https://github.com/pulp/pulp-operator/issues/1041)
 
+______________________________________________________________________
 
-----
+## 1.0.0-alpha.8 (2023-06-23) {: #1.0.0-alpha.8 }
 
-
-1.0.0-alpha.8 (2023-06-23)
-==========================
-
-
-Bugfixes
---------
+#### Bugfixes
 
 - Modified the default readiness probe endpoint when DOMAIN is enabled.
   [#987](https://github.com/pulp/pulp-operator/issues/987)
 
+______________________________________________________________________
 
-----
+## 1.0.0-alpha.7 (2023-06-22) {: #1.0.0-alpha.7 }
 
-
-1.0.0-alpha.7 (2023-06-22)
-==========================
-
-
-Features
---------
+#### Features
 
 - Modified the reconciliation for `pulpcore-content` to wait for `API` pods get
   into a READY state before updating the `Deployment` in case of image version change.
@@ -242,69 +182,49 @@ Features
   secret reconciliation.
   [#973](https://github.com/pulp/pulp-operator/issues/973)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Added a watcher on some secrets not managed by the operator and added a
   reconciliation loop in case these secrets get modified.
   [#521](https://github.com/pulp/pulp-operator/issues/521)
 
-
-Improved Documentation
-----------------------
+#### Improved Documentation
 
 - Added a networking section in configuration doc.
   [#666](https://github.com/pulp/pulp-operator/issues/666)
 - Added more information regarding the usage and limitation of `emptyDir`.
   [#824](https://github.com/pulp/pulp-operator/issues/824)
 
+______________________________________________________________________
 
-----
+## 1.0.0-alpha.6 (2023-04-27) {: #1.0.0-alpha.6 }
 
-
-1.0.0-alpha.6 (2023-04-27)
-==========================
-
-
-Bugfixes
---------
+#### Bugfixes
 
 - The container_token_secret was not getting its name from Pulp CR.
   [#852](https://github.com/pulp/pulp-operator/issues/852)
 
-
-Improved Documentation
-----------------------
+#### Improved Documentation
 
 - Add Documentation for custom S3 endpoints
   [#882](https://github.com/pulp/pulp-operator/issues/882)
 
-
-Misc
-----
+#### Misc
 
 - [#858](https://github.com/pulp/pulp-operator/issues/858), [#935](https://github.com/pulp/pulp-operator/issues/935), [#942](https://github.com/pulp/pulp-operator/issues/942)
 
+______________________________________________________________________
 
-----
+## 1.0.0-alpha.5 (2023-01-03) {: #1.0.0-alpha.5 }
 
-
-1.0.0-alpha.5 (2023-01-03)
-==========================
-
-
-Features
---------
+#### Features
 
 - Added a feature to deploy and sync Galaxy execution environments.
   [#821](https://github.com/pulp/pulp-operator/issues/821)
 - Modified postgres mount point to keep compatibility with ansible-based operator version.
   [#848](https://github.com/pulp/pulp-operator/issues/848)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Added a check for `ingress_host` being null when `ingress_type` defined as "ingress".
   [#675](https://github.com/pulp/pulp-operator/issues/675)
@@ -319,9 +239,7 @@ Bugfixes
 - Fixed an issue with default values for TOKEN_SERVER and TOKEN_AUTH_DISABLED in settings.py.
   [#836](https://github.com/pulp/pulp-operator/issues/836)
 
-
-Improved Documentation
-----------------------
+#### Improved Documentation
 
 - Added steps to configure and run backup/restore procedure.
   [#765](https://github.com/pulp/pulp-operator/issues/765)
@@ -330,52 +248,36 @@ Improved Documentation
 - Document how to install multiple instances of Pulp operator.
   [#827](https://github.com/pulp/pulp-operator/issues/827)
 
+______________________________________________________________________
 
-----
+## 1.0.0-alpha.4 (2022-11-28) {: #1.0.0-alpha.4 }
 
-
-1.0.0-alpha.4 (2022-11-28)
-==========================
-
-
-Features
---------
+#### Features
 
 - Added a field to set IngressClass name.
   [#674](https://github.com/pulp/pulp-operator/issues/674)
 - Added a field to pass a secret name to configure route custom certificates.
   [#800](https://github.com/pulp/pulp-operator/issues/800)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Fixed an issue with envtest failing because of an assessment with old value.
   [#807](https://github.com/pulp/pulp-operator/issues/807)
 
-
-Improved Documentation
-----------------------
+#### Improved Documentation
 
 - Described the Operator unmanaged state.
   [#792](https://github.com/pulp/pulp-operator/issues/792)
 
-
-Misc
-----
+#### Misc
 
 - [#796](https://github.com/pulp/pulp-operator/issues/796)
 
+______________________________________________________________________
 
-----
+## 1.0.0-alpha.3 (2022-11-17) {: #1.0.0-alpha.3 }
 
-
-1.0.0-alpha.3 (2022-11-17)
-==========================
-
-
-Features
---------
+#### Features
 
 - Added a configmap to avoid pulprestore controller execution.
   [#550](https://github.com/pulp/pulp-operator/issues/550)
@@ -384,55 +286,41 @@ Features
 - Added a field to set affinity for bkp-manager pods.
   [#782](https://github.com/pulp/pulp-operator/issues/782)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Make web available when ingress isn't nginx
   [#770](https://github.com/pulp/pulp-operator/issues/770)
 
+______________________________________________________________________
 
-----
+## 1.0.0-alpha.2 (2022-11-09) {: #1.0.0-alpha.2 }
 
-
-1.0.0-alpha.2 (2022-11-09)
-==========================
-
-
-Bugfixes
---------
+#### Bugfixes
 
 - Ensure reconciliation when ingress is modified
   [#672](https://github.com/pulp/pulp-operator/issues/672)
-- Fixed an issue with .status.conditions[] not getting updated for pulpcore-workers.
+- Fixed an issue with .status.conditions\[\] not getting updated for pulpcore-workers.
   [#735](https://github.com/pulp/pulp-operator/issues/735)
-- Fixed an issue with .status.conditions[] getting updated in a specific order.
+- Fixed an issue with .status.conditions\[\] getting updated in a specific order.
   [#736](https://github.com/pulp/pulp-operator/issues/736)
 - Fixed an issue in RequeueAfter reconciliation logic.
   [#747](https://github.com/pulp/pulp-operator/issues/747)
-- Added a "retry" in case controller fails to update operator's status.conditions[].
+- Added a "retry" in case controller fails to update operator's status.conditions\[\].
   [#751](https://github.com/pulp/pulp-operator/issues/751)
 - Fix ingress type assertion
   [#755](https://github.com/pulp/pulp-operator/issues/755)
 - Set update error message as DEBUG instead of ERROR.
   [#756](https://github.com/pulp/pulp-operator/issues/756)
 
-
-Misc
-----
+#### Misc
 
 - [#763](https://github.com/pulp/pulp-operator/issues/763)
 
+______________________________________________________________________
 
-----
+## 1.0.0-alpha.1 (2022-11-03) {: #1.0.0-alpha.1 }
 
-
-1.0.0-alpha.1 (2022-11-03)
-==========================
-
-
-Features
---------
+#### Features
 
 - Added PDB configuration through Pulp CR.
   [#433](https://github.com/pulp/pulp-operator/issues/433)
@@ -475,9 +363,7 @@ Features
 - Improved route paths provisioning loop.
   [#729](https://github.com/pulp/pulp-operator/issues/729)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Added logic on how to handle different/multiple types of storage in Pulp CR.
   [#526](https://github.com/pulp/pulp-operator/issues/526)
@@ -520,9 +406,7 @@ Bugfixes
 - Fixed issue with headless services propagating new address to pulp-web pods.
   [#737](https://github.com/pulp/pulp-operator/issues/737)
 
-
-Improved Documentation
-----------------------
+#### Improved Documentation
 
 - Added steps to configure object storage.
   [#593](https://github.com/pulp/pulp-operator/issues/593)
@@ -537,212 +421,151 @@ Improved Documentation
 - Added a section explaining default secrets created by the operator.
   [#683](https://github.com/pulp/pulp-operator/issues/683)
 
-
-Misc
-----
+#### Misc
 
 - [#678](https://github.com/pulp/pulp-operator/issues/678), [#692](https://github.com/pulp/pulp-operator/issues/692)
 
+______________________________________________________________________
 
-----
+## 0.14.0 (2022-09-19) {: #0.14.0 }
 
-
-0.14.0 (2022-09-19)
-===================
-
-
-Features
---------
+#### Features
 
 - Omitted pulp-web role if ingress_type==route, which brings some benefits like:
-  * reduce point of failure
-  * reduce complexity
-  * reduce resource consumption
-  * reduce communication hops
-  [#436](https://github.com/pulp/pulp-operator/issues/436)
+  - reduce point of failure
+  - reduce complexity
+  - reduce resource consumption
+  - reduce communication hops
+    [#436](https://github.com/pulp/pulp-operator/issues/436)
 - Add support for pulp_container signing service
   [#564](https://github.com/pulp/pulp-operator/issues/564)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Adding NodeSelector/Toleration to Redis Deployment
   [#561](https://github.com/pulp/pulp-operator/issues/561)
 - Allows users to correctly set predefined pvc with backup_pvc.  It was hardcoded in the remove ownerReferences task.  Now correctly uses the dynamic variable backup_claim.
   [#610](https://github.com/pulp/pulp-operator/issues/610)
 
-
-Misc
-----
+#### Misc
 
 - [#489](https://github.com/pulp/pulp-operator/issues/489), [#590](https://github.com/pulp/pulp-operator/issues/590)
 
+______________________________________________________________________
 
-----
+## 0.13.0 (2022-07-04) {: #0.13.0 }
 
-
-0.13.0 (2022-07-04)
-===================
-
-
-Features
---------
+#### Features
 
 - Added more information on `.status.conditions` CR field.
   [#435](https://github.com/pulp/pulp-operator/issues/435)
 - Added readiness probe to content and workers
   [#455](https://github.com/pulp/pulp-operator/issues/455)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Remove ownerReferences from DB fields encryption secret to avoid garbage collection
   [#467](https://github.com/pulp/pulp-operator/issues/467)
 
-
-Misc
-----
+#### Misc
 
 - [#461](https://github.com/pulp/pulp-operator/issues/461), [#466](https://github.com/pulp/pulp-operator/issues/466)
 
+______________________________________________________________________
 
-----
+## 0.12.0 (2022-06-15) {: #0.12.0 }
 
-
-0.12.0 (2022-06-15)
-===================
-
-
-Features
---------
+#### Features
 
 - Make no_log configurable
   [#443](https://github.com/pulp/pulp-operator/issues/443)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Improve pulp status health check
   [#447](https://github.com/pulp/pulp-operator/issues/447)
 
+______________________________________________________________________
 
-----
+## 0.11.1 (2022-06-09) {: #0.11.1 }
 
-
-0.11.1 (2022-06-09)
-===================
-
-
-Bugfixes
---------
+#### Bugfixes
 
 - Gunicorn API workers default to 2
   [#437](https://github.com/pulp/pulp-operator/issues/437)
 - Ensure azure_connection_string is optional
   [#440](https://github.com/pulp/pulp-operator/issues/440)
 
+______________________________________________________________________
 
-----
+## 0.11.0 (2022-06-02) {: #0.11.0 }
 
-
-0.11.0 (2022-06-02)
-===================
-
-
-Features
---------
+#### Features
 
 - Upgrade to PostgreSQL 13 and add data migration logic
   [#358](https://github.com/pulp/pulp-operator/issues/358)
 - Made Nginx, Gunicorn, HAproxy timeouts configurable
   [#418](https://github.com/pulp/pulp-operator/issues/418)
-- The Pulp API can now be rerooted using the new ``API_ROOT`` setting. By default it is set to
-  ``/pulp/``. Pulp appends the string ``api/v3/`` onto the value of ``API_ROOT``.
+- The Pulp API can now be rerooted using the new `API_ROOT` setting. By default it is set to
+  `/pulp/`. Pulp appends the string `api/v3/` onto the value of `API_ROOT`.
   [#421](https://github.com/pulp/pulp-operator/issues/421)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Ensure Nginx `client_max_body_size` is correctly set
   [#418](https://github.com/pulp/pulp-operator/issues/418)
 - Ensure content can be signed
   [#426](https://github.com/pulp/pulp-operator/issues/426)
-- Fix restore when ``deployment_name`` is set
+- Fix restore when `deployment_name` is set
   [#427](https://github.com/pulp/pulp-operator/issues/427)
 
-
-Misc
-----
+#### Misc
 
 - [#407](https://github.com/pulp/pulp-operator/issues/407)
 
+______________________________________________________________________
 
-----
+## 0.10.1 (2022-05-18) {: #0.10.1 }
 
-
-0.10.1 (2022-05-18)
-===================
-
-
-Bugfixes
---------
+#### Bugfixes
 
 - Set reconcile period to 0s to resolve issue with reconciliation loop not converging
   [#385](https://github.com/pulp/pulp-operator/issues/385)
 - Patch container-auth secret creation to ensure the reconciliation loop converges
   [#403](https://github.com/pulp/pulp-operator/issues/403)
 
-
-Deprecations and Removals
--------------------------
+#### Deprecations and Removals
 
 - Revert #373 to ensure the reconciliation loop converges
   [#403](https://github.com/pulp/pulp-operator/issues/403)
 
+______________________________________________________________________
 
-----
+## 0.10.0 (2022-05-12) {: #0.10.0 }
 
-
-0.10.0 (2022-05-12)
-===================
-
-
-Features
---------
+#### Features
 
 - Add configurable timeout for pulp-api and pulp-content
   [#390](https://github.com/pulp/pulp-operator/issues/390)
 - Add configurable workers for pulp-api and pulp-content
   [#392](https://github.com/pulp/pulp-operator/issues/392)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Fix a reference to an incorrect variable in pulp-status role
   [#388](https://github.com/pulp/pulp-operator/issues/388)
 - Provide default values for container registry
   [#394](https://github.com/pulp/pulp-operator/issues/394)
 
-
-Misc
-----
+#### Misc
 
 - [#386](https://github.com/pulp/pulp-operator/issues/386)
 
+______________________________________________________________________
 
-----
+## 0.9.0 (2022-04-27) {: #0.9.0 }
 
-
-0.9.0 (2022-04-27)
-==================
-
-Features
---------
+#### Features
 
 - Modified image_pull_secret to allow users to provide multiple secrets.
   [#343](https://github.com/pulp/pulp-operator/issues/343)
@@ -753,29 +576,20 @@ Features
 - Enable backup for ReadWriteOnce access mode
   [#380](https://github.com/pulp/pulp-operator/issues/380)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Fix backup/restore events
   [#378](https://github.com/pulp/pulp-operator/issues/378)
 
-
-Misc
-----
+#### Misc
 
 - [#374](https://github.com/pulp/pulp-operator/issues/374)
 
+______________________________________________________________________
 
-----
+## 0.8.0 (2022-03-14) {: #0.8.0 }
 
-
-0.8.0 (2022-03-14)
-==================
-
-
-Features
---------
+#### Features
 
 - Add ability to configure extra args for postgres
   [#344](https://github.com/pulp/pulp-operator/issues/344)
@@ -786,23 +600,16 @@ Features
 - Support nodeSelector and tolerations
   [#348](https://github.com/pulp/pulp-operator/issues/348)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Ensure the operator works with pre-defined TLS secret
   [#354](https://github.com/pulp/pulp-operator/issues/354)
 
+______________________________________________________________________
 
-----
+## 0.7.1 (2022-02-22) {: #0.7.1 }
 
-
-0.7.1 (2022-02-22)
-==================
-
-
-Bugfixes
---------
+#### Bugfixes
 
 - Made Redis optional when installing pulp
   [#323](https://github.com/pulp/pulp-operator/issues/323)
@@ -815,40 +622,28 @@ Bugfixes
 - Fixes TokenReview authentication
   [#337](https://github.com/pulp/pulp-operator/issues/337)
 
+______________________________________________________________________
 
-----
+## 0.7.0 (2021-12-21) {: #0.7.0 }
 
-
-0.7.0 (2021-12-21)
-==================
-
-
-Features
---------
+#### Features
 
 - Support cert-manager format on container token secret
   [#313](https://github.com/pulp/pulp-operator/issues/313)
 - Enable Execution Environments by default
   [#315](https://github.com/pulp/pulp-operator/issues/315)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Renamed services to avoid overwriting environment variables
   https://kubernetes.io/docs/concepts/services-networking/service/#environment-variables
   [#309](https://github.com/pulp/pulp-operator/issues/309)
 
+______________________________________________________________________
 
-----
+## 0.6.1 (2021-12-09) {: #0.6.1 }
 
-
-0.6.1 (2021-12-09)
-==================
-
-
-Bugfixes
---------
+#### Bugfixes
 
 - Mount `/var/lib/pulp/tmp` on pulp-content
   [#299](https://github.com/pulp/pulp-operator/issues/299)
@@ -857,57 +652,40 @@ Bugfixes
 - Raise resource limits for content container to avoid OOMKill
   [#303](https://github.com/pulp/pulp-operator/issues/303)
 
+______________________________________________________________________
 
-----
+## 0.6.0 (2021-12-06) {: #0.6.0 }
 
-
-0.6.0 (2021-12-06)
-==================
-
-
-Bugfixes
---------
+#### Bugfixes
 
 - Fix node affinity handling
   [#289](https://github.com/pulp/pulp-operator/issues/289)
 - Fixed web containers initialization
   [#295](https://github.com/pulp/pulp-operator/issues/295)
 
+______________________________________________________________________
 
-----
+## 0.5.0 (2021-11-05) {: #0.5.0 }
 
-
-0.5.0 (2021-11-05)
-==================
-
-
-Features
---------
+#### Features
 
 - Made request size limit configurable
   [#227](https://github.com/pulp/pulp-operator/issues/227)
 - Ensure resource manager is not started for pulpcore >= 3.16
   [#231](https://github.com/pulp/pulp-operator/issues/231)
-- Set RELATED_IMAGE_ vars to enable disconnected deployments
+- Set RELATED_IMAGE\_ vars to enable disconnected deployments
   [#232](https://github.com/pulp/pulp-operator/issues/232)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Image pull policy defaults to IfNotPresent
   [#229](https://github.com/pulp/pulp-operator/issues/229)
 
+______________________________________________________________________
 
-----
+## 0.4.0 (2021-10-15) {: #0.4.0 }
 
-
-0.4.0 (2021-10-15)
-==================
-
-
-Features
---------
+#### Features
 
 - Removed tags, registry, and projects so users can add images with custom registries and tags in image override
   [#218](https://github.com/pulp/pulp-operator/issues/218)
@@ -918,38 +696,27 @@ Features
 - Added support to override PosgreSQL sslmode
   [#9421](https://pulp.plan.io/issues/9421)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Ensure default storage for Postgres
   [#221](https://github.com/pulp/pulp-operator/issues/221)
 
-
-Deprecations and Removals
--------------------------
+#### Deprecations and Removals
 
 - Move from cluster-scoped operator model to namespace-scoped model
   [#208](https://github.com/pulp/pulp-operator/issues/208)
 - Dropping OCP 4.6 support
   [#9330](https://pulp.plan.io/issues/9330)
 
-
-Misc
-----
+#### Misc
 
 - [#206](https://github.com/pulp/pulp-operator/issues/206), [#209](https://github.com/pulp/pulp-operator/issues/209), [#215](https://github.com/pulp/pulp-operator/issues/215), [#9217](https://pulp.plan.io/issues/9217)
 
+______________________________________________________________________
 
-----
+## 0.3.0 (2021-07-14) {: #0.3.0 }
 
-
-0.3.0 (2021-07-14)
-==================
-
-
-Features
---------
+#### Features
 
 - Enable container based database migration support
   [#8472](https://pulp.plan.io/issues/8472)
@@ -964,9 +731,7 @@ Features
 - Allow user to specify the storage class for the Redis PVC
   [#8877](https://pulp.plan.io/issues/8877)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Allow user to specify empty string for PostgreSQL PVC storage class
   [#8733](https://pulp.plan.io/issues/8733)
@@ -979,29 +744,20 @@ Bugfixes
 - Resolve Pulp status correctly when deployed in a separate namespace
   [#8880](https://pulp.plan.io/issues/8880)
 
-
-Improved Documentation
-----------------------
+#### Improved Documentation
 
 - Document how to deploy Pulp on OpenShift
   [#8836](https://pulp.plan.io/issues/8836)
 
-
-Misc
-----
+#### Misc
 
 - [#8530](https://pulp.plan.io/issues/8530), [#8563](https://pulp.plan.io/issues/8563), [#8598](https://pulp.plan.io/issues/8598)
 
+______________________________________________________________________
 
-----
+## 0.2.0 (2021-03-26) {: #0.2.0 }
 
-
-0.2.0 (2021-03-26)
-==================
-
-
-Features
---------
+#### Features
 
 - Add deployment of nginx webserver with pulp snippets
   [#5657](https://pulp.plan.io/issues/5657)
@@ -1020,20 +776,15 @@ Features
 - Enable resource requirement specification for deployments and have operator check for running nodes and healthy status
   [#8456](https://pulp.plan.io/issues/8456)
 
-
-Bugfixes
---------
+#### Bugfixes
 
 - Only build plugins from pulp org
   [#7234](https://pulp.plan.io/issues/7234)
 - Fix storage option check so that Azure Blob Storage can be used as a backend
   [#8424](https://pulp.plan.io/issues/8424)
 
-
-Misc
-----
+#### Misc
 
 - [#5134](https://pulp.plan.io/issues/5134), [#5141](https://pulp.plan.io/issues/5141), [#5142](https://pulp.plan.io/issues/5142), [#7107](https://pulp.plan.io/issues/7107), [#8273](https://pulp.plan.io/issues/8273), [#8293](https://pulp.plan.io/issues/8293), [#8294](https://pulp.plan.io/issues/8294), [#8345](https://pulp.plan.io/issues/8345), [#8353](https://pulp.plan.io/issues/8353), [#8370](https://pulp.plan.io/issues/8370), [#8378](https://pulp.plan.io/issues/8378), [#8399](https://pulp.plan.io/issues/8399), [#8418](https://pulp.plan.io/issues/8418)
 
-
-----
+______________________________________________________________________
