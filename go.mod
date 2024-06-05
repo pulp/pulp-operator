@@ -3,7 +3,7 @@ module github.com/pulp/pulp-operator
 go 1.21
 
 require (
-	github.com/go-logr/logr v1.4.1
+	github.com/go-logr/logr v1.4.2
 	github.com/onsi/ginkgo/v2 v2.19.0
 	github.com/onsi/gomega v1.33.1
 	github.com/openshift/api v0.0.0-20220825183227-75c111537c4d
