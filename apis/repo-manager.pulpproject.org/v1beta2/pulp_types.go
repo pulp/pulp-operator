@@ -281,11 +281,19 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	Cache Cache `json:"cache,omitempty"`
 
-	// Definition of /etc/pulp/settings.py config file.
+	// [DEPRECATED] Definition of /etc/pulp/settings.py config file.
+	// This field is deprecated and will be removed in the future, use the
+	// custom_pulp_settings field instead.
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
 	PulpSettings runtime.RawExtension `json:"pulp_settings,omitempty"`
+
+	// Name of the ConfigMap to define Pulp configurations not available
+	// through this CR.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	CustomPulpSettings string `json:"custom_pulp_settings,omitempty"`
 
 	// The image name (repo name) for the pulp webserver image.
 	// Default: "quay.io/pulp/pulp-web"

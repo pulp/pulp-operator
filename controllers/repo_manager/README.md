@@ -222,7 +222,8 @@ PulpSpec defines the desired state of Pulp
 | worker | Worker defines desired state of pulpcore-worker resources | [Worker](#worker) | false |
 | web | Web defines desired state of pulpcore-web (reverse-proxy) resources | [Web](#web) | false |
 | cache | Cache defines desired state of redis resources | [Cache](#cache) | false |
-| pulp_settings | Definition of /etc/pulp/settings.py config file. | runtime.RawExtension | false |
+| pulp_settings | [DEPRECATED] Definition of /etc/pulp/settings.py config file. This field is deprecated and will be removed in the future, use the custom_pulp_settings field instead. | runtime.RawExtension | false |
+| custom_pulp_settings | Name of the ConfigMap to define Pulp configurations not available through this CR. | string | false |
 | image_web | The image name (repo name) for the pulp webserver image. Default: \"quay.io/pulp/pulp-web\" | string | false |
 | image_web_version | The image version for the pulp webserver image. Default: \"stable\" | string | false |
 | admin_password_secret | Secret where the administrator password can be found. Default: <operator's name> + \"-admin-password\" | string | false |

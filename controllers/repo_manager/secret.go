@@ -160,7 +160,7 @@ func pulpServerSecret(resources controllers.FunctionResources) client.Object {
 	ldapSettings(resources, &pulp_settings)
 
 	// add custom settings to the secret
-	addCustomPulpSettings(pulp, &pulp_settings)
+	addCustomPulpSettings(resources, &pulp_settings)
 
 	sec := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -520,8 +520,9 @@ func convertSettings(key string, settings interface{}) string {
 	return converted
 }
 
-// addCustomPulpSettings appends custom settings defined in Pulp CR into pulpSettings
-func addCustomPulpSettings(pulp *repomanagerpulpprojectorgv1beta2.Pulp, pulpSettings *string) {
+// [DEPRECATED] PulppSettings should not be used anymore. Keeping it to avoid compatibility issues
+// oldCustomPulpSettings appends custom settings defined in Pulp CR into pulpSettings
+func oldCustomPulpSettings(pulp *repomanagerpulpprojectorgv1beta2.Pulp, pulpSettings *string) {
 	settings := pulp.Spec.PulpSettings.Raw
 	var settingsJson map[string]interface{}
 	json.Unmarshal(settings, &settingsJson)
@@ -533,6 +534,31 @@ func addCustomPulpSettings(pulp *repomanagerpulpprojectorgv1beta2.Pulp, pulpSett
 	}
 
 	*pulpSettings = *pulpSettings + convertedSettings
+}
+
+func addCustomPulpSettings(resources controllers.FunctionResources, pulpSettings *string) {
+	pulp := resources.Pulp
+
+	// [DEPRECATED] PulppSettings should not be used anymore. Keeping it to avoid compatibility issues
+	if pulp.Spec.PulpSettings.Raw != nil {
+		oldCustomPulpSettings(pulp, pulpSettings)
+		return
+	}
+
+	if pulp.Spec.CustomPulpSettings == "" {
+		return
+	}
+
+	settingsCM := &corev1.ConfigMap{}
+	resources.Client.Get(resources.Context, types.NamespacedName{Name: pulp.Spec.CustomPulpSettings, Namespace: pulp.Namespace}, settingsCM)
+
+	settings := ""
+	for _, k := range sortKeys(settingsCM.Data) {
+		settings = settings + fmt.Sprintf("%v = %v\n", k, settingsCM.Data[k])
+	}
+
+	*pulpSettings = *pulpSettings + settings
+
 }
 
 // debugLogging will set the log level from Pulpcore pods to DEBUG

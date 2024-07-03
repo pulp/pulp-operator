@@ -164,7 +164,7 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 			FailureThreshold: 2,
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
-					Path: controllers.GetPulpSetting(m, "api_root") + "api/v3/status/",
+					Path: controllers.GetAPIRoot(funcResources.Client, m) + "api/v3/status/",
 					Port: intstr.IntOrString{
 						IntVal: 8080,
 					},
@@ -471,7 +471,7 @@ func (r *RepoManagerReconciler) pulpWebConfigMap(m *repomanagerpulpprojectorgv1b
 				proxy_pass http://pulp-content;
 			}
 
-			location ` + controllers.GetPulpSetting(m, "api_root") + `api/v3/ {
+			location ` + controllers.GetAPIRoot(r.Client, m) + `api/v3/ {
 				proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 				proxy_set_header X-Forwarded-Proto $scheme;
 				proxy_set_header Host $http_host;

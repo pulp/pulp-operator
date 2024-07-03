@@ -31,7 +31,7 @@ based on the definitions of `Pulp CR`.
 There are 2 ways to configure the settings:
 
 * [via specific fields](#pulp-operator-defined-settings)
-* [via `pulp_settings` field](#custom-settings)
+* [via `custom_pulp_settings` field](#custom-settings)
 
 ## Pulp Operator Defined Settings
 
@@ -189,16 +189,28 @@ API_ROOT = "/pulp/"
 ## Custom Settings
 
 !!! WARNING
-    Use `pulp_settings` field with caution. Since Pulp Operator will not manage
-    nor validate these settings, providing invalid values can cause disruption or
+    Use the `custom_pulp_settings` field with caution. Since Pulp Operator will not manage
+    nor validate the contents from the ConfigMap, providing invalid values can cause disruption or
     unexpected behaviors.
 
 Most of Pulp configurations should be done using the settings [presented before](/pulp_operator/configuring/pulp_settings/#pulp-operator-defined-settings),
-but sometimes it is not possible. In this case, Pulp CR has the `pulp_settings`
-field that can be used to define additional configurations. For example, to disable
-[Pulp analytics](https://docs.pulpproject.org/pulpcore/configuration/settings.html#analytics):
+but sometimes it is not possible. In this case, Pulp CR has the `custom_pulp_settings`
+field that can be used to define a `ConfigMap` with the additional Pulp configurations.
+
+For example, to disable
+[Pulp analytics](https://docs.pulpproject.org/pulpcore/configuration/settings.html#analytics), first create a new ConfigMap:
+```bash
+$ kubectl create configmap settings  --from-literal=ANALYTICS=False
+```
+
+update Pulp CR with this new `ConfigMap`:
+
 ```yaml
 spec:
-  pulp_settings:
-    analytics: false
+  custom_pulp_settings: settings
 ```
+
+
+!!! Info
+    The `pulp_settings` field is deprecated!
+    Use the `custom_pulp_settings` field instead.

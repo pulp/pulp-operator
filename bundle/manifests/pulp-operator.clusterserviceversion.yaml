@@ -168,7 +168,7 @@ metadata:
     capabilities: Full Lifecycle
     categories: Integration & Delivery
     containerImage: quay.io/pulp/pulp-operator:devel
-    createdAt: "2024-04-08T17:36:58Z"
+    createdAt: "2024-07-04T17:02:20Z"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
     operators.operatorframework.io/builder: operator-sdk-v1.29.0
@@ -604,6 +604,12 @@ spec:
         path: content.topology_spread_constraints
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Name of the ConfigMap to define Pulp configurations not available
+          through this CR.
+        displayName: Custom Pulp Settings
+        path: custom_pulp_settings
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: Database defines desired state of postgres resources
         displayName: Database
         path: database
@@ -936,7 +942,9 @@ spec:
         path: pulp_secret_key
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - description: Definition of /etc/pulp/settings.py config file.
+      - description: '[DEPRECATED] Definition of /etc/pulp/settings.py config file.
+          This field is deprecated and will be removed in the future, use the custom_pulp_settings
+          field instead.'
         displayName: Pulp Settings
         path: pulp_settings
         x-descriptors:

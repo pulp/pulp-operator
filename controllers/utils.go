@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -323,36 +324,58 @@ func WaitAPIPods[T any](resource T, pulp *repomanagerpulpprojectorgv1beta2.Pulp,
 		time.Sleep(time.Second)
 	}
 }
-func GetPulpSetting(pulp *repomanagerpulpprojectorgv1beta2.Pulp, key string) string {
-	settings := pulp.Spec.PulpSettings.Raw
-	var settingsJson map[string]interface{}
-	json.Unmarshal(settings, &settingsJson)
 
-	v := settingsJson[key]
-	// default values
-	if v == nil {
-		switch key {
-		case "api_root":
-			return "/pulp/"
-		case "content_path_prefix":
-			domainEnabled := settingsJson[strings.ToLower("domain_enabled")]
-			if domainEnabled != nil && domainEnabled.(bool) {
-				return "/pulp/content/default/"
-			}
-			return "/pulp/content/"
-		case "galaxy_collection_signing_service":
-			return "ansible-default"
-		case "galaxy_container_signing_service":
-			return "container-default"
+// getPulpSetting returns the value of a Pulp setting field
+func getPulpSetting(r client.Client, pulp *repomanagerpulpprojectorgv1beta2.Pulp, key string) string {
+	// [DEPRECATED] PulppSettings should not be used anymore. Keeping it to avoid compatibility issues
+	if settings := pulp.Spec.PulpSettings.Raw; settings != nil {
+		var settingsJson map[string]interface{}
+		json.Unmarshal(settings, &settingsJson)
+		if setting := settingsJson[key]; setting != nil && setting.(string) != "" {
+			return setting.(string)
 		}
 	}
-	switch v.(type) {
-	case map[string]interface{}:
-		rawMapping, _ := json.Marshal(v)
-		return fmt.Sprintln(strings.Replace(string(rawMapping), "\"", "'", -1))
-	default:
-		return fmt.Sprintf("%v", v)
+
+	if pulp.Spec.CustomPulpSettings != "" {
+		settingsCM := &corev1.ConfigMap{}
+		r.Get(context.TODO(), types.NamespacedName{Name: pulp.Spec.CustomPulpSettings, Namespace: pulp.Namespace}, settingsCM)
+		if setting, found := settingsCM.Data[key]; found {
+			return setting
+		}
 	}
+
+	return ""
+}
+
+// domainEnabled returns the definition of DOMAIN_ENABLED in settings.py
+func domainEnabled(r client.Client, pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
+	if domainEnabled := getPulpSetting(r, pulp, "domain_enabled"); domainEnabled != "" {
+		enabled, _ := strconv.ParseBool(domainEnabled)
+		return enabled
+	}
+	return false
+}
+
+// GetAPIRoot returns the definition of API_ROOT in settings.py or /pulp/
+func GetAPIRoot(r client.Client, pulp *repomanagerpulpprojectorgv1beta2.Pulp) string {
+	if apiRoot := getPulpSetting(r, pulp, "api_root"); apiRoot != "" {
+		return apiRoot
+	}
+	return "/pulp/"
+}
+
+// GetContentPathPrefix returns the definition of CONTENT_PATH_PREFIX in settings.py or
+// * /pulp/content/default/ if domain is enabled
+// * /pulp/content/ otherwise
+func GetContentPathPrefix(r client.Client, pulp *repomanagerpulpprojectorgv1beta2.Pulp) string {
+	if contentPath := getPulpSetting(r, pulp, "content_path_prefix"); contentPath != "" {
+		return contentPath
+	}
+
+	if domainEnabled(r, pulp) {
+		return "/pulp/content/default/"
+	}
+	return "/pulp/content/"
 }
 
 // getSigningKeyFingerprint returns the signing key fingerprint from secret object

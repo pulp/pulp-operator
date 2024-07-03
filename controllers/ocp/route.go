@@ -113,13 +113,13 @@ func PulpRouteController(resources controllers.FunctionResources, restClient res
 	defaultPlugins := []RoutePlugin{
 		{
 			Name:        pulp.Name + "-content",
-			Path:        controllers.GetPulpSetting(pulp, "content_path_prefix"),
+			Path:        controllers.GetContentPathPrefix(resources.Client, pulp),
 			TargetPort:  "content-24816",
 			ServiceName: settings.ContentService(pulp.Name),
 		},
 		{
 			Name:        pulp.Name + "-api-v3",
-			Path:        controllers.GetPulpSetting(pulp, "api_root") + "api/v3/",
+			Path:        controllers.GetAPIRoot(resources.Client, pulp) + "api/v3/",
 			TargetPort:  "api-24817",
 			ServiceName: settings.ApiService(pulp.Name),
 		},
