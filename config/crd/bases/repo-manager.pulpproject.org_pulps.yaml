@@ -5896,6 +5896,10 @@ spec:
                       type: object
                     type: array
                 type: object
+              custom_pulp_settings:
+                description: Name of the ConfigMap to define Pulp configurations not
+                  available through this CR.
+                type: string
               database:
                 description: Database defines desired state of postgres resources
                 properties:
@@ -7736,7 +7740,9 @@ spec:
                   Default: "pulp-secret-key"'
                 type: string
               pulp_settings:
-                description: Definition of /etc/pulp/settings.py config file.
+                description: '[DEPRECATED] Definition of /etc/pulp/settings.py config
+                  file. This field is deprecated and will be removed in the future,
+                  use the custom_pulp_settings field instead.'
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               pvc:

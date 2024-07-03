@@ -15,7 +15,7 @@ If no `database` parameter is defined, Pulp operator will deploy PostgreSQL with
 * **no data will be persisted**, the container will mount an emptyDir (all data will be lost in case of pod restart)
 
 
-A new `Secret` (&lt;deployment-name>-postgres-configuration) will also be created with some information like:
+A new `Secret` (<deployment-name>-postgres-configuration) will also be created with some information like:
 
   * the database name
   * the admin user

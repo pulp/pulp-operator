@@ -728,7 +728,7 @@ func (d *CommonDeployment) setInitContainerResourceRequirements(pulp repomanager
 }
 
 // setReadinessProbe defines the container readinessprobe
-func (d *CommonDeployment) setReadinessProbe(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setReadinessProbe(resources any, pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
 	readinessProbe := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("ReadinessProbe").Interface().(*corev1.Probe)
 	switch pulpcoreType {
 	case settings.API:
@@ -738,7 +738,7 @@ func (d *CommonDeployment) setReadinessProbe(pulp repomanagerpulpprojectorgv1bet
 					Exec: &corev1.ExecAction{
 						Command: []string{
 							"/usr/bin/readyz.py",
-							GetPulpSetting(&pulp, "api_root") + "api/v3/status/",
+							GetAPIRoot(resources.(FunctionResources).Client, &pulp) + "api/v3/status/",
 						},
 					},
 				},
@@ -756,7 +756,7 @@ func (d *CommonDeployment) setReadinessProbe(pulp repomanagerpulpprojectorgv1bet
 					Exec: &corev1.ExecAction{
 						Command: []string{
 							"/usr/bin/readyz.py",
-							GetPulpSetting(&pulp, "content_path_prefix"),
+							GetContentPathPrefix(resources.(FunctionResources).Client, &pulp),
 						},
 					},
 				},
@@ -790,7 +790,7 @@ func (d *CommonDeployment) setReadinessProbe(pulp repomanagerpulpprojectorgv1bet
 }
 
 // setReadinessProbe defines the container livenessprobe
-func (d *CommonDeployment) setLivenessProbe(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setLivenessProbe(resources any, pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
 	livenessProbe := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("LivenessProbe").Interface().(*corev1.Probe)
 	switch pulpcoreType {
 	case settings.API:
@@ -799,7 +799,7 @@ func (d *CommonDeployment) setLivenessProbe(pulp repomanagerpulpprojectorgv1beta
 				FailureThreshold: 10,
 				ProbeHandler: corev1.ProbeHandler{
 					HTTPGet: &corev1.HTTPGetAction{
-						Path: GetPulpSetting(&pulp, "api_root") + "api/v3/status/",
+						Path: GetAPIRoot(resources.(FunctionResources).Client, &pulp) + "api/v3/status/",
 						Port: intstr.IntOrString{
 							IntVal: 24817,
 						},
@@ -1126,8 +1126,8 @@ func (d *CommonDeployment) build(resources any, pulpcoreType settings.PulpcoreTy
 	d.setVolumes(resources, pulpcoreType)
 	d.setVolumeMounts(*pulp, pulpcoreType)
 	d.setResourceRequirements(*pulp, pulpcoreType)
-	d.setLivenessProbe(*pulp, pulpcoreType)
-	d.setReadinessProbe(*pulp, pulpcoreType)
+	d.setLivenessProbe(resources, *pulp, pulpcoreType)
+	d.setReadinessProbe(resources, *pulp, pulpcoreType)
 	d.setImage(*pulp)
 	d.setTopologySpreadConstraints(*pulp, pulpcoreType)
 	d.setInitContainerResourceRequirements(*pulp, pulpcoreType)

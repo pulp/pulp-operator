@@ -1,0 +1,3 @@
+Modified the way to provide custom Pulp settings. Instead of using a field of
+type `RawExtension`, the new `custom_pulp_settings` field allow to pass the name
+of a `ConfigMap` with the configurations.

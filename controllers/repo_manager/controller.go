@@ -327,6 +327,10 @@ func indexerFunc(obj client.Object) []string {
 	if pulp.Spec.LDAP.CA != "" {
 		keys = append(keys, pulp.Spec.LDAP.CA)
 	}
+	if customSettings := pulp.Spec.CustomPulpSettings; customSettings != "" {
+		keys = append(keys, customSettings)
+	}
+
 	return keys
 }
 
@@ -337,7 +341,7 @@ func (r *RepoManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.recorder = mgr.GetEventRecorderFor("Pulp")
 
 	// adds an index to `object_storage_azure_secret` allowing to lookup `Pulp` by a referenced `Azure Object Storage Secret` name
-	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &repomanagerpulpprojectorgv1beta2.Pulp{}, "secrets", indexerFunc); err != nil {
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &repomanagerpulpprojectorgv1beta2.Pulp{}, "objects", indexerFunc); err != nil {
 		return err
 	}
 
@@ -354,7 +358,12 @@ func (r *RepoManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&netv1.Ingress{}).
 		Watches(
 			&corev1.Secret{},
-			handler.EnqueueRequestsFromMapFunc(r.findPulpDependentSecrets),
+			handler.EnqueueRequestsFromMapFunc(r.findPulpDependentObjects),
+			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
+		).
+		Watches(
+			&corev1.ConfigMap{},
+			handler.EnqueueRequestsFromMapFunc(r.findPulpDependentObjects),
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
 		)
 

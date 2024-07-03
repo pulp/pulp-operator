@@ -86,13 +86,13 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 	defaultPlugins := []controllers.IngressPlugin{
 		{
 			Name:        pulp.Name + "-content",
-			Path:        controllers.GetPulpSetting(pulp, "content_path_prefix"),
+			Path:        controllers.GetContentPathPrefix(r.Client, pulp),
 			TargetPort:  "content-24816",
 			ServiceName: settings.ContentService(pulp.Name),
 		},
 		{
 			Name:        pulp.Name + "-api-v3",
-			Path:        controllers.GetPulpSetting(pulp, "api_root") + "api/v3/",
+			Path:        controllers.GetAPIRoot(r.Client, pulp) + "api/v3/",
 			TargetPort:  "api-24817",
 			ServiceName: settings.ApiService(pulp.Name),
 		},
