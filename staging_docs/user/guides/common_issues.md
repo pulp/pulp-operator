@@ -52,3 +52,89 @@ All fields from `Spec` *should* be reconciled on *Deployments*, *Services*, *Rou
 
 After the Operator finishes executing a restore procedure it creates a `ConfigMap` called *`restore-lock`*. This `ConfigMap` is used to control the restore reconciliation loop and avoid it overwriting all files or `Secrets` with data from an old backup.  
 If you still want to run the restore, just delete the *`restore-lock`* `ConfigMap` and recreate the PulpRestore CR.
+
+
+### **How can I manually run a database migration?**
+
+There are some cases in which a db migration is needed and the operator did not automatically trigger a new migration job.  
+We are investigating how the operator should handle these scenarios.
+
+In the meantime, to manually run a migration if there is/are pulpcore pods running:
+```bash
+$ kubectl exec deployments/<PULP CR NAME>-api pulpcore-manager migrate
+```
+
+for example:
+```bash
+$ kubectl exec deployments/pulp-api pulpcore-manager migrate
+```
+
+If the pods are stuck in init or crash state and Pulp is running in an OCP cluster:
+```bash
+$ oc debug -c init-container  deployment/pulp-api -- pulpcore-manager migrate
+```
+
+or create a job to run the migrations (the values from these vars can be extracted from pulpcore pods):
+```bash
+export POSTGRES_HOST="pulp-database-service"
+export POSTGRES_PORT="5432"
+export SERVICE_ACCOUNT="pulp"
+export PULP_SERVER_SECRET="pulp-server"
+export DB_FIELDS_ENC_SECRET="pulp-db-fields-encryption"
+
+
+kubectl apply -f-<<EOF
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pulpcore-migration
+spec:
+  backoffLimit: 1
+  completionMode: NonIndexed
+  completions: 1
+  parallelism: 1
+  template:
+    spec:
+      containers:
+      - args:
+        - -c
+        - |-
+          /usr/bin/wait_on_postgres.py
+          /usr/local/bin/pulpcore-manager migrate --noinput
+        command:
+        - /bin/sh
+        env:
+        - name: POSTGRES_SERVICE_HOST
+          value: "$POSTGRES_HOST"
+        - name: POSTGRES_SERVICE_PORT
+          value: "$POSTGRES_PORT"
+        image: quay.io/pulp/pulp-minimal:stable
+        name: migration
+        volumeMounts:
+        - mountPath: /etc/pulp/keys/database_fields.symmetric.key
+          name: pulp-db-fields-encryption
+          readOnly: true
+          subPath: database_fields.symmetric.key
+        - mountPath: /etc/pulp/settings.py
+          name: pulp-server
+          readOnly: true
+          subPath: settings.py
+      restartPolicy: Never
+      serviceAccount: "$SERVICE_ACCOUNT"
+      volumes:
+      - name: pulp-server
+        secret:
+          defaultMode: 420
+          items:
+          - key: settings.py
+            path: settings.py
+          secretName: "$PULP_SERVER_SECRET"
+      - name: pulp-db-fields-encryption
+        secret:
+          defaultMode: 420
+          items:
+          - key: database_fields.symmetric.key
+            path: database_fields.symmetric.key
+          secretName: "$DB_FIELDS_ENC_SECRET"
+EOF
+```
