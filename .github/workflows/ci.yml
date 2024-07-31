@@ -246,8 +246,6 @@ jobs:
         shell: bash
       - name: Test all components
         run: |
-          git clone --depth=1 https://github.com/pulp/pulp_ansible.git
-          git clone --depth=1 https://github.com/pulp/pulp_container.git
           .ci/scripts/pulp_tests.sh -m
         shell: bash
         env:
@@ -349,8 +347,6 @@ jobs:
         run: .ci/scripts/kubelinter.sh
       - name: Test all components
         run: |
-          git clone --depth=1 https://github.com/pulp/pulp_ansible.git
-          git clone --depth=1 https://github.com/pulp/pulp_container.git
           .ci/scripts/pulp_tests.sh -m
         shell: bash
         env:
@@ -475,8 +471,6 @@ jobs:
       - name: Test all components
         run: |
           export INGRESS_TYPE=$COMPONENT_TYPE
-          git clone --depth=1 https://github.com/pulp/pulp_ansible.git
-          git clone --depth=1 https://github.com/pulp/pulp_container.git
           .ci/scripts/pulp_tests.sh -m
           if [[ "$COMPONENT_TYPE" == "telemetry" ]]; then
             .ci/scripts/telemetry.sh
@@ -734,8 +728,6 @@ jobs:
         run: .ci/scripts/kubelinter.sh
       - name: Test all components
         run: |
-          git clone --depth=1 https://github.com/pulp/pulp_ansible.git
-          git clone --depth=1 https://github.com/pulp/pulp_container.git
           .ci/scripts/pulp_tests.sh -m
         shell: bash
         env:
