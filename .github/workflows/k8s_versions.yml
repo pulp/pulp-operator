@@ -99,8 +99,6 @@ jobs:
       - name: Test all components
         run: |
           export INGRESS_TYPE=nodeport
-          git clone --depth=1 https://github.com/pulp/pulp_ansible.git
-          git clone --depth=1 https://github.com/pulp/pulp_container.git
           .ci/scripts/pulp_tests.sh -m
         shell: bash
         env:
@@ -200,8 +198,6 @@ jobs:
       - name: Test all components
         run: |
           export INGRESS_TYPE=nodeport
-          git clone --depth=1 https://github.com/pulp/pulp_ansible.git
-          git clone --depth=1 https://github.com/pulp/pulp_container.git
           .ci/scripts/pulp_tests.sh -k
         shell: bash
         env:
@@ -333,8 +329,6 @@ jobs:
       - name: Test all components
         run: |
           export INGRESS_TYPE=nodeport
-          git clone --depth=1 https://github.com/pulp/pulp_ansible.git
-          git clone --depth=1 https://github.com/pulp/pulp_container.git
           .ci/scripts/pulp_tests.sh --eks
         shell: bash
         env:
