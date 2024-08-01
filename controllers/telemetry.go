@@ -87,7 +87,7 @@ exec  /usr/local/bin/opentelemetry-instrument --service_name pulp-api "${PULP_AP
 		},
 		VolumeMounts:    telemetryVolMount,
 		Resources:       requirements,
-		SecurityContext: setDefaultSecurityContext(),
+		SecurityContext: SetDefaultSecurityContext(),
 	}
 
 	containers = append(containers, sidecarTelemetryContainer)

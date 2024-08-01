@@ -252,6 +252,9 @@ func (r *RepoManagerBackupReconciler) createBackupPod(ctx context.Context, pulpB
 		TimeoutSeconds:      10,
 	}
 
+	runAsUser := int64(700)
+	fsGroup := int64(700)
+
 	bkpPod := &corev1.Pod{}
 	err = r.Get(ctx, types.NamespacedName{Name: pulpBackup.Name + "-backup-manager", Namespace: pulpBackup.Namespace}, bkpPod)
 	pod := &corev1.Pod{
@@ -270,11 +273,13 @@ func (r *RepoManagerBackupReconciler) createBackupPod(ctx context.Context, pulpB
 					"sleep",
 					"infinity",
 				},
-				VolumeMounts:   volumeMounts,
-				ReadinessProbe: readinessProbe,
+				VolumeMounts:    volumeMounts,
+				ReadinessProbe:  readinessProbe,
+				SecurityContext: controllers.SetDefaultSecurityContext(),
 			}},
-			Volumes:       volumes,
-			RestartPolicy: corev1.RestartPolicyNever,
+			Volumes:         volumes,
+			RestartPolicy:   corev1.RestartPolicyNever,
+			SecurityContext: &corev1.PodSecurityContext{RunAsUser: &runAsUser, FSGroup: &fsGroup},
 		},
 	}
 	if err != nil && errors.IsNotFound(err) {

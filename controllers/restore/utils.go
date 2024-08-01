@@ -5,6 +5,7 @@ import (
 	"time"
 
 	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
@@ -143,6 +144,9 @@ func (r *RepoManagerRestoreReconciler) createRestorePod(ctx context.Context, pul
 		TimeoutSeconds:      10,
 	}
 
+	runAsUser := int64(700)
+	fsGroup := int64(700)
+
 	restorePod := &corev1.Pod{}
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -159,11 +163,13 @@ func (r *RepoManagerRestoreReconciler) createRestorePod(ctx context.Context, pul
 					"sleep",
 					"infinity",
 				},
-				VolumeMounts:   volumeMounts,
-				ReadinessProbe: readinessProbe,
+				VolumeMounts:    volumeMounts,
+				ReadinessProbe:  readinessProbe,
+				SecurityContext: controllers.SetDefaultSecurityContext(),
 			}},
-			Volumes:       volumes,
-			RestartPolicy: corev1.RestartPolicyNever,
+			Volumes:         volumes,
+			RestartPolicy:   corev1.RestartPolicyNever,
+			SecurityContext: &corev1.PodSecurityContext{RunAsUser: &runAsUser, FSGroup: &fsGroup},
 		},
 	}
 	err := r.Get(ctx, types.NamespacedName{Name: pulpRestore.Name + "-backup-manager", Namespace: pulpRestore.Namespace}, restorePod)
