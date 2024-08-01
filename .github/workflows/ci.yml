@@ -53,7 +53,7 @@ jobs:
         shell: bash
       - name: Check code format
         run: |
-          make fmt vet
+          make tidy fmt vet
         shell: bash
   docs:
     uses: "./.github/workflows/docs-ci.yml"
