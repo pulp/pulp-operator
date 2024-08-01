@@ -111,7 +111,7 @@ help: ## Display this help.
 ##@ Development
 
 .PHONY: manifests
-manifests: controller-gen crd-to-markdown ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+manifests: tidy controller-gen crd-to-markdown ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 	$(CRD_MARKDOWN) -f apis/repo-manager.$(CR_DOMAIN)/v1beta2/pulp_types.go -n $(CR_KIND) > controllers/repo_manager/README.md
 	$(CRD_MARKDOWN) -f apis/repo-manager.$(CR_DOMAIN)/v1beta2/pulp_backup_types.go -n $(CR_KIND)Backup > controllers/backup/README.md
@@ -120,6 +120,10 @@ manifests: controller-gen crd-to-markdown ## Generate WebhookConfiguration, Clus
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+
+.PHONY: tidy
+tidy:
+	go mod tidy
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
@@ -275,7 +279,7 @@ SDK_BIN = $(LOCALBIN)/operator-sdk
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v3.8.7
-CONTROLLER_TOOLS_VERSION ?= v0.9.2
+CONTROLLER_TOOLS_VERSION ?= v0.14.0
 CRD_MARKDOWN_VERSION ?= v0.0.3
 OPERATOR_SDK_VERSION ?= v1.29.0
 
