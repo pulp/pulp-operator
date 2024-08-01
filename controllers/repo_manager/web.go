@@ -197,6 +197,9 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 	}
 	envVars = append(envVars, m.Spec.Web.EnvVars...)
 
+	runAsUser := int64(700)
+	fsGroup := int64(700)
+
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        settings.WEB.DeploymentName(m.Name),
@@ -236,8 +239,9 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 								ReadOnly:  true,
 							},
 						},
+						SecurityContext: controllers.SetDefaultSecurityContext(),
 					}},
-					SecurityContext: &corev1.PodSecurityContext{},
+					SecurityContext: &corev1.PodSecurityContext{RunAsUser: &runAsUser, FSGroup: &fsGroup},
 					Volumes: []corev1.Volume{
 						{
 							Name: m.Name + "-nginx-conf",

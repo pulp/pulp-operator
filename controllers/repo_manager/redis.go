@@ -331,6 +331,9 @@ func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp, funcResources con
 	deploymentAnnotations["ignore-check.kube-linter.io/unset-memory-requirements"] = "Temporarily disabled"
 	deploymentAnnotations["ignore-check.kube-linter.io/no-node-affinity"] = "Do not check node affinity"
 
+	runAsUser := int64(700)
+	fsGroup := int64(700)
+
 	// deployment definition
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -354,6 +357,7 @@ func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp, funcResources con
 					NodeSelector:       nodeSelector,
 					Tolerations:        toleration,
 					ServiceAccountName: settings.PulpServiceAccount(m.Name),
+					SecurityContext:    &corev1.PodSecurityContext{RunAsUser: &runAsUser, FSGroup: &fsGroup},
 					Containers: []corev1.Container{{
 						Name:            "redis",
 						Image:           redisImage,
@@ -363,9 +367,10 @@ func redisDeployment(m *repomanagerpulpprojectorgv1beta2.Pulp, funcResources con
 							ContainerPort: 6379,
 							Protocol:      "TCP",
 						}},
-						LivenessProbe:  livenessProbe,
-						ReadinessProbe: readinessProbe,
-						Resources:      resources,
+						LivenessProbe:   livenessProbe,
+						ReadinessProbe:  readinessProbe,
+						Resources:       resources,
+						SecurityContext: controllers.SetDefaultSecurityContext(),
 					}},
 					Volumes: volumes,
 				},

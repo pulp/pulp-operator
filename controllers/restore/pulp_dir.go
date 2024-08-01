@@ -27,7 +27,7 @@ func (r *RepoManagerRestoreReconciler) restorePulpDir(ctx context.Context, pulpR
 	}
 	log.Info("Starting pulp dir restore ...")
 	execCmd := []string{
-		"bash", "-c", "cp -fa " + backupDir + "/pulp/. /var/lib/pulp",
+		"bash", "-c", "cp -fa " + backupDir + "/pulp/ /var/lib/pulp",
 	}
 	if _, err := controllers.ContainerExec(r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace); err != nil {
 		log.Error(err, "Failed to restore pulp dir")

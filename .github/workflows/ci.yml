@@ -92,7 +92,7 @@ jobs:
           ref: 1.0.0-beta.4
       - name: Install Pulp CRD
         run: |
-          make install
+          make install CONTROLLER_TOOLS_VERSION=v0.14.0
         shell: bash
       - name: Build bundle image
         run: |

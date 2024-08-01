@@ -902,3 +902,18 @@ func DeployContainerSign(secret corev1.Secret) bool {
 	_, contains := secret.Data[settings.ContainerSigningScriptName]
 	return contains
 }
+
+// SetDefaultSecurityContext defines the container security configuration to be in compliance with PodSecurity "restricted:v1.24"
+func SetDefaultSecurityContext() *corev1.SecurityContext {
+	allowPrivilegeEscalation, runAsNonRoot := false, true
+	return &corev1.SecurityContext{
+		AllowPrivilegeEscalation: &allowPrivilegeEscalation,
+		Capabilities: &corev1.Capabilities{
+			Drop: []corev1.Capability{"ALL"},
+		},
+		RunAsNonRoot: &runAsNonRoot,
+		SeccompProfile: &corev1.SeccompProfile{
+			Type: corev1.SeccompProfileTypeRuntimeDefault,
+		},
+	}
+}

@@ -835,21 +835,6 @@ func (d *CommonDeployment) setInitContainerImage(pulp repomanagerpulpprojectorgv
 	}
 }
 
-// setDefaultSecurityContext defines the container security configuration to be in compliance with PodSecurity "restricted:v1.24"
-func setDefaultSecurityContext() *corev1.SecurityContext {
-	allowPrivilegeEscalation, runAsNonRoot := false, true
-	return &corev1.SecurityContext{
-		AllowPrivilegeEscalation: &allowPrivilegeEscalation,
-		Capabilities: &corev1.Capabilities{
-			Drop: []corev1.Capability{"ALL"},
-		},
-		RunAsNonRoot: &runAsNonRoot,
-		SeccompProfile: &corev1.SeccompProfile{
-			Type: corev1.SeccompProfileTypeRuntimeDefault,
-		},
-	}
-}
-
 // setInitContainers defines initContainers specs
 func (d *CommonDeployment) setInitContainers(resources any, pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
 	args := []string{
@@ -876,7 +861,7 @@ func (d *CommonDeployment) setInitContainers(resources any, pulp repomanagerpulp
 			Args:            args,
 			VolumeMounts:    d.initContainerVolumeMounts,
 			Resources:       d.initContainerResourceRequirements,
-			SecurityContext: setDefaultSecurityContext(),
+			SecurityContext: SetDefaultSecurityContext(),
 		},
 	}
 
@@ -949,13 +934,13 @@ echo "${PULP_SIGNING_KEY_FINGERPRINT}:6" | gpg --import-ownertrust
 		Args:            args,
 		Resources:       resourceRequirements,
 		VolumeMounts:    volumeMounts,
-		SecurityContext: setDefaultSecurityContext(),
+		SecurityContext: SetDefaultSecurityContext(),
 	}
 }
 
 // setContainers defines pulpcore containers specs
 func (d *CommonDeployment) setContainers(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
-	securityContext := setDefaultSecurityContext()
+	securityContext := SetDefaultSecurityContext()
 	var containers []corev1.Container
 	switch pulpcoreType {
 	case settings.API:
