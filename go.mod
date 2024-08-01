@@ -2,6 +2,8 @@ module github.com/pulp/pulp-operator
 
 go 1.21
 
+toolchain go1.22.3
+
 require (
 	github.com/go-logr/logr v1.4.2
 	github.com/onsi/ginkgo/v2 v2.19.0
