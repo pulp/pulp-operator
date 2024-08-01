@@ -103,7 +103,7 @@
 
 - name: Remove resource manager deployment
   kubernetes.core.k8s:
-    api_version: v1
+    api_version: apps/v1
     kind: Deployment
     name: "{{ ansible_operator_meta.name }}-resource-manager"
     namespace: "{{ ansible_operator_meta.namespace }}"
