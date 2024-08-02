@@ -11,6 +11,7 @@ if [[ "${1-}" == "--minikube" ]] || [[ "${1-}" == "-m" ]]; then
   if [[ "$CI_TEST" == "true" ]]; then
     SVC_NAME="example-pulp-web-svc"
     WEB_PORT="24880"
+    sudo pkill -f "port-forward" || true
     kubectl port-forward service/$SVC_NAME $WEB_PORT:$WEB_PORT &
   fi
 fi
@@ -34,27 +35,19 @@ if [ ! -f ~/.config/pulp/settings.toml ]; then
 base_url = "$BASE_ADDR"
 verify_ssl = false
 format = "json"
+username = "admin"
+password = "password"
 EOF
 fi
 
-cat ~/.config/pulp/cli.toml | tee ~/.config/pulp/settings.toml
+cat ~/.config/pulp/cli.toml
 
 pulp status | jq
 
-pushd pulp_ansible/docs/_scripts
-timeout 5m bash -x quickstart.sh || {
-  YLATEST=$(git ls-remote --heads https://github.com/pulp/pulp_ansible.git | grep -o "[[:digit:]]\.[[:digit:]]*" | sort -V | tail -1)
-  git fetch --depth=1 origin heads/$YLATEST:$YLATEST
-  git checkout $YLATEST
+pushd $(dirname $0)/pulp_ansible/
   timeout 5m bash -x quickstart.sh
-}
 popd
 
-pushd pulp_container/docs/_scripts
-timeout 5m bash -x docs_check.sh || {
-  YLATEST=$(git ls-remote --heads https://github.com/pulp/pulp_container.git | grep -o "[[:digit:]]\.[[:digit:]]*" | sort -V | tail -1)
-  git fetch --depth=1 origin heads/$YLATEST:$YLATEST
-  git checkout $YLATEST
+pushd $(dirname $0)/pulp_container/
   timeout 5m bash -x docs_check.sh
-}
 popd
