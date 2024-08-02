@@ -131,7 +131,22 @@ spec:
           image: "{{ _image }}"
           imagePullPolicy: "{{ image_pull_policy }}"
           # We set args, not command, so as to not override the entrypoint script
-          args: ["pulp-api"]
+          command:
+            - /bin/sh
+            - -c
+            - |
+              mkdir -p /var/lib/pulp/media /var/lib/pulp/assets /var/lib/pulp/tmp
+              pulpcore-manager migrate
+              ADMIN_PASSWORD_FILE=/etc/pulp/pulp-admin-password
+              if [[ -f "$ADMIN_PASSWORD_FILE" ]]; then
+                 echo "pulp admin can be initialized."
+                 PULP_ADMIN_PASSWORD=$(cat $ADMIN_PASSWORD_FILE)
+              fi
+              
+              if [ -n "${PULP_ADMIN_PASSWORD}" ]; then
+                  /usr/local/bin/pulpcore-manager reset-admin-password --password "${PULP_ADMIN_PASSWORD}"
+              fi
+              pulp-api
           env:
             - name: POSTGRES_SERVICE_HOST
               value: "{{ postgres_host }}"

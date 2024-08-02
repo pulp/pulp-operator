@@ -93,10 +93,12 @@ base_url = "$BASE_ADDR"
 api_root = "$API_ROOT"
 verify_ssl = false
 format = "json"
+username = "admin"
+password = "password"
 EOF
 fi
 
-cat ~/.config/pulp/cli.toml | tee ~/.config/pulp/settings.toml
+cat ~/.config/pulp/cli.toml
 
 pulp content list
 CONTENT_LENGTH=$(pulp content list | jq length)

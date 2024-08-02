@@ -13,6 +13,9 @@ COPY requirements.yml ${HOME}/requirements.yml
 RUN ansible-galaxy collection install --force -r ${HOME}/requirements.yml \
  && chmod -R ug+rwx ${HOME}/.ansible
 
+RUN pip install --upgrade kubernetes && \
+ rm -rf /root/.cache/pip
+
 COPY watches.yaml ${HOME}/watches.yaml
 COPY roles/ ${HOME}/roles/
 COPY playbooks/ ${HOME}/playbooks/
