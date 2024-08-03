@@ -41,10 +41,11 @@ func (r *RepoManagerReconciler) updateAdminPasswordJob(ctx context.Context, pulp
 		log.Error(err, "Failed to find "+adminSecretName+" Secret!")
 	}
 
-	// if the secret didn't change there is nothing to do
+	// if the secret is already set (it is not the first execution) and it
+	// didn't change, there is nothing to do
 	calculatedHash := controllers.CalculateHash(adminSecret.Data)
 	currentHash := controllers.GetCurrentHash(adminSecret)
-	if currentHash == calculatedHash {
+	if pulp.Status.AdminPasswordSecret != "" && currentHash == calculatedHash {
 		return
 	}
 
@@ -81,6 +82,9 @@ func (r *RepoManagerReconciler) updateAdminPasswordJob(ctx context.Context, pulp
 	if err := r.Update(ctx, adminSecret); err != nil {
 		log.Error(err, "Failed to update "+adminSecretName+" Secret label!")
 	}
+
+	// update the status.admin_password_secret field
+	setStatus(ctx, pulp, adminPwdSecretCondition(), *r, "AdminPasswordSecret")
 }
 
 // pulpcoreVolumes defines the list of volumes used by pulpcore containers
