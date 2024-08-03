@@ -179,7 +179,6 @@ func setStatusFields(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2
 		{verifyFunc: dbFieldsEncrSecretCondition(), fieldName: "DBFieldsEncryptionSecret"},
 		{verifyFunc: ingressTypeCondition(), fieldName: "IngressType"},
 		{verifyFunc: containerTokenSecretCondition(), fieldName: "ContainerTokenSecret"},
-		{verifyFunc: adminPwdSecretCondition(), fieldName: "AdminPasswordSecret"},
 		{verifyFunc: ingressClassNameCondition(), fieldName: "IngressClassName"},
 		{verifyFunc: pulpSecretKeyCondition(), fieldName: "PulpSecretKey"},
 	}
