@@ -67,7 +67,8 @@ func (r *RepoManagerReconciler) CreateServiceAccount(ctx context.Context, pulp *
 	}
 
 	// Check and reconcile pulp-sa
-	if saModified(sa, expectedSA) {
+	// Temporarily disabling to prevent an infinite reconciliation loop issue in OCP 4.16.
+	/* 	if saModified(sa, expectedSA) {
 		log.Info("The " + serviceAccountName + " SA has been modified! Reconciling ...")
 		err = r.Update(ctx, expectedSA)
 		if err != nil {
@@ -75,7 +76,7 @@ func (r *RepoManagerReconciler) CreateServiceAccount(ctx context.Context, pulp *
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{Requeue: true}, nil
-	}
+	} */
 
 	return r.CreateRole(ctx, pulp)
 }

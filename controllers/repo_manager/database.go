@@ -417,8 +417,15 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 		containerPort = int32(m.Spec.Database.PostgresPort)
 	}
 
-	runAsUser := int64(999)
-	fsGroup := int64(999)
+	podSecurityContext := &corev1.PodSecurityContext{}
+	if isOpenshift, _ := controllers.IsOpenShift(); !isOpenshift {
+		runAsUser := int64(999)
+		fsGroup := int64(999)
+		podSecurityContext = &corev1.PodSecurityContext{
+			RunAsUser:  &runAsUser,
+			RunAsGroup: &fsGroup,
+		}
+	}
 
 	return &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -440,7 +447,7 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 					NodeSelector:       nodeSelector,
 					Tolerations:        toleration,
 					ServiceAccountName: settings.PulpServiceAccount(m.Name),
-					SecurityContext:    &corev1.PodSecurityContext{RunAsUser: &runAsUser, FSGroup: &fsGroup},
+					SecurityContext:    podSecurityContext,
 					Containers: []corev1.Container{{
 						Image: postgresImage,
 						Name:  "postgres",
