@@ -25,7 +25,7 @@
 
 - name: Remove pulp-web deployment with route
   kubernetes.core.k8s:
-    api_version: v1
+    api_version: apps/v1
     kind: Deployment
     name: "{{ ansible_operator_meta.name }}-web"
     namespace: "{{ ansible_operator_meta.namespace }}"
