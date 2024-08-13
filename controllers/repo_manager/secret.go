@@ -398,16 +398,24 @@ func s3Settings(resources controllers.FunctionResources, pulpSettings *string) {
 	}
 
 	logger.V(1).Info("Retrieving S3 data from " + resources.Pulp.Spec.ObjectStorageS3Secret)
-	storageData, err := controllers.RetrieveSecretData(context, pulp.Spec.ObjectStorageS3Secret, pulp.Namespace, true, client, "s3-access-key-id", "s3-secret-access-key", "s3-bucket-name")
+	storageData, err := controllers.RetrieveSecretData(context, pulp.Spec.ObjectStorageS3Secret, pulp.Namespace, true, client, "s3-bucket-name")
 	if err != nil {
 		logger.Error(err, "Secret Not Found!", "Secret.Namespace", pulp.Namespace, "Secret.Name", pulp.Spec.ObjectStorageS3Secret)
 		return
 	}
 
-	optionalKey, _ := controllers.RetrieveSecretData(resources.Context, resources.Pulp.Spec.ObjectStorageS3Secret, resources.Pulp.Namespace, false, client, "s3-endpoint", "s3-region")
+	optionalKey, _ := controllers.RetrieveSecretData(resources.Context, resources.Pulp.Spec.ObjectStorageS3Secret, resources.Pulp.Namespace, false, client, "s3-endpoint", "s3-region", "s3-access-key-id", "s3-secret-access-key")
 	if len(optionalKey["s3-endpoint"]) == 0 && len(optionalKey["s3-region"]) == 0 {
 		logger.Error(err, "Either s3-endpoint or s3-region needs to be specified", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Spec.ObjectStorageS3Secret)
 		return
+	}
+
+	if len(optionalKey["s3-secret-access-key"]) > 0 {
+		*pulpSettings = *pulpSettings + fmt.Sprintf("AWS_SECRET_ACCESS_KEY = \"%v\"\n", optionalKey["s3-secret-access-key"])
+	}
+
+	if len(optionalKey["s3-access-key-id"]) > 0 {
+		*pulpSettings = *pulpSettings + fmt.Sprintf("AWS_ACCESS_KEY_ID = \"%v\"\n", optionalKey["s3-access-key-id"])
 	}
 
 	if len(optionalKey["s3-endpoint"]) > 0 {
@@ -418,9 +426,7 @@ func s3Settings(resources controllers.FunctionResources, pulpSettings *string) {
 		*pulpSettings = *pulpSettings + fmt.Sprintf("AWS_S3_REGION_NAME = \"%v\"\n", optionalKey["s3-region"])
 	}
 
-	*pulpSettings = *pulpSettings + `AWS_ACCESS_KEY_ID = '` + storageData["s3-access-key-id"] + `'
-AWS_SECRET_ACCESS_KEY = '` + storageData["s3-secret-access-key"] + `'
-AWS_STORAGE_BUCKET_NAME = '` + storageData["s3-bucket-name"] + `'
+	*pulpSettings = *pulpSettings + `AWS_STORAGE_BUCKET_NAME = '` + storageData["s3-bucket-name"] + `'
 AWS_DEFAULT_ACL = "@none None"
 S3_USE_SIGV4 = True
 AWS_S3_SIGNATURE_VERSION = "s3v4"
