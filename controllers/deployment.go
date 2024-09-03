@@ -553,6 +553,10 @@ func signingMetadataVolumes(resources any, storageType []string, volumes []corev
 			item := corev1.KeyToPath{Key: settings.ContainerSigningScriptName, Path: settings.ContainerSigningScriptName}
 			secretItems = append(secretItems, item)
 		}
+		if DeployAptSign(*secret) {
+			item := corev1.KeyToPath{Key: settings.AptSigningScriptName, Path: settings.AptSigningScriptName}
+			secretItems = append(secretItems, item)
+		}
 		volumePermissions := int32(0755)
 		signingSecretVolume := []corev1.Volume{
 			{
@@ -653,7 +657,7 @@ func (d *CommonDeployment) setVolumeMounts(pulp repomanagerpulpprojectorgv1beta2
 				for _, script := range volume.VolumeSource.Secret.Items {
 					signingSecretMount := corev1.VolumeMount{
 						Name:      pulp.Name + "-signing-scripts",
-						MountPath: "/var/lib/pulp/scripts/" + script.Key,
+						MountPath: settings.SigningScriptPath + script.Key,
 						SubPath:   script.Key,
 						ReadOnly:  true,
 					}

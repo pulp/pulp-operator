@@ -903,6 +903,12 @@ func DeployContainerSign(secret corev1.Secret) bool {
 	return contains
 }
 
+// DeployAptSign returns true if signingScript secret is defined with an apt script
+func DeployAptSign(secret corev1.Secret) bool {
+	_, contains := secret.Data[settings.AptSigningScriptName]
+	return contains
+}
+
 // SetDefaultSecurityContext defines the container security configuration to be in compliance with PodSecurity "restricted:v1.24"
 func SetDefaultSecurityContext() *corev1.SecurityContext {
 	allowPrivilegeEscalation, runAsNonRoot := false, true

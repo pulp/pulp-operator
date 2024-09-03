@@ -52,6 +52,9 @@ See the GnuPG official documentation for more information on how to generate a n
 
 ## Creating a Secret with the gpg key
 
+!!! WARNING
+    Make sure to set `signing_service.gpg` as the key name for the `Secret` (using a different name will fail operator's execution)
+
 ```bash
 $ gpg --export-secret-keys -a pulp@example.com  > /tmp/gpg_private_key.gpg
 $ kubectl create secret generic signing-secret --from-file=signing_service.gpg=/tmp/gpg_private_key.gpg
@@ -115,11 +118,48 @@ fi
 EOF
 ```
 
+* example of an APT signing script
+```bash
+$ SIGNING_SCRIPT_PATH=/tmp
+$ APT_SIGNING_SCRIPT=apt_script.sh
+$ cat<<EOF> "$SIGNING_SCRIPT_PATH/$APT_SIGNING_SCRIPT"
+#!/bin/bash
+
+set -e
+
+RELEASE_FILE="\$(/usr/bin/readlink -f \$1)"
+OUTPUT_DIR="\$(/usr/bin/mktemp -d)"
+DETACHED_SIGNATURE_PATH="\${OUTPUT_DIR}/Release.gpg"
+INLINE_SIGNATURE_PATH="\${OUTPUT_DIR}/InRelease"
+COMMON_GPG_OPTS="--batch --armor --digest-algo SHA256 --default-key \$PULP_SIGNING_KEY_FINGERPRINT"
+
+# Create a detached signature
+/usr/bin/gpg \${COMMON_GPG_OPTS} \
+  --detach-sign \
+  --output "\${DETACHED_SIGNATURE_PATH}" \
+  "\${RELEASE_FILE}"
+
+# Create an inline signature
+/usr/bin/gpg \${COMMON_GPG_OPTS} \
+  --clearsign \
+  --output "\${INLINE_SIGNATURE_PATH}" \
+  "\${RELEASE_FILE}"
+
+echo { \
+       \"signatures\": { \
+         \"inline\": \"\${INLINE_SIGNATURE_PATH}\", \
+         \"detached\": \"\${DETACHED_SIGNATURE_PATH}\" \
+       } \
+     }
+
+EOF
+```
+
 !!! WARNING
-    Make sure to set `collection_script.sh` and/or `container_script.sh` as key names (using different names would fail operator's execution)
+    Make sure to set `collection_script.sh`, `container_script.sh`, and/or `apt_script.sh` as key names (using different names would fail operator's execution)
 
 ```bash
-$ kubectl create secret generic signing-scripts --from-file=collection_script.sh=/tmp/collection_script.sh --from-file=container_script.sh=/tmp/container_script.sh
+$ kubectl create secret generic signing-scripts --from-file=collection_script.sh=/tmp/collection_script.sh --from-file=container_script.sh=/tmp/container_script.sh --from-file=apt_script.sh=/tmp/apt_script.sh
 ```
 
 ## Configuring Pulp CR
@@ -147,6 +187,8 @@ Signing service 'collection-signing-service' has been successfully removed.
 Successfully added signing service collection-signing-service for key 66BBFE010CF70CC92826D9AB71684D7912B09BC1.
 Signing service 'container-signing-service' has been successfully removed.
 Successfully added signing service container-signing-service for key 66BBFE010CF70CC92826D9AB71684D7912B09BC1.
+Signing service 'apt-signing-service' has been successfully removed.
+Successfully added signing service apt-signing-service for key 66BBFE010CF70CC92826D9AB71684D7912B09BC1.
 ```
 
 double-checking if the signing services are stored in the database:
@@ -158,6 +200,15 @@ $ kubectl exec deployment/pulp-api -- curl -suadmin:$PULP_PWD localhost:24817/pu
   "next": null,
   "previous": null,
   "results": [
+    {
+      "pulp_href": "/pulp/api/v3/signing-services/0191e929-31f4-77d1-841e-2b545cf45da3/",
+      "pulp_created": "2024-09-13T02:14:36.846612Z",
+      "pulp_last_updated": "2024-09-13T02:14:36.846627Z",
+      "name": "apt-signing-service",
+      "public_key": "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQGiBGbjgnIRBACc7VbJTNbDRja...",
+      "pubkey_fingerprint": "66BBFE010CF70CC92826D9AB71684D7912B09BC1",
+      "script": "/var/lib/pulp/scripts/apt_script.sh"
+    },
     {
       "pulp_href": "/pulp/api/v3/signing-services/018c0126-1f0c-7803-868d-1a1ee7210db1/",
       "pulp_created": "2023-11-22T11:45:25.042451Z",
