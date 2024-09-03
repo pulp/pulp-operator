@@ -13,8 +13,10 @@ const (
 	resetAdminPwdJob            = "reset-admin-password-"
 	updateChecksumsJob          = "update-content-checksums-"
 	signingScriptJob            = "signing-metadata-"
+	SigningScriptPath           = "/var/lib/pulp/scripts/"
 	ContainerSigningScriptName  = "container_script.sh"
 	CollectionSigningScriptName = "collection_script.sh"
+	AptSigningScriptName        = "apt_script.sh"
 )
 
 func MigrationJob(pulpName string) string {

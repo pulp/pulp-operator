@@ -351,18 +351,6 @@ func signingScriptContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp, scripts
 	volumeMounts := pulpcoreVolumeMounts(pulp)
 	signingSecretMount := []corev1.VolumeMount{
 		{
-			Name:      pulp.Name + "-signing-scripts",
-			MountPath: "/var/lib/pulp/scripts/" + settings.CollectionSigningScriptName,
-			SubPath:   settings.CollectionSigningScriptName,
-			ReadOnly:  true,
-		},
-		{
-			Name:      pulp.Name + "-signing-scripts",
-			MountPath: "/var/lib/pulp/scripts/" + settings.ContainerSigningScriptName,
-			SubPath:   settings.ContainerSigningScriptName,
-			ReadOnly:  true,
-		},
-		{
 			Name:      "gpg-keys",
 			MountPath: "/etc/pulp/keys/signing_service.gpg",
 			SubPath:   "signing_service.gpg",
@@ -372,6 +360,30 @@ func signingScriptContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp, scripts
 			Name:      "ephemeral-gpg",
 			MountPath: "/var/lib/pulp/.gnupg",
 		},
+	}
+	if controllers.DeployCollectionSign(scriptsSecret) {
+		signingSecretMount = append(signingSecretMount, corev1.VolumeMount{
+			Name:      pulp.Name + "-signing-scripts",
+			MountPath: settings.SigningScriptPath + settings.CollectionSigningScriptName,
+			SubPath:   settings.CollectionSigningScriptName,
+			ReadOnly:  true,
+		})
+	}
+	if controllers.DeployContainerSign(scriptsSecret) {
+		signingSecretMount = append(signingSecretMount, corev1.VolumeMount{
+			Name:      pulp.Name + "-signing-scripts",
+			MountPath: settings.SigningScriptPath + settings.ContainerSigningScriptName,
+			SubPath:   settings.ContainerSigningScriptName,
+			ReadOnly:  true,
+		})
+	}
+	if controllers.DeployAptSign(scriptsSecret) {
+		signingSecretMount = append(signingSecretMount, corev1.VolumeMount{
+			Name:      pulp.Name + "-signing-scripts",
+			MountPath: settings.SigningScriptPath + settings.AptSigningScriptName,
+			SubPath:   settings.AptSigningScriptName,
+			ReadOnly:  true,
+		})
 	}
 	volumeMounts = append(volumeMounts, signingSecretMount...)
 
@@ -393,13 +405,18 @@ echo "${PULP_SIGNING_KEY_FINGERPRINT}:6" | gpg --import-ownertrust
 	}
 	if controllers.DeployCollectionSign(scriptsSecret) {
 		args[0] += "/usr/local/bin/pulpcore-manager remove-signing-service collection-signing-service\n"
-		args[0] += "/usr/local/bin/pulpcore-manager add-signing-service collection-signing-service /var/lib/pulp/scripts/" + settings.CollectionSigningScriptName + " " + fingerprint + "\n"
+		args[0] += "/usr/local/bin/pulpcore-manager add-signing-service collection-signing-service " + settings.SigningScriptPath + settings.CollectionSigningScriptName + " " + fingerprint + "\n"
 		envVars = append(envVars, corev1.EnvVar{Name: "COLLECTION_SIGNING_SERVICE", Value: "collection-signing-service"})
 	}
 	if controllers.DeployContainerSign(scriptsSecret) {
 		args[0] += "/usr/local/bin/pulpcore-manager remove-signing-service container-signing-service --class container:ManifestSigningService\n"
-		args[0] += "/usr/local/bin/pulpcore-manager add-signing-service container-signing-service /var/lib/pulp/scripts/" + settings.ContainerSigningScriptName + " " + fingerprint + " --class container:ManifestSigningService"
+		args[0] += "/usr/local/bin/pulpcore-manager add-signing-service container-signing-service " + settings.SigningScriptPath + settings.ContainerSigningScriptName + " " + fingerprint + " --class container:ManifestSigningService \n"
 		envVars = append(envVars, corev1.EnvVar{Name: "CONTAINER_SIGNING_SERVICE", Value: "container-signing-service"})
+	}
+	if controllers.DeployAptSign(scriptsSecret) {
+		args[0] += "/usr/local/bin/pulpcore-manager remove-signing-service apt-signing-service --class deb:AptReleaseSigningService\n"
+		args[0] += "/usr/local/bin/pulpcore-manager add-signing-service --class deb:AptReleaseSigningService apt-signing-service " + settings.SigningScriptPath + settings.AptSigningScriptName + " " + fingerprint
+		envVars = append(envVars, corev1.EnvVar{Name: "APT_SIGNING_SERVICE", Value: "apt-signing-service"})
 	}
 
 	return corev1.Container{
@@ -424,6 +441,10 @@ func signingScriptJobVolumes(pulp *repomanagerpulpprojectorgv1beta2.Pulp, secret
 	}
 	if controllers.DeployContainerSign(secret) {
 		item := corev1.KeyToPath{Key: settings.ContainerSigningScriptName, Path: settings.ContainerSigningScriptName}
+		secretItems = append(secretItems, item)
+	}
+	if controllers.DeployAptSign(secret) {
+		item := corev1.KeyToPath{Key: settings.AptSigningScriptName, Path: settings.AptSigningScriptName}
 		secretItems = append(secretItems, item)
 	}
 
