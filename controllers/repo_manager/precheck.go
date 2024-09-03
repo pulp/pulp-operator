@@ -119,7 +119,7 @@ func initializeStatusCondition(ctx context.Context, r *RepoManagerReconciler, pu
 
 // checkImageVersion verifies if pulp-webcheckImageVersion image version matches pulp-minimal
 func checkImageVersion(r *RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
-	if r.needsPulpWeb(pulp) && pulp.Spec.ImageVersion != pulp.Spec.ImageWebVersion {
+	if r.needsPulpWeb(pulp) && pulp.Spec.ImageVersion != pulp.Spec.ImageWebVersion && pulp.Spec.Web.Replicas > 0 {
 		if pulp.Spec.InhibitVersionConstraint {
 			controllers.CustomZapLogger().Warn("image_version should be equal to image_web_version! Using different versions is not recommended and can make the application unreachable")
 		} else {
