@@ -1,0 +1,1 @@
+Fixed an issue where custom annotations were not getting added to nginx ingresses.

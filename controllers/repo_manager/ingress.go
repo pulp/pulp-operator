@@ -265,6 +265,9 @@ func (i IngressNginx) Deploy(resources controllers.FunctionResources, plugins []
 	annotation["nginx.ingress.kubernetes.io/proxy-read-timeout"] = nginxProxyReadTimeout
 	annotation["nginx.ingress.kubernetes.io/proxy-connect-timeout"] = nginxProxyConnectTimeout
 	annotation["nginx.ingress.kubernetes.io/proxy-send-timeout"] = nginxProxySendTimeout
+	for key, val := range pulp.Spec.IngressAnnotations {
+		annotation[key] = val
+	}
 
 	ingress.ObjectMeta.Annotations = annotation
 	ingress.Spec.IngressClassName = &pulp.Spec.IngressClassName
