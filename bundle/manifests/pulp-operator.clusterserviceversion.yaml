@@ -168,7 +168,7 @@ metadata:
     capabilities: Full Lifecycle
     categories: Integration & Delivery
     containerImage: quay.io/pulp/pulp-operator:devel
-    createdAt: "2024-07-04T17:02:20Z"
+    createdAt: "2024-08-14T02:03:48Z"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
     operators.operatorframework.io/builder: operator-sdk-v1.29.0
@@ -838,6 +838,11 @@ spec:
         path: inhibit_version_constraint
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Disable ipv6 for pulpcore and pulp-web pods
+        displayName: IPv6 Disabled
+        path: ipv6_disabled
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: 'Define if the IngressClass provided has Nginx as Ingress Controller.
           If the Ingress Controller is not nginx the operator will automatically provision
           `pulp-web` pods to redirect the traffic. If it is a nginx controller the

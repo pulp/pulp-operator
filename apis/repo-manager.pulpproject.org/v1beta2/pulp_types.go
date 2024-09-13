@@ -400,6 +400,11 @@ type PulpSpec struct {
 	// LDAP defines the ldap resources used by pulpcore containers to integrate Pulp with LDAP authentication
 	// +kubebuilder:validation:Optional
 	LDAP LDAP `json:"ldap,omitempty"`
+
+	// Disable ipv6 for pulpcore and pulp-web pods
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	IPv6Disabled *bool `json:"ipv6_disabled,omitempty"`
 }
 
 // Api defines desired state of pulpcore-api resources

@@ -19,3 +19,7 @@ func EmptyCAConfigMapName(pulpName string) string {
 func PulpWebConfigMapName(pulpName string) string {
 	return pulpName + "-configmap"
 }
+
+func PulpWorkerProbe(pulpName string) string {
+	return pulpName + "-worker-probe"
+}

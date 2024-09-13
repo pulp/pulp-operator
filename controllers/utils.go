@@ -917,3 +917,7 @@ func SetDefaultSecurityContext() *corev1.SecurityContext {
 		},
 	}
 }
+
+func Ipv6Disabled(pulp repomanagerpulpprojectorgv1beta2.Pulp) bool {
+	return pulp.Spec.IPv6Disabled != nil && *pulp.Spec.IPv6Disabled
+}

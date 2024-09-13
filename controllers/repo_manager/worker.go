@@ -37,6 +37,12 @@ func (r *RepoManagerReconciler) pulpWorkerController(ctx context.Context, pulp *
 
 	// conditionType is used to update .status.conditions with the current resource state
 	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Worker-Ready"
+
+	// temporary workaround that creates a configmap to be used as a readiness probe when ipv6 is disabled (pending oci-image update)
+	if requeue, err := r.createProbeConfigMap(ctx, pulp, conditionType); err != nil || requeue != nil {
+		return *requeue, err
+	}
+
 	funcResources := controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}
 
 	// define the k8s Deployment function based on k8s distribution and deployment type
@@ -62,4 +68,41 @@ func (r *RepoManagerReconciler) pulpWorkerController(ctx context.Context, pulp *
 		r.recorder.Event(pulp, corev1.EventTypeNormal, "WorkerReady", "All Worker tasks ran successfully")
 	}
 	return ctrl.Result{}, nil
+}
+
+// TODO: the ipv6 incompatibility should be handled by oci-image.
+// Remove this function after updating the image.
+func (r *RepoManagerReconciler) createProbeConfigMap(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, conditionType string) (*ctrl.Result, error) {
+
+	if !controllers.Ipv6Disabled(*pulp) {
+		return nil, nil
+	}
+
+	configMapName := settings.PulpWorkerProbe(pulp.Name)
+	resourceDefinition := ResourceDefinition{
+		Context:       ctx,
+		Type:          &corev1.ConfigMap{},
+		Name:          configMapName,
+		Alias:         "PulpWorkerProbe",
+		ConditionType: conditionType,
+		Pulp:          pulp}
+
+	// create the configmap
+	requeue, err := r.createPulpResource(resourceDefinition, postgresConnectionConfigMap)
+	if err != nil {
+		return nil, err
+	} else if requeue {
+		return &ctrl.Result{Requeue: true}, nil
+	}
+
+	// Ensure the configmap data is as expected
+	funcResources := controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: r.RawLogger}
+	configMap := &corev1.ConfigMap{}
+	r.Get(ctx, types.NamespacedName{Name: configMapName, Namespace: pulp.Namespace}, configMap)
+	expectedCM := postgresConnectionConfigMap(funcResources)
+	if requeue, err := controllers.ReconcileObject(funcResources, expectedCM, configMap, conditionType, controllers.PulpConfigMap{}); err != nil || requeue {
+		return &ctrl.Result{Requeue: requeue}, err
+	}
+
+	return nil, nil
 }

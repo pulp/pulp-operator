@@ -244,6 +244,7 @@ PulpSpec defines the desired state of Pulp
 | loadbalancer_port | Port exposed by pulp-web service when ingress_type==loadbalancer | int32 | false |
 | telemetry | Telemetry defines the OpenTelemetry configuration | [Telemetry](#telemetry) | false |
 | ldap | LDAP defines the ldap resources used by pulpcore containers to integrate Pulp with LDAP authentication | [LDAP](#ldap) | false |
+| ipv6_disabled | Disable ipv6 for pulpcore and pulp-web pods | *bool | false |
 
 [Back to Custom Resources](#custom-resources)
 

@@ -651,3 +651,55 @@ func (r *RepoManagerReconciler) runSigningSecretTasks(ctx context.Context, pulp 
 
 	return &ctrl.Result{Requeue: true}
 }
+
+// TODO: the ipv6 incompatibility should be handled by oci-image.
+// Remove this function after updating the image.
+// postgresConnectionConfigMap creates a ConfigMap with a script to verify the
+// conectivity with Postgres
+func postgresConnectionConfigMap(resources controllers.FunctionResources) client.Object {
+	pulp := resources.Pulp
+	checkPostgres := map[string]string{
+		"wait_on_postgres.py": `#!/usr/bin/env python3
+import os
+import socket
+import sys
+import time
+if __name__ == "__main__":
+    postgres_is_alive = False
+    s4 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    tries = 0
+    print("Waiting on postgresql to start...")
+    while not postgres_is_alive and tries < 100:
+        tries += 1
+        pg_port = 5432
+        try:
+            env_port = os.environ.get("POSTGRES_SERVICE_PORT", "5432")
+            pg_port = int(env_port)
+        except ValueError:
+            pass
+        try:
+            print("Checking postgres host %s" % os.environ["POSTGRES_SERVICE_HOST"])
+            print("Checking postgres port %s" % os.environ["POSTGRES_SERVICE_PORT"])
+            s4.connect((os.environ["POSTGRES_SERVICE_HOST"], pg_port))
+        except socket.error:
+            time.sleep(3)
+        else:
+            postgres_is_alive = True
+
+    if postgres_is_alive:
+        print("Postgres started!")
+        sys.exit(0)
+    else:
+        print("Unable to reach postgres on port %s" % os.environ["POSTGRES_SERVICE_PORT"])
+        sys.exit(1)`,
+	}
+	labels := settings.CommonLabels(*pulp)
+	return &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      settings.PulpWorkerProbe(pulp.Name),
+			Namespace: pulp.Namespace,
+			Labels:    labels,
+		},
+		Data: checkPostgres,
+	}
+}
