@@ -435,6 +435,26 @@ func (d *CommonDeployment) setVolumes(resources any, pulpcoreType settings.Pulpc
 			},
 		}
 		volumes = append(volumes, ansibleVolume)
+
+		// mount wait_on_postgres.py if ipv6 is disabled
+		if Ipv6Disabled(pulp) {
+			defaultMode := int32(0755)
+			waitOnPostgres := corev1.Volume{
+				Name: pulp.Name + "-worker-probe",
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						DefaultMode: &defaultMode,
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: pulp.Name + "-worker-probe",
+						},
+						Items: []corev1.KeyToPath{
+							{Key: "wait_on_postgres.py", Path: "wait_on_postgres.py"},
+						},
+					},
+				},
+			}
+			volumes = append(volumes, waitOnPostgres)
+		}
 	}
 
 	// worker and content pods don't need to mount the admin secret
@@ -612,6 +632,15 @@ func (d *CommonDeployment) setVolumeMounts(pulp repomanagerpulpprojectorgv1beta2
 	if pulpcoreType == settings.WORKER {
 		ansibleVolume := corev1.VolumeMount{Name: pulp.Name + "-ansible-tmp", MountPath: "/.ansible/tmp"}
 		volumeMounts = append(volumeMounts, ansibleVolume)
+
+		if Ipv6Disabled(pulp) {
+			waitOnPostgres := corev1.VolumeMount{
+				Name:      pulp.Name + "-worker-probe",
+				MountPath: "/usr/bin/wait_on_postgres.py",
+				SubPath:   "wait_on_postgres.py",
+			}
+			volumeMounts = append(volumeMounts, waitOnPostgres)
+		}
 	}
 
 	// worker and content pods don't need to mount the admin secret
@@ -942,6 +971,49 @@ echo "${PULP_SIGNING_KEY_FINGERPRINT}:6" | gpg --import-ownertrust
 	}
 }
 
+func pulpcoreApiContainerArgs(pulp repomanagerpulpprojectorgv1beta2.Pulp) []string {
+	gunicornBindAddress := "[::]:24817"
+	if Ipv6Disabled(pulp) {
+		gunicornBindAddress = "0.0.0.0:24817"
+	}
+	return []string{
+		"-c",
+		`if which pulpcore-api
+then
+  PULP_API_ENTRYPOINT=("pulpcore-api")
+else
+  PULP_API_ENTRYPOINT=("gunicorn" "pulpcore.app.wsgi:application" "--name" "pulp-api" "--access-logformat" "pulp [%({correlation-id}o)s]: %(h)s %(l)s %(u)s %(t)s \"%(r)s\" %(s)s %(b)s \"%(f)s\" \"%(a)s\"")
+fi
+exec "${PULP_API_ENTRYPOINT[@]}" \
+--bind "` + gunicornBindAddress + `" \
+--timeout "${PULP_GUNICORN_TIMEOUT}" \
+--workers "${PULP_API_WORKERS}" \
+--access-logfile -`,
+	}
+}
+
+func pulpcoreContentContainerArgs(pulp repomanagerpulpprojectorgv1beta2.Pulp) []string {
+	gunicornBindAddress := "[::]:24816"
+	if Ipv6Disabled(pulp) {
+		gunicornBindAddress = "0.0.0.0:24816"
+	}
+	return []string{
+		"-c",
+		`if which pulpcore-content
+then
+  PULP_CONTENT_ENTRYPOINT=("pulpcore-content")
+else
+  PULP_CONTENT_ENTRYPOINT=("gunicorn" "pulpcore.content:server" "--worker-class" "aiohttp.GunicornWebWorker" "--name" "pulp-content")
+fi
+exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
+--bind "` + gunicornBindAddress + `" \
+--timeout "${PULP_GUNICORN_TIMEOUT}" \
+--workers "${PULP_CONTENT_WORKERS}" \
+--access-logfile -
+`,
+	}
+}
+
 // setContainers defines pulpcore containers specs
 func (d *CommonDeployment) setContainers(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
 	securityContext := SetDefaultSecurityContext()
@@ -953,7 +1025,8 @@ func (d *CommonDeployment) setContainers(pulp repomanagerpulpprojectorgv1beta2.P
 				Name:            "api",
 				Image:           d.image,
 				ImagePullPolicy: corev1.PullPolicy(pulp.Spec.ImagePullPolicy),
-				Command:         []string{"/usr/bin/pulp-api"},
+				Command:         []string{"/bin/sh"},
+				Args:            pulpcoreApiContainerArgs(pulp),
 				Env:             d.envVars,
 				Ports: []corev1.ContainerPort{{
 					ContainerPort: 24817,
@@ -971,7 +1044,8 @@ func (d *CommonDeployment) setContainers(pulp repomanagerpulpprojectorgv1beta2.P
 			Name:            "content",
 			Image:           d.image,
 			ImagePullPolicy: corev1.PullPolicy(pulp.Spec.ImagePullPolicy),
-			Command:         []string{"/usr/bin/pulp-content"},
+			Command:         []string{"/bin/sh"},
+			Args:            pulpcoreContentContainerArgs(pulp),
 			Resources:       d.resourceRequirements,
 			Env:             d.envVars,
 			Ports: []corev1.ContainerPort{{

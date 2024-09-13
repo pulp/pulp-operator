@@ -609,8 +609,22 @@ var _ = Describe("Pulp controller", Ordered, func() {
 	apiContainers := []corev1.Container{{
 		Name:    "api",
 		Image:   "quay.io/pulp/pulp-minimal:latest",
-		Command: []string{"/usr/bin/pulp-api"},
-		Env:     envVarsApi,
+		Command: []string{"/bin/sh"},
+		Args: []string{
+			"-c",
+			`if which pulpcore-api
+then
+  PULP_API_ENTRYPOINT=("pulpcore-api")
+else
+  PULP_API_ENTRYPOINT=("gunicorn" "pulpcore.app.wsgi:application" "--name" "pulp-api" "--access-logformat" "pulp [%({correlation-id}o)s]: %(h)s %(l)s %(u)s %(t)s \"%(r)s\" %(s)s %(b)s \"%(f)s\" \"%(a)s\"")
+fi
+exec "${PULP_API_ENTRYPOINT[@]}" \
+--bind "[::]:24817" \
+--timeout "${PULP_GUNICORN_TIMEOUT}" \
+--workers "${PULP_API_WORKERS}" \
+--access-logfile -`,
+		},
+		Env: envVarsApi,
 		Ports: []corev1.ContainerPort{{
 			ContainerPort: 24817,
 			Protocol:      "TCP",
@@ -708,9 +722,24 @@ var _ = Describe("Pulp controller", Ordered, func() {
 						Name:            "content",
 						Image:           "quay.io/pulp/pulp-minimal:latest",
 						ImagePullPolicy: corev1.PullPolicy("IfNotPresent"),
-						Command:         []string{"/usr/bin/pulp-content"},
-						Resources:       corev1.ResourceRequirements{},
-						Env:             envVarsContent,
+						Command:         []string{"/bin/sh"},
+						Args: []string{
+							"-c",
+							`if which pulpcore-content
+then
+  PULP_CONTENT_ENTRYPOINT=("pulpcore-content")
+else
+  PULP_CONTENT_ENTRYPOINT=("gunicorn" "pulpcore.content:server" "--worker-class" "aiohttp.GunicornWebWorker" "--name" "pulp-content")
+fi
+exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
+--bind "[::]:24816" \
+--timeout "${PULP_GUNICORN_TIMEOUT}" \
+--workers "${PULP_CONTENT_WORKERS}" \
+--access-logfile -
+`,
+						},
+						Resources: corev1.ResourceRequirements{},
+						Env:       envVarsContent,
 						Ports: []corev1.ContainerPort{{
 							ContainerPort: 24816,
 							Protocol:      "TCP",

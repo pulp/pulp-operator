@@ -375,12 +375,19 @@ func (r *RepoManagerReconciler) pulpWebConfigMap(m *repomanagerpulpprojectorgv1b
 		tlsTerminationMechanism = strings.ToLower(m.Spec.Web.TLSTerminationMechanism)
 	}
 
+	listenHTTPIpv6 := "listen [::]:8080 default_server deferred;"
+	listenHTTPSIpv6 := "listen [::]:8443 default_server deferred ssl;"
+	if controllers.Ipv6Disabled(*m) {
+		listenHTTPIpv6 = ""
+		listenHTTPSIpv6 = ""
+	}
+
 	if tlsTerminationMechanism == "passthrough" {
 		serverConfig = `
 
     server {
         listen 8080 default_server;
-        listen [::]:8080 default_server;
+        ` + listenHTTPIpv6 + `
         server_name _;
 
         proxy_read_timeout ` + nginxProxyReadTimeout + `;
@@ -395,7 +402,7 @@ func (r *RepoManagerReconciler) pulpWebConfigMap(m *repomanagerpulpprojectorgv1b
 
     server {
         listen 8443 default_server deferred ssl;
-        listen [::]:8443 default_server deferred ssl;
+        ` + listenHTTPSIpv6 + `
 
         ssl_certificate /etc/nginx/pki/web.crt;
         ssl_certificate_key /etc/nginx/pki/web.key;
@@ -414,8 +421,7 @@ func (r *RepoManagerReconciler) pulpWebConfigMap(m *repomanagerpulpprojectorgv1b
     server {
     	# Gunicorn docs suggest the use of the "deferred" directive on Linux.
     	listen 8080 default_server deferred;
-    	listen [::]:8080 default_server deferred;
-`
+    	` + listenHTTPIpv6
 	}
 
 	data := map[string]string{
