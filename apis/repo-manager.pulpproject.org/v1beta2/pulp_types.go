@@ -43,6 +43,7 @@ type PulpSpec struct {
 	// Default: "pulp"
 	// +kubebuilder:default:="pulp"
 	// +kubebuilder:validation:Enum:=pulp;galaxy
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="deployment_type is immutable"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	DeploymentType string `json:"deployment_type,omitempty"`
 
