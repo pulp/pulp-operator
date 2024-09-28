@@ -7140,6 +7140,9 @@ spec:
                 - pulp
                 - galaxy
                 type: string
+                x-kubernetes-validations:
+                - message: deployment_type is immutable
+                  rule: self == oldSelf
               disable_migrations:
                 description: |-
                   Disable database migrations. Useful for situations in which we don't want

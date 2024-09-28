@@ -113,14 +113,13 @@ spec:
 ...
 ```
 
-If the `admin_password_secret` field is not defined with the name of a `Secret` the Operator will create one (called *pulp-admin-password*) with a random string.  
-This field is immutable, i.e., it is not possible to modify the name of the `Secret` that the Operator will use to define the admin password. In case of a need to update the admin password, the `Secret` content should be updated instead.
+If the `admin_password_secret` field is not defined with the name of a `Secret` the Operator will create one (called *pulp-admin-password*) with a random string.
 
 
 ### pulp-container-auth
 
 Contains the keys which are going to be used for the [signing and validation of tokens](https://docs.pulpproject.org/pulp_container/authentication.html#token-authentication-label).  
-It is managed by `container_token_secret` field in Pulp `CR`. The `Secret` name is immutable (an attempt to change its name in Pulp `CR` will reconcile it), any update should be done in the existing `Secret` content.
+It is managed by `container_token_secret` field in Pulp `CR`.
 
 ### pulp-secret-key
 
@@ -141,4 +140,3 @@ spec:
 ```
 
 If the `pulp_secret_key` field is not defined with the name of a `Secret` the Operator will create one (called *pulp-secret-key*) with a random string.  
-This field is immutable, i.e., it is not possible to modify the name of the `Secret` that the Operator will use to define the Django `SECRET_KEY`. In case of a need to update it, the `Secret` content should be updated instead.
