@@ -1,0 +1,2 @@
+Updated the manifests to include the `ipv6_disabled` field and
+definitions for some k8s core resources.
