@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.16.5
   name: pulps.repo-manager.pulpproject.org
 spec:
   group: repo-manager.pulpproject.org
@@ -85,9 +85,7 @@ spec:
                                         This field is effectively required, but due to backwards compatibility is
                                         allowed to be empty. Instances of this type with an empty value here are
                                         almost certainly wrong.
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                       type: string
                                     optional:
                                       description: Specify whether the ConfigMap or
@@ -153,9 +151,7 @@ spec:
                                         This field is effectively required, but due to backwards compatibility is
                                         allowed to be empty. Instances of this type with an empty value here are
                                         almost certainly wrong.
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                       type: string
                                     optional:
                                       description: Specify whether the Secret or its
@@ -184,10 +180,8 @@ spec:
                               Claims lists the names of resources, defined in spec.resourceClaims,
                               that are used by this container.
 
-
                               This is an alpha field and requires enabling the
                               DynamicResourceAllocation feature gate.
-
 
                               This field is immutable. It can only be set for containers.
                             items:
@@ -198,6 +192,12 @@ spec:
                                     Name must match the name of one entry in pod.spec.resourceClaims of
                                     the Pod where this field is used. It makes that resource available
                                     inside a container.
+                                  type: string
+                                request:
+                                  description: |-
+                                    Request is the name chosen for a request in the referenced claim.
+                                    If empty, everything from the claim is made available, otherwise
+                                    only the result of this request.
                                   type: string
                               required:
                               - name
@@ -536,7 +536,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                         Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -551,7 +551,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                         Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -718,7 +718,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                     Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -733,7 +733,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                     Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -898,7 +898,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                         Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -913,7 +913,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                         Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -1080,7 +1080,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                     Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -1095,7 +1095,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                     Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -1221,9 +1221,7 @@ spec:
                                     This field is effectively required, but due to backwards compatibility is
                                     allowed to be empty. Instances of this type with an empty value here are
                                     almost certainly wrong.
-                                    TODO: Add other useful fields. apiVersion, kind, uid?
                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                   type: string
                                 optional:
                                   description: Specify whether the ConfigMap or its
@@ -1289,9 +1287,7 @@ spec:
                                     This field is effectively required, but due to backwards compatibility is
                                     allowed to be empty. Instances of this type with an empty value here are
                                     almost certainly wrong.
-                                    TODO: Add other useful fields. apiVersion, kind, uid?
                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                   type: string
                                 optional:
                                   description: Specify whether the Secret or its key
@@ -1361,9 +1357,7 @@ spec:
                                         This field is effectively required, but due to backwards compatibility is
                                         allowed to be empty. Instances of this type with an empty value here are
                                         almost certainly wrong.
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                       type: string
                                     optional:
                                       description: Specify whether the ConfigMap or
@@ -1429,9 +1423,7 @@ spec:
                                         This field is effectively required, but due to backwards compatibility is
                                         allowed to be empty. Instances of this type with an empty value here are
                                         almost certainly wrong.
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                       type: string
                                     optional:
                                       description: Specify whether the Secret or its
@@ -1460,10 +1452,8 @@ spec:
                               Claims lists the names of resources, defined in spec.resourceClaims,
                               that are used by this container.
 
-
                               This is an alpha field and requires enabling the
                               DynamicResourceAllocation feature gate.
-
 
                               This field is immutable. It can only be set for containers.
                             items:
@@ -1474,6 +1464,12 @@ spec:
                                     Name must match the name of one entry in pod.spec.resourceClaims of
                                     the Pod where this field is used. It makes that resource available
                                     inside a container.
+                                  type: string
+                                request:
+                                  description: |-
+                                    Request is the name chosen for a request in the referenced claim.
+                                    If empty, everything from the claim is made available, otherwise
+                                    only the result of this request.
                                   type: string
                               required:
                               - name
@@ -1543,10 +1539,10 @@ spec:
                             format: int32
                             type: integer
                           service:
+                            default: ""
                             description: |-
                               Service is the name of the service to place in the gRPC HealthCheckRequest
                               (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-
 
                               If this is not specified, the default behavior is defined by gRPC.
                             type: string
@@ -1747,17 +1743,14 @@ spec:
                           should be considered for eviction. Current implementation considers healthy pods,
                           as pods that have status.conditions item with type="Ready",status="True".
 
-
                           Valid policies are IfHealthyBudget and AlwaysAllow.
                           If no policy is specified, the default behavior will be used,
                           which corresponds to the IfHealthyBudget policy.
-
 
                           IfHealthyBudget policy means that running pods (status.phase="Running"),
                           but not yet healthy can be evicted only if the guarded application is not
                           disrupted (status.currentHealthy is at least equal to status.desiredHealthy).
                           Healthy pods will be subject to the PDB for eviction.
-
 
                           AlwaysAllow policy means that all running pods (status.phase="Running"),
                           but not yet healthy are considered disrupted and can be evicted regardless
@@ -1765,11 +1758,9 @@ spec:
                           pods of a disrupted application might not get a chance to become healthy.
                           Healthy pods will be subject to the PDB for eviction.
 
-
                           Additional policies may be added in the future.
                           Clients making eviction decisions should disallow eviction of unhealthy pods
                           if they encounter an unrecognized policy in this field.
-
 
                           This field is beta-level. The eviction API uses this field when
                           the feature gate PDBUnhealthyPodEvictionPolicy is enabled (enabled by default).
@@ -1810,10 +1801,10 @@ spec:
                             format: int32
                             type: integer
                           service:
+                            default: ""
                             description: |-
                               Service is the name of the service to place in the gRPC HealthCheckRequest
                               (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-
 
                               If this is not specified, the default behavior is defined by gRPC.
                             type: string
@@ -1946,10 +1937,8 @@ spec:
                           Claims lists the names of resources, defined in spec.resourceClaims,
                           that are used by this container.
 
-
                           This is an alpha field and requires enabling the
                           DynamicResourceAllocation feature gate.
-
 
                           This field is immutable. It can only be set for containers.
                         items:
@@ -1960,6 +1949,12 @@ spec:
                                 Name must match the name of one entry in pod.spec.resourceClaims of
                                 the Pod where this field is used. It makes that resource available
                                 inside a container.
+                              type: string
+                            request:
+                              description: |-
+                                Request is the name chosen for a request in the referenced claim.
+                                If empty, everything from the claim is made available, otherwise
+                                only the result of this request.
                               type: string
                           required:
                           - name
@@ -2001,9 +1996,6 @@ spec:
                         description: |-
                           Rolling update config params. Present only if DeploymentStrategyType =
                           RollingUpdate.
-                          ---
-                          TODO: Update this to follow our convention for oneOf, whatever we decide it
-                          to be.
                         properties:
                           maxSurge:
                             anyOf:
@@ -2149,7 +2141,6 @@ spec:
                             Keys that don't exist in the incoming pod labels will
                             be ignored. A null or empty list means only match against labelSelector.
 
-
                             This is a beta field and requires the MatchLabelKeysInPodTopologySpread feature gate to be enabled (enabled by default).
                           items:
                             type: string
@@ -2189,7 +2180,6 @@ spec:
                             Valid values are integers greater than 0.
                             When value is not nil, WhenUnsatisfiable must be DoNotSchedule.
 
-
                             For example, in a 3-zone cluster, MaxSkew is set to 2, MinDomains is set to 5 and pods with the same
                             labelSelector spread as 2/2/2:
                             | zone1 | zone2 | zone3 |
@@ -2207,7 +2197,6 @@ spec:
                             - Honor: only nodes matching nodeAffinity/nodeSelector are included in the calculations.
                             - Ignore: nodeAffinity/nodeSelector are ignored. All nodes are included in the calculations.
 
-
                             If this value is nil, the behavior is equivalent to the Honor policy.
                             This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
                           type: string
@@ -2218,7 +2207,6 @@ spec:
                             - Honor: nodes without taints, along with tainted nodes for which the incoming pod
                             has a toleration, are included.
                             - Ignore: node taints are ignored. All nodes are included.
-
 
                             If this value is nil, the behavior is equivalent to the Ignore policy.
                             This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
@@ -2553,7 +2541,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                         Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -2568,7 +2556,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                         Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -2735,7 +2723,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                     Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -2750,7 +2738,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                     Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -2915,7 +2903,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                         Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -2930,7 +2918,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                         Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -3097,7 +3085,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                     Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -3112,7 +3100,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                     Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -3244,10 +3232,10 @@ spec:
                             format: int32
                             type: integer
                           service:
+                            default: ""
                             description: |-
                               Service is the name of the service to place in the gRPC HealthCheckRequest
                               (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-
 
                               If this is not specified, the default behavior is defined by gRPC.
                             type: string
@@ -3409,10 +3397,10 @@ spec:
                             format: int32
                             type: integer
                           service:
+                            default: ""
                             description: |-
                               Service is the name of the service to place in the gRPC HealthCheckRequest
                               (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-
 
                               If this is not specified, the default behavior is defined by gRPC.
                             type: string
@@ -3545,10 +3533,8 @@ spec:
                           Claims lists the names of resources, defined in spec.resourceClaims,
                           that are used by this container.
 
-
                           This is an alpha field and requires enabling the
                           DynamicResourceAllocation feature gate.
-
 
                           This field is immutable. It can only be set for containers.
                         items:
@@ -3559,6 +3545,12 @@ spec:
                                 Name must match the name of one entry in pod.spec.resourceClaims of
                                 the Pod where this field is used. It makes that resource available
                                 inside a container.
+                              type: string
+                            request:
+                              description: |-
+                                Request is the name chosen for a request in the referenced claim.
+                                If empty, everything from the claim is made available, otherwise
+                                only the result of this request.
                               type: string
                           required:
                           - name
@@ -3603,9 +3595,6 @@ spec:
                         description: |-
                           Rolling update config params. Present only if DeploymentStrategyType =
                           RollingUpdate.
-                          ---
-                          TODO: Update this to follow our convention for oneOf, whatever we decide it
-                          to be.
                         properties:
                           maxSurge:
                             anyOf:
@@ -3992,7 +3981,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                         Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -4007,7 +3996,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                         Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -4174,7 +4163,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                     Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -4189,7 +4178,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                     Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -4354,7 +4343,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                         Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -4369,7 +4358,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                         Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -4536,7 +4525,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                     Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -4551,7 +4540,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                     Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -4678,9 +4667,7 @@ spec:
                                     This field is effectively required, but due to backwards compatibility is
                                     allowed to be empty. Instances of this type with an empty value here are
                                     almost certainly wrong.
-                                    TODO: Add other useful fields. apiVersion, kind, uid?
                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                   type: string
                                 optional:
                                   description: Specify whether the ConfigMap or its
@@ -4746,9 +4733,7 @@ spec:
                                     This field is effectively required, but due to backwards compatibility is
                                     allowed to be empty. Instances of this type with an empty value here are
                                     almost certainly wrong.
-                                    TODO: Add other useful fields. apiVersion, kind, uid?
                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                   type: string
                                 optional:
                                   description: Specify whether the Secret or its key
@@ -4818,9 +4803,7 @@ spec:
                                         This field is effectively required, but due to backwards compatibility is
                                         allowed to be empty. Instances of this type with an empty value here are
                                         almost certainly wrong.
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                       type: string
                                     optional:
                                       description: Specify whether the ConfigMap or
@@ -4886,9 +4869,7 @@ spec:
                                         This field is effectively required, but due to backwards compatibility is
                                         allowed to be empty. Instances of this type with an empty value here are
                                         almost certainly wrong.
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                       type: string
                                     optional:
                                       description: Specify whether the Secret or its
@@ -4917,10 +4898,8 @@ spec:
                               Claims lists the names of resources, defined in spec.resourceClaims,
                               that are used by this container.
 
-
                               This is an alpha field and requires enabling the
                               DynamicResourceAllocation feature gate.
-
 
                               This field is immutable. It can only be set for containers.
                             items:
@@ -4931,6 +4910,12 @@ spec:
                                     Name must match the name of one entry in pod.spec.resourceClaims of
                                     the Pod where this field is used. It makes that resource available
                                     inside a container.
+                                  type: string
+                                request:
+                                  description: |-
+                                    Request is the name chosen for a request in the referenced claim.
+                                    If empty, everything from the claim is made available, otherwise
+                                    only the result of this request.
                                   type: string
                               required:
                               - name
@@ -5000,10 +4985,10 @@ spec:
                             format: int32
                             type: integer
                           service:
+                            default: ""
                             description: |-
                               Service is the name of the service to place in the gRPC HealthCheckRequest
                               (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-
 
                               If this is not specified, the default behavior is defined by gRPC.
                             type: string
@@ -5204,17 +5189,14 @@ spec:
                           should be considered for eviction. Current implementation considers healthy pods,
                           as pods that have status.conditions item with type="Ready",status="True".
 
-
                           Valid policies are IfHealthyBudget and AlwaysAllow.
                           If no policy is specified, the default behavior will be used,
                           which corresponds to the IfHealthyBudget policy.
-
 
                           IfHealthyBudget policy means that running pods (status.phase="Running"),
                           but not yet healthy can be evicted only if the guarded application is not
                           disrupted (status.currentHealthy is at least equal to status.desiredHealthy).
                           Healthy pods will be subject to the PDB for eviction.
-
 
                           AlwaysAllow policy means that all running pods (status.phase="Running"),
                           but not yet healthy are considered disrupted and can be evicted regardless
@@ -5222,11 +5204,9 @@ spec:
                           pods of a disrupted application might not get a chance to become healthy.
                           Healthy pods will be subject to the PDB for eviction.
 
-
                           Additional policies may be added in the future.
                           Clients making eviction decisions should disallow eviction of unhealthy pods
                           if they encounter an unrecognized policy in this field.
-
 
                           This field is beta-level. The eviction API uses this field when
                           the feature gate PDBUnhealthyPodEvictionPolicy is enabled (enabled by default).
@@ -5267,10 +5247,10 @@ spec:
                             format: int32
                             type: integer
                           service:
+                            default: ""
                             description: |-
                               Service is the name of the service to place in the gRPC HealthCheckRequest
                               (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-
 
                               If this is not specified, the default behavior is defined by gRPC.
                             type: string
@@ -5403,10 +5383,8 @@ spec:
                           Claims lists the names of resources, defined in spec.resourceClaims,
                           that are used by this container.
 
-
                           This is an alpha field and requires enabling the
                           DynamicResourceAllocation feature gate.
-
 
                           This field is immutable. It can only be set for containers.
                         items:
@@ -5417,6 +5395,12 @@ spec:
                                 Name must match the name of one entry in pod.spec.resourceClaims of
                                 the Pod where this field is used. It makes that resource available
                                 inside a container.
+                              type: string
+                            request:
+                              description: |-
+                                Request is the name chosen for a request in the referenced claim.
+                                If empty, everything from the claim is made available, otherwise
+                                only the result of this request.
                               type: string
                           required:
                           - name
@@ -5458,9 +5442,6 @@ spec:
                         description: |-
                           Rolling update config params. Present only if DeploymentStrategyType =
                           RollingUpdate.
-                          ---
-                          TODO: Update this to follow our convention for oneOf, whatever we decide it
-                          to be.
                         properties:
                           maxSurge:
                             anyOf:
@@ -5606,7 +5587,6 @@ spec:
                             Keys that don't exist in the incoming pod labels will
                             be ignored. A null or empty list means only match against labelSelector.
 
-
                             This is a beta field and requires the MatchLabelKeysInPodTopologySpread feature gate to be enabled (enabled by default).
                           items:
                             type: string
@@ -5646,7 +5626,6 @@ spec:
                             Valid values are integers greater than 0.
                             When value is not nil, WhenUnsatisfiable must be DoNotSchedule.
 
-
                             For example, in a 3-zone cluster, MaxSkew is set to 2, MinDomains is set to 5 and pods with the same
                             labelSelector spread as 2/2/2:
                             | zone1 | zone2 | zone3 |
@@ -5664,7 +5643,6 @@ spec:
                             - Honor: only nodes matching nodeAffinity/nodeSelector are included in the calculations.
                             - Ignore: nodeAffinity/nodeSelector are ignored. All nodes are included in the calculations.
 
-
                             If this value is nil, the behavior is equivalent to the Honor policy.
                             This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
                           type: string
@@ -5675,7 +5653,6 @@ spec:
                             - Honor: nodes without taints, along with tainted nodes for which the incoming pod
                             has a toleration, are included.
                             - Ignore: node taints are ignored. All nodes are included.
-
 
                             If this value is nil, the behavior is equivalent to the Ignore policy.
                             This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
@@ -6015,7 +5992,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                         Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -6030,7 +6007,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                         Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -6197,7 +6174,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                     Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -6212,7 +6189,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                     Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -6377,7 +6354,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                         Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -6392,7 +6369,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                         Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -6559,7 +6536,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                     Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -6574,7 +6551,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                     Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -6695,10 +6672,10 @@ spec:
                             format: int32
                             type: integer
                           service:
+                            default: ""
                             description: |-
                               Service is the name of the service to place in the gRPC HealthCheckRequest
                               (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-
 
                               If this is not specified, the default behavior is defined by gRPC.
                             type: string
@@ -6857,10 +6834,8 @@ spec:
                           Claims lists the names of resources, defined in spec.resourceClaims,
                           that are used by this container.
 
-
                           This is an alpha field and requires enabling the
                           DynamicResourceAllocation feature gate.
-
 
                           This field is immutable. It can only be set for containers.
                         items:
@@ -6871,6 +6846,12 @@ spec:
                                 Name must match the name of one entry in pod.spec.resourceClaims of
                                 the Pod where this field is used. It makes that resource available
                                 inside a container.
+                              type: string
+                            request:
+                              description: |-
+                                Request is the name chosen for a request in the referenced claim.
+                                If empty, everything from the claim is made available, otherwise
+                                only the result of this request.
                               type: string
                           required:
                           - name
@@ -6959,10 +6940,10 @@ spec:
                             format: int32
                             type: integer
                           service:
+                            default: ""
                             description: |-
                               Service is the name of the service to place in the gRPC HealthCheckRequest
                               (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-
 
                               If this is not specified, the default behavior is defined by gRPC.
                             type: string
@@ -7333,9 +7314,7 @@ spec:
                                         This field is effectively required, but due to backwards compatibility is
                                         allowed to be empty. Instances of this type with an empty value here are
                                         almost certainly wrong.
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                       type: string
                                     optional:
                                       description: Specify whether the ConfigMap or
@@ -7401,9 +7380,7 @@ spec:
                                         This field is effectively required, but due to backwards compatibility is
                                         allowed to be empty. Instances of this type with an empty value here are
                                         almost certainly wrong.
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                       type: string
                                     optional:
                                       description: Specify whether the Secret or its
@@ -7432,10 +7409,8 @@ spec:
                               Claims lists the names of resources, defined in spec.resourceClaims,
                               that are used by this container.
 
-
                               This is an alpha field and requires enabling the
                               DynamicResourceAllocation feature gate.
-
 
                               This field is immutable. It can only be set for containers.
                             items:
@@ -7446,6 +7421,12 @@ spec:
                                     Name must match the name of one entry in pod.spec.resourceClaims of
                                     the Pod where this field is used. It makes that resource available
                                     inside a container.
+                                  type: string
+                                request:
+                                  description: |-
+                                    Request is the name chosen for a request in the referenced claim.
+                                    If empty, everything from the claim is made available, otherwise
+                                    only the result of this request.
                                   type: string
                               required:
                               - name
@@ -7620,9 +7601,7 @@ spec:
                                         This field is effectively required, but due to backwards compatibility is
                                         allowed to be empty. Instances of this type with an empty value here are
                                         almost certainly wrong.
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                       type: string
                                     optional:
                                       description: Specify whether the ConfigMap or
@@ -7688,9 +7667,7 @@ spec:
                                         This field is effectively required, but due to backwards compatibility is
                                         allowed to be empty. Instances of this type with an empty value here are
                                         almost certainly wrong.
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                       type: string
                                     optional:
                                       description: Specify whether the Secret or its
@@ -7719,10 +7696,8 @@ spec:
                               Claims lists the names of resources, defined in spec.resourceClaims,
                               that are used by this container.
 
-
                               This is an alpha field and requires enabling the
                               DynamicResourceAllocation feature gate.
-
 
                               This field is immutable. It can only be set for containers.
                             items:
@@ -7733,6 +7708,12 @@ spec:
                                     Name must match the name of one entry in pod.spec.resourceClaims of
                                     the Pod where this field is used. It makes that resource available
                                     inside a container.
+                                  type: string
+                                request:
+                                  description: |-
+                                    Request is the name chosen for a request in the referenced claim.
+                                    If empty, everything from the claim is made available, otherwise
+                                    only the result of this request.
                                   type: string
                               required:
                               - name
@@ -7814,10 +7795,8 @@ spec:
                           Claims lists the names of resources, defined in spec.resourceClaims,
                           that are used by this container.
 
-
                           This is an alpha field and requires enabling the
                           DynamicResourceAllocation feature gate.
-
 
                           This field is immutable. It can only be set for containers.
                         items:
@@ -7828,6 +7807,12 @@ spec:
                                 Name must match the name of one entry in pod.spec.resourceClaims of
                                 the Pod where this field is used. It makes that resource available
                                 inside a container.
+                              type: string
+                            request:
+                              description: |-
+                                Request is the name chosen for a request in the referenced claim.
+                                If empty, everything from the claim is made available, otherwise
+                                only the result of this request.
                               type: string
                           required:
                           - name
@@ -7916,9 +7901,7 @@ spec:
                                     This field is effectively required, but due to backwards compatibility is
                                     allowed to be empty. Instances of this type with an empty value here are
                                     almost certainly wrong.
-                                    TODO: Add other useful fields. apiVersion, kind, uid?
                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                   type: string
                                 optional:
                                   description: Specify whether the ConfigMap or its
@@ -7984,9 +7967,7 @@ spec:
                                     This field is effectively required, but due to backwards compatibility is
                                     allowed to be empty. Instances of this type with an empty value here are
                                     almost certainly wrong.
-                                    TODO: Add other useful fields. apiVersion, kind, uid?
                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                   type: string
                                 optional:
                                   description: Specify whether the Secret or its key
@@ -8036,10 +8017,10 @@ spec:
                             format: int32
                             type: integer
                           service:
+                            default: ""
                             description: |-
                               Service is the name of the service to place in the gRPC HealthCheckRequest
                               (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-
 
                               If this is not specified, the default behavior is defined by gRPC.
                             type: string
@@ -8240,17 +8221,14 @@ spec:
                           should be considered for eviction. Current implementation considers healthy pods,
                           as pods that have status.conditions item with type="Ready",status="True".
 
-
                           Valid policies are IfHealthyBudget and AlwaysAllow.
                           If no policy is specified, the default behavior will be used,
                           which corresponds to the IfHealthyBudget policy.
-
 
                           IfHealthyBudget policy means that running pods (status.phase="Running"),
                           but not yet healthy can be evicted only if the guarded application is not
                           disrupted (status.currentHealthy is at least equal to status.desiredHealthy).
                           Healthy pods will be subject to the PDB for eviction.
-
 
                           AlwaysAllow policy means that all running pods (status.phase="Running"),
                           but not yet healthy are considered disrupted and can be evicted regardless
@@ -8258,11 +8236,9 @@ spec:
                           pods of a disrupted application might not get a chance to become healthy.
                           Healthy pods will be subject to the PDB for eviction.
 
-
                           Additional policies may be added in the future.
                           Clients making eviction decisions should disallow eviction of unhealthy pods
                           if they encounter an unrecognized policy in this field.
-
 
                           This field is beta-level. The eviction API uses this field when
                           the feature gate PDBUnhealthyPodEvictionPolicy is enabled (enabled by default).
@@ -8303,10 +8279,10 @@ spec:
                             format: int32
                             type: integer
                           service:
+                            default: ""
                             description: |-
                               Service is the name of the service to place in the gRPC HealthCheckRequest
                               (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-
 
                               If this is not specified, the default behavior is defined by gRPC.
                             type: string
@@ -8439,10 +8415,8 @@ spec:
                           Claims lists the names of resources, defined in spec.resourceClaims,
                           that are used by this container.
 
-
                           This is an alpha field and requires enabling the
                           DynamicResourceAllocation feature gate.
-
 
                           This field is immutable. It can only be set for containers.
                         items:
@@ -8453,6 +8427,12 @@ spec:
                                 Name must match the name of one entry in pod.spec.resourceClaims of
                                 the Pod where this field is used. It makes that resource available
                                 inside a container.
+                              type: string
+                            request:
+                              description: |-
+                                Request is the name chosen for a request in the referenced claim.
+                                If empty, everything from the claim is made available, otherwise
+                                only the result of this request.
                               type: string
                           required:
                           - name
@@ -8499,9 +8479,6 @@ spec:
                         description: |-
                           Rolling update config params. Present only if DeploymentStrategyType =
                           RollingUpdate.
-                          ---
-                          TODO: Update this to follow our convention for oneOf, whatever we decide it
-                          to be.
                         properties:
                           maxSurge:
                             anyOf:
@@ -8842,7 +8819,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                         Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -8857,7 +8834,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                         Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -9024,7 +9001,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                     Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -9039,7 +9016,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                     Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -9204,7 +9181,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                         Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -9219,7 +9196,7 @@ spec:
                                         pod labels will be ignored. The default value is empty.
                                         The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                         Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                        This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                       items:
                                         type: string
                                       type: array
@@ -9386,7 +9363,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                     Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -9401,7 +9378,7 @@ spec:
                                     pod labels will be ignored. The default value is empty.
                                     The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                     Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                    This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.
+                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
                                   items:
                                     type: string
                                   type: array
@@ -9527,9 +9504,7 @@ spec:
                                     This field is effectively required, but due to backwards compatibility is
                                     allowed to be empty. Instances of this type with an empty value here are
                                     almost certainly wrong.
-                                    TODO: Add other useful fields. apiVersion, kind, uid?
                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                   type: string
                                 optional:
                                   description: Specify whether the ConfigMap or its
@@ -9595,9 +9570,7 @@ spec:
                                     This field is effectively required, but due to backwards compatibility is
                                     allowed to be empty. Instances of this type with an empty value here are
                                     almost certainly wrong.
-                                    TODO: Add other useful fields. apiVersion, kind, uid?
                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                   type: string
                                 optional:
                                   description: Specify whether the Secret or its key
@@ -9655,9 +9628,7 @@ spec:
                                         This field is effectively required, but due to backwards compatibility is
                                         allowed to be empty. Instances of this type with an empty value here are
                                         almost certainly wrong.
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                       type: string
                                     optional:
                                       description: Specify whether the ConfigMap or
@@ -9723,9 +9694,7 @@ spec:
                                         This field is effectively required, but due to backwards compatibility is
                                         allowed to be empty. Instances of this type with an empty value here are
                                         almost certainly wrong.
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                       type: string
                                     optional:
                                       description: Specify whether the Secret or its
@@ -9754,10 +9723,8 @@ spec:
                               Claims lists the names of resources, defined in spec.resourceClaims,
                               that are used by this container.
 
-
                               This is an alpha field and requires enabling the
                               DynamicResourceAllocation feature gate.
-
 
                               This field is immutable. It can only be set for containers.
                             items:
@@ -9768,6 +9735,12 @@ spec:
                                     Name must match the name of one entry in pod.spec.resourceClaims of
                                     the Pod where this field is used. It makes that resource available
                                     inside a container.
+                                  type: string
+                                request:
+                                  description: |-
+                                    Request is the name chosen for a request in the referenced claim.
+                                    If empty, everything from the claim is made available, otherwise
+                                    only the result of this request.
                                   type: string
                               required:
                               - name
@@ -9837,10 +9810,10 @@ spec:
                             format: int32
                             type: integer
                           service:
+                            default: ""
                             description: |-
                               Service is the name of the service to place in the gRPC HealthCheckRequest
                               (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-
 
                               If this is not specified, the default behavior is defined by gRPC.
                             type: string
@@ -10041,17 +10014,14 @@ spec:
                           should be considered for eviction. Current implementation considers healthy pods,
                           as pods that have status.conditions item with type="Ready",status="True".
 
-
                           Valid policies are IfHealthyBudget and AlwaysAllow.
                           If no policy is specified, the default behavior will be used,
                           which corresponds to the IfHealthyBudget policy.
-
 
                           IfHealthyBudget policy means that running pods (status.phase="Running"),
                           but not yet healthy can be evicted only if the guarded application is not
                           disrupted (status.currentHealthy is at least equal to status.desiredHealthy).
                           Healthy pods will be subject to the PDB for eviction.
-
 
                           AlwaysAllow policy means that all running pods (status.phase="Running"),
                           but not yet healthy are considered disrupted and can be evicted regardless
@@ -10059,11 +10029,9 @@ spec:
                           pods of a disrupted application might not get a chance to become healthy.
                           Healthy pods will be subject to the PDB for eviction.
 
-
                           Additional policies may be added in the future.
                           Clients making eviction decisions should disallow eviction of unhealthy pods
                           if they encounter an unrecognized policy in this field.
-
 
                           This field is beta-level. The eviction API uses this field when
                           the feature gate PDBUnhealthyPodEvictionPolicy is enabled (enabled by default).
@@ -10104,10 +10072,10 @@ spec:
                             format: int32
                             type: integer
                           service:
+                            default: ""
                             description: |-
                               Service is the name of the service to place in the gRPC HealthCheckRequest
                               (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-
 
                               If this is not specified, the default behavior is defined by gRPC.
                             type: string
@@ -10240,10 +10208,8 @@ spec:
                           Claims lists the names of resources, defined in spec.resourceClaims,
                           that are used by this container.
 
-
                           This is an alpha field and requires enabling the
                           DynamicResourceAllocation feature gate.
-
 
                           This field is immutable. It can only be set for containers.
                         items:
@@ -10254,6 +10220,12 @@ spec:
                                 Name must match the name of one entry in pod.spec.resourceClaims of
                                 the Pod where this field is used. It makes that resource available
                                 inside a container.
+                              type: string
+                            request:
+                              description: |-
+                                Request is the name chosen for a request in the referenced claim.
+                                If empty, everything from the claim is made available, otherwise
+                                only the result of this request.
                               type: string
                           required:
                           - name
@@ -10295,9 +10267,6 @@ spec:
                         description: |-
                           Rolling update config params. Present only if DeploymentStrategyType =
                           RollingUpdate.
-                          ---
-                          TODO: Update this to follow our convention for oneOf, whatever we decide it
-                          to be.
                         properties:
                           maxSurge:
                             anyOf:
@@ -10443,7 +10412,6 @@ spec:
                             Keys that don't exist in the incoming pod labels will
                             be ignored. A null or empty list means only match against labelSelector.
 
-
                             This is a beta field and requires the MatchLabelKeysInPodTopologySpread feature gate to be enabled (enabled by default).
                           items:
                             type: string
@@ -10483,7 +10451,6 @@ spec:
                             Valid values are integers greater than 0.
                             When value is not nil, WhenUnsatisfiable must be DoNotSchedule.
 
-
                             For example, in a 3-zone cluster, MaxSkew is set to 2, MinDomains is set to 5 and pods with the same
                             labelSelector spread as 2/2/2:
                             | zone1 | zone2 | zone3 |
@@ -10501,7 +10468,6 @@ spec:
                             - Honor: only nodes matching nodeAffinity/nodeSelector are included in the calculations.
                             - Ignore: nodeAffinity/nodeSelector are ignored. All nodes are included in the calculations.
 
-
                             If this value is nil, the behavior is equivalent to the Honor policy.
                             This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
                           type: string
@@ -10512,7 +10478,6 @@ spec:
                             - Honor: nodes without taints, along with tainted nodes for which the incoming pod
                             has a toleration, are included.
                             - Ignore: node taints are ignored. All nodes are included.
-
 
                             If this value is nil, the behavior is equivalent to the Ignore policy.
                             This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
@@ -10573,16 +10538,8 @@ spec:
                 type: string
               conditions:
                 items:
-                  description: "Condition contains details for one aspect of the current
-                    state of this API Resource.\n---\nThis struct is intended for
-                    direct use as an array at the field path .status.conditions.  For
-                    example,\n\n\n\ttype FooStatus struct{\n\t    // Represents the
-                    observations of a foo's current state.\n\t    // Known .status.conditions.type
-                    are: \"Available\", \"Progressing\", and \"Degraded\"\n\t    //
-                    +patchMergeKey=type\n\t    // +patchStrategy=merge\n\t    // +listType=map\n\t
-                    \   // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\"
-                    patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t
-                    \   // other fields\n\t}"
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -10623,12 +10580,7 @@ spec:
                       - Unknown
                       type: string
                     type:
-                      description: |-
-                        type of condition in CamelCase or in foo.example.com/CamelCase.
-                        ---
-                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
-                        useful (see .node.status.conditions), the ability to deconflict is important.
-                        The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
                       maxLength: 316
                       pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
                       type: string
