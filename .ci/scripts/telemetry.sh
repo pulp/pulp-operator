@@ -15,7 +15,7 @@ if [[ "$HTTP_STATUS" != 200 ]]; then
   exit 1
 fi
 
-echo "Verifying if \"http_server\" string is found in metrics endpoint ..."
-kubectl exec deployment/$DEPLOYMENT_NAME -- curl -s localhost:8889/metrics | grep http_server  &>/dev/null
+echo "Verifying if \"http_method\" string is found in metrics endpoint ..."
+kubectl exec deployment/$DEPLOYMENT_NAME -- curl -s localhost:8889/metrics | grep http_method  &>/dev/null
 
 echo "Telemetry ok"

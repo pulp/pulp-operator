@@ -33,7 +33,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: true
+          cache: false
       - name: Check commit message
         if: github.event_name == 'pull_request'
         env:
@@ -75,7 +75,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: true
+          cache: false
       - name: Install kind
         run: |
           .ci/scripts/kind_with_registry.sh
@@ -121,7 +121,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: true
+          cache: false
       - name: Install kind
         run: |
           .ci/scripts/kind_with_registry.sh
@@ -138,9 +138,12 @@ jobs:
         run: |
           make install
         shell: bash
+      - name: Build operator image
+        run: |
+          make docker-build docker-push IMG=localhost:5001/pulp-operator:dev
       - name: Build bundle image
         run: |
-          make bundle-build bundle-push BUNDLE_IMG=localhost:5001/pulp-operator-bundle:testing
+          make bundle bundle-build bundle-push BUNDLE_IMG=localhost:5001/pulp-operator-bundle:testing IMG=localhost:5001/pulp-operator:dev
         shell: bash
       - name: Install the operator
         run: |
@@ -151,10 +154,13 @@ jobs:
           kubectl apply -f config/samples/simple-with-reduced-migration-cpu.yaml
           kubectl apply -f config/samples/simple-test.yaml
       - name: Check and wait for example-pulp deployment
-        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
+        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
         shell: bash
       - name: Check and wait for test-pulp deployment
-        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/test-pulp --timeout=900s
+        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/test-pulp --timeout=600s
+      - name: Logs
+        if: always()
+        run: .github/workflows/scripts/show_logs.sh --kind
   envtest:
     runs-on: ubuntu-latest
     steps:
@@ -165,7 +171,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: true
+          cache: false
       - name: Check code format and generate manifests
         run: |
           make test
@@ -186,7 +192,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: true
+          cache: false
       - name: Install httpie
         run: |
           echo ::group::HTTPIE
@@ -274,7 +280,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: true
+          cache: false
       - name: Install httpie
         run: |
           echo ::group::HTTPIE
@@ -379,7 +385,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: true
+          cache: false
       - name: Install httpie
         run: |
           echo ::group::HTTPIE
@@ -506,7 +512,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: true
+          cache: false
       - name: Install httpie
         run: |
           echo ::group::HTTPIE
@@ -623,7 +629,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: true
+          cache: false
       - name: Install httpie
         run: |
           echo ::group::HTTPIE
@@ -755,7 +761,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: true
+          cache: false
       - name: Install httpie
         run: |
           echo ::group::HTTPIE
