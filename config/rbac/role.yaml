@@ -6,6 +6,38 @@ metadata:
   namespace: pulp-operator-system
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - persistentvolumeclaims
+  - persistentvolumes
+  - pods
+  - pods/log
+  - secrets
+  - serviceaccounts
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - pods/exec
+  verbs:
+  - create
+- apiGroups:
   - apps
   resources:
   - deployments
@@ -31,51 +63,6 @@ rules:
   - patch
   - update
   - watch
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  - persistentvolumeclaims
-  - pods
-  - pods/log
-  - secrets
-  - serviceaccounts
-  - services
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
-- apiGroups:
-  - ""
-  resources:
-  - persistentvolumeclaims
-  - persistentvolumes
-  - pods
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - pods/exec
-  verbs:
-  - create
 - apiGroups:
   - networking.k8s.io
   resources:
@@ -117,6 +104,8 @@ rules:
   - repo-manager.pulpproject.org
   resources:
   - pulpbackups
+  - pulprestores
+  - pulps
   verbs:
   - create
   - delete
@@ -125,75 +114,19 @@ rules:
   - patch
   - update
   - watch
-- apiGroups:
-  - repo-manager.pulpproject.org
-  resources:
-  - pulpbackups
-  - pulps
-  verbs:
-  - get
-  - list
 - apiGroups:
   - repo-manager.pulpproject.org
   resources:
   - pulpbackups/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - repo-manager.pulpproject.org
-  resources:
-  - pulpbackups/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - repo-manager.pulpproject.org
-  resources:
-  - pulprestores
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - repo-manager.pulpproject.org
-  resources:
   - pulprestores/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - repo-manager.pulpproject.org
-  resources:
-  - pulprestores/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - repo-manager.pulpproject.org
-  resources:
-  - pulps
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - repo-manager.pulpproject.org
-  resources:
   - pulps/finalizers
   verbs:
   - update
 - apiGroups:
   - repo-manager.pulpproject.org
   resources:
+  - pulpbackups/status
+  - pulprestores/status
   - pulps/status
   verbs:
   - get

@@ -168,7 +168,7 @@ metadata:
     capabilities: Full Lifecycle
     categories: Integration & Delivery
     containerImage: quay.io/pulp/pulp-operator:devel
-    createdAt: "2024-08-14T02:03:48Z"
+    createdAt: "2024-11-29T18:20:58Z"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
     operators.operatorframework.io/builder: operator-sdk-v1.29.0
@@ -1412,6 +1412,38 @@ spec:
           - create
           - patch
         - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          - persistentvolumeclaims
+          - persistentvolumes
+          - pods
+          - pods/log
+          - secrets
+          - serviceaccounts
+          - services
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
+        - apiGroups:
+          - ""
+          resources:
+          - pods/exec
+          verbs:
+          - create
+        - apiGroups:
           - apps
           resources:
           - deployments
@@ -1437,51 +1469,6 @@ spec:
           - patch
           - update
           - watch
-        - apiGroups:
-          - ""
-          resources:
-          - configmaps
-          - persistentvolumeclaims
-          - pods
-          - pods/log
-          - secrets
-          - serviceaccounts
-          - services
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - ""
-          resources:
-          - events
-          verbs:
-          - create
-          - patch
-        - apiGroups:
-          - ""
-          resources:
-          - persistentvolumeclaims
-          - persistentvolumes
-          - pods
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - ""
-          resources:
-          - pods/exec
-          verbs:
-          - create
         - apiGroups:
           - networking.k8s.io
           resources:
@@ -1523,6 +1510,8 @@ spec:
           - repo-manager.pulpproject.org
           resources:
           - pulpbackups
+          - pulprestores
+          - pulps
           verbs:
           - create
           - delete
@@ -1531,75 +1520,19 @@ spec:
           - patch
           - update
           - watch
-        - apiGroups:
-          - repo-manager.pulpproject.org
-          resources:
-          - pulpbackups
-          - pulps
-          verbs:
-          - get
-          - list
         - apiGroups:
           - repo-manager.pulpproject.org
           resources:
           - pulpbackups/finalizers
-          verbs:
-          - update
-        - apiGroups:
-          - repo-manager.pulpproject.org
-          resources:
-          - pulpbackups/status
-          verbs:
-          - get
-          - patch
-          - update
-        - apiGroups:
-          - repo-manager.pulpproject.org
-          resources:
-          - pulprestores
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - repo-manager.pulpproject.org
-          resources:
           - pulprestores/finalizers
-          verbs:
-          - update
-        - apiGroups:
-          - repo-manager.pulpproject.org
-          resources:
-          - pulprestores/status
-          verbs:
-          - get
-          - patch
-          - update
-        - apiGroups:
-          - repo-manager.pulpproject.org
-          resources:
-          - pulps
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - repo-manager.pulpproject.org
-          resources:
           - pulps/finalizers
           verbs:
           - update
         - apiGroups:
           - repo-manager.pulpproject.org
           resources:
+          - pulpbackups/status
+          - pulprestores/status
           - pulps/status
           verbs:
           - get
