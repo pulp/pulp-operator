@@ -41,7 +41,7 @@ else
   PULP_API_ENTRYPOINT=("gunicorn" "pulpcore.app.wsgi:application" "--bind" "[::]:24817" "--name" "pulp-api" "--access-logformat" "pulp [%({correlation-id}o)s]: %(h)s %(l)s %(u)s %(t)s \"%(r)s\" %(s)s %(b)s \"%(f)s\" \"%(a)s\"")
 fi
 
-exec  /usr/local/bin/opentelemetry-instrument --service_name pulp-api "${PULP_API_ENTRYPOINT[@]}" \
+exec "${PULP_API_ENTRYPOINT[@]}" \
 --timeout "${PULP_GUNICORN_TIMEOUT}" \
 --workers "${PULP_API_WORKERS}" \
 --access-logfile -`,

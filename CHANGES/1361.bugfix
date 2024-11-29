@@ -1,0 +1,1 @@
+Fixed an issue with pulp-api pods crashing when otel is enabled.
