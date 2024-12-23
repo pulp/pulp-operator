@@ -206,7 +206,7 @@ jobs:
         shell: bash
       - name: Updating registries configuration
         run: |
-          if [ -f "/etc/docker/daemon.json" ]
+          if [ -f "/etc/docker/daemon.json" ] || sudo systemctl is-active --quiet docker
           then
             echo "INFO:
             Updating docker configuration
@@ -294,7 +294,7 @@ jobs:
         shell: bash
       - name: Updating registries configuration
         run: |
-          if [ -f "/etc/docker/daemon.json" ]
+          if [ -f "/etc/docker/daemon.json" ] || sudo systemctl is-active --quiet docker
           then
             echo "INFO:
             Updating docker configuration
@@ -399,7 +399,7 @@ jobs:
         shell: bash
       - name: Updating registries configuration
         run: |
-          if [ -f "/etc/docker/daemon.json" ]
+          if [ -f "/etc/docker/daemon.json" ] || sudo systemctl is-active --quiet docker
           then
             echo "INFO:
             Updating docker configuration
@@ -643,7 +643,7 @@ jobs:
         shell: bash
       - name: Updating registries configuration
         run: |
-          if [ -f "/etc/docker/daemon.json" ]
+          if [ -f "/etc/docker/daemon.json" ] || sudo systemctl is-active --quiet docker
           then
             echo "INFO:
             Updating docker configuration

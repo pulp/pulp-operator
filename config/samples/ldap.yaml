@@ -18,7 +18,8 @@ metadata:
 spec:
   image: localhost/pulp-minimal
   image_version: stable
-  image_web_version: stable
+  image_web_version: 3.63.4
+  inhibit_version_constraint: true
   ldap:
     config: pulp-ldap-secret
   api:
