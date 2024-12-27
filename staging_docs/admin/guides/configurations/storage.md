@@ -1,20 +1,16 @@
 # Pulp Operator storage configuration
 
-Before installing Pulp, for production clusters, it is necessary to configure how Pulp should persist the data.
+Before installing Pulp, it is necessary to configure how Pulp should persist the data.
 
-[Pulp uses django-storages](https://docs.pulpproject.org/pulpcore/installation/storage.html) to support multiple types of storage backends. The current version of operator supports the following types of storage installation:
+[Pulp uses django-storages](https://docs.pulpproject.org/pulpcore/installation/storage.html) to support multiple types of storage backends. The current version of pulp-operator supports the following types of storage installation:
 
 * [Storage Class](#configuring-pulp-operator-storage-to-use-a-storage-class)
 * [Persistent Volume Claim](#configuring-pulp-operator-storage-to-use-a-persistent-volume-claim)
 * [Azure Blob](#configuring-pulp-operator-to-use-object-storage)
 * [Amazon Simple Storage Service (S3)](#configuring-pulp-operator-to-use-object-storage)
-* [EmptyDir](#configuring-pulp-operator-in-non-production-clusters)
 
 !!! info
     Only one storage type should be provided, trying to configure Pulp CR with multiple storage types will fail operator execution.
-
-
-If no backend is configured, Pulp will by default use the EmptyDir volume.
 
 
 ## Configure Pulp Operator storage to use a Storage Class
@@ -178,20 +174,3 @@ spec:
 ```
 
 After that, Pulp Operator will automatically update the `settings.py` config file and redeploy pulpcore pods to get the new configuration.
-
-
-## Configuring Pulp Operator in non-production clusters
-
-If there is no `Storage Class` nor `Persistent Volume Claim` nor `Object Storage` provided the operator will deploy the components (Pulp, Database, and Cache) with an [emptyDir](https://kubernetes.io/docs/concepts/storage/volumes/#emptydir).
-
-You must configure storage for the Pulp Operator. For non-production clusters, you can set the components to an empty directory. If you do so, everything is lost if you restart the pod.
-
-!!! warning
-    Configure this option for only non-production clusters.
-
-!!! warning
-    The content stored in an `emptyDir` volume is not shared between the pods, because of that deploying Pulp with more than a single replica of `pulpcore-api` and/or `pulpcore-content` will result in unexpected behaviors.
-
-Configuring Pulp operator with `emptyDir` will fail the execution of some plugins.
-For example, `pulp-container` plugin needs to access the data created by `pulpcore-api` component through `pulpcore-content` pod, but since each pod has its own `emptyDir` volume - and their data is not shared between them - Pulp will not work as expected.
-

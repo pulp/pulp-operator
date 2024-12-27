@@ -371,12 +371,6 @@ func (r *RepoManagerReconciler) createPulpResource(resource ResourceDefinition, 
 		log.Info("Creating a new "+resource.Name+" "+objKind, "Namespace", resource.Pulp.Namespace, "Name", resource.Name)
 		err = r.Create(resource.Context, expectedResource)
 
-		// special condition for api deployments where we need to provide a warning message
-		// in case no storage type is provided
-		if resource.Name == resource.Pulp.Name+"-api" && objKind == "Deployment" {
-			controllers.CheckEmptyDir(resource.Pulp, controllers.PulpResource)
-		}
-
 		if err != nil {
 			log.Error(err, "Failed to create new "+resource.Name+" "+objKind)
 			controllers.UpdateStatus(resource.Context, r.Client, resource.Pulp, metav1.ConditionFalse, resource.ConditionType, "ErrorCreating"+resource.Alias+objKind, "Failed to create "+resource.Name+" "+objKind+": "+err.Error())

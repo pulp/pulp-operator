@@ -52,7 +52,7 @@ func prechecks(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerp
 	}
 
 	// verify if multiple storage types were provided
-	if reconcile := checkMultipleStorageType(r.RawLogger, pulp); reconcile != nil {
+	if reconcile := checkStorageDefinitions(r.RawLogger, pulp); reconcile != nil {
 		return reconcile, nil
 	}
 
@@ -72,7 +72,7 @@ func prechecks(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerp
 	}
 
 	// verify inconsistency in file_storage_* definition
-	if reconcile := checkFileStorage(ctx, r, pulp); reconcile != nil {
+	if reconcile := checkFileStorage(r, pulp); reconcile != nil {
 		return reconcile, nil
 	}
 
@@ -155,13 +155,33 @@ func checkIngressDefinition(log logr.Logger, pulp *repomanagerpulpprojectorgv1be
 	return nil
 }
 
-// checkMultipleStorageType verifies if there is more than one storage type defined.
+// checkStorageDefinitions verifies if there is more than one storage type defined or none.
 // Only a single type should be provided, if more the operator will not be able to
 // determine which one should be used.
-func checkMultipleStorageType(log logr.Logger, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
+func checkStorageDefinitions(log logr.Logger, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
 	for _, resource := range []string{controllers.PulpResource, controllers.CacheResource, controllers.DatabaseResource} {
-		if foundMultiStorage, storageType := controllers.MultiStorageConfigured(pulp, resource); foundMultiStorage {
-			log.Error(nil, "found more than one storage type \""+strings.Join(storageType, `", "`)+"\" for "+resource+". Please, choose only one storage type or do not define any to use emptyDir")
+		foundMultiStorage, storageType := controllers.MultiStorageConfigured(pulp, resource)
+		if foundMultiStorage {
+			log.Error(nil, "found more than one storage type \""+strings.Join(storageType, `", "`)+"\" for "+resource+". Please, choose only one storage type.")
+			return &ctrl.Result{}
+		}
+
+		// we don't need to check if there is no storage definition for cache pods (redis does not need to persist data)
+		// so we can skip the next checks and go to the next loop iteration
+		if resource == controllers.CacheResource {
+			continue
+		}
+
+		// we don't need to check if there is no storage definition for installations using an external postgres instance.
+		// so we can skip the next checks and go to the next loop iteration
+		if resource == controllers.DatabaseResource {
+			if pulp.Spec.Database.ExternalDBSecret != "" {
+				continue
+			}
+		}
+
+		if storageType == nil {
+			log.Error(nil, "could not find any storage definition for "+resource+". You must configure storage for Pulp and Database pods.")
 			return &ctrl.Result{}
 		}
 	}
@@ -215,18 +235,16 @@ func checkSecretsAvailability(ctx context.Context, r *RepoManagerReconciler, pul
 // checkFileStorage verifies if there is a file_storage definition but the storage_class is not provided
 // the file_storage_* fields are used to provision the PVC using the provided file_storage_class
 // if no file_storage_class is provided, the other fields will not be useful and can cause confusion
-func checkFileStorage(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
+func checkFileStorage(r *RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
 	if hasFileStorageDefinition(pulp) && len(pulp.Spec.FileStorageClass) == 0 {
 		r.RawLogger.Error(nil, "No file_storage_class provided for the file_storage_{access_mode,size} definition(s)!")
-		r.RawLogger.Error(nil, "Provide a file_storage_storage_class with the file_storage_{access_mode,size} fields to deploy Pulp with persistent data")
-		r.RawLogger.Error(nil, "or remove all file_storage_* fields to deploy Pulp with emptyDir.")
+		r.RawLogger.Error(nil, "Provide a file_storage_storage_class with the file_storage_{access_mode,size} fields to deploy Pulp with persistent data.")
 		return &ctrl.Result{}
 	}
 
 	if len(pulp.Spec.FileStorageClass) > 0 && (len(pulp.Spec.FileStorageAccessMode) == 0 || len(pulp.Spec.FileStorageSize) == 0) {
 		r.RawLogger.Error(nil, "file_storage_class provided but no file_storage_size and/or file_storage_access_mode defined!")
-		r.RawLogger.Error(nil, "Provide a file_storage_size and file_storage_access_mode fields to deploy Pulp with persistent data")
-		r.RawLogger.Error(nil, "or remove all file_storage_* fields to deploy Pulp with emptyDir.")
+		r.RawLogger.Error(nil, "Provide a file_storage_size and file_storage_access_mode fields to deploy Pulp with persistent data.")
 		return &ctrl.Result{}
 	}
 	return nil
