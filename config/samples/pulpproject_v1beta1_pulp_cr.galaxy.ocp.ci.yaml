@@ -50,3 +50,9 @@ spec:
       limits:
         cpu: 800m
         memory: 1Gi
+
+  file_storage_access_mode: "ReadWriteMany"
+  file_storage_size: "5Gi"
+  file_storage_storage_class: azurefile-csi
+  database:
+    postgres_storage_class: azurefile-csi

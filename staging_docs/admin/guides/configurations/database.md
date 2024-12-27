@@ -7,12 +7,12 @@ Pulp operator provides a PostgreSQL database for Pulp to use, but it is also pos
 
 [Pulp CR page](https://docs.pulpproject.org/pulp_operator/pulp/#database) has all the parameters that can be set to inform Pulp operator how it should deploy the PostgreSQL container.
 
-If no `database` parameter is defined, Pulp operator will deploy PostgreSQL with the following configuration:
+To configure Pulp operator to deploy PostgreSQL, **it is required to define the [storage configurations for the database pod](https://pulpproject.org/pulp-operator/docs/admin/guides/configurations/storage/#pulp-operator-storage-configuration)**.
+Pulp operator will deploy PostgreSQL with the following configuration:
 
 * a `StatefulSet` will be provisioned to handle PostgreSQL pod
 * a single PostgreSQL replica will be available (it is **not** possible to form a cluster with this container)
 * it will deploy a `docker.io/library/postgres:13` image
-* **no data will be persisted**, the container will mount an emptyDir (all data will be lost in case of pod restart)
 
 
 A new `Secret` (<deployment-name>-postgres-configuration) will also be created with some information like:

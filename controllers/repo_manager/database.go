@@ -81,7 +81,6 @@ func (r *RepoManagerReconciler) databaseController(ctx context.Context, pulp *re
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new Database StatefulSet", "StatefulSet.Namespace", pgSts.Namespace, "StatefulSet.Name", statefulSetName)
 		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingDatabaseSts", "Creating "+statefulSetName+" StatefulSet resource")
-		controllers.CheckEmptyDir(pulp, controllers.DatabaseResource)
 		// Set Pulp instance as the owner and controller
 		ctrl.SetControllerReference(pulp, expected_sts, r.Scheme)
 		err = r.Create(ctx, expected_sts)
@@ -337,17 +336,6 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 		}
 		volumes = append(volumes, volume)
 
-		// if there is no SC nor PVC nor object storage defined we will mount an emptyDir
-	} else if storageType[0] == controllers.EmptyDirType {
-		emptyDir := []corev1.Volume{
-			{
-				Name: volumeName,
-				VolumeSource: corev1.VolumeSource{
-					EmptyDir: &corev1.EmptyDirVolumeSource{},
-				},
-			},
-		}
-		volumes = append(volumes, emptyDir...)
 	}
 
 	pgDataMountPath := filepath.Dir(postgresDataPath)

@@ -3,7 +3,6 @@ package repo_manager_test
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -835,6 +834,8 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 			Raw: []byte(`{"Api_Root": "/pulp/"}`),
 		}
 
+		postgresStorageClass := "standard"
+
 		// [TODO] Instead of using this hardcoded pulp CR we should
 		// use the samples from config/samples/ folder during each
 		// pipeline workflow execution
@@ -868,6 +869,7 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 					Replicas: 1,
 				},
 				Database: repomanagerpulpprojectorgv1beta2.Database{
+					PostgresStorageClass:        &postgresStorageClass,
 					PostgresStorageRequirements: "5Gi",
 				},
 				FileStorageAccessMode: "ReadWriteOnce",
@@ -970,70 +972,6 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 				return createdSts.Spec.Template.Spec.Containers[0].Image == "postgres:12"
 			}, timeout, interval).Should(BeTrue())
 
-		})
-	})
-
-	Context("When pulp.Spec.Database.PostgresStorageClass and cluster SC are not defined", func() {
-		It("Should configure the database pod template with an emptyDir volume", func() {
-
-			By("Making sure that database type is not external")
-			if len(createdPulp.Spec.Database.ExternalDBSecret) > 0 {
-				Skip("External database does not need to provision a Persistent Volume")
-			}
-
-			By("Checking if postgressc is not defined")
-			if postgresSC := createdPulp.Spec.Database.PostgresStorageClass; postgresSC != nil && *postgresSC != "" {
-				Skip("PostgresSC defined")
-			}
-
-			By("Checking if there is no default SC")
-			if isDefaultSCDefined() {
-				Skip("Default storage class defined")
-			}
-
-			By("Checking if sts template is configured to use emptyDir volume")
-			var found bool
-			for _, volume := range createdSts.Spec.Template.Spec.Volumes {
-				if volume.Name == DBVolumeName && reflect.DeepEqual(volume.VolumeSource.EmptyDir, &corev1.EmptyDirVolumeSource{}) {
-					found = true
-					break
-				}
-			}
-			Expect(found).Should(BeTrue())
-		})
-	})
-
-	Context("When pulp is not configured with object storage nor pulp.Spec.FileStorageClass is defined and there is no default SC", func() {
-		It("Shoud configure the api pod template with an emptyDir volume", func() {
-			By("Checking if an object storage is not defined")
-			if len(createdPulp.Spec.ObjectStorageAzureSecret) != 0 || len(createdPulp.Spec.ObjectStorageS3Secret) != 0 {
-				Skip("Object storage defined")
-			}
-
-			By("Checking if fileSC is not defined")
-			if createdPulp.Spec.FileStorageClass != "" {
-				Skip("FileStorageClass defined")
-			}
-
-			By("Checking if there is no default SC")
-			if isDefaultSCDefined() {
-				Skip("Default storage class defined")
-			}
-
-			By("Checking if api deployment is configured to use emptyDir volume")
-			var foundTmp, foundAsset bool
-			apiDeployment := &appsv1.Deployment{}
-			objectGet(ctx, apiDeployment, PulpName+"-api")
-			for _, volume := range apiDeployment.Spec.Template.Spec.Volumes {
-				if volume.Name == "tmp-file-storage" && reflect.DeepEqual(volume.VolumeSource.EmptyDir, &corev1.EmptyDirVolumeSource{}) {
-					foundTmp = true
-				}
-				if volume.Name == "assets-file-storage" && reflect.DeepEqual(volume.VolumeSource.EmptyDir, &corev1.EmptyDirVolumeSource{}) {
-					foundAsset = true
-				}
-			}
-			Expect(foundTmp).Should(BeTrue())
-			Expect(foundAsset).Should(BeTrue())
 		})
 	})
 

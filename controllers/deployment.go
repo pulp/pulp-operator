@@ -496,24 +496,6 @@ func (d *CommonDeployment) setVolumes(resources any, pulpcoreType settings.Pulpc
 			},
 		}
 		volumes = append(volumes, fileStorage)
-	} else if storageType[0] == EmptyDirType { // if there is no SC nor PVC nor object storage defined we will mount an emptyDir
-		emptyDir := corev1.Volume{
-			Name: "tmp-file-storage",
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-			},
-		}
-		volumes = append(volumes, emptyDir)
-		// only api pods need the assets-file-storage
-		if pulpcoreType == settings.API {
-			assetVolume := corev1.Volume{
-				Name: "assets-file-storage",
-				VolumeSource: corev1.VolumeSource{
-					EmptyDir: &corev1.EmptyDirVolumeSource{},
-				},
-			}
-			volumes = append(volumes, assetVolume)
-		}
 	}
 
 	volumes = signingMetadataVolumes(resources, storageType, volumes)
@@ -663,13 +645,6 @@ func (d *CommonDeployment) setVolumeMounts(pulp repomanagerpulpprojectorgv1beta2
 			MountPath: "/var/lib/pulp",
 		}
 		volumeMounts = append(volumeMounts, fileStorageMount)
-	} else if storageType[0] == EmptyDirType { // if no file-storage nor object storage were provided we will mount the emptyDir
-		emptyDir := corev1.VolumeMount{Name: "tmp-file-storage", MountPath: "/var/lib/pulp/tmp"}
-		volumeMounts = append(volumeMounts, emptyDir)
-		if pulpcoreType == settings.API { // worker and content pods don't need to mount the assets-file-storage secret
-			assetsVolume := corev1.VolumeMount{Name: "assets-file-storage", MountPath: "/var/lib/pulp/assets"}
-			volumeMounts = append(volumeMounts, assetsVolume)
-		}
 	}
 
 	if pulp.Spec.SigningSecret != "" {
@@ -743,9 +718,6 @@ func (d *CommonDeployment) setInitContainerVolumeMounts(pulp repomanagerpulpproj
 			MountPath: "/var/lib/pulp",
 		}
 		volumeMounts = append(volumeMounts, fileStorageMount)
-	} else if storageType[0] == EmptyDirType { // if no file-storage nor object storage were provided we will mount the emptyDir
-		emptyDir := corev1.VolumeMount{Name: "tmp-file-storage", MountPath: "/var/lib/pulp/tmp"}
-		volumeMounts = append(volumeMounts, emptyDir)
 	}
 	d.initContainerVolumeMounts = append([]corev1.VolumeMount(nil), volumeMounts...)
 }

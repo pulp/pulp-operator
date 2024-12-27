@@ -150,7 +150,7 @@ func MultiStorageConfigured(pulp *repomanagerpulpprojectorgv1beta2.Pulp, resourc
 		if len(names) > 1 {
 			return true, names
 		} else if len(names) == 0 {
-			return false, []string{EmptyDirType}
+			return false, nil
 		}
 
 	case CacheResource:
@@ -179,7 +179,7 @@ func MultiStorageConfigured(pulp *repomanagerpulpprojectorgv1beta2.Pulp, resourc
 		if len(names) > 1 {
 			return true, names
 		} else if len(names) == 0 {
-			return false, []string{EmptyDirType}
+			return false, nil
 		}
 	}
 
@@ -280,17 +280,6 @@ func CustomZapLogger() *zap.Logger {
 	defer logger.Sync()
 
 	return logger
-}
-
-// CheckEmptyDir creates a log warn message in case no persistent storage is provided
-// for the given resource
-func CheckEmptyDir(pulp *repomanagerpulpprojectorgv1beta2.Pulp, resource string) {
-	_, storageType := MultiStorageConfigured(pulp, resource)
-	if storageType[0] == EmptyDirType {
-		logger := CustomZapLogger()
-		logger.Warn("No StorageClass or PVC defined for " + strings.ToUpper(resource) + " pods!")
-		logger.Warn("CONFIGURING " + strings.ToUpper(resource) + " POD VOLUME AS EMPTYDIR. THIS SHOULD NOT BE USED IN PRODUCTION CLUSTERS.")
-	}
 }
 
 // CheckImageVersionModified verifies if the container image tag defined in
