@@ -1,11 +1,12 @@
 module github.com/pulp/pulp-operator
 
 go 1.23.0
+
 toolchain go1.23.4
 
 require (
 	github.com/go-logr/logr v1.4.2
-	github.com/onsi/ginkgo/v2 v2.22.1
+	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
 	github.com/openshift/api v0.0.0-20220825183227-75c111537c4d
 	go.uber.org/zap v1.27.0
