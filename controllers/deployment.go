@@ -559,6 +559,10 @@ func signingMetadataVolumes(resources any, storageType []string, volumes []corev
 			item := corev1.KeyToPath{Key: settings.AptSigningScriptName, Path: settings.AptSigningScriptName}
 			secretItems = append(secretItems, item)
 		}
+		if DeployRpmSign(*secret) {
+			item := corev1.KeyToPath{Key: settings.RpmSigningScriptName, Path: settings.RpmSigningScriptName}
+			secretItems = append(secretItems, item)
+		}
 		volumePermissions := int32(0755)
 		signingSecretVolume := []corev1.Volume{
 			{
