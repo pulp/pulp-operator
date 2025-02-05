@@ -17,6 +17,7 @@ const (
 	ContainerSigningScriptName  = "container_script.sh"
 	CollectionSigningScriptName = "collection_script.sh"
 	AptSigningScriptName        = "apt_script.sh"
+	RpmSigningScriptName        = "rpm_script.sh"
 )
 
 func MigrationJob(pulpName string) string {

@@ -155,11 +155,46 @@ echo { \
 EOF
 ```
 
+* example of an RPM signing script
+```bash
+$ SIGNING_SCRIPT_PATH=/tmp
+$ APT_SIGNING_SCRIPT=rpm_script.sh
+$ cat<<EOF> "$SIGNING_SCRIPT_PATH/$RPM_SIGNING_SCRIPT"
+#!/bin/bash
+
+set -e
+
+FILE_PATH=\$1
+GPG_FINGERPRINT="\$PULP_SIGNING_KEY_FINGERPRINT"
+GPG_HOME=/var/lib/pulp/.gnupg/
+GPG_BIN=/usr/bin/gpg
+
+# Make sure the gpg public key has been imported
+gpg --export -a \$GPG_FINGERPRINT > /tmp/RPM-GPG-KEY
+rpm --import /tmp/RPM-GPG-KEY
+
+rpm \
+    --define "_signature gpg" \
+    --define "_gpg_path \$GPG_HOME" \
+    --define "_gpg_name \$GPG_FINGERPRINT" \
+    --define "_gpgbin \$GPG_BIN" \
+    --define "__gpg_sign_cmd %{__gpg} gpg --force-v3-sigs --batch --verbose --no-armor --no-secmem-warning -u %{_gpg_name} -sbo %{__signature_filename} --digest-algo sha256 -v --pinentry-mode loopback %{__plaintext_filename}" \
+    --addsign "\$FILE_PATH" 1> /dev/null
+
+STATUS=\$?
+if [[ \$STATUS -eq 0 ]]; then
+   echo {\"rpm_package\": \"\$FILE_PATH\"}
+else
+   exit \$STATUS
+fi
+EOF
+```
+
 !!! WARNING
-    Make sure to set `collection_script.sh`, `container_script.sh`, and/or `apt_script.sh` as key names (using different names would fail operator's execution)
+    Make sure to set `collection_script.sh`, `container_script.sh`, `apt_script.sh`, and/or `rpm_script.sh` as key names (using different names would fail operator's execution)
 
 ```bash
-$ kubectl create secret generic signing-scripts --from-file=collection_script.sh=/tmp/collection_script.sh --from-file=container_script.sh=/tmp/container_script.sh --from-file=apt_script.sh=/tmp/apt_script.sh
+$ kubectl create secret generic signing-scripts --from-file=collection_script.sh=/tmp/collection_script.sh --from-file=container_script.sh=/tmp/container_script.sh --from-file=apt_script.sh=/tmp/apt_script.sh --from-file=rpm_script.sh=/tmp/rpm_script.sh
 ```
 
 ## Configuring Pulp CR
@@ -189,6 +224,8 @@ Signing service 'container-signing-service' has been successfully removed.
 Successfully added signing service container-signing-service for key 66BBFE010CF70CC92826D9AB71684D7912B09BC1.
 Signing service 'apt-signing-service' has been successfully removed.
 Successfully added signing service apt-signing-service for key 66BBFE010CF70CC92826D9AB71684D7912B09BC1.
+Signing service 'rpm-signing-service' has been successfully removed.
+Successfully added signing service rpm-signing-service for key 66BBFE010CF70CC92826D9AB71684D7912B09BC1.
 ```
 
 double-checking if the signing services are stored in the database:
@@ -224,6 +261,14 @@ $ kubectl exec deployment/pulp-api -- curl -suadmin:$PULP_PWD localhost:24817/pu
       "public_key": "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGJFjREBE...",
       "pubkey_fingerprint": "66BBFE010CF70CC92826D9AB71684D7912B09BC1",
       "script": "/var/lib/pulp/scripts/collection_script.sh"
+    },
+    {
+      "pulp_href": "/pulp/api/v3/signing-services/0194a988-684c-7dda-9b16-2bb614a8e1ba/",
+      "pulp_created": "2025-01-27T20:51:17.323038Z",
+      "name": "rpm-signing-service",
+      "public_key": "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQGNBGeSYcYBDADaKR4OZ+y...",
+      "pubkey_fingerprint": "66BBFE010CF70CC92826D9AB71684D7912B09BC1",
+      "script": "/var/lib/pulp/scripts/rpm_script.sh"
     }
   ]
 }

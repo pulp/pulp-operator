@@ -385,6 +385,14 @@ func signingScriptContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp, scripts
 			ReadOnly:  true,
 		})
 	}
+	if controllers.DeployRpmSign(scriptsSecret) {
+		signingSecretMount = append(signingSecretMount, corev1.VolumeMount{
+			Name:      pulp.Name + "-signing-scripts",
+			MountPath: settings.SigningScriptPath + settings.RpmSigningScriptName,
+			SubPath:   settings.RpmSigningScriptName,
+			ReadOnly:  true,
+		})
+	}
 	volumeMounts = append(volumeMounts, signingSecretMount...)
 
 	// resource requirements
@@ -415,8 +423,13 @@ echo "${PULP_SIGNING_KEY_FINGERPRINT}:6" | gpg --import-ownertrust
 	}
 	if controllers.DeployAptSign(scriptsSecret) {
 		args[0] += "/usr/local/bin/pulpcore-manager remove-signing-service apt-signing-service --class deb:AptReleaseSigningService\n"
-		args[0] += "/usr/local/bin/pulpcore-manager add-signing-service --class deb:AptReleaseSigningService apt-signing-service " + settings.SigningScriptPath + settings.AptSigningScriptName + " " + fingerprint
+		args[0] += "/usr/local/bin/pulpcore-manager add-signing-service apt-signing-service " + settings.SigningScriptPath + settings.AptSigningScriptName + " " + fingerprint + " --class deb:AptReleaseSigningService \n"
 		envVars = append(envVars, corev1.EnvVar{Name: "APT_SIGNING_SERVICE", Value: "apt-signing-service"})
+	}
+	if controllers.DeployRpmSign(scriptsSecret) {
+		args[0] += "/usr/local/bin/pulpcore-manager remove-signing-service rpm-signing-service --class rpm:RpmPackageSigningService\n"
+		args[0] += "/usr/local/bin/pulpcore-manager add-signing-service rpm-signing-service " + settings.SigningScriptPath + settings.RpmSigningScriptName + " " + fingerprint + " --class rpm:RpmPackageSigningService \n"
+		envVars = append(envVars, corev1.EnvVar{Name: "RPM_SIGNING_SERVICE", Value: "rpm-signing-service"})
 	}
 
 	return corev1.Container{
@@ -445,6 +458,10 @@ func signingScriptJobVolumes(pulp *repomanagerpulpprojectorgv1beta2.Pulp, secret
 	}
 	if controllers.DeployAptSign(secret) {
 		item := corev1.KeyToPath{Key: settings.AptSigningScriptName, Path: settings.AptSigningScriptName}
+		secretItems = append(secretItems, item)
+	}
+	if controllers.DeployRpmSign(secret) {
+		item := corev1.KeyToPath{Key: settings.RpmSigningScriptName, Path: settings.RpmSigningScriptName}
 		secretItems = append(secretItems, item)
 	}
 

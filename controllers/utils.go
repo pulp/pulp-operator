@@ -898,6 +898,12 @@ func DeployAptSign(secret corev1.Secret) bool {
 	return contains
 }
 
+// DeployRpmSign returns true if signingScript secret is defined with an rpm script
+func DeployRpmSign(secret corev1.Secret) bool {
+	_, contains := secret.Data[settings.RpmSigningScriptName]
+	return contains
+}
+
 // SetDefaultSecurityContext defines the container security configuration to be in compliance with PodSecurity "restricted:v1.24"
 func SetDefaultSecurityContext() *corev1.SecurityContext {
 	allowPrivilegeEscalation, runAsNonRoot := false, true
