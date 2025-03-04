@@ -1,0 +1,1 @@
+Fixed an issue with duplicated `API_ROOT` definition when the config is also set in `custom_pulp_settings` ConfigMap.
