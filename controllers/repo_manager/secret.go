@@ -560,7 +560,7 @@ func addCustomPulpSettings(resources controllers.FunctionResources, pulpSettings
 
 	settings := ""
 	for _, k := range sortKeys(settingsCM.Data) {
-		settings = settings + fmt.Sprintf("%v = %v\n", k, settingsCM.Data[k])
+		settings = settings + fmt.Sprintf("%v = %v\n", strings.ToUpper(k), settingsCM.Data[k])
 	}
 
 	*pulpSettings = *pulpSettings + settings

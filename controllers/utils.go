@@ -328,12 +328,24 @@ func getPulpSetting(r client.Client, pulp *repomanagerpulpprojectorgv1beta2.Pulp
 	if pulp.Spec.CustomPulpSettings != "" {
 		settingsCM := &corev1.ConfigMap{}
 		r.Get(context.TODO(), types.NamespacedName{Name: pulp.Spec.CustomPulpSettings, Namespace: pulp.Namespace}, settingsCM)
-		if setting, found := settingsCM.Data[key]; found {
-			return setting
+		if setting := getCMData(settingsCM, key); setting != nil {
+			return *setting
 		}
 	}
 
 	return ""
+}
+
+// getCMData returns the value from ConfigMap "key"
+func getCMData(cm *corev1.ConfigMap, key string) *string {
+	// we don't have control of the ConfigMap content, so we need to verify if the key was defined
+	// either in lower or uppercase
+	if setting, found := cm.Data[strings.ToLower(key)]; found {
+		return &setting
+	} else if setting, found := cm.Data[strings.ToUpper(key)]; found {
+		return &setting
+	}
+	return nil
 }
 
 // domainEnabled returns the definition of DOMAIN_ENABLED in settings.py
@@ -348,7 +360,7 @@ func domainEnabled(r client.Client, pulp *repomanagerpulpprojectorgv1beta2.Pulp)
 // GetAPIRoot returns the definition of API_ROOT in settings.py or /pulp/
 func GetAPIRoot(r client.Client, pulp *repomanagerpulpprojectorgv1beta2.Pulp) string {
 	if apiRoot := getPulpSetting(r, pulp, "api_root"); apiRoot != "" {
-		return apiRoot
+		return strings.Replace(apiRoot, "\"", "", -1)
 	}
 	return "/pulp/"
 }
@@ -358,7 +370,7 @@ func GetAPIRoot(r client.Client, pulp *repomanagerpulpprojectorgv1beta2.Pulp) st
 // * /pulp/content/ otherwise
 func GetContentPathPrefix(r client.Client, pulp *repomanagerpulpprojectorgv1beta2.Pulp) string {
 	if contentPath := getPulpSetting(r, pulp, "content_path_prefix"); contentPath != "" {
-		return contentPath
+		return strings.Replace(contentPath, "\"", "", -1)
 	}
 
 	if domainEnabled(r, pulp) {
