@@ -260,7 +260,6 @@ PUBLIC_KEY_PATH = "/etc/pulp/keys/container_auth_public_key.pem"
 STATIC_ROOT = "/var/lib/operator/static/"
 TOKEN_AUTH_DISABLED = False
 TOKEN_SIGNATURE_ALGORITHM = "ES256"
-API_ROOT = "/pulp/"
 `
 }
 
