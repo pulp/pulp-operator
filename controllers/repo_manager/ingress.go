@@ -23,12 +23,10 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
 	pulp_ocp "github.com/pulp/pulp-operator/controllers/ocp"
 	"github.com/pulp/pulp-operator/controllers/settings"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -39,10 +37,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp *pulpv1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// conditionType is used to update .status.conditions with the current resource state
-	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Ingress-Ready"
+	conditionType := "Pulp-Ingress-Ready"
 
 	podList := &corev1.PodList{}
 	labels := settings.PulpcoreLabels(*pulp, "content")
@@ -75,7 +73,7 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 	execCmd := []string{
 		"/usr/bin/route_paths.py", pulp.Name,
 	}
-	cmdOutput, err := controllers.ContainerExec(r, &pod, execCmd, "content", pod.Namespace)
+	cmdOutput, err := controllers.ContainerExec(ctx, r, &pod, execCmd, "content", pod.Namespace)
 	if err != nil {
 		controllers.CustomZapLogger().Warn(err.Error() + " Failed to get ingresss from " + pod.Name)
 		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "Failed to get ingresss!", "FailedGet"+pod.Name)
@@ -86,13 +84,13 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 	defaultPlugins := []controllers.IngressPlugin{
 		{
 			Name:        pulp.Name + "-content",
-			Path:        controllers.GetContentPathPrefix(r.Client, pulp),
+			Path:        controllers.GetContentPathPrefix(ctx, r.Client, pulp),
 			TargetPort:  "content-24816",
 			ServiceName: settings.ContentService(pulp.Name),
 		},
 		{
 			Name:        pulp.Name + "-api-v3",
-			Path:        controllers.GetAPIRoot(r.Client, pulp) + "api/v3/",
+			Path:        controllers.GetAPIRoot(ctx, r.Client, pulp) + "api/v3/",
 			TargetPort:  "api-24817",
 			ServiceName: settings.ApiService(pulp.Name),
 		},

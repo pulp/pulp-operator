@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -12,7 +12,7 @@ import (
 )
 
 // restoreDatabaseData scales down the pods and runs a pg_restore
-func (r *RepoManagerRestoreReconciler) restoreDatabaseData(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore, backupDir string, pod *corev1.Pod) error {
+func (r *RepoManagerRestoreReconciler) restoreDatabaseData(ctx context.Context, pulpRestore *pulpv1.PulpRestore, backupDir string, pod *corev1.Pod) error {
 	log := r.RawLogger
 	backupFile := "pulp.db"
 
@@ -43,7 +43,7 @@ func (r *RepoManagerRestoreReconciler) restoreDatabaseData(ctx context.Context, 
 	}
 
 	log.Info("Running db restore ...")
-	if _, err := controllers.ContainerExec(r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace); err != nil {
+	if _, err := controllers.ContainerExec(ctx, r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace); err != nil {
 		log.Error(err, "Failed to restore postgres data")
 		return err
 	}

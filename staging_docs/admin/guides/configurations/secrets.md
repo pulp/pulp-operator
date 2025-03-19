@@ -1,9 +1,6 @@
 # Pulp Operator Secrets
 
-Pulp Operator creates k8s `Secrets` based on the configuration defined in Pulp `CR`.
-
-Some `Secrets` are **not** reconciled, which means, any modification in their content will **not**
-get synchronized with the `CR` definition. This is to avoid losing any custom data added to the `Secret`.
+Pulp Operator creates and also watches k8s `Secrets` based on the configuration defined in Pulp `CR`.
 
 
 ### Restore the default values
@@ -25,7 +22,7 @@ $ kubectl delete secret <secret name>
 ```
 
 !!! note
-    Any modifications to the `Secrets` [will **not** be replicated to the running pods](/pulp_operator/faq/#i-modified-a-configmapsecret-but-the-new-config-is-not-replicated-to-pods).  
+    Any modifications to the `Secrets` [will **not** be replicated to the running pods](https://pulpproject.org/pulp-operator/docs/user/guides/common_issues/#i-modified-a-configmapsecret-but-the-new-config-is-not-replicated-to-pods).  
     To update the `Pods` with the new `Secret` contents just delete the `Pod` (the new `Pod` provisioned by the controller will mount the updated `Secret`).
 
 ## List of Secrets deployed by the Operator
@@ -86,15 +83,20 @@ REDIS_DB = ""
 
 ```
 
-For more information about Pulp Settings config file see [Pulpcore doc](https://docs.pulpproject.org/pulpcore/configuration/settings.html). <br/>
+For more information about Pulp Settings config file see [Pulpcore doc](https://pulpproject.org/pulpcore/docs/admin/reference/settings/). <br/>
 For more information about how to configure `settings.py` file using Pulp
-Operator see [Pulp Settings](/pulp_operator/configuring/pulp_settings/).
+Operator see [Pulp Settings](http://pulpproject.org/pulp-operator/docs/admin/guides/configurations/pulp_settings/).
 
 
 ### pulp-db-fields-encryption
 
 Symmetric key used to encrypt the data stored in the database.  
-*The current version of Operator does not provide a way to modify this key yet.*
+*The current version of pulp-perator does not provide a way to modify this key yet.*
+
+!!! warning
+    Modifying this key without properly following the [key rotation](https://pulpproject.org/pulpcore/docs/admin/guides/configure-pulp/db-encryption/#key-rotation) will make Pulp unusable and you will have to drop your database and start over. As of now, pulp-operator does not automate the logic for the key rotation.
+
+For more info check: [rotate-the-db-fields-encryption-key](https://pulpproject.org/pulp-operator/docs/admin/guides/configurations/database/#rotate-the-fields-encryption-key)
 
 
 ### pulp-admin-password
@@ -114,13 +116,12 @@ spec:
 ```
 
 If the `admin_password_secret` field is not defined with the name of a `Secret` the Operator will create one (called *pulp-admin-password*) with a random string.  
-This field is immutable, i.e., it is not possible to modify the name of the `Secret` that the Operator will use to define the admin password. In case of a need to update the admin password, the `Secret` content should be updated instead.
 
 
 ### pulp-container-auth
 
-Contains the keys which are going to be used for the [signing and validation of tokens](https://docs.pulpproject.org/pulp_container/authentication.html#token-authentication-label).  
-It is managed by `container_token_secret` field in Pulp `CR`. The `Secret` name is immutable (an attempt to change its name in Pulp `CR` will reconcile it), any update should be done in the existing `Secret` content.
+Contains the keys which are going to be used for the [signing and validation of tokens](http://pulpproject.org/pulp_container/docs/admin/learn/authentication/#token-authentication).  
+It is managed by `container_token_secret` field in Pulp `CR`.
 
 ### pulp-secret-key
 
@@ -140,5 +141,4 @@ spec:
 ...
 ```
 
-If the `pulp_secret_key` field is not defined with the name of a `Secret` the Operator will create one (called *pulp-secret-key*) with a random string.  
-This field is immutable, i.e., it is not possible to modify the name of the `Secret` that the Operator will use to define the Django `SECRET_KEY`. In case of a need to update it, the `Secret` content should be updated instead.
+If the `pulp_secret_key` field is not defined with the name of a `Secret`, pulp-operator will create one (called *pulp-secret-key*) with a random string.  

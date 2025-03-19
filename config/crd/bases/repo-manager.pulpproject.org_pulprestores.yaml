@@ -14,7 +14,7 @@ spec:
     singular: pulprestore
   scope: Namespaced
   versions:
-  - name: v1beta2
+  - name: v1
     schema:
       openAPIV3Schema:
         description: PulpRestore is the Schema for the pulprestores API
@@ -44,7 +44,7 @@ spec:
                   object (backupDirectory)
                 type: string
               backup_name:
-                description: Name of the backup custom resource
+                description: Name of PulpBackup CR
                 type: string
               backup_pvc:
                 description: Name of the PVC to be restored from, set as a status
@@ -52,14 +52,7 @@ spec:
                 type: string
               deployment_name:
                 default: pulp
-                description: Name of the deployment to be restored to
-                type: string
-              deployment_type:
-                default: pulp
-                description: Name of the deployment type. Can be one of {galaxy,pulp}.
-                enum:
-                - galaxy
-                - pulp
+                description: Name of Pulp CR to be restored
                 type: string
               keep_replicas:
                 default: false

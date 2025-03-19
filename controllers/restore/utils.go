@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -19,7 +19,7 @@ const CMLock = "restore-lock"
 // isFileStorage returns true if pulp is deployed with storage type = file
 // this is a workaround to identify if it will be necessary to mount /var/lib/pulp in the backup-manager pod
 // to restore its contents
-func (r *RepoManagerRestoreReconciler) isFileStorage(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore) bool {
+func (r *RepoManagerRestoreReconciler) isFileStorage(ctx context.Context, pulpRestore *pulpv1.PulpRestore) bool {
 	// if file-storage PVC is not provisioned it means that pulp is deployed with object storage
 	// in this case, we should just return restorePulpDir without action
 	fileStoragePVC := &corev1.PersistentVolumeClaim{}
@@ -31,7 +31,7 @@ func (r *RepoManagerRestoreReconciler) isFileStorage(ctx context.Context, pulpRe
 }
 
 // backupPVCFound returns the name of PVC and true if backup-claim PVC is found else return nil,false
-func (r *RepoManagerRestoreReconciler) backupPVCFound(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore) (string, bool) {
+func (r *RepoManagerRestoreReconciler) backupPVCFound(ctx context.Context, pulpRestore *pulpv1.PulpRestore) (string, bool) {
 
 	backupPVCName := ""
 	if pulpRestore.Spec.BackupPVC == "" {
@@ -49,7 +49,7 @@ func (r *RepoManagerRestoreReconciler) backupPVCFound(ctx context.Context, pulpR
 
 // [TODO] refactor updateStatus so that it can be used by pulp, pulpRestore, and pulpBackup controllers
 // updateStatus modifies a .status.condition from pulpbackup CR
-func (r *RepoManagerRestoreReconciler) updateStatus(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore, conditionStatus metav1.ConditionStatus, conditionType, conditionMessage, conditionReason string) {
+func (r *RepoManagerRestoreReconciler) updateStatus(ctx context.Context, pulpRestore *pulpv1.PulpRestore, conditionStatus metav1.ConditionStatus, conditionType, conditionMessage, conditionReason string) {
 	v1.SetStatusCondition(&pulpRestore.Status.Conditions, metav1.Condition{
 		Type:               conditionType,
 		Status:             conditionStatus,
@@ -62,7 +62,7 @@ func (r *RepoManagerRestoreReconciler) updateStatus(ctx context.Context, pulpRes
 
 // [TODO] refactor cleanup so that it can be used by pulpRestore and pulpBackup controllers
 // cleanup deletes the backup-manager pod
-func (r *RepoManagerRestoreReconciler) cleanup(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore) error {
+func (r *RepoManagerRestoreReconciler) cleanup(ctx context.Context, pulpRestore *pulpv1.PulpRestore) error {
 	restorePod := &corev1.Pod{}
 	r.Get(ctx, types.NamespacedName{Name: pulpRestore.Name + "-backup-manager", Namespace: pulpRestore.Namespace}, restorePod)
 	r.Delete(ctx, restorePod)
@@ -82,15 +82,15 @@ func (r *RepoManagerRestoreReconciler) cleanup(ctx context.Context, pulpRestore 
 
 // [TODO] refactor createBackupPod so that it can be used by pulpRestore and pulpBackup controllers
 // createBackupPod provisions the backup-manager pod where the restore steps will run
-func (r *RepoManagerRestoreReconciler) createRestorePod(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore, backupPVCName, backupDir string) (*corev1.Pod, error) {
+func (r *RepoManagerRestoreReconciler) createRestorePod(ctx context.Context, pulpRestore *pulpv1.PulpRestore, backupPVCName, backupDir string) (*corev1.Pod, error) {
 	log := r.RawLogger
 
 	labels := map[string]string{
-		"app.kubernetes.io/name":       pulpRestore.Spec.DeploymentType + "-backup-storage",
-		"app.kubernetes.io/instance":   pulpRestore.Spec.DeploymentType + "-backup-storage-" + pulpRestore.Name,
+		"app.kubernetes.io/name":       "pulp-backup-storage",
+		"app.kubernetes.io/instance":   "pulp-backup-storage-" + pulpRestore.Name,
 		"app.kubernetes.io/component":  "backup-storage",
-		"app.kubernetes.io/part-of":    pulpRestore.Spec.DeploymentType,
-		"app.kubernetes.io/managed-by": pulpRestore.Spec.DeploymentType + "-operator",
+		"app.kubernetes.io/part-of":    "pulp",
+		"app.kubernetes.io/managed-by": "pulp-operator",
 	}
 
 	// [TO-DO] define postgres image based on the database implementation type
@@ -215,7 +215,7 @@ func (r *RepoManagerRestoreReconciler) waitPodReady(ctx context.Context, namespa
 // This is to avoid scenarios in which a restore CR is kept after a restore already finished and
 // a new reconciliation loop run trying to overwrite the resources when it shouldn't.
 // To rerun a restore the user will have to manually delete the lock configmap first.
-func (r *RepoManagerRestoreReconciler) createLockConfigMap(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore) {
+func (r *RepoManagerRestoreReconciler) createLockConfigMap(ctx context.Context, pulpRestore *pulpv1.PulpRestore) {
 	log := r.RawLogger
 
 	configMap := &corev1.ConfigMap{}
@@ -248,12 +248,12 @@ func (r *RepoManagerRestoreReconciler) createLockConfigMap(ctx context.Context, 
 // getBackupDir return the name of backup folder
 // if pulpRestore.Spec.BackupDir is not defined it will get the name from pulpBackup status
 // if pulpRestore.Spec.BackupDir is not defined and pulpBackup is not found it will return error
-func (r *RepoManagerRestoreReconciler) getBackupDir(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore) (string, error) {
+func (r *RepoManagerRestoreReconciler) getBackupDir(ctx context.Context, pulpRestore *pulpv1.PulpRestore) (string, error) {
 	log := r.RawLogger
 
 	backupDir := pulpRestore.Spec.BackupDir
 	if len(pulpRestore.Spec.BackupDir) == 0 {
-		pulpBackup := &repomanagerpulpprojectorgv1beta2.PulpBackup{}
+		pulpBackup := &pulpv1.PulpBackup{}
 		if err := r.Get(ctx, types.NamespacedName{Name: pulpRestore.Spec.BackupName, Namespace: pulpRestore.Namespace}, pulpBackup); err != nil {
 			log.Error(err, "Failed to get pulpBackup and no backup_dir provided!")
 			return "", err
@@ -261,9 +261,4 @@ func (r *RepoManagerRestoreReconciler) getBackupDir(ctx context.Context, pulpRes
 		return pulpBackup.Status.BackupDirectory, nil
 	}
 	return backupDir, nil
-}
-
-// getDeploymentName returns the deployment_name
-func getDeploymentName(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore) string {
-	return pulpRestore.Spec.DeploymentName
 }

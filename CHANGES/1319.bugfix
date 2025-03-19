@@ -1,2 +1,0 @@
-Fixed a faulty `PodSecurityContext` configuration for database and cache pods,
-resolving a deployment failure in OCP environments.

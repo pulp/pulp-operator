@@ -28,7 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/go-logr/logr"
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -51,7 +51,7 @@ type RepoManagerRestoreReconciler struct {
 // move the current state of the cluster closer to the desired state.
 func (r *RepoManagerRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.RawLogger
-	pulpRestore := &repomanagerpulpprojectorgv1beta2.PulpRestore{}
+	pulpRestore := &pulpv1.PulpRestore{}
 	err := r.Get(ctx, req.NamespacedName, pulpRestore)
 
 	if err != nil {
@@ -140,10 +140,15 @@ func (r *RepoManagerRestoreReconciler) Reconcile(ctx context.Context, req ctrl.R
 	execCmd := []string{
 		"stat", backupDir,
 	}
-	_, err = controllers.ContainerExec(r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
+	_, err = controllers.ContainerExec(ctx, r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
 	if err != nil {
 		// requeue request when backupDir is not found
 		r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Failed to find "+backupDir+" dir!", "BackupDirNotFound")
+		return ctrl.Result{}, err
+	}
+
+	// Restoring the configmaps
+	if err := r.restoreConfigMap(ctx, pulpRestore, backupDir, pod); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -192,7 +197,7 @@ func (r *RepoManagerRestoreReconciler) Reconcile(ctx context.Context, req ctrl.R
 // SetupWithManager sets up the controller with the Manager.
 func (r *RepoManagerRestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&repomanagerpulpprojectorgv1beta2.PulpRestore{}).
+		For(&pulpv1.PulpRestore{}).
 		Owns(&corev1.ConfigMap{}).
 		WithEventFilter(controllers.IgnoreUpdateCRStatusPredicate()).
 		Complete(r)

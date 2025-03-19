@@ -1,7 +1,0 @@
-apiVersion: repo-manager.pulpproject.org/v1beta2
-kind: PulpRestore
-metadata:
-  name: ci-pulprestore
-spec:
-  backup_name: pulpbackup-sample
-  deployment_name: galaxy-example

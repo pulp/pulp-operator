@@ -27,18 +27,10 @@ show_logs() {
 
 sed -i 's/kubectl/oc/g' Makefile
 
-oc apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
-
 ROUTE_HOST="pulpci.$(oc get ingresses.config/cluster -o jsonpath={.spec.domain})"
 echo $ROUTE_HOST
 
-if [[ "$CI_TEST" == "galaxy" ]]; then
-  CR_FILE=config/samples/pulpproject_v1beta1_pulp_cr.galaxy.ocp.ci.yaml
-  oc apply -f .ci/assets/kubernetes/galaxy_sign.secret.yaml
-  oc apply -f .ci/assets/kubernetes/signing_scripts.yaml
-else
-  CR_FILE=config/samples/pulpproject_v1beta1_pulp_cr.ocp.ci.yaml
-fi
+CR_FILE=config/samples/simple-ocp.yaml
 
 sed -i "s/route_host_placeholder/$ROUTE_HOST/g" $CR_FILE
 oc apply -f $CR_FILE

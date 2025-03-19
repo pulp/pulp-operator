@@ -23,7 +23,7 @@ import (
 
 	"github.com/go-logr/logr"
 	routev1 "github.com/openshift/api/route/v1"
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
 	pulp_ocp "github.com/pulp/pulp-operator/controllers/ocp"
 	appsv1 "k8s.io/api/apps/v1"
@@ -69,17 +69,13 @@ type RepoManagerReconciler struct {
 func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.RawLogger
 
-	pulp := &repomanagerpulpprojectorgv1beta2.Pulp{}
+	pulp := &pulpv1.Pulp{}
 	err := r.Get(ctx, req.NamespacedName, pulp)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
 			log.Info("Pulp resource not found. Ignoring since object must be deleted")
 			return ctrl.Result{}, nil
 		}
-		// Error reading the object - requeue the request.
 		log.Error(err, "Failed to get Pulp")
 		return ctrl.Result{}, err
 	}
@@ -129,7 +125,7 @@ func (r *RepoManagerReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	return ctrl.Result{}, nil
 }
 
-func ocpTasks(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, r RepoManagerReconciler) (*ctrl.Result, error) {
+func ocpTasks(ctx context.Context, pulp *pulpv1.Pulp, r RepoManagerReconciler) (*ctrl.Result, error) {
 	if isOpenShift, _ := controllers.IsOpenShift(); !isOpenShift {
 		return nil, nil
 	}
@@ -145,7 +141,7 @@ func ocpTasks(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, 
 	return nil, nil
 }
 
-func createRHPullSecret(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, r RepoManagerReconciler) error {
+func createRHPullSecret(ctx context.Context, pulp *pulpv1.Pulp, r RepoManagerReconciler) error {
 	r.RawLogger.V(1).Info("Running on OpenShift cluster")
 	if err := pulp_ocp.CreateRHOperatorPullSecret(r.Client, ctx, *pulp); err != nil {
 		return err
@@ -154,7 +150,7 @@ func createRHPullSecret(ctx context.Context, pulp *repomanagerpulpprojectorgv1be
 	return nil
 }
 
-func injectCertificates(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, r RepoManagerReconciler) (*ctrl.Result, error) {
+func injectCertificates(ctx context.Context, pulp *pulpv1.Pulp, r RepoManagerReconciler) (*ctrl.Result, error) {
 	if !pulp.Spec.TrustedCa {
 		return nil, nil
 	}
@@ -167,7 +163,7 @@ func injectCertificates(ctx context.Context, pulp *repomanagerpulpprojectorgv1be
 	return nil, nil
 }
 
-func databaseTasks(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, r RepoManagerReconciler) (*ctrl.Result, error) {
+func databaseTasks(ctx context.Context, pulp *pulpv1.Pulp, r RepoManagerReconciler) (*ctrl.Result, error) {
 	log := r.RawLogger
 
 	// Do not provision postgres resources if using external DB
@@ -183,7 +179,7 @@ func databaseTasks(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.P
 	return nil, nil
 }
 
-func pulpCoreTasks(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, r RepoManagerReconciler) (*ctrl.Result, error) {
+func pulpCoreTasks(ctx context.Context, pulp *pulpv1.Pulp, r RepoManagerReconciler) (*ctrl.Result, error) {
 	log := r.RawLogger
 
 	log.V(1).Info("Running file storage tasks ...")
@@ -265,10 +261,6 @@ func pulpCoreTasks(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.P
 		return &pulpController, err
 	}
 
-	if pulpController, err := r.galaxy(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}); needsRequeue(err, pulpController) {
-		return &pulpController, err
-	}
-
 	// remove telemetry resources in case it is not enabled anymore
 	if pulp.Status.TelemetryEnabled && !pulp.Spec.Telemetry.Enabled {
 		controllers.RemoveTelemetryResources(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log})
@@ -277,7 +269,7 @@ func pulpCoreTasks(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.P
 	return nil, nil
 }
 
-func cacheTasks(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, r RepoManagerReconciler) (*ctrl.Result, error) {
+func cacheTasks(ctx context.Context, pulp *pulpv1.Pulp, r RepoManagerReconciler) (*ctrl.Result, error) {
 	log := r.RawLogger
 
 	// Provision redis resources only if
@@ -305,7 +297,7 @@ func cacheTasks(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp
 
 // indexerFunc knows how to take an object and turn it into a series of non-namespaced keys
 func indexerFunc(obj client.Object) []string {
-	pulp := obj.(*repomanagerpulpprojectorgv1beta2.Pulp)
+	pulp := obj.(*pulpv1.Pulp)
 	var keys []string
 
 	secrets := []string{"ObjectStorageAzureSecret", "ObjectStorageS3Secret", "SSOSecret", "AdminPasswordSecret", "PulpSecretKey", "SigningScripts", "SigningSecret"}
@@ -341,12 +333,12 @@ func (r *RepoManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.recorder = mgr.GetEventRecorderFor("Pulp")
 
 	// adds an index to `object_storage_azure_secret` allowing to lookup `Pulp` by a referenced `Azure Object Storage Secret` name
-	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &repomanagerpulpprojectorgv1beta2.Pulp{}, "objects", indexerFunc); err != nil {
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &pulpv1.Pulp{}, "objects", indexerFunc); err != nil {
 		return err
 	}
 
 	controller := ctrl.NewControllerManagedBy(mgr).
-		For(&repomanagerpulpprojectorgv1beta2.Pulp{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		For(&pulpv1.Pulp{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&appsv1.StatefulSet{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.Service{}).

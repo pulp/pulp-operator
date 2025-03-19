@@ -5,7 +5,7 @@ metadata:
     alm-examples: |-
       [
         {
-          "apiVersion": "repo-manager.pulpproject.org/v1beta2",
+          "apiVersion": "repo-manager.pulpproject.org/v1",
           "kind": "Pulp",
           "metadata": {
             "name": "example"
@@ -31,15 +31,6 @@ metadata:
               }
             },
             "ingress_type": "nodeport",
-            "pulp_settings": {
-              "allowed_export_paths": [
-                "/tmp"
-              ],
-              "allowed_import_paths": [
-                "/tmp"
-              ],
-              "api_root": "/pulp/"
-            },
             "worker": {
               "replicas": 2,
               "resource_requirements": {
@@ -56,87 +47,7 @@ metadata:
           }
         },
         {
-          "apiVersion": "repo-manager.pulpproject.org/v1beta2",
-          "kind": "Pulp",
-          "metadata": {
-            "name": "galaxy-example"
-          },
-          "spec": {
-            "admin_password_secret": "example-pulp-admin-password",
-            "api": {
-              "replicas": 1
-            },
-            "content": {
-              "replicas": 1,
-              "resource_requirements": {
-                "limits": {
-                  "cpu": "800m",
-                  "memory": "1Gi"
-                },
-                "requests": {
-                  "cpu": "150m",
-                  "memory": "256Mi"
-                }
-              }
-            },
-            "database": {
-              "postgres_storage_class": "standard"
-            },
-            "deployment_type": "galaxy",
-            "file_storage_access_mode": "ReadWriteMany",
-            "file_storage_size": "10Gi",
-            "file_storage_storage_class": "standard",
-            "image": "quay.io/pulp/galaxy-minimal",
-            "image_version": "4.6.3",
-            "image_web": "quay.io/pulp/galaxy-web",
-            "image_web_version": "4.6.3",
-            "ingress_type": "nodeport",
-            "nodeport_port": 30000,
-            "pulp_settings": {
-              "allowed_export_paths": [
-                "/tmp"
-              ],
-              "allowed_import_paths": [
-                "/tmp"
-              ],
-              "analytics": false,
-              "ansible_api_hostname": "http://nodeport.local:30000",
-              "api_root": "/api/galaxy/pulp/",
-              "content_origin": "http://nodeport.local:30000",
-              "token_server": "http://nodeport.local:30000/token/"
-            },
-            "signing_scripts": "signing-scripts",
-            "signing_secret": "signing-galaxy",
-            "web": {
-              "replicas": 1,
-              "resource_requirements": {
-                "limits": {
-                  "cpu": "800m",
-                  "memory": "1Gi"
-                },
-                "requests": {
-                  "cpu": "100m",
-                  "memory": "256Mi"
-                }
-              }
-            },
-            "worker": {
-              "replicas": 1,
-              "resource_requirements": {
-                "limits": {
-                  "cpu": "800m",
-                  "memory": "1Gi"
-                },
-                "requests": {
-                  "cpu": "150m",
-                  "memory": "256Mi"
-                }
-              }
-            }
-          }
-        },
-        {
-          "apiVersion": "repo-manager.pulpproject.org/v1beta2",
+          "apiVersion": "repo-manager.pulpproject.org/v1",
           "kind": "PulpBackup",
           "metadata": {
             "name": "pulpbackup-sample"
@@ -144,20 +55,19 @@ metadata:
           "spec": {
             "admin_password_secret": "example-pulp-admin-password",
             "backup_storage_class": "standard",
-            "deployment_name": "galaxy-example",
-            "deployment_type": "galaxy",
-            "postgres_configuration_secret": "galaxy-example-postgres-configuration"
+            "deployment_name": "pulp-example",
+            "postgres_configuration_secret": "pulp-example-postgres-configuration"
           }
         },
         {
-          "apiVersion": "repo-manager.pulpproject.org/v1beta2",
+          "apiVersion": "repo-manager.pulpproject.org/v1",
           "kind": "PulpRestore",
           "metadata": {
             "name": "ci-pulprestore"
           },
           "spec": {
             "backup_name": "pulpbackup-sample",
-            "deployment_name": "galaxy-example"
+            "deployment_name": "pulp-example"
           }
         }
       ]
@@ -167,6 +77,7 @@ metadata:
     createdAt: "2021-03-26 16:57:40"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
+    metadata.annotations.support: Community
     operators.operatorframework.io/builder: operator-sdk-v1.22.2
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/pulp/pulp-operator
@@ -205,12 +116,9 @@ spec:
       - description: Storage requirements for the backup
         displayName: Backup Storage Req
         path: backup_storage_requirements
-      - description: Name of the deployment to be backed up
+      - description: Name of Pulp CR to be backed up
         displayName: Deployment Name
         path: deployment_name
-      - description: Name of the deployment type. Can be one of {galaxy,pulp}.
-        displayName: Deployment Type
-        path: deployment_type
       - description: Secret where the database configuration can be found
         displayName: Database configuration
         path: postgres_configuration_secret
@@ -241,7 +149,7 @@ spec:
       - description: Name of the deployment backed up
         displayName: Deployment Name
         path: deploymentName
-      version: v1beta2
+      version: v1
     - description: PulpRestore is the Schema for the pulprestores API
       displayName: Pulp Restore
       kind: PulpRestore
@@ -251,19 +159,16 @@ spec:
           (backupDirectory)
         displayName: Backup Dir
         path: backup_dir
-      - description: Name of the backup custom resource
+      - description: Name of PulpBackup CR
         displayName: Backup Name
         path: backup_name
       - description: Name of the PVC to be restored from, set as a status found on
           the backup object (backupClaim)
         displayName: Backup PVC
         path: backup_pvc
-      - description: Name of the deployment to be restored to
+      - description: Name of Pulp CR to be restored
         displayName: Deployment Name
         path: deployment_name
-      - description: Name of the deployment type. Can be one of {galaxy,pulp}.
-        displayName: Deployment Type
-        path: deployment_type
       - description: KeepBackupReplicasCount allows to define if the restore controller
           should restore the components with the same number of replicas from backup
           or restore only a single replica each.
@@ -276,7 +181,7 @@ spec:
         - urn:alm:descriptor:io.kubernetes.conditions
       - displayName: Postgres Secret
         path: postgres_secret
-      version: v1beta2
+      version: v1
     - description: Pulp is the Schema for the pulps API
       displayName: Pulp
       kind: Pulp
@@ -303,7 +208,7 @@ spec:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'List of allowed checksum algorithms used to verify repository''s
-          integrity. Valid options: ["md5","sha1","sha256","sha512"].'
+          integrity. Valid options: ["md5","sha1","sha224","sha256","sha384","sha512"].'
         displayName: Allowed Content Checksums
         path: allowed_content_checksums
         x-descriptors:
@@ -572,7 +477,7 @@ spec:
         - urn:alm:descriptor:io.kubernetes:Probe
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'Size is the size of number of pulp-content replicas. Default:
-          2'
+          1'
         displayName: Replicas
         path: content.replicas
         x-descriptors:
@@ -706,28 +611,11 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: 'Define if the operator should or should not deploy the default
-          Execution Environments. Default: false'
-        displayName: Deploy EEDefaults
-        path: deploy_ee_defaults
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:hidden
-      - description: 'Name of the deployment type. Default: "pulp"'
-        displayName: Deployment Type
-        path: deployment_type
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: Disable database migrations. Useful for situations in which we
           don't want to automatically run the database migrations, for example, during
           restore.
         displayName: Disable Migrations
         path: disable_migrations
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:hidden
-      - description: 'Name of the ConfigMap with the list of Execution Environments
-          that should be synchronized. Default: ee-default-images'
-        displayName: EEDefaults
-        path: ee_defaults
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: 'By default Pulp logs at INFO level, but enabling DEBUG logging
@@ -767,7 +655,7 @@ spec:
         path: image
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: 'Image pull policy for container image. Default: "IfNotPresent"'
+      - description: Image pull policy for container image.
         displayName: Image Pull Policy
         path: image_pull_policy
         x-descriptors:
@@ -943,13 +831,6 @@ spec:
         path: pulp_secret_key
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - description: '[DEPRECATED] Definition of /etc/pulp/settings.py config file.
-          This field is deprecated and will be removed in the future, use the custom_pulp_settings
-          field instead.'
-        displayName: Pulp Settings
-        path: pulp_settings
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: PersistenVolumeClaim name that will be used by Pulp pods. If
           defined, the PVC must be provisioned by the user and the operator will only
           configure the deployment to use it
@@ -1014,14 +895,6 @@ spec:
         path: signing_scripts
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
-        - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: '[DEPRECATED] ConfigMap where the signing scripts are stored.
-          This field is deprecated and will be removed in the future, use the signing_scripts
-          field instead.'
-        displayName: Signing Scripts Configmap
-        path: signing_scripts_configmap
-        x-descriptors:
-        - urn:alm:descriptor:io.kubernetes:ConfigMap
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Name of the Secret where the gpg key is stored.
         displayName: Signing Secret
@@ -1163,7 +1036,7 @@ spec:
         - urn:alm:descriptor:io.kubernetes:Probe
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'Size is the size of number of pulp-worker replicas. Default:
-          2'
+          1'
         displayName: Replicas
         path: worker.replicas
         x-descriptors:
@@ -1196,7 +1069,7 @@ spec:
         path: conditions
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes.conditions
-      version: v1beta2
+      version: v1
   description: |-
     [Pulp](https://pulpproject.org/) is a platform for managing repositories of content, such as software packages, and making them available to a large number of consumers.
 
@@ -1212,7 +1085,7 @@ spec:
     Pulp is completely free and open-source!
 
     * License: GPLv2+
-    * Documentation: [https://docs.pulpproject.org/](https://docs.pulpproject.org/)
+    * Documentation: [https://pulpproject.org/](https://pulpproject.org/)
     * Source: [https://github.com/pulp/pulpcore/](https://github.com/pulp/pulpcore/)
 
     For more information, check out the project website: [https://pulpproject.org](https://pulpproject.org)
@@ -1223,14 +1096,7 @@ spec:
 
     Pulp Operator is under active development, with the goal to provide a scalable and robust cluster for Pulp 3.
 
-    Note that Pulp operator works with three different types of service containers (the operator itself, the main service and the web service):
-
-    |           | Operator | Main | Web |
-    | --------- | -------- | ---- | --- |
-    | **Image** | [pulp-operator](https://quay.io/repository/pulp/pulp-operator?tab=tags) |[pulp-minimal](https://quay.io/repository/pulp/pulp-minimal?tab=tags) | [pulp-web](https://quay.io/repository/pulp/pulp-web?tab=tags) |
-    | **Image** | [pulp-operator](https://quay.io/repository/pulp/pulp-operator?tab=tags) |[galaxy-minimal](https://quay.io/repository/pulp/galaxy-minimal?tab=tags) | [galaxy-web](https://quay.io/repository/pulp/galaxy-web?tab=tags) |
-
-    <br>Pulp operator is manually built and [hosted on quay.io](https://quay.io/repository/pulp/pulp-operator). Read more about the container images [here](https://docs.pulpproject.org/pulp_operator/container/).
+    <br>Pulp operator is manually built and [hosted on quay.io](https://quay.io/repository/pulp/pulp-operator). Read more about the container images [here](https://pulpproject.org/pulp-oci-images/docs/admin/reference/available-images/single-process-images/).
 
     ## Custom Resource Definitions
     Pulp Operator currently provides three different kinds of [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#custom-resources): Pulp, Pulp Backup and Pulp Restore.
@@ -1244,7 +1110,7 @@ spec:
 
     ## Get Help
 
-    Documentation: [https://docs.pulpproject.org/pulp_operator/](https://docs.pulpproject.org/pulp_operator/)
+    Documentation: [https://pulpproject.org/pulp_operator/](https://pulpproject.org/pulp_operator/)
 
     Issue Tracker: [https://github.com/pulp/pulp-operator/issues](https://github.com/pulp/pulp-operator/issues)
 
@@ -1535,11 +1401,12 @@ spec:
   - name: Pulp Project
     url: https://pulpproject.org/
   - name: Docs
-    url: https://docs.pulpproject.org/pulp_operator/
+    url: https://pulpproject.org/pulp_operator/
   maintainers:
   - email: pulp-list@redhat.com
     name: Pulp Community
-  maturity: beta
+  maturity: stable
+  minKubeVersion: 1.30.0
   provider:
     name: Pulp Community
     url: https://github.com/pulp/pulp-operator

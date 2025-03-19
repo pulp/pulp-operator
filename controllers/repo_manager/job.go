@@ -21,7 +21,7 @@ import (
 	"encoding/json"
 	"reflect"
 
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
 	"github.com/pulp/pulp-operator/controllers/settings"
 	batchv1 "k8s.io/api/batch/v1"
@@ -32,7 +32,7 @@ import (
 )
 
 // updateAdminPasswordJob creates a k8s job if the admin-password secret has changed
-func (r *RepoManagerReconciler) updateAdminPasswordJob(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) {
+func (r *RepoManagerReconciler) updateAdminPasswordJob(ctx context.Context, pulp *pulpv1.Pulp) {
 	log := r.RawLogger
 
 	adminSecretName := controllers.GetAdminSecretName(*pulp)
@@ -41,11 +41,11 @@ func (r *RepoManagerReconciler) updateAdminPasswordJob(ctx context.Context, pulp
 		log.Error(err, "Failed to find "+adminSecretName+" Secret!")
 	}
 
-	// if the secret is already set (it is not the first execution) and it
+	// if the secret is the same and its content
 	// didn't change, there is nothing to do
 	calculatedHash := controllers.CalculateHash(adminSecret.Data)
 	currentHash := controllers.GetCurrentHash(adminSecret)
-	if pulp.Status.AdminPasswordSecret != "" && currentHash == calculatedHash {
+	if pulp.Status.AdminPasswordSecret == pulp.Spec.AdminPasswordSecret && currentHash == calculatedHash {
 		return
 	}
 
@@ -88,7 +88,7 @@ func (r *RepoManagerReconciler) updateAdminPasswordJob(ctx context.Context, pulp
 }
 
 // pulpcoreVolumes defines the list of volumes used by pulpcore containers
-func pulpcoreVolumes(pulp *repomanagerpulpprojectorgv1beta2.Pulp, adminSecretName string) []corev1.Volume {
+func pulpcoreVolumes(pulp *pulpv1.Pulp, adminSecretName string) []corev1.Volume {
 	dbFieldsEncryptionSecret := controllers.GetDBFieldsEncryptionSecret(*pulp)
 
 	volumes := []corev1.Volume{
@@ -138,7 +138,7 @@ func pulpcoreVolumes(pulp *repomanagerpulpprojectorgv1beta2.Pulp, adminSecretNam
 }
 
 // pulpcoreVolumeMounts defines the list of volumeMounts from pulpcore containers
-func pulpcoreVolumeMounts(pulp *repomanagerpulpprojectorgv1beta2.Pulp) []corev1.VolumeMount {
+func pulpcoreVolumeMounts(pulp *pulpv1.Pulp) []corev1.VolumeMount {
 	return []corev1.VolumeMount{
 		{
 			Name:      pulp.Name + "-server",
@@ -156,7 +156,7 @@ func pulpcoreVolumeMounts(pulp *repomanagerpulpprojectorgv1beta2.Pulp) []corev1.
 }
 
 // resetAdminPasswordContainer defines the container spec for the reset admin password job
-func resetAdminPasswordContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) corev1.Container {
+func resetAdminPasswordContainer(pulp *pulpv1.Pulp) corev1.Container {
 	// env vars
 	envVars := controllers.GetPostgresEnvVars(*pulp)
 	envVars = append(envVars, controllers.SetCustomEnvVars(*pulp, "AdminPasswordJob")...)
@@ -202,7 +202,7 @@ func resetAdminPasswordContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) co
 }
 
 // migrationJob creates a k8s Job to run django migrations
-func (r *RepoManagerReconciler) migrationJob(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) {
+func (r *RepoManagerReconciler) migrationJob(ctx context.Context, pulp *pulpv1.Pulp) {
 	log := r.RawLogger
 
 	labels := jobLabels(*pulp)
@@ -233,7 +233,7 @@ func (r *RepoManagerReconciler) migrationJob(ctx context.Context, pulp *repomana
 }
 
 // migrationContainer defines the container spec for the django migrations Job
-func migrationContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) corev1.Container {
+func migrationContainer(pulp *pulpv1.Pulp) corev1.Container {
 	// env vars
 	envVars := controllers.GetPostgresEnvVars(*pulp)
 	envVars = append(envVars, controllers.SetCustomEnvVars(*pulp, "MigrationJob")...)
@@ -262,12 +262,12 @@ func migrationContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) corev1.Cont
 }
 
 // jobLabels defines the common labels used in Jobs
-func jobLabels(pulp repomanagerpulpprojectorgv1beta2.Pulp) map[string]string {
+func jobLabels(pulp pulpv1.Pulp) map[string]string {
 	return settings.CommonLabels(pulp)
 }
 
 // updateContentChecksumsJob creates a k8s Job to update the list of allowed content checksums
-func (r *RepoManagerReconciler) updateContentChecksumsJob(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) {
+func (r *RepoManagerReconciler) updateContentChecksumsJob(ctx context.Context, pulp *pulpv1.Pulp) {
 	log := r.RawLogger
 
 	if !contentChecksumsModified(pulp) {
@@ -308,7 +308,7 @@ func (r *RepoManagerReconciler) updateContentChecksumsJob(ctx context.Context, p
 }
 
 // contentChecksumsContainer defines the container spec for the updateContentChecksums Job
-func contentChecksumsContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) corev1.Container {
+func contentChecksumsContainer(pulp *pulpv1.Pulp) corev1.Container {
 	// env vars
 	envVars := controllers.GetPostgresEnvVars(*pulp)
 	envVars = append(envVars, controllers.SetCustomEnvVars(*pulp, string(settings.API))...)
@@ -339,14 +339,14 @@ func contentChecksumsContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp) core
 
 // contentChecksumsModified returns true if
 // .status.AllowedContentChecksums != pulp.Spec.AllowedContentChecksums
-func contentChecksumsModified(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
+func contentChecksumsModified(pulp *pulpv1.Pulp) bool {
 	var statusAllowedChecksum []string
 	json.Unmarshal([]byte(pulp.Status.AllowedContentChecksums), &statusAllowedChecksum)
 	return !reflect.DeepEqual(pulp.Spec.AllowedContentChecksums, statusAllowedChecksum)
 }
 
 // signingScriptContainer returns the definition of the container used in signingScript Job
-func signingScriptContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp, scriptsSecret corev1.Secret, r RepoManagerReconciler) corev1.Container {
+func signingScriptContainer(ctx context.Context, pulp *pulpv1.Pulp, scriptsSecret corev1.Secret, r RepoManagerReconciler) corev1.Container {
 	// volume mounts
 	volumeMounts := pulpcoreVolumeMounts(pulp)
 	signingSecretMount := []corev1.VolumeMount{
@@ -398,7 +398,7 @@ func signingScriptContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp, scripts
 	// resource requirements
 	resources := pulp.Spec.SigningJob.PulpContainer.ResourceRequirements
 
-	fingerprint, _ := controllers.GetSigningKeyFingerprint(r.Client, pulp.Spec.SigningSecret, pulp.Namespace)
+	fingerprint, _ := controllers.GetSigningKeyFingerprint(ctx, r.Client, pulp.Spec.SigningSecret, pulp.Namespace)
 
 	// env vars
 	envVars := controllers.GetPostgresEnvVars(*pulp)
@@ -446,7 +446,7 @@ echo "${PULP_SIGNING_KEY_FINGERPRINT}:6" | gpg --import-ownertrust
 }
 
 // signingScriptJobVolumes returns the list of volumes used by signingScript Job pod
-func signingScriptJobVolumes(pulp *repomanagerpulpprojectorgv1beta2.Pulp, secret corev1.Secret) []corev1.Volume {
+func signingScriptJobVolumes(pulp *pulpv1.Pulp, secret corev1.Secret) []corev1.Volume {
 	secretItems := []corev1.KeyToPath{}
 	if controllers.DeployCollectionSign(secret) {
 		item := corev1.KeyToPath{Key: settings.CollectionSigningScriptName, Path: settings.CollectionSigningScriptName}
@@ -498,7 +498,7 @@ func signingScriptJobVolumes(pulp *repomanagerpulpprojectorgv1beta2.Pulp, secret
 }
 
 // signingScriptJob creates a k8s job to store the signing scripts
-func (r *RepoManagerReconciler) signingScriptJob(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) {
+func (r *RepoManagerReconciler) signingScriptJob(ctx context.Context, pulp *pulpv1.Pulp) {
 	log := r.RawLogger
 
 	secretName := pulp.Spec.SigningScripts
@@ -520,7 +520,7 @@ func (r *RepoManagerReconciler) signingScriptJob(ctx context.Context, pulp *repo
 		labels,
 		&backoffLimit,
 		&jobTTL,
-		[]corev1.Container{signingScriptContainer(pulp, *secret, *r)},
+		[]corev1.Container{signingScriptContainer(ctx, pulp, *secret, *r)},
 		signingScriptJobVolumes(pulp, *secret),
 	})
 
@@ -541,7 +541,7 @@ func (r *RepoManagerReconciler) signingScriptJob(ctx context.Context, pulp *repo
 }
 
 // signingScriptContainerImage defines the container image to use in signingScript Job containers
-func signingScriptContainerImage(pulp repomanagerpulpprojectorgv1beta2.Pulp) string {
+func signingScriptContainerImage(pulp pulpv1.Pulp) string {
 	image := pulp.Spec.SigningJob.PulpContainer.Image
 	if len(image) == 0 {
 		image = pulp.Spec.Image + ":" + pulp.Spec.ImageVersion
@@ -550,7 +550,7 @@ func signingScriptContainerImage(pulp repomanagerpulpprojectorgv1beta2.Pulp) str
 }
 
 // initContainer returns the definition of a common container with instructions to check if the database migrations finished
-func initContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp, resources corev1.ResourceRequirements, image string) corev1.Container {
+func initContainer(pulp *pulpv1.Pulp, resources corev1.ResourceRequirements, image string) corev1.Container {
 	args := []string{
 		"-c",
 		`/usr/bin/wait_on_postgres.py

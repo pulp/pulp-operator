@@ -20,7 +20,7 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
 	"github.com/pulp/pulp-operator/controllers/settings"
 	corev1 "k8s.io/api/core/v1"
@@ -33,7 +33,7 @@ import (
 )
 
 // CreateRHOperatorPullSecret creates a default secret called redhat-operators-pull-secret
-func CreateRHOperatorPullSecret(r client.Client, ctx context.Context, pulp repomanagerpulpprojectorgv1beta2.Pulp) error {
+func CreateRHOperatorPullSecret(r client.Client, ctx context.Context, pulp pulpv1.Pulp) error {
 	log := logr.Logger{}
 
 	pulpName := pulp.Name
@@ -66,7 +66,7 @@ func CreateRHOperatorPullSecret(r client.Client, ctx context.Context, pulp repom
 
 // CreateEmptyConfigMap creates an empty ConfigMap that is used by CNO (Cluster Network Operator) to
 // inject custom CA into containers
-func CreateEmptyConfigMap(r client.Client, scheme *runtime.Scheme, ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, log logr.Logger) (ctrl.Result, error) {
+func CreateEmptyConfigMap(r client.Client, scheme *runtime.Scheme, ctx context.Context, pulp *pulpv1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	configMapName := settings.EmptyCAConfigMapName(pulp.Name)
 	configMap := &corev1.ConfigMap{}
@@ -102,7 +102,7 @@ func CreateEmptyConfigMap(r client.Client, scheme *runtime.Scheme, ctx context.C
 }
 
 // mountCASpec adds the trusted-ca bundle into []volume and []volumeMount if pulp.Spec.TrustedCA is true
-func mountCASpec(pulp *repomanagerpulpprojectorgv1beta2.Pulp, volumes []corev1.Volume, volumeMounts []corev1.VolumeMount) ([]corev1.Volume, []corev1.VolumeMount) {
+func mountCASpec(pulp *pulpv1.Pulp, volumes []corev1.Volume, volumeMounts []corev1.VolumeMount) ([]corev1.Volume, []corev1.VolumeMount) {
 
 	if pulp.Spec.TrustedCa {
 
@@ -136,7 +136,7 @@ func mountCASpec(pulp *repomanagerpulpprojectorgv1beta2.Pulp, volumes []corev1.V
 }
 
 // GetRouteHost defines route host based on ingress default cluster domain if no .spec.route_host defined
-func GetRouteHost(pulp *repomanagerpulpprojectorgv1beta2.Pulp) string {
+func GetRouteHost(pulp *pulpv1.Pulp) string {
 	if len(pulp.Spec.RouteHost) == 0 {
 		controllers.CustomZapLogger().Warn(`ingress_type defined as "route" but no route_host provided.`)
 		controllers.CustomZapLogger().Warn(`Setting "example.com" as the default hostname for routes ...`)

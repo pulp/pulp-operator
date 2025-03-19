@@ -1,5 +1,0 @@
-bases:
-- ../base
-
-patchesStrategicMerge:
-- mgmt.yaml

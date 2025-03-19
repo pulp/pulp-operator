@@ -1,13 +1,13 @@
 # Configure Pulp Cache
 
 Pulp can cache the metadata instead of doing "slower" requests into the database (PostgreSQL).
-To do so, it uses [Redis as the cache backend](https://docs.pulpproject.org/pulpcore/configuration/settings.html#redis-settings) technology.
+To do so, it uses [Redis as the cache backend](https://pulpproject.org/pulp-operator/docs/admin/guides/configurations/pulp_settings/#cache) technology.
 
 Pulp operator provides a single node Redis server for Pulp to use, but it is also possible to configure the operator to use an external Redis installation.
 
 ## Configure Pulp operator to deploy a Redis instance
 
-[Pulp CR page](https://docs.pulpproject.org/pulp_operator/pulp/#cache) has all the parameters that can be set to inform Pulp operator how it should deploy the Redis container.
+[Pulp CR page](https://pulpproject.org/pulp-operator/docs/admin/reference/custom_resources/repo_manager/#cache) has all the parameters that can be set to inform Pulp operator how it should deploy the Redis container.
 
 If no `cache` parameter is defined, Pulp operator will deploy Redis with the following configuration:
 

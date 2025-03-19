@@ -4,7 +4,7 @@ During repositories synchronization, Pulp checks the downloaded files against a 
 of checksums algorithms. Together with a valid (and trusted) release file signature this will guarantee the integrity of the synchronized repository.
 
 The list of checksums algorithms is defined using the `ALLOWED_CONTENT_CHECKSUMS` setting.  
-For more information on how `Pulp` uses the checksums check: [https://docs.pulpproject.org/pulp_deb/workflows/checksums.html](https://docs.pulpproject.org/pulp_deb/workflows/checksums.html)
+For more information on how `Pulp` uses the checksums check: [https://pulpproject.org/pulp_deb/docs/user/guides/checksums/#configuring-checksums](https://pulpproject.org/pulp_deb/docs/user/guides/checksums/#configuring-checksums)
 
 
 To set the `ALLOWED_CONTENT_CHECKSUMS` in Pulp Operator, update Pulp CR with:

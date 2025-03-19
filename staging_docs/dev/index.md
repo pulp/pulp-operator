@@ -8,8 +8,8 @@ This is the section is designed to support contributions to Pulp Operator develo
 
 1. Unless a change is small or doesn't affect users, create an issue on
 [github](https://github.com/pulp/pulp-operator/issues/new).
-2. Add [a changelog update.](https://docs.pulpproject.org/contributing/git.html#changelog-update)
-3. Write an excellent [Commit Message.](https://docs.pulpproject.org/contributing/git.html#commit-message)
+2. Add [a changelog update.](https://pulpproject.org/pulpcore/docs/dev/guides/git/#changelog-update)
+3. Write an excellent [Commit Message.](https://pulpproject.org/pulpcore/docs/dev/guides/git/#commit-message)
 Make sure you reference and link to the issue.
 4. Push your branch to your fork and open a [Pull request across forks.](https://help.github.com/articles/creating-a-pull-request-from-a-fork/)
 5. Add GitHub labels as appropriate.

@@ -17,13 +17,12 @@ limitations under the License.
 package controllers
 
 import (
-	"context"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
 
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers/settings"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -147,12 +146,12 @@ func (d DeploymentWorkerCommon) Deploy(resources any) client.Object {
 }
 
 // setReplicas defines the number of pod replicas
-func (d *CommonDeployment) setReplicas(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setReplicas(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
 	d.replicas = int32(reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("Replicas").Int())
 }
 
 // setLabels defines the pod and deployment labels
-func (d *CommonDeployment) setLabels(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setLabels(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
 	d.podLabels = settings.PulpcoreLabels(pulp, strings.ToLower(string(pulpcoreType)))
 	d.deploymentLabels = make(map[string]string)
 	for k, v := range d.podLabels {
@@ -161,7 +160,7 @@ func (d *CommonDeployment) setLabels(pulp repomanagerpulpprojectorgv1beta2.Pulp,
 }
 
 // setAffinity defines the affinity rules
-func (d *CommonDeployment) setAffinity(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setAffinity(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
 	affinity := &corev1.Affinity{}
 	specField := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("Affinity").Interface().(*corev1.Affinity)
 	if specField != nil {
@@ -171,7 +170,7 @@ func (d *CommonDeployment) setAffinity(pulp repomanagerpulpprojectorgv1beta2.Pul
 }
 
 // setStrategy defines the deployment strategy to use to replace existing pods with new ones
-func (d *CommonDeployment) setStrategy(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setStrategy(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
 	// if no strategy is defined in pulp CR we are setting `strategy.Type` with the
 	// default value ("RollingUpdate"), this will be helpful during the reconciliation
 	// when a strategy was previously defined and eventually the field is removed
@@ -184,7 +183,7 @@ func (d *CommonDeployment) setStrategy(pulp repomanagerpulpprojectorgv1beta2.Pul
 }
 
 // setPodSecurityContext defines the pod-level security attributes
-func (d *CommonDeployment) setPodSecurityContext(pulp repomanagerpulpprojectorgv1beta2.Pulp) {
+func (d *CommonDeployment) setPodSecurityContext() {
 	runAsUser := int64(700)
 	fsGroup := int64(700)
 	d.podSecurityContext = &corev1.PodSecurityContext{
@@ -194,7 +193,7 @@ func (d *CommonDeployment) setPodSecurityContext(pulp repomanagerpulpprojectorgv
 }
 
 // setNodeSelector defines the selectors to schedule the pod on a node
-func (d *CommonDeployment) setNodeSelector(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setNodeSelector(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
 	nodeSelector := map[string]string{}
 	specField := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("NodeSelector").Interface().(map[string]string)
 	if specField != nil {
@@ -204,7 +203,7 @@ func (d *CommonDeployment) setNodeSelector(pulp repomanagerpulpprojectorgv1beta2
 }
 
 // setTolerations defines the pod tolerations
-func (d *CommonDeployment) setTolerations(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setTolerations(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
 	toleration := []corev1.Toleration{}
 	specField := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("Tolerations").Interface().([]corev1.Toleration)
 	if specField != nil {
@@ -214,7 +213,7 @@ func (d *CommonDeployment) setTolerations(pulp repomanagerpulpprojectorgv1beta2.
 }
 
 // setTopologySpreadConstraints defines how to spread pods across topology
-func (d *CommonDeployment) setTopologySpreadConstraints(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setTopologySpreadConstraints(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
 	topologySpreadConstraint := []corev1.TopologySpreadConstraint{}
 	specField := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("TopologySpreadConstraints").Interface().([]corev1.TopologySpreadConstraint)
 	if specField != nil {
@@ -227,15 +226,22 @@ func (d *CommonDeployment) setTopologySpreadConstraints(pulp repomanagerpulpproj
 func (d *CommonDeployment) setEnvVars(resources any, pulpcoreType settings.PulpcoreType) {
 	pulp := resources.(FunctionResources).Pulp
 	pulpcoreTypeField := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType))
+	ctx := resources.(FunctionResources).Context
 
 	envVars := SetPulpcoreCustomEnvVars(*pulp, pulpcoreType)
 
 	if pulpcoreType != settings.WORKER {
-		// gunicornWorkers definition
+		// get gunicornWorkers definition from CR
 		gunicornWorkers := strconv.FormatInt(pulpcoreTypeField.FieldByName("GunicornWorkers").Int(), 10)
+		if gunicornWorkers == "0" { // set default value if none provided
+			gunicornWorkers = "2"
+		}
 
-		// gunicornTimeout definition
+		// get gunicornTimeout definition from CR
 		gunicornTimeout := strconv.FormatInt(pulpcoreTypeField.FieldByName("GunicornTimeout").Int(), 10)
+		if gunicornTimeout == "0" { // set default value if none provided
+			gunicornTimeout = "90"
+		}
 
 		gunicornEnvVars := []corev1.EnvVar{
 			{Name: "PULP_GUNICORN_TIMEOUT", Value: gunicornTimeout},
@@ -318,7 +324,7 @@ func (d *CommonDeployment) setEnvVars(resources any, pulpcoreType settings.Pulpc
 	if pulp.Spec.SigningSecret != "" {
 
 		// for now, we are just dumping the error, but we should handle it
-		signingKeyFingerprint, _ := GetSigningKeyFingerprint(resources.(FunctionResources).Client, pulp.Spec.SigningSecret, pulp.Namespace)
+		signingKeyFingerprint, _ := GetSigningKeyFingerprint(ctx, resources.(FunctionResources).Client, pulp.Spec.SigningSecret, pulp.Namespace)
 
 		signingKeyEnvVars := []corev1.EnvVar{
 			{Name: "PULP_SIGNING_KEY_FINGERPRINT", Value: signingKeyFingerprint},
@@ -336,7 +342,7 @@ func (d *CommonDeployment) setInitContainerEnvVars(resources any, pulpcoreType s
 }
 
 // GetPostgresEnvVars return the list of postgres environment variables to use in containers
-func GetPostgresEnvVars(pulp repomanagerpulpprojectorgv1beta2.Pulp) (envVars []corev1.EnvVar) {
+func GetPostgresEnvVars(pulp pulpv1.Pulp) (envVars []corev1.EnvVar) {
 	var dbHost, dbPort string
 
 	// if there is no ExternalDBSecret defined, we should
@@ -386,12 +392,12 @@ func GetPostgresEnvVars(pulp repomanagerpulpprojectorgv1beta2.Pulp) (envVars []c
 }
 
 // GetAdminSecretName retrieves pulp admin user password
-func GetAdminSecretName(pulp repomanagerpulpprojectorgv1beta2.Pulp) string {
+func GetAdminSecretName(pulp pulpv1.Pulp) string {
 	return pulp.Spec.AdminPasswordSecret
 }
 
 // GetDBFieldsEncryptionSecret returns the name of DBFieldsEncryption Secret
-func GetDBFieldsEncryptionSecret(pulp repomanagerpulpprojectorgv1beta2.Pulp) string {
+func GetDBFieldsEncryptionSecret(pulp pulpv1.Pulp) string {
 	return pulp.Spec.DBFieldsEncryptionSecret
 }
 
@@ -597,7 +603,7 @@ func signingMetadataVolumes(resources any, storageType []string, volumes []corev
 }
 
 // setVolumeMounts defines the list containers volumes mount points
-func (d *CommonDeployment) setVolumeMounts(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setVolumeMounts(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
 
 	volumeMounts := []corev1.VolumeMount{
 		{
@@ -697,7 +703,7 @@ func (d *CommonDeployment) setVolumeMounts(pulp repomanagerpulpprojectorgv1beta2
 }
 
 // setInitContainerVolumeMount defines the init-containers volumes mount points
-func (d *CommonDeployment) setInitContainerVolumeMounts(pulp repomanagerpulpprojectorgv1beta2.Pulp) {
+func (d *CommonDeployment) setInitContainerVolumeMounts(pulp pulpv1.Pulp) {
 
 	volumeMounts := []corev1.VolumeMount{
 		{
@@ -727,18 +733,19 @@ func (d *CommonDeployment) setInitContainerVolumeMounts(pulp repomanagerpulpproj
 }
 
 // setResourceRequirements defines the container resources
-func (d *CommonDeployment) setResourceRequirements(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setResourceRequirements(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
 	d.resourceRequirements = reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("ResourceRequirements").Interface().(corev1.ResourceRequirements)
 }
 
 // setInitContainerResourceRequirements defines the init-container resources
-func (d *CommonDeployment) setInitContainerResourceRequirements(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setInitContainerResourceRequirements(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
 	d.initContainerResourceRequirements = reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("InitContainer").FieldByName("ResourceRequirements").Interface().(corev1.ResourceRequirements)
 }
 
 // setReadinessProbe defines the container readinessprobe
-func (d *CommonDeployment) setReadinessProbe(resources any, pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setReadinessProbe(resources any, pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
 	readinessProbe := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("ReadinessProbe").Interface().(*corev1.Probe)
+	ctx := resources.(FunctionResources).Context
 	switch pulpcoreType {
 	case settings.API:
 		if readinessProbe == nil {
@@ -747,7 +754,7 @@ func (d *CommonDeployment) setReadinessProbe(resources any, pulp repomanagerpulp
 					Exec: &corev1.ExecAction{
 						Command: []string{
 							"/usr/bin/readyz.py",
-							GetAPIRoot(resources.(FunctionResources).Client, &pulp) + "api/v3/status/",
+							GetAPIRoot(ctx, resources.(FunctionResources).Client, &pulp) + "api/v3/status/",
 						},
 					},
 				},
@@ -765,7 +772,7 @@ func (d *CommonDeployment) setReadinessProbe(resources any, pulp repomanagerpulp
 					Exec: &corev1.ExecAction{
 						Command: []string{
 							"/usr/bin/readyz.py",
-							GetContentPathPrefix(resources.(FunctionResources).Client, &pulp),
+							GetContentPathPrefix(ctx, resources.(FunctionResources).Client, &pulp),
 						},
 					},
 				},
@@ -799,8 +806,9 @@ func (d *CommonDeployment) setReadinessProbe(resources any, pulp repomanagerpulp
 }
 
 // setReadinessProbe defines the container livenessprobe
-func (d *CommonDeployment) setLivenessProbe(resources any, pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setLivenessProbe(resources any, pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
 	livenessProbe := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("LivenessProbe").Interface().(*corev1.Probe)
+	ctx := resources.(FunctionResources).Context
 	switch pulpcoreType {
 	case settings.API:
 		if livenessProbe == nil {
@@ -808,7 +816,7 @@ func (d *CommonDeployment) setLivenessProbe(resources any, pulp repomanagerpulpp
 				FailureThreshold: 10,
 				ProbeHandler: corev1.ProbeHandler{
 					HTTPGet: &corev1.HTTPGetAction{
-						Path: GetAPIRoot(resources.(FunctionResources).Client, &pulp) + "api/v3/status/",
+						Path: GetAPIRoot(ctx, resources.(FunctionResources).Client, &pulp) + "api/v3/status/",
 						Port: intstr.IntOrString{
 							IntVal: 24817,
 						},
@@ -826,7 +834,7 @@ func (d *CommonDeployment) setLivenessProbe(resources any, pulp repomanagerpulpp
 }
 
 // setImage defines pulpcore container image
-func (d *CommonDeployment) setImage(pulp repomanagerpulpprojectorgv1beta2.Pulp) {
+func (d *CommonDeployment) setImage(pulp pulpv1.Pulp) {
 	image := os.Getenv("RELATED_IMAGE_PULP")
 	if len(pulp.Spec.Image) > 0 && len(pulp.Spec.ImageVersion) > 0 {
 		image = pulp.Spec.Image + ":" + pulp.Spec.ImageVersion
@@ -837,7 +845,7 @@ func (d *CommonDeployment) setImage(pulp repomanagerpulpprojectorgv1beta2.Pulp) 
 }
 
 // setInitContainerImage defines pulpcore init-container image
-func (d *CommonDeployment) setInitContainerImage(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setInitContainerImage(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
 	d.initContainerImage = reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("InitContainer").FieldByName("Image").String()
 	if len(d.initContainerImage) == 0 {
 		d.initContainerImage = d.image
@@ -845,7 +853,7 @@ func (d *CommonDeployment) setInitContainerImage(pulp repomanagerpulpprojectorgv
 }
 
 // setInitContainers defines initContainers specs
-func (d *CommonDeployment) setInitContainers(resources any, pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setInitContainers(resources any, pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
 	args := []string{
 		"-c",
 		`/usr/bin/wait_on_postgres.py
@@ -881,7 +889,8 @@ func (d *CommonDeployment) setInitContainers(resources any, pulp repomanagerpulp
 }
 
 // setGpgInitContainer returns the definition of a container used to store the gpg keys in the keyring
-func setGpgInitContainer(resources any, pulp repomanagerpulpprojectorgv1beta2.Pulp) corev1.Container {
+func setGpgInitContainer(resources any, pulp pulpv1.Pulp) corev1.Container {
+	ctx := resources.(FunctionResources).Context
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      "gpg-keys",
@@ -917,7 +926,7 @@ func setGpgInitContainer(resources any, pulp repomanagerpulpprojectorgv1beta2.Pu
 		},
 	}
 
-	signingKeyFingerprint, _ := GetSigningKeyFingerprint(resources.(FunctionResources).Client, pulp.Spec.SigningSecret, pulp.Namespace)
+	signingKeyFingerprint, _ := GetSigningKeyFingerprint(ctx, resources.(FunctionResources).Client, pulp.Spec.SigningSecret, pulp.Namespace)
 
 	// env vars
 	envVars := []corev1.EnvVar{{Name: "PULP_SIGNING_KEY_FINGERPRINT", Value: signingKeyFingerprint}}
@@ -947,7 +956,7 @@ echo "${PULP_SIGNING_KEY_FINGERPRINT}:6" | gpg --import-ownertrust
 	}
 }
 
-func pulpcoreApiContainerArgs(pulp repomanagerpulpprojectorgv1beta2.Pulp) []string {
+func pulpcoreApiContainerArgs(pulp pulpv1.Pulp) []string {
 	gunicornBindAddress := "[::]:24817"
 	if Ipv6Disabled(pulp) {
 		gunicornBindAddress = "0.0.0.0:24817"
@@ -968,7 +977,7 @@ exec "${PULP_API_ENTRYPOINT[@]}" \
 	}
 }
 
-func pulpcoreContentContainerArgs(pulp repomanagerpulpprojectorgv1beta2.Pulp) []string {
+func pulpcoreContentContainerArgs(pulp pulpv1.Pulp) []string {
 	gunicornBindAddress := "[::]:24816"
 	if Ipv6Disabled(pulp) {
 		gunicornBindAddress = "0.0.0.0:24816"
@@ -991,7 +1000,7 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 }
 
 // setContainers defines pulpcore containers specs
-func (d *CommonDeployment) setContainers(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setContainers(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
 	securityContext := SetDefaultSecurityContext()
 	var containers []corev1.Container
 	switch pulpcoreType {
@@ -1051,7 +1060,7 @@ func (d *CommonDeployment) setContainers(pulp repomanagerpulpprojectorgv1beta2.P
 }
 
 // setAnnotations defines the list of pods and deployments annotations
-func (d *CommonDeployment) setAnnotations(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) {
+func (d *CommonDeployment) setAnnotations(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
 	d.podAnnotations = map[string]string{
 		"kubectl.kubernetes.io/default-container": strings.ToLower(string(pulpcoreType)),
 	}
@@ -1102,7 +1111,7 @@ func (d *CommonDeployment) setTelemetryConfig(resources any, pulpcoreType settin
 func AddHashLabel(r FunctionResources, deployment *appsv1.Deployment) {
 	// if the object does not exist yet we need to mutate the object to get the
 	// default values (I think they are added by the admission controller)
-	if err := r.Create(context.TODO(), deployment, client.DryRunAll); err != nil {
+	if err := r.Create(r.Context, deployment, client.DryRunAll); err != nil {
 		SetHashLabel(HashFromMutated(deployment, r), deployment)
 	} else {
 		SetHashLabel(CalculateHash(deployment.Spec), deployment)
@@ -1159,7 +1168,7 @@ func (d *CommonDeployment) build(resources any, pulpcoreType settings.PulpcoreTy
 	d.setLabels(*pulp, pulpcoreType)
 	d.setAnnotations(*pulp, pulpcoreType)
 	d.setAffinity(*pulp, pulpcoreType)
-	d.setPodSecurityContext(*pulp)
+	d.setPodSecurityContext()
 	d.setNodeSelector(*pulp, pulpcoreType)
 	d.setTolerations(*pulp, pulpcoreType)
 	d.setVolumes(resources, pulpcoreType)

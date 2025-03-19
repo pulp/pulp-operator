@@ -17,7 +17,7 @@ limitations under the License.
 package ocp
 
 import (
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -25,7 +25,7 @@ import (
 )
 
 // defaultsForOCPDeployment sets the common Deployment configurations specific to OCP clusters
-func defaultsForOCPDeployment(deployment *appsv1.Deployment, pulp *repomanagerpulpprojectorgv1beta2.Pulp) {
+func defaultsForOCPDeployment(deployment *appsv1.Deployment, pulp *pulpv1.Pulp) {
 	// in OCP we use SCC so there is no need to define PodSecurityContext
 	deployment.Spec.Template.Spec.SecurityContext = &corev1.PodSecurityContext{}
 

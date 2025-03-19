@@ -234,7 +234,7 @@ stringData:
 EOF
 
 kubectl apply -f-<<EOF
-apiVersion: repo-manager.pulpproject.org/v1beta2
+apiVersion: repo-manager.pulpproject.org/v1
 kind: Pulp
 metadata:
   name: test-pulp-ha
@@ -293,5 +293,9 @@ spec:
       is_spot_instance: "true"
   web:
     replicas: 1
+
+  file_storage_access_mode: "ReadWriteOnce"
+  file_storage_size: "2Gi"
+  file_storage_storage_class: standard
 EOF
 ```

@@ -38,9 +38,8 @@ PulpRestoreSpec defines the desired state of PulpRestore
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| deployment_type | Name of the deployment type. Can be one of {galaxy,pulp}. | string | true |
-| deployment_name | Name of the deployment to be restored to | string | true |
-| backup_name | Name of the backup custom resource | string | true |
+| deployment_name | Name of Pulp CR to be restored | string | true |
+| backup_name | Name of PulpBackup CR | string | true |
 | backup_pvc | Name of the PVC to be restored from, set as a status found on the backup object (backupClaim) | string | true |
 | backup_dir | Backup directory name, set as a status found on the backup object (backupDirectory) | string | true |
 | keep_replicas | KeepBackupReplicasCount allows to define if the restore controller should restore the components with the same number of replicas from backup or restore only a single replica each. | bool | true |

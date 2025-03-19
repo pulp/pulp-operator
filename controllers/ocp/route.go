@@ -25,8 +25,6 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/pulp/pulp-operator/controllers"
 	"github.com/pulp/pulp-operator/controllers/settings"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
@@ -69,7 +67,7 @@ func PulpRouteController(resources controllers.FunctionResources, restClient res
 	ctx := resources.Context
 
 	// conditionType is used to update .status.conditions with the current resource state
-	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Route-Ready"
+	conditionType := "Pulp-Route-Ready"
 
 	podList := &corev1.PodList{}
 	labels := settings.PulpcoreLabels(*pulp, "worker")
@@ -102,7 +100,7 @@ func PulpRouteController(resources controllers.FunctionResources, restClient res
 	execCmd := []string{
 		"/usr/bin/route_paths.py", pulp.Name,
 	}
-	cmdOutput, err := controllers.ContainerExec(PodExec{restClient, restConfig, resources.Scheme}, &pod, execCmd, "worker", pod.Namespace)
+	cmdOutput, err := controllers.ContainerExec(ctx, PodExec{restClient, restConfig, resources.Scheme}, &pod, execCmd, "worker", pod.Namespace)
 	if err != nil {
 		controllers.CustomZapLogger().Warn(err.Error() + " Failed to get routes from " + pod.Name)
 		controllers.UpdateStatus(ctx, resources.Client, pulp, metav1.ConditionFalse, conditionType, "Failed to get routes!", "FailedGet"+pod.Name)
@@ -113,13 +111,13 @@ func PulpRouteController(resources controllers.FunctionResources, restClient res
 	defaultPlugins := []RoutePlugin{
 		{
 			Name:        pulp.Name + "-content",
-			Path:        controllers.GetContentPathPrefix(resources.Client, pulp),
+			Path:        controllers.GetContentPathPrefix(ctx, resources.Client, pulp),
 			TargetPort:  "content-24816",
 			ServiceName: settings.ContentService(pulp.Name),
 		},
 		{
 			Name:        pulp.Name + "-api-v3",
-			Path:        controllers.GetAPIRoot(resources.Client, pulp) + "api/v3/",
+			Path:        controllers.GetAPIRoot(ctx, resources.Client, pulp) + "api/v3/",
 			TargetPort:  "api-24817",
 			ServiceName: settings.ApiService(pulp.Name),
 		},
@@ -195,6 +193,9 @@ func PulpRouteController(resources controllers.FunctionResources, restClient res
 			return pluginRoutineReturn.Result, pluginRoutineReturn.error
 		}
 	}
+
+	// remove pulp-web components if ingress_type was not route
+	controllers.RemovePulpWebResources(resources)
 
 	// we should only update the status when Route-Ready==false
 	if v1.IsStatusConditionFalse(pulp.Status.Conditions, conditionType) {

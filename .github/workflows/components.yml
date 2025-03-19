@@ -1,0 +1,87 @@
+name: "Components CI"
+on:
+  workflow_call:
+
+jobs:
+  components:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - COMPONENT_TYPE: ingress
+          - COMPONENT_TYPE: nodeport
+          - COMPONENT_TYPE: telemetry
+          - COMPONENT_TYPE: ldap
+          - COMPONENT_TYPE: external-db
+          - COMPONENT_TYPE: s3
+          - COMPONENT_TYPE: azure
+    steps:
+      - uses: actions/checkout@v4
+      - uses: "./.github/actions/pre-reqs"
+        with:
+          component-type: ${{ matrix.COMPONENT_TYPE }}
+      - name: Deploy pulp-operator to K8s
+        run: |
+          make local
+          kubectl get namespace
+          kubectl config set-context --current --namespace=pulp-operator-system
+          kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
+          if [[ "$COMPONENT_TYPE" == "ingress" ]]; then
+            kubectl apply -f config/samples/simple.ingress.yaml
+          elif [[ "$COMPONENT_TYPE" == "telemetry" ]]; then
+            kubectl apply -f config/samples/simple.telemetry.yaml
+          elif [[ "$COMPONENT_TYPE" == "ldap" ]]; then
+            .ci/scripts/ldap_config.sh
+            kubectl apply -f config/samples/simple.ldap.yaml
+          elif [[ "$COMPONENT_TYPE" == "external-db" ]]; then
+            kubectl create ns db
+            kubectl apply -f config/samples/external_db.yaml
+            kubectl apply -f config/samples/simple-external-db.yaml
+          elif [[ "$COMPONENT_TYPE" == "s3" ]]; then
+            kubectl config set-context --current --namespace=pulp-operator-system
+            kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
+            kubectl apply -f .ci/assets/kubernetes/pulp-object-storage.aws.secret.yaml
+            kubectl apply -f config/samples/simple.s3.ci.yaml
+          elif [[ "$COMPONENT_TYPE" == "azure" ]]; then
+            kubectl config set-context --current --namespace=pulp-operator-system
+            kubectl apply -f .ci/assets/kubernetes/pulp-object-storage.azure.secret.yaml
+            kubectl apply -f config/samples/simple.azure.ci.yaml
+          else
+            kubectl apply -f config/samples/simple.yaml
+          fi
+        shell: bash
+      - name: Check and wait pulp-operator deploy
+        run: |
+          journalctl --unit=pulp-operator -f &
+          kubectl logs -f -l app.kubernetes.io/component=operator -c manager &
+          kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
+        shell: bash
+      - name: KubeLinter
+        if: github.event_name == 'pull_request'
+        run: .ci/scripts/kubelinter.sh
+      - name: Test all components
+        run: |
+          export INGRESS_TYPE=$COMPONENT_TYPE
+          .ci/scripts/pulp_tests.sh -m
+          if [[ "$COMPONENT_TYPE" == "telemetry" ]]; then
+            .ci/scripts/telemetry.sh
+          elif [[ "$COMPONENT_TYPE" == "ldap" ]] ; then
+            .ci/scripts/ldap_test.sh
+          fi
+        shell: bash
+        env:
+          PY_COLORS: '1'
+      - name: Logs Before BKP/Restore
+        if: always()
+        run: .github/workflows/scripts/show_logs.sh
+      - name: Backup & Restore
+        run: |
+          # we do not support backup/restore of external DB
+          if [[ "$COMPONENT_TYPE" != "external-db" ]]; then
+            .ci/scripts/backup_and_restore.sh -m
+          fi
+        shell: bash
+      - name: Logs
+        if: always()
+        run: .github/workflows/scripts/show_logs.sh

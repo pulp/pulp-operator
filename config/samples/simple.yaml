@@ -1,20 +1,35 @@
-apiVersion: repo-manager.pulpproject.org/v1beta2
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: 'example-pulp-admin-password'
+stringData:
+  password: 'password'
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: settings
+data:
+  analytics: "False"
+  token_server: '"http://nodeport.local:30000/token/"'
+  content_origin: '"http://nodeport.local:30000"'
+  ansible_api_hostname: '"http://nodeport.local:30000"'
+  pypi_api_hostname: '"http://nodeport.local:30000"'
+  api_root: '"/pulp/"'
+  allowed_export_paths: '[ "/tmp" ]'
+  allowed_import_paths: '[ "/tmp" ]'
+
+---
+apiVersion: repo-manager.pulpproject.org/v1
 kind: Pulp
 metadata:
   name: example-pulp
 spec:
-  deployment_type: pulp
-  image_version: stable
-  image_web_version: stable
-#  affinity:
-#    nodeAffinity:
-#      requiredDuringSchedulingIgnoredDuringExecution:
-#        nodeSelectorTerms:
-#        - matchExpressions:
-#          - key: test
-#            operator: In
-#            values:
-#            - test
+  custom_pulp_settings: settings
+  admin_password_secret: "example-pulp-admin-password"
+
   api:
     replicas: 1
   content:
@@ -23,19 +38,11 @@ spec:
     replicas: 1
   web:
     replicas: 1
-  migration_job:
-    container:
-      resource_requirements:
-        requests:
-          cpu: 1
-        limits:
-          cpu: 1
 
   database:
     postgres_storage_class: standard
-#    postgres_storage_requirements: "5Gi"
 
-  file_storage_access_mode: "ReadWriteOnce"
+  file_storage_access_mode: "ReadWriteMany"
   file_storage_size: "2Gi"
   file_storage_storage_class: standard
 
@@ -46,32 +53,3 @@ spec:
 
   ingress_type: nodeport
   nodeport_port: 30000
-
-  pulp_settings:
-    api_root: "/pulp/"
-    allowed_export_paths:
-      - /tmp
-    allowed_import_paths:
-      - /tmp
-    telemetry: false
-    token_server: http://nodeport.local:30000/token/
-    content_origin: http://nodeport.local:30000
-    ansible_api_hostname: http://nodeport.local:30000
-    # cache_enabled: true
-    # db_encryption_key: "/etc/pulp/keys/database_fields.symmetric.key"
-    # galaxy_collection_signing_service: ansible-default
-    # ansible_certs_dir: "/etc/pulp/keys/"
-    # databases:
-    #   default:
-    #     HOST: "pulp-database-svc.pulp.svc.cluster.local"
-    #     ENGINE: django.db.backends.postgresql_psycopg2
-    #     NAME: "pulp"
-    #     USER: "pulp"
-    #     PASSWORD: "{{ postgres_pass }}"
-    #     PORT: "5432"
-    #     CONN_MAX_AGE: 0
-    #     OPTIONS:
-    #       sslmode: "prefer"
-    # redis_host: "pulp-redis-svc.pulp"
-    # redis_port: 6379
-    # redis_password: ""

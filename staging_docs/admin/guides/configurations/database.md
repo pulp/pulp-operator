@@ -1,11 +1,11 @@
 # Configure Pulp Database
 
-Pulp operator provides a PostgreSQL database for Pulp to use, but it is also possible to configure the operator to use an external PostgreSQL installation. At this time, [Pulp 3.0 will only work with PostgreSQL](https://docs.pulpproject.org/pulpcore/installation/instructions.html?highlight=database#database-setup).
+Pulp operator provides a PostgreSQL database for Pulp to use, but it is also possible to configure the operator to use an external PostgreSQL installation. At this time, [Pulp 3.0 will only work with PostgreSQL](https://pulpproject.org/pulpcore/docs/admin/reference/settings/#databases).
 
 
 ## Configure Pulp operator to deploy a PostgreSQL instance
 
-[Pulp CR page](https://docs.pulpproject.org/pulp_operator/pulp/#database) has all the parameters that can be set to inform Pulp operator how it should deploy the PostgreSQL container.
+[Pulp CR page](https://pulpproject.org/pulp-operator/docs/admin/reference/custom_resources/repo_manager/#database) has all the parameters that can be set to inform Pulp operator how it should deploy the PostgreSQL container.
 
 To configure Pulp operator to deploy PostgreSQL, **it is required to define the [storage configurations for the database pod](https://pulpproject.org/pulp-operator/docs/admin/guides/configurations/storage/#pulp-operator-storage-configuration)**.
 Pulp operator will deploy PostgreSQL with the following configuration:

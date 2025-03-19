@@ -1,2 +1,0 @@
-Fixed an issue where the reset-admin-password `Job` was not being deployed during
-a reinstallation with the same admin `Secret`.

@@ -20,11 +20,9 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
 	"github.com/pulp/pulp-operator/controllers/settings"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,10 +38,10 @@ type ContentResource struct {
 	Function   func(controllers.FunctionResources) client.Object
 }
 
-func (r *RepoManagerReconciler) pulpContentController(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) pulpContentController(ctx context.Context, pulp *pulpv1.Pulp, log logr.Logger) (ctrl.Result, error) {
 
 	// conditionType is used to update .status.conditions with the current resource state
-	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Content-Ready"
+	conditionType := "Pulp-Content-Ready"
 	funcResources := controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}
 
 	// define the k8s Deployment function based on k8s distribution and deployment type
@@ -100,7 +98,7 @@ func serviceForContent(resources controllers.FunctionResources) client.Object {
 	return svc
 }
 
-func serviceContentObject(pulp repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Service {
+func serviceContentObject(pulp pulpv1.Pulp) *corev1.Service {
 	name := pulp.Name
 	namespace := pulp.Namespace
 	return &corev1.Service{
@@ -114,7 +112,7 @@ func serviceContentObject(pulp repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Se
 }
 
 // content service spec
-func serviceContentSpec(pulp repomanagerpulpprojectorgv1beta2.Pulp) corev1.ServiceSpec {
+func serviceContentSpec(pulp pulpv1.Pulp) corev1.ServiceSpec {
 
 	serviceInternalTrafficPolicyCluster := corev1.ServiceInternalTrafficPolicyType("Cluster")
 	ipFamilyPolicyType := corev1.IPFamilyPolicyType("SingleStack")

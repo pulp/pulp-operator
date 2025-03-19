@@ -1,0 +1,46 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: 'example-pulp-admin-password'
+stringData:
+  password: 'password'
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: settings
+data:
+  analytics: "False"
+  token_server: '"http://nodeport.local:30000/token/"'
+  content_origin: '"http://nodeport.local:30000"'
+  ansible_api_hostname: '"http://nodeport.local:30000"'
+  pypi_api_hostname: '"http://nodeport.local:30000"'
+  api_root: '"/pulp/"'
+  allowed_export_paths: '[ "/tmp" ]'
+  allowed_import_paths: '[ "/tmp" ]'
+
+---
+apiVersion: repo-manager.pulpproject.org/v1
+kind: Pulp
+metadata:
+  name: example-pulp
+spec:
+  admin_password_secret: "example-pulp-admin-password"
+  ingress_type: nodeport
+  nodeport_port: 30000
+  object_storage_azure_secret: example-pulp-object-storage
+
+  custom_pulp_settings: settings
+
+  api:
+    replicas: 1
+  content:
+    replicas: 1
+  worker:
+    replicas: 1
+  web:
+    replicas: 1
+  database:
+    postgres_storage_class: standard

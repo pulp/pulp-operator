@@ -66,8 +66,8 @@ function operatorhub {
 
   cp -a ${PULP_OPERATOR_SOURCE_PATH}/bundle/* ${CATALOG_DIR}/
   CSV_FILE=${CATALOG_DIR}/manifests/pulp-operator.clusterserviceversion.yaml
-  sed -i "s#containerImage: quay.io/pulp/pulp-operator:devel#containerImage: quay.io/pulp/pulp-operator:${PULP_OPERATOR_RELEASE_VERSION}#g" $CSV_FILE
-  echo "  replaces: pulp-operator.${PULP_OPERATOR_REPLACE_VERSION}" >> $CSV_FILE
+  sed -i "s#containerImage: quay.io/pulp/pulp-operator:devel#containerImage: quay.io/pulp/pulp-operator:v${PULP_OPERATOR_RELEASE_VERSION}#g" $CSV_FILE
+  echo "  replaces: pulp-operator.v${PULP_OPERATOR_REPLACE_VERSION}" >> $CSV_FILE
 
   echo "Commiting changes ..."
   git add operators/pulp-operator/
