@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
 	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
@@ -19,7 +19,7 @@ type secretType struct {
 	name string
 
 	// PulpBackup instance
-	pulpBackup *repomanagerpulpprojectorgv1beta2.PulpBackup
+	pulpBackup *pulpv1.PulpBackup
 
 	// path of where the backup will be stored (PVC mount point)
 	backupDir string
@@ -35,24 +35,24 @@ type secretType struct {
 }
 
 // backupSecrets makes a copy of the Secrets used by Pulp components
-func (r *RepoManagerBackupReconciler) backupSecret(ctx context.Context, pulpBackup *repomanagerpulpprojectorgv1beta2.PulpBackup, backupDir string, pod *corev1.Pod) error {
+func (r *RepoManagerBackupReconciler) backupSecret(ctx context.Context, pulpBackup *pulpv1.PulpBackup, backupDir string, pod *corev1.Pod) error {
 	log := r.RawLogger
-	deploymentName := getDeploymentName(ctx, pulpBackup)
+	deploymentName := getDeploymentName(pulpBackup)
 
 	// we are considering that pulp CR instance is running in the same namespace as pulpbackup and
 	// that there is only a single instance of pulp CR available
 	// we could also let users pass the name of pulp instance
-	pulp := &repomanagerpulpprojectorgv1beta2.Pulp{}
+	pulp := &pulpv1.Pulp{}
 	if err := r.Get(ctx, types.NamespacedName{Name: deploymentName, Namespace: pulpBackup.Namespace}, pulp); err != nil {
 		log.Error(err, "Failed to get Pulp")
 		return err
 	}
 
-	pulpSecretKey := getPulpSecretKey(ctx, pulpBackup)
-	adminPasswordSecret := getAdminPasswordSecret(ctx, pulpBackup)
-	postgresCfgSecret := getPostgresCfgSecret(ctx, pulpBackup)
-	dbFieldsEncryption := getDBFieldsEncryption(ctx, pulpBackup, pulp)
-	containerTokenSecret := getContainerTokenSecret(ctx, pulpBackup, pulp)
+	pulpSecretKey := getPulpSecretKey(pulpBackup)
+	adminPasswordSecret := getAdminPasswordSecret(pulpBackup)
+	postgresCfgSecret := getPostgresCfgSecret(pulpBackup)
+	dbFieldsEncryption := getDBFieldsEncryption(pulp)
+	containerTokenSecret := getContainerTokenSecret(pulp)
 
 	// PULP-SECRET-KEY
 	if err := r.createSecretBackupFile(ctx, secretType{"pulp_secret_key", pulpBackup, backupDir, "pulp_secret_key.yaml", pulpSecretKey, pod}); err != nil {
@@ -162,7 +162,7 @@ func (r *RepoManagerBackupReconciler) createBackupFile(ctx context.Context, secr
 	execCmd := []string{
 		"bash", "-c", "echo '" + string(secretSerialized) + "' > " + secretType.backupDir + "/" + secretType.backupFile,
 	}
-	_, err = controllers.ContainerExec(r, secretType.pod, execCmd, secretType.pulpBackup.Name+"-backup-manager", secretType.pod.Namespace)
+	_, err = controllers.ContainerExec(ctx, r, secretType.pod, execCmd, secretType.pulpBackup.Name+"-backup-manager", secretType.pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to backup "+secretType.secretName+" secret")
 		return err
@@ -191,7 +191,7 @@ func (r *RepoManagerBackupReconciler) createSecretBackupFile(ctx context.Context
 	execCmd := []string{
 		"bash", "-c", "echo '" + secretYaml.String() + "' > " + secretType.backupDir + "/" + secretType.backupFile,
 	}
-	_, err = controllers.ContainerExec(r, secretType.pod, execCmd, secretType.pulpBackup.Name+"-backup-manager", secretType.pod.Namespace)
+	_, err = controllers.ContainerExec(ctx, r, secretType.pod, execCmd, secretType.pulpBackup.Name+"-backup-manager", secretType.pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to backup "+secretType.secretName+" secret")
 		return err

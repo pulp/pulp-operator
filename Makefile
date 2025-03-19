@@ -1,19 +1,14 @@
-CR_KIND ?= Pulp
-LOWER_CR_KIND = $(shell echo $(CR_KIND) | tr A-Z a-z)
-CR_PLURAL ?= pulps
-CR_DOMAIN ?= pulpproject.org
-APP_IMAGE ?= quay.io/pulp/pulp-minimal
-WEB_IMAGE ?= quay.io/pulp/pulp-web
-
 # VERSION defines the project version for the bundle.
 # Update this value when you upgrade the version of your project.
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
 # - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.0.2)
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
-VERSION ?= 1.0.0-beta.5
+VERSION ?= 1.0.0
+DATE := $(shell date '+%Y%m%d')
+BUILD_VERSION := $(VERSION)-$(DATE)
 
 # CHANNELS define the bundle channels used in the bundle.
-CHANNELS = "beta"
+CHANNELS = "stable"
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
 # To re-generate a bundle for other specific channels without changing the standard setup, you can:
 # - use the CHANNELS as arg of the bundle target (e.g make bundle CHANNELS=candidate,fast,stable)
@@ -24,7 +19,7 @@ endif
 
 # DEFAULT_CHANNEL defines the default channel used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g DEFAULT_CHANNEL = "stable")
-DEFAULT_CHANNEL = "beta"
+DEFAULT_CHANNEL = "stable"
 # To re-generate a bundle for any other default channel without changing the default setup, you can:
 # - use the DEFAULT_CHANNEL as arg of the bundle target (e.g make bundle DEFAULT_CHANNEL=stable)
 # - use environment variables to overwrite this value (e.g export DEFAULT_CHANNEL="stable")
@@ -39,7 +34,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 # For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
 # pulpproject.org/pulp-operator-bundle:$VERSION and pulpproject.org/pulp-operator-catalog:$VERSION.
 #IMAGE_TAG_BASE ?= pulpproject.org/pulp-operator
-IMAGE_TAG_BASE ?= quay.io/pulp/$(LOWER_CR_KIND)-operator
+IMAGE_TAG_BASE ?= quay.io/pulp/pulp-operator
 
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
@@ -58,13 +53,13 @@ endif
 
 # Image URL to use all building/pushing image targets
 IMG ?= $(IMAGE_TAG_BASE):v$(VERSION)
-NAMESPACE ?= $(LOWER_CR_KIND)-operator-system
+NAMESPACE ?= pulp-operator-system
 WATCH_NAMESPACE ?= $(NAMESPACE)
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.24.2
 
-GOLANG_VERSION=1.20.10
+GOLANG_VERSION=1.23.0
 GOLANG_ARCH=linux-amd64
 GOLANG_INSTALL_PATH=/tmp
 
@@ -113,9 +108,9 @@ help: ## Display this help.
 .PHONY: manifests
 manifests: tidy controller-gen crd-to-markdown ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-	$(CRD_MARKDOWN) -f apis/repo-manager.$(CR_DOMAIN)/v1beta2/pulp_types.go -n $(CR_KIND) > controllers/repo_manager/README.md
-	$(CRD_MARKDOWN) -f apis/repo-manager.$(CR_DOMAIN)/v1beta2/pulp_backup_types.go -n $(CR_KIND)Backup > controllers/backup/README.md
-	$(CRD_MARKDOWN) -f apis/repo-manager.$(CR_DOMAIN)/v1beta2/pulp_restore_types.go -n $(CR_KIND)Restore > controllers/restore/README.md
+	$(CRD_MARKDOWN) -f apis/repo-manager.pulpproject.org/v1/pulp_types.go -n Pulp > controllers/repo_manager/README.md
+	$(CRD_MARKDOWN) -f apis/repo-manager.pulpproject.org/v1/pulp_backup_types.go -n PulpBackup > controllers/backup/README.md
+	$(CRD_MARKDOWN) -f apis/repo-manager.pulpproject.org/v1/pulp_restore_types.go -n PulpRestore > controllers/restore/README.md
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -167,44 +162,7 @@ servedocs: ## Build unified docs
 
 .PHONY: build
 build: generate fmt vet ## Build manager binary.
-	go build -o bin/manager main.go
-
-.PHONY: rename
-rename: ## Replace Custom Resource name
-	find apis/repo-manager.pulpproject.org/*/*_types.go -exec sed -i "s/Pulp/${CR_KIND}/g" {} \;
-	find controllers/*.go -exec sed -i "s/Pulp/${CR_KIND}/g" {} \;
-	find controllers/*/*.go -exec sed -i "s/Pulp/${CR_KIND}/g" {} \;
-	find config/samples/*.yaml -exec sed -i "s/Pulp/${CR_KIND}/g" {} \;
-	sed -i "s/Pulp/${CR_KIND}/g" PROJECT
-	sed -i "s/pulpproject.org/${CR_DOMAIN}/g" PROJECT main.go
-	find apis/repo-manager.pulpproject.org/*/* -exec sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" {} \;
-	find bundle/manifests/* -exec sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" {} \;
-	find config/*/* -exec sed -i "s/pulps/${CR_PLURAL}/g" {} \;
-	find config/*/* -exec sed -i "s/pulprestores/${LOWER_CR_KIND}restores/g" {} \;
-	find config/*/* -exec sed -i "s/pulpbackups/${LOWER_CR_KIND}backups/g" {} \;
-	sed -i "s/pulp/${LOWER_CR_KIND}/g" config/default/kustomization.yaml
-	find config/*/* -exec sed -i "s/3b5210cd.pulpproject.org/3b5210cd.${CR_DOMAIN}/g" {} \;
-	find config/*/* -exec sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" {} \;
-	find controllers/*/*.go -exec sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" {} \;
-	find controllers/*.go -exec sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" {} \;
-	find controllers/*/*.go -exec sed -i "s/pulps/${CR_PLURAL}/g" {} \;
-	find controllers/*.go -exec sed -i "s/pulps/${CR_PLURAL}/g" {} \;
-	find controllers/*/*.go -exec sed -i "s/pulpbackup/${LOWER_CR_KIND}backup/g" {} \;
-	find controllers/*/*.go -exec sed -i "s/pulprestore/${LOWER_CR_KIND}restore/g" {} \;
-	sed -i "s/default:=\"pulp\"/default:=\"${LOWER_CR_KIND}\"/" apis/repo-manager.pulpproject.org/v1beta2/pulp_types.go
-	sed -i "s|quay.io/pulp/pulp-minimal|${APP_IMAGE}|g" apis/repo-manager.pulpproject.org/v1beta2/pulp_types.go
-	sed -i "s|quay.io/pulp/pulp-web|${WEB_IMAGE}|g" apis/repo-manager.pulpproject.org/v1beta2/pulp_types.go
-	sed -i '0,/OperatorType/s/OperatorType.*/OperatorType  = "${LOWER_CR_KIND}"/' controllers/repo_manager/controller_test.go
-	sed -i "s|quay.io/pulp/pulp-minimal|${APP_IMAGE}|g" controllers/repo_manager/controller_test.go
-	mv config/crd/bases/repo-manager.pulpproject.org_pulps.yaml config/crd/bases/repo-manager.${CR_DOMAIN}_${CR_PLURAL}.yaml
-	mv config/crd/bases/repo-manager.pulpproject.org_pulpbackups.yaml config/crd/bases/repo-manager.${CR_DOMAIN}_${LOWER_CR_KIND}backups.yaml
-	mv config/crd/bases/repo-manager.pulpproject.org_pulprestores.yaml config/crd/bases/repo-manager.${CR_DOMAIN}_${LOWER_CR_KIND}restores.yaml
-	mv bundle/manifests/repo-manager.pulpproject.org_pulps.yaml bundle/manifests/repo-manager.${CR_DOMAIN}_${CR_PLURAL}.yaml
-	mv bundle/manifests/repo-manager.pulpproject.org_pulpbackups.yaml bundle/manifests/repo-manager.${CR_DOMAIN}_${LOWER_CR_KIND}backups.yaml
-	mv bundle/manifests/repo-manager.pulpproject.org_pulprestores.yaml bundle/manifests/repo-manager.${CR_DOMAIN}_${LOWER_CR_KIND}restores.yaml
-	mv apis/repo-manager.pulpproject.org apis/repo-manager.${CR_DOMAIN}
-	sed -i "s/repo-manager.pulpproject.org/repo-manager.${CR_DOMAIN}/g" controllers/utils.go
-	mv config/samples/repo-manager.pulpproject.org_v1beta2_pulp.yaml config/samples/repo-manager.${CR_DOMAIN}_v1beta2_pulp.yaml
+	go build -o bin/manager -ldflags="-X 'main.Version=$(BUILD_VERSION)'" main.go
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
@@ -212,7 +170,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 
 .PHONY: docker-build
 docker-build: ## Build docker image with the manager.
-	$(CONTAINER_TOOL) build -t ${IMG} .
+	$(CONTAINER_TOOL) build --build-arg VERSION=${BUILD_VERSION} -t ${IMG} .
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
@@ -231,7 +189,7 @@ docker-buildx: ## Build and push docker image for the manager for cross-platform
 	sed -e '1 s/\(^FROM\)/FROM --platform=\$$\{BUILDPLATFORM\}/; t' -e ' 1,// s//FROM --platform=\$$\{BUILDPLATFORM\}/' Dockerfile > Dockerfile.cross
 	- docker buildx create --name project-v3-builder
 	docker buildx use project-v3-builder
-	- docker buildx build --push --platform=$(PLATFORMS) --tag ${IMG} -f Dockerfile.cross .
+	- docker buildx build --push --platform=$(PLATFORMS) --tag ${IMG} --build-arg VERSION=${BUILD_VERSION} -f Dockerfile.cross .
 	- docker buildx rm project-v3-builder
 	rm Dockerfile.cross
 
@@ -251,7 +209,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 
 .PHONY: local
 local: kustomize ## Run controller in the K8s cluster specified in ~/.kube/config.
-	.ci/scripts/local.sh $(CR_KIND) $(CR_DOMAIN) $(CR_PLURAL) $(APP_IMAGE) $(WEB_IMAGE)
+	.ci/scripts/local.sh Pulp pulpproject.org pulps quay.io/pulp/pulp-minimal quay.io/pulp/pulp-web
 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
@@ -281,7 +239,7 @@ SDK_BIN = $(LOCALBIN)/operator-sdk
 KUSTOMIZE_VERSION ?= v3.8.7
 CONTROLLER_TOOLS_VERSION ?= v0.16.5
 CRD_MARKDOWN_VERSION ?= v0.0.3
-OPERATOR_SDK_VERSION ?= v1.29.0
+OPERATOR_SDK_VERSION ?= v1.31.0
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize

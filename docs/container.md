@@ -46,41 +46,6 @@ with pulpcore and plugins specific configuration.
 [https://quay.io/repository/pulp/pulp-web?tab=tags](https://quay.io/repository/pulp/pulp-web?tab=tags)
 
 
-## Galaxy
-
-An all-in-one [galaxy](https://github.com/ansible/galaxy_ng) image that can assume each of the following types of service:
-
-- **pulpcore-api** - serves the Galaxy (v3) API. The number of instances of this service should be scaled as demand requires.  _Administrators and users of all of the APIs put demand on this service_.
-
-
-- **pulpcore-content** - serves content to clients. pulpcore-api redirects clients to pulpcore-content to download content. When content is being mirrored from a remote source, this service can download that content and stream it to the client the first time the content is requested. The number of instances of this service should be scaled as demand requires. _Content consumers put demands on this service_.
-
-
-- **pulpcore-worker** - performs syncing, importing of content, and other asynchronous operations that require resource locking. The number of instances of this service should be scaled as demand requires. _Administrators and content importers put demands on this service_.
-
-
-### Tags
-
-* `latest`: Built nightly, with master branch of [galaxy](https://github.com/ansible/galaxy_ng).
-* `stable`: Built on push, with latest released version of galaxy.
-* `4.y.z`:  Galaxy 4.y.z version.
-
-[https://quay.io/repository/pulp/galaxy?tab=tags](https://quay.io/repository/pulp/galaxy?tab=tags)
-
-
-## Galaxy Web
-
-An Nginx image based on [centos/nginx-116-centos7](https://hub.docker.com/r/centos/nginx-116-centos7),
-with galaxy specific configuration.
-
-### Tags
-
-* `latest`: Built nightly, with master branch of galaxy.
-* `stable`: Built on push, with latest released version of galaxy.
-* `4.y.z`:  Galaxy 4.y.z version.
-
-[https://quay.io/repository/pulp/galaxy-web?tab=tags](https://quay.io/repository/pulp/galaxy-web?tab=tags)
-
 
 ## Pulp Operator
 

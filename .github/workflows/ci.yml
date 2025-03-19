@@ -65,102 +65,85 @@ jobs:
         run: |
           .ci/scripts/bundle_check.sh
         shell: bash
-  bundle-upgrade:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Setup Go environment
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: false
-      - name: Install kind
-        run: |
-          .ci/scripts/kind_with_registry.sh
-        shell: bash
-      - name: Install OLM
-        run: |
-          make sdkbin OPERATOR_SDK_VERSION=v1.29.0 LOCALBIN=/tmp
-          /tmp/operator-sdk olm install
-        shell: bash
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          repository: pulp/pulp-operator
-          ref: 1.0.0-beta.4
-      - name: Install Pulp CRD
-        run: |
-          make install CONTROLLER_TOOLS_VERSION=v0.14.0
-        shell: bash
-      - name: Build bundle image
-        run: |
-          make bundle-build bundle-push BUNDLE_IMG=localhost:5001/pulp-operator-bundle:old
-        shell: bash
-      - name: Install the operator
-        run: |
-          /tmp/operator-sdk run bundle --skip-tls localhost:5001/pulp-operator-bundle:old
-        shell: bash
-      - uses: actions/checkout@v4
-      - name: Build bundle image
-        run: |
-          make bundle-build  bundle-push BUNDLE_IMG=localhost:5001/pulp-operator-bundle:new
-        shell: bash
-      - name: Upgrade the operator
-        run: |
-          /tmp/operator-sdk run bundle-upgrade --use-http localhost:5001/pulp-operator-bundle:new
-        shell: bash
+
+  # tmp disabling it
+  #upgrade:
+  #  uses: "./.github/workflows/upgrade.yml"
+
   two-deployments:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Setup Go environment
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
           cache: false
       - name: Install kind
-        run: |
-          .ci/scripts/kind_with_registry.sh
-        shell: bash
+        run: .ci/scripts/kind_with_registry.sh v1.31.6
       - name: Install OLM
         run: |
-          make sdkbin OPERATOR_SDK_VERSION=v1.29.0 LOCALBIN=/tmp
-          /tmp/operator-sdk olm install
+          make sdkbin OPERATOR_SDK_VERSION=v1.31.0 LOCALBIN=/tmp
+          /tmp/operator-sdk olm install --version v0.31.0
         shell: bash
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Install Pulp CRD
-        run: |
-          make install
-        shell: bash
+        run: make install
       - name: Build operator image
-        run: |
-          make docker-build docker-push IMG=localhost:5001/pulp-operator:dev
+        run: make docker-build docker-push IMG=localhost:5001/pulp-operator:dev
       - name: Build bundle image
-        run: |
-          make bundle bundle-build bundle-push BUNDLE_IMG=localhost:5001/pulp-operator-bundle:testing IMG=localhost:5001/pulp-operator:dev
-        shell: bash
+        run: make bundle bundle-build bundle-push BUNDLE_IMG=localhost:5001/pulp-operator-bundle:testing IMG=localhost:5001/pulp-operator:dev
       - name: Install the operator
-        run: |
-          /tmp/operator-sdk run bundle --skip-tls localhost:5001/pulp-operator-bundle:testing
-        shell: bash
+        run: /tmp/operator-sdk run bundle --skip-tls localhost:5001/pulp-operator-bundle:testing
       - name: Deploy example-pulp and test-pulp
         run: |
           kubectl apply -f config/samples/simple-with-reduced-migration-cpu.yaml
           kubectl apply -f config/samples/simple-test.yaml
       - name: Check and wait for example-pulp deployment
         run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=600s
-        shell: bash
       - name: Check and wait for test-pulp deployment
         run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/test-pulp --timeout=600s
       - name: Logs
         if: always()
         run: .github/workflows/scripts/show_logs.sh --kind
+      - name: OLM Logs
+        if: always()
+        run: |
+          echo ::group::SUB
+          kubectl get sub -oyaml -A
+          echo ::endgroup::
+
+          echo ::group::InstallPlan
+          kubectl get ip -A -oyaml
+          echo ::endgroup::
+
+          echo ::group::PODS
+          kubectl -nolm get pods
+          kubectl get pods -A
+          echo ::endgroup::
+
+          echo ::group::CATALOG-OPERATOR-LOGS
+          kubectl -nolm logs deployment/catalog-operator
+          echo ::endgroup::
+
+          echo ::group::OLM-OPERATOR-LOGS
+          kubectl -nolm logs deployment/olm-operator
+          echo ::endgroup::
+
+          echo ::group::CATALOGSOURCE
+          kubectl get catalogsource -oyaml -A
+          echo ::endgroup::
+
+          echo ::group::CATALOGSOURCE-POD-LOGS
+          kubectl -ndefault logs localhost-5001-pulp-operator-bundle-testing
+          kubectl -ndefault describe pod/localhost-5001-pulp-operator-bundle-testing
+          echo ::endgroup::
+
+          echo ::group::CSV
+          kubectl get csv -A -oyaml
+          echo ::endgroup::
+        shell: bash
+
   envtest:
     runs-on: ubuntu-latest
     steps:
@@ -182,73 +165,24 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/pre-reqs
         with:
-          fetch-depth: 0
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.8'
-      - name: Setup Go environment
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: false
-      - name: Install httpie
-        run: |
-          echo ::group::HTTPIE
-          sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
-          echo ::endgroup::
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo "CI_TEST=true" >> $GITHUB_ENV
-          echo "TEST=pulp" >> $GITHUB_ENV
-          echo "INGRESS_TYPE=nodeport" >> $GITHUB_ENV
-        shell: bash
-      - name: Updating registries configuration
-        run: |
-          if [ -f "/etc/docker/daemon.json" ] || sudo systemctl is-active --quiet docker
-          then
-            echo "INFO:
-            Updating docker configuration
-            "
-
-            echo "$(cat /etc/docker/daemon.json | jq -s '.[0] + {
-            "insecure-registries" : ["ingress.local","nodeport.local:30000"]
-            }')" | sudo tee /etc/docker/daemon.json
-            sudo service docker restart || true
-          fi
-
-          if [ -f "/etc/containers/registries.conf" ]
-          then
-            echo "INFO:
-            Updating registries configuration
-            "
-            echo "[registries.insecure]
-            registries = ['ingress.local','nodeport.local:30000']
-            " | sudo tee -a /etc/containers/registries.conf
-          fi
-        shell: bash
-      - name: Start minikube
-        run: |
-          minikube start --memory=max --cpus=max --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
-          minikube addons enable metrics-server
-        # now you can run kubectl to see the pods in the cluster
-      - name: Try the cluster !
-        run: kubectl get pods -A
-      - name: Setup a minikube docker env
-        run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
+          ingress-type: nodeport
       - name: Install Pulp Operator
         run: |
-          make docker-build IMG=localhost/pulp-operator:devel
+          make docker-build install IMG=localhost/pulp-operator:devel
           kubectl create ns pulp-operator-system
           kubectl config set-context --current --namespace=pulp-operator-system
           helm repo add pulp-operator https://github.com/pulp/pulp-k8s-resources/raw/main/helm-charts/ --force-update
-          helm install --set namespace=pulp-operator-system --set image=localhost/pulp-operator:devel pulp pulp-operator/pulp-operator
+          helm install --skip-crds --set namespace=pulp-operator-system --set image=localhost/pulp-operator:devel pulp pulp-operator/pulp-operator
           kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
           kubectl apply -f config/samples/simple.yaml
         shell: bash
       - name: Check and wait pulp-operator deploy
-        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
+        run: |
+          journalctl --unit=pulp-operator -f &
+          kubectl logs -f -l app.kubernetes.io/component=operator -c manager &
+          kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
         shell: bash
       - name: Test all components
         run: |
@@ -268,85 +202,21 @@ jobs:
     if: github.event_name != 'pull_request'
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/pre-reqs
         with:
-          # by default, it uses a depth of 1
-          # this fetches all history so that we can read each commit
-          fetch-depth: 0
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.8'
-      - name: Setup Go environment
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: false
-      - name: Install httpie
-        run: |
-          echo ::group::HTTPIE
-          sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
-          echo ::endgroup::
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo "CI_TEST=true" >> $GITHUB_ENV
-          echo "TEST=pulp" >> $GITHUB_ENV
-          echo "INGRESS_TYPE=nodeport" >> $GITHUB_ENV
-        shell: bash
-      - name: Updating registries configuration
-        run: |
-          if [ -f "/etc/docker/daemon.json" ] || sudo systemctl is-active --quiet docker
-          then
-            echo "INFO:
-            Updating docker configuration
-            "
-
-            echo "$(cat /etc/docker/daemon.json | jq -s '.[0] + {
-            "insecure-registries" : ["ingress.local","nodeport.local:30000"]
-            }')" | sudo tee /etc/docker/daemon.json
-            sudo service docker restart || true
-          fi
-
-          if [ -f "/etc/containers/registries.conf" ]
-          then
-            echo "INFO:
-            Updating registries configuration
-            "
-            echo "[registries.insecure]
-            registries = ['ingress.local','nodeport.local:30000']
-            " | sudo tee -a /etc/containers/registries.conf
-          fi
-        shell: bash
-      - name: Start minikube
-        run: |
-          minikube start --memory=max --cpus=max --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
-          minikube addons enable metrics-server
-        # now you can run kubectl to see the pods in the cluster
-      - name: Try the cluster !
-        run: kubectl get pods -A
-      - name: Setup a minikube docker env
-        run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
-      - name: Uninstalling GHA kustomize
-        run: |
-          # hack for uninstalling kustomize from GHA
-          mv /usr/local/bin/kustomize /usr/local/bin/ghakustomize
-          make kustomize
-          mv ./bin/kustomize /usr/local/bin/kustomize
-          kustomize version
-        shell: bash
-      - name: Check code format and generate manifests
-        run: |
-          make manifests generate fmt vet
-        shell: bash
+          ingress-type: nodeport
       - name: Deploy pulp-operator to K8s
         run: |
           make docker-build deploy
           kubectl get namespace
           kubectl config set-context --current --namespace=pulp-operator-system
-          kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
           kubectl apply -f config/samples/simple.yaml
         shell: bash
       - name: Check and wait pulp-operator deploy
-        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
+        run: |
+          journalctl --unit=pulp-operator -f &
+          kubectl logs -f -l app.kubernetes.io/component=operator -c manager &
+          kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
         shell: bash
       - name: KubeLinter
         if: github.event_name == 'pull_request'
@@ -360,425 +230,21 @@ jobs:
       - name: Logs
         if: always()
         run: .github/workflows/scripts/show_logs.sh
+
   components:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - COMPONENT_TYPE: ingress
-          - COMPONENT_TYPE: nodeport
-          - COMPONENT_TYPE: telemetry
-          - COMPONENT_TYPE: ldap
-          - COMPONENT_TYPE: external-db
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          # by default, it uses a depth of 1
-          # this fetches all history so that we can read each commit
-          fetch-depth: 0
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.8'
-      - name: Setup Go environment
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: false
-      - name: Install httpie
-        run: |
-          echo ::group::HTTPIE
-          sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
-          echo ::endgroup::
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo "CI_TEST=true" >> $GITHUB_ENV
-          echo "TEST=pulp" >> $GITHUB_ENV
-          echo "COMPONENT_TYPE=${{ matrix.COMPONENT_TYPE }}" >> $GITHUB_ENV
-        shell: bash
-      - name: Updating registries configuration
-        run: |
-          if [ -f "/etc/docker/daemon.json" ] || sudo systemctl is-active --quiet docker
-          then
-            echo "INFO:
-            Updating docker configuration
-            "
+    uses: "./.github/workflows/components.yml"
 
-            echo "$(cat /etc/docker/daemon.json | jq -s '.[0] + {
-            "insecure-registries" : ["ingress.local","nodeport.local:30000"]
-            }')" | sudo tee /etc/docker/daemon.json
-            sudo service docker restart || true
-          fi
-
-          if [ -f "/etc/containers/registries.conf" ]
-          then
-            echo "INFO:
-            Updating registries configuration
-            "
-            echo "[registries.insecure]
-            registries = ['ingress.local','nodeport.local:30000']
-            " | sudo tee -a /etc/containers/registries.conf
-          fi
-        shell: bash
-      - name: Start minikube
-        run: |
-          minikube start --memory=max --cpus=max --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
-          minikube addons enable metrics-server
-          minikube addons enable ingress
-        # now you can run kubectl to see the pods in the cluster
-      - name: Try the cluster !
-        run: kubectl get pods -A
-      - name: Setup a minikube docker env
-        run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
-      - name: Uninstalling GHA kustomize
-        run: |
-          # hack for uninstalling kustomize from GHA
-          mv /usr/local/bin/kustomize /usr/local/bin/ghakustomize
-          make kustomize
-          mv ./bin/kustomize /usr/local/bin/kustomize
-          kustomize version
-        shell: bash
-      - name: Check code format and generate manifests
-        run: |
-          make manifests generate fmt vet
-        shell: bash
-      - name: Prepare Object Storage
-        run: |
-          .ci/scripts/prepare-object-storage.sh
-        shell: bash
-      - name: Deploy pulp-operator to K8s
-        run: |
-          make local
-          kubectl get namespace
-          kubectl config set-context --current --namespace=pulp-operator-system
-          kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
-          if [[ "$COMPONENT_TYPE" == "ingress" ]]; then
-            kubectl apply -f config/samples/simple.ingress.yaml
-          elif [[ "$COMPONENT_TYPE" == "telemetry" ]]; then
-            kubectl apply -f config/samples/telemetry.yaml
-          elif [[ "$COMPONENT_TYPE" == "ldap" ]]; then
-            .ci/scripts/ldap_config.sh
-            kubectl apply -f config/samples/ldap.yaml
-          elif [[ "$COMPONENT_TYPE" == "external-db" ]]; then
-            kubectl create ns db
-            kubectl apply -f config/samples/external_db.yaml
-            kubectl apply -f config/samples/simple-external-db.yaml
-          else
-            kubectl apply -f config/samples/simple.yaml
-          fi
-        shell: bash
-      - name: Check and wait pulp-operator deploy
-        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
-        shell: bash
-      - name: KubeLinter
-        if: github.event_name == 'pull_request'
-        run: .ci/scripts/kubelinter.sh
-      - name: Test all components
-        run: |
-          export INGRESS_TYPE=$COMPONENT_TYPE
-          .ci/scripts/pulp_tests.sh -m
-          if [[ "$COMPONENT_TYPE" == "telemetry" ]]; then
-            .ci/scripts/telemetry.sh
-          elif [[ "$COMPONENT_TYPE" == "ldap" ]] ; then
-            .ci/scripts/ldap_test.sh
-          fi
-        shell: bash
-        env:
-          PY_COLORS: '1'
-      - name: Logs
-        if: always()
-        run: .github/workflows/scripts/show_logs.sh
-  galaxy:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - STORAGE: filesystem
-          - STORAGE: azure
-          - STORAGE: s3
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          # by default, it uses a depth of 1
-          # this fetches all history so that we can read each commit
-          fetch-depth: 0
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.8'
-      - name: Setup Go environment
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: false
-      - name: Install httpie
-        run: |
-          echo ::group::HTTPIE
-          sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
-          echo ::endgroup::
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo "CI_TEST=true" >> $GITHUB_ENV
-          echo "TEST=galaxy,galaxybackup,galaxyrestore" >> $GITHUB_ENV
-          echo "CI_TEST_STORAGE=${{ matrix.STORAGE }}" >> $GITHUB_ENV
-          echo "API_ROOT=/api/galaxy/pulp/" >> $GITHUB_ENV
-        shell: bash
-      - name: Start minikube
-        run: |
-          minikube start --memory=max --cpus=max --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
-          minikube addons enable metrics-server
-        # now you can run kubectl to see the pods in the cluster
-      - name: Try the cluster !
-        run: kubectl get pods -A
-      - name: Setup a minikube docker env
-        run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
-      - name: Uninstalling GHA kustomize
-        run: |
-          # hack for uninstalling kustomize from GHA
-          mv /usr/local/bin/kustomize /usr/local/bin/ghakustomize
-          make kustomize
-          mv ./bin/kustomize /usr/local/bin/kustomize
-          kustomize version
-        shell: bash
-      - name: Rename kind to Galaxy
-        run: make rename manifests bundle generate CR_KIND=Galaxy CR_DOMAIN=ansible.com CR_PLURAL=galaxies APP_IMAGE=quay.io/pulp/galaxy-minimal WEB_IMAGE=quay.io/pulp/galaxy-web
-      - name: Check code format and generate manifests
-        run: |
-          make manifests generate fmt vet CR_KIND=Galaxy CR_DOMAIN=ansible.com CR_PLURAL=galaxies APP_IMAGE=quay.io/pulp/galaxy-minimal WEB_IMAGE=quay.io/pulp/galaxy-web
-        shell: bash
-      - name: Prepare Object Storage
-        run: |
-          .ci/scripts/prepare-object-storage.sh
-        shell: bash
-      - name: Deploy pulp-operator to K8s
-        run: |
-          make local CR_KIND=Galaxy CR_DOMAIN=ansible.com CR_PLURAL=galaxies APP_IMAGE=quay.io/pulp/galaxy-minimal WEB_IMAGE=quay.io/pulp/galaxy-web
-          kubectl get namespace
-          kubectl config set-context --current --namespace=pulp-operator-system
-          kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
-          kubectl apply -f .ci/assets/kubernetes/galaxy_sign.secret.yaml
-          kubectl apply -f .ci/assets/kubernetes/signing_scripts.yaml
-          if [[ "$CI_TEST_STORAGE" == "azure" ]]; then
-            kubectl apply -f .ci/assets/kubernetes/pulp-object-storage.azure.secret.yaml
-            kubectl apply -f config/samples/galaxy.azure.ci.yaml
-          elif [[ "$CI_TEST_STORAGE" == "s3" ]]; then
-            kubectl apply -f .ci/assets/kubernetes/pulp-object-storage.aws.secret.yaml
-            kubectl apply -f config/samples/galaxy.s3.ci.yaml
-          elif [[ "$CI_TEST_STORAGE" == "filesystem" ]]; then
-            kubectl apply -f config/samples/galaxy.yaml
-          fi
-        shell: bash
-      - name: Check and wait pulp-operator deploy
-        run: kubectl wait --for condition=Galaxy-Operator-Finished-Execution galaxy/galaxy-example --timeout=900s
-        shell: bash
-      - name: KubeLinter
-        if: github.event_name == 'pull_request'
-        run: .ci/scripts/kubelinter.sh
-      - name: Test
-        run: .ci/scripts/galaxy_ng-tests.sh -m
-        shell: bash
-      - name: Backup & Restore
-        run: CI_TEST=galaxy .ci/scripts/backup_and_restore.sh -m
-        shell: bash
-        env:
-          PY_COLORS: '1'
-      - name: Send Build details to Slack
-        id: slack
-        uses: slackapi/slack-github-action@v1.18.0
-        if: failure() && github.event_name != 'pull_request'
-        with:
-          payload: |
-            {
-              "text": "Galaxy Operator CI ${{ job.status }}\nhttps://github.com/pulp/pulp-operator/actions/runs/${{ github.run_id }}",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "Galaxy Operator CI ${{ job.status }}\nhttps://github.com/pulp/pulp-operator/actions/runs/${{ github.run_id }}"
-                  }
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_PULP_CHANNEL }}
-      - name: Logs
-        if: always()
-        run: .github/workflows/scripts/show_logs.sh
-  upgrade:
-    runs-on: ubuntu-latest
-    if: github.ref_name != 'main'
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - INGRESS_TYPE: ingress
-          - INGRESS_TYPE: nodeport
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          repository: pulp/pulp-operator
-          ref: main
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.8'
-      - name: Setup Go environment
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: false
-      - name: Install httpie
-        run: |
-          echo ::group::HTTPIE
-          sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
-          echo ::endgroup::
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo "CI_TEST=true" >> $GITHUB_ENV
-          echo "TEST=pulp" >> $GITHUB_ENV
-          echo "INGRESS_TYPE=${{ matrix.INGRESS_TYPE }}" >> $GITHUB_ENV
-        shell: bash
-      - name: Updating registries configuration
-        run: |
-          if [ -f "/etc/docker/daemon.json" ] || sudo systemctl is-active --quiet docker
-          then
-            echo "INFO:
-            Updating docker configuration
-            "
-
-            echo "$(cat /etc/docker/daemon.json | jq -s '.[0] + {
-            "insecure-registries" : ["ingress.local","nodeport.local:30000"]
-            }')" | sudo tee /etc/docker/daemon.json
-            sudo service docker restart || true
-          fi
-
-          if [ -f "/etc/containers/registries.conf" ]
-          then
-            echo "INFO:
-            Updating registries configuration
-            "
-            echo "[registries.insecure]
-            registries = ['ingress.local','nodeport.local:30000']
-            " | sudo tee -a /etc/containers/registries.conf
-          fi
-        shell: bash
-      - name: Start minikube
-        run: |
-          minikube start --memory=max --cpus=max --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000
-          minikube addons enable metrics-server
-          minikube addons enable ingress
-        # now you can run kubectl to see the pods in the cluster
-      - name: Try the cluster !
-        run: kubectl get pods -A
-      - name: Setup a minikube docker env
-        run: minikube -p minikube docker-env | grep "export" | sed 's/export //' | sed 's/"//g' >> $GITHUB_ENV
-      - name: Uninstalling GHA kustomize
-        run: |
-          # hack for uninstalling kustomize from GHA
-          mv /usr/local/bin/kustomize /usr/local/bin/ghakustomize
-          make kustomize
-          mv ./bin/kustomize /usr/local/bin/kustomize
-          kustomize version
-        shell: bash
-      - name: Prepare Object Storage
-        run: |
-          .ci/scripts/prepare-object-storage.sh
-        shell: bash
-      - name: Deploy pulp-operator to K8s
-        run: |
-          make local
-          kubectl get namespace
-          kubectl config set-context --current --namespace=pulp-operator-system
-          kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
-          if [[ "$INGRESS_TYPE" == "ingress" ]]; then
-            kubectl apply -f config/samples/simple.ingress.yaml
-          else
-            kubectl apply -f config/samples/simple.yaml
-            kubectl patch pulp example-pulp --type=merge -p '{"spec":{"api":{"strategy":{"type":"Recreate"}}}}'
-          fi
-        shell: bash
-      - name: Check and wait pulp-operator deploy [before upgrade]
-        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
-        shell: bash
-      - name: Logs [before upgrade]
-        if: always()
-        run: .github/workflows/scripts/show_logs.sh
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Upgrade pulp-operator
-        run: |
-          make install
-          sleep 1
-          kubectl get pulps.repo-manager.pulpproject.org
-          sudo systemctl stop pulp-operator.service
-          make local
-          if [[ "$INGRESS_TYPE" == "ingress" ]]; then
-            kubectl apply -f config/samples/simple.ingress.yaml
-            kubectl patch pulp example-pulp --type=merge -p '{"spec": { "web": {"replicas": 1 }}}'
-            kubectl patch pulp example-pulp --type=merge -p '{"spec": { "ingress_annotations": { "nginx.ingress.kubernetes.io/proxy-body-size": "0" } }}'
-          else
-            kubectl apply -f config/samples/simple.yaml
-            kubectl patch pulp example-pulp --type=merge -p '{"spec":{"api":{"strategy":{"type":"Recreate"}}}}'
-          fi
-          sleep 10
-        shell: bash
-      - name: Check and wait pulp-operator deploy
-        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
-        shell: bash
-      - name: KubeLinter
-        if: github.event_name == 'pull_request'
-        run: .ci/scripts/kubelinter.sh
-      - name: Test all components
-        run: |
-          .ci/scripts/pulp_tests.sh -m
-        shell: bash
-        env:
-          PY_COLORS: '1'
-      - name: Logs
-        if: always()
-        run: .github/workflows/scripts/show_logs.sh
   deploy:
     runs-on: ubuntu-latest
-    needs: [containerized, components, galaxy]
+    needs: [containerized, components]
     if: |
       github.event_name != 'pull_request' &&
       github.repository_owner == 'pulp'
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/pre-reqs
         with:
-          # by default, it uses a depth of 1
-          # this fetches all history so that we can read each commit
-          fetch-depth: 0
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.8'
-      - name: Setup Go environment
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: false
-      - name: Install httpie
-        run: |
-          echo ::group::HTTPIE
-          sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
-          echo ::endgroup::
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo "CI_TEST=true" >> $GITHUB_ENV
-        shell: bash
-      - name: Uninstalling GHA kustomize
-        run: |
-          # hack for uninstalling kustomize from GHA
-          mv /usr/local/bin/kustomize /usr/local/bin/ghakustomize
-          make kustomize
-          mv ./bin/kustomize /usr/local/bin/kustomize
-          kustomize version
-        shell: bash
+          deploy: true
       - name: Quay login
         env:
           QUAY_BOT_PASSWORD: ${{ secrets.QUAY_BOT_PASSWORD }}
@@ -786,5 +252,10 @@ jobs:
         run: echo "$QUAY_BOT_PASSWORD" | docker login -u "$QUAY_BOT_USERNAME" --password-stdin quay.io
       - name: Build and Push images
         run: |
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            export IMG=quay.io/pulp/pulp-operator:nightly
+            export CATALOG_IMG=quay.io/pulp/pulp-operator-catalog:nightly
+            export BUNDLE_IMG=quay.io/pulp/pulp-operator-bundle:nightly
+          fi
           make docker-buildx bundle-build bundle-push catalog-build catalog-push
         shell: bash

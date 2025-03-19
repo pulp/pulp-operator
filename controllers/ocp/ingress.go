@@ -18,8 +18,6 @@ package ocp
 
 import (
 	"github.com/pulp/pulp-operator/controllers"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,7 +44,7 @@ func deployOCPIngressRedirect(resources controllers.FunctionResources, plugins [
 	pulp := resources.Pulp
 	log := resources.Logger
 	ingressName := pulp.Name + "-redirect"
-	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Ingress-Ready"
+	conditionType := "Pulp-Ingress-Ready"
 
 	expectedIngress, err := controllers.IngressDefaults(resources, plugins)
 	if err != nil {

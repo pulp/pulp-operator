@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -20,8 +20,8 @@ type PodReplicas struct {
 }
 
 // restorePulpCR recreates the pulp CR with the content from backup
-func (r *RepoManagerRestoreReconciler) restorePulpCR(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore, backupDir string, pod *corev1.Pod) (PodReplicas, error) {
-	pulp := &repomanagerpulpprojectorgv1beta2.Pulp{}
+func (r *RepoManagerRestoreReconciler) restorePulpCR(ctx context.Context, pulpRestore *pulpv1.PulpRestore, backupDir string, pod *corev1.Pod) (PodReplicas, error) {
+	pulp := &pulpv1.Pulp{}
 	podReplicas := PodReplicas{}
 
 	// we'll recreate pulp instance only if it was not found
@@ -34,14 +34,14 @@ func (r *RepoManagerRestoreReconciler) restorePulpCR(ctx context.Context, pulpRe
 		execCmd := []string{
 			"cat", backupDir + "/cr_object",
 		}
-		cmdOutput, err := controllers.ContainerExec(r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
+		cmdOutput, err := controllers.ContainerExec(ctx, r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
 		if err != nil {
 			log.Error(err, "Failed to get cr_object backup file!")
 			r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Failed to get cr_object backup file!", "FailedGet"+pulpRestore.Spec.DeploymentName+"CR")
 			return PodReplicas{}, err
 		}
 
-		pulp := repomanagerpulpprojectorgv1beta2.Pulp{
+		pulp := pulpv1.Pulp{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      pulpRestore.Spec.DeploymentName,
 				Namespace: pulpRestore.Namespace,
@@ -79,9 +79,9 @@ func (r *RepoManagerRestoreReconciler) restorePulpCR(ctx context.Context, pulpRe
 // scaleDeployments will rescale the deployments with:
 // - if KeepBackupReplicasCount = true  - it will keep the same amount of replicas from backup
 // - if KeepBackupReplicasCount = false - it will deploy 1 replica for each component
-func (r *RepoManagerRestoreReconciler) scaleDeployments(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore, podReplicas PodReplicas) error {
+func (r *RepoManagerRestoreReconciler) scaleDeployments(ctx context.Context, pulpRestore *pulpv1.PulpRestore, podReplicas PodReplicas) error {
 	log := r.RawLogger
-	pulp := &repomanagerpulpprojectorgv1beta2.Pulp{}
+	pulp := &pulpv1.Pulp{}
 
 	if err := r.Get(ctx, types.NamespacedName{Name: pulpRestore.Spec.DeploymentName, Namespace: pulpRestore.Namespace}, pulp); err != nil && errors.IsNotFound(err) {
 		// Error reading the object - requeue the request.
@@ -144,13 +144,4 @@ func (r *RepoManagerRestoreReconciler) scaleDeployments(ctx context.Context, pul
 	}
 
 	return nil
-}
-
-// getDeploymentType returns the deployment_type (if not provided default is "pulp")
-func getDeploymentType(pulp *repomanagerpulpprojectorgv1beta2.Pulp) string {
-	deploymentType := pulp.Spec.DeploymentType
-	if len(pulp.Spec.DeploymentType) == 0 {
-		deploymentType = "pulp"
-	}
-	return deploymentType
 }

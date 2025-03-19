@@ -72,7 +72,7 @@ Content defines desired state of pulpcore-content resources
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| replicas | Size is the size of number of pulp-content replicas. Default: 2 | int32 | true |
+| replicas | Size is the size of number of pulp-content replicas. Default: 1 | int32 | true |
 | resource_requirements | Resource requirements for the pulp-content container | corev1.ResourceRequirements | false |
 | affinity | Affinity is a group of affinity scheduling rules. | *corev1.Affinity | false |
 | node_selector | NodeSelector for the Pulp pods. | map[string]string | false |
@@ -181,7 +181,6 @@ PulpSpec defines the desired state of Pulp
 | ----- | ----------- | ------ | -------- |
 | unmanaged | Define if the operator should stop managing Pulp resources. If set to true, the operator will not execute any task (it will be \"disabled\"). Default: false | bool | false |
 | enable_debugging | By default Pulp logs at INFO level, but enabling DEBUG logging can be a helpful thing to get more insight when things don’t go as expected. Default: false | bool | false |
-| deployment_type | Name of the deployment type. Default: \"pulp\" | string | false |
 | file_storage_size | The size of the file storage; for example 100Gi. This field should be used only if file_storage_storage_class is provided | string | false |
 | file_storage_access_mode | The file storage access mode. This field should be used only if file_storage_storage_class is provided | string | false |
 | file_storage_storage_class | Storage class to use for the file persistentVolumeClaim | string | false |
@@ -190,7 +189,6 @@ PulpSpec defines the desired state of Pulp
 | pvc | PersistenVolumeClaim name that will be used by Pulp pods. If defined, the PVC must be provisioned by the user and the operator will only configure the deployment to use it | string | false |
 | db_fields_encryption_secret | Secret where the Fernet symmetric encryption key is stored. Default: <operators's name>-\"-db-fields-encryption\" | string | false |
 | signing_secret | Name of the Secret where the gpg key is stored. | string | false |
-| signing_scripts_configmap | [DEPRECATED] ConfigMap where the signing scripts are stored. This field is deprecated and will be removed in the future, use the signing_scripts field instead. | string | false |
 | signing_scripts | Name of the Secret where the signing scripts are stored. | string | false |
 | ingress_type | The ingress type to use to reach the deployed instance. Default: none (will not expose the service) | string | false |
 | ingress_annotations | Annotations for the Ingress | map[string]string | false |
@@ -215,14 +213,13 @@ PulpSpec defines the desired state of Pulp
 | image | The image name (repo name) for the pulp image. Default: \"quay.io/pulp/pulp-minimal:stable\" | string | false |
 | image_version | The image version for the pulp image. Default: \"stable\" | string | false |
 | inhibit_version_constraint | Relax the check of image_version and image_web_version not matching. Default: \"false\" | bool | false |
-| image_pull_policy | Image pull policy for container image. Default: \"IfNotPresent\" | string | false |
+| image_pull_policy | Image pull policy for container image. | string | false |
 | api | Api defines desired state of pulpcore-api resources | [Api](#api) | true |
 | database | Database defines desired state of postgres resources | [Database](#database) | false |
 | content | Content defines desired state of pulpcore-content resources | [Content](#content) | false |
 | worker | Worker defines desired state of pulpcore-worker resources | [Worker](#worker) | false |
 | web | Web defines desired state of pulpcore-web (reverse-proxy) resources | [Web](#web) | false |
 | cache | Cache defines desired state of redis resources | [Cache](#cache) | false |
-| pulp_settings | [DEPRECATED] Definition of /etc/pulp/settings.py config file. This field is deprecated and will be removed in the future, use the custom_pulp_settings field instead. | runtime.RawExtension | false |
 | custom_pulp_settings | Name of the ConfigMap to define Pulp configurations not available through this CR. | string | false |
 | image_web | The image name (repo name) for the pulp webserver image. Default: \"quay.io/pulp/pulp-web\" | string | false |
 | image_web_version | The image version for the pulp webserver image. Default: \"stable\" | string | false |
@@ -232,14 +229,12 @@ PulpSpec defines the desired state of Pulp
 | sa_labels | ServiceAccount.metadata.labels that will be used in Pulp pods. | map[string]string | false |
 | sso_secret | Secret where Single Sign-on configuration can be found | string | false |
 | mount_trusted_ca | Define if the operator should or should not mount the custom CA certificates added to the cluster via cluster-wide proxy config. Default: false | bool | false |
-| deploy_ee_defaults | Define if the operator should or should not deploy the default Execution Environments. Default: false | bool | false |
-| ee_defaults | Name of the ConfigMap with the list of Execution Environments that should be synchronized. Default: ee-default-images | string | false |
 | admin_password_job | Job to reset pulp admin password | [PulpJob](#pulpjob) | false |
 | migration_job | Job to run django migrations | [PulpJob](#pulpjob) | false |
 | signing_job | Job to store signing metadata scripts | [PulpJob](#pulpjob) | false |
 | disable_migrations | Disable database migrations. Useful for situations in which we don't want to automatically run the database migrations, for example, during restore. | bool | false |
 | pulp_secret_key | Name of the Secret to provide Django cryptographic signing. Default: \"pulp-secret-key\" | string | false |
-| allowed_content_checksums | List of allowed checksum algorithms used to verify repository's integrity. Valid options: [\"md5\",\"sha1\",\"sha256\",\"sha512\"]. | []string | false |
+| allowed_content_checksums | List of allowed checksum algorithms used to verify repository's integrity. Valid options: [\"md5\",\"sha1\",\"sha224\",\"sha256\",\"sha384\",\"sha512\"]. | []string | false |
 | loadbalancer_protocol | Protocol used by pulp-web service when ingress_type==loadbalancer | string | false |
 | loadbalancer_port | Port exposed by pulp-web service when ingress_type==loadbalancer | int32 | false |
 | telemetry | Telemetry defines the OpenTelemetry configuration | [Telemetry](#telemetry) | false |
@@ -255,7 +250,6 @@ PulpStatus defines the observed state of Pulp
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
 | conditions |  | []metav1.Condition | true |
-| deployment_type | Name of the deployment type. | string | false |
 | object_storage_azure_secret | The secret for Azure compliant object storage configuration. | string | false |
 | object_storage_s3_secret | The secret for S3 compliant object storage configuration. | string | false |
 | db_fields_encryption_secret | Secret where the Fernet symmetric encryption key is stored. | string | false |
@@ -314,7 +308,7 @@ Worker defines desired state of pulpcore-worker resources
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| replicas | Size is the size of number of pulp-worker replicas. Default: 2 | int32 | true |
+| replicas | Size is the size of number of pulp-worker replicas. Default: 1 | int32 | true |
 | resource_requirements | Resource requirements for the pulp-api container | corev1.ResourceRequirements | false |
 | affinity | Affinity is a group of affinity scheduling rules. | *corev1.Affinity | false |
 | node_selector | NodeSelector for the Pulp pods. | map[string]string | false |

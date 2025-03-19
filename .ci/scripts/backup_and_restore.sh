@@ -4,17 +4,16 @@ set -euo pipefail
 echo "Set context"
 kubectl config set-context --current --namespace=pulp-operator-system
 
-BACKUP_RESOURCE=repo-manager_v1beta2_pulpbackup.yaml
-RESTORE_RESOURCE=repo-manager_v1beta2_pulprestore.yaml
+BACKUP_RESOURCE=repo-manager.pulpproject.org_v1_pulpbackup.yaml
+RESTORE_RESOURCE=repo-manager.pulpproject.org_v1_pulprestore.yaml
+PULP_CR=example-pulp
 
 if [[ "$CI_TEST" == "true" ]]; then
   CUSTOM_RESOURCE=simple.yaml
-elif [[ "$CI_TEST" == "galaxy" && "$CI_TEST_STORAGE" == "filesystem" ]]; then
-  CUSTOM_RESOURCE=galaxy.yaml
-elif [[ "$CI_TEST" == "galaxy" && "$CI_TEST_STORAGE" == "azure" ]]; then
-  CUSTOM_RESOURCE=galaxy.azure.ci.yaml
-elif [[ "$CI_TEST" == "galaxy" && "$CI_TEST_STORAGE" == "s3" ]]; then
-  CUSTOM_RESOURCE=galaxy.s3.ci.yaml
+elif [[ "$CI_TEST_STORAGE" == "azure" ]]; then
+  CUSTOM_RESOURCE=simple.azure.ci.yaml
+elif [[ "$CI_TEST_STORAGE" == "s3" ]]; then
+  CUSTOM_RESOURCE=simple.s3.ci.yaml
 fi
 
 echo ::group::PRE_BACKUP_LOGS
@@ -36,7 +35,7 @@ kubectl delete -f config/samples/$CUSTOM_RESOURCE
 # deleting resources that have no operator owerReference to better validate that
 # restore controller will recreate them instead of "reusing" the older ones
 kubectl delete secrets --all
-kubectl delete pvc -l pulp_cr=galaxy-example
+kubectl delete pvc -l pulp_cr=$PULP_CR
 kubectl wait --for=delete --timeout=300s -f config/samples/$CUSTOM_RESOURCE
 
 kubectl apply -f config/samples/$RESTORE_RESOURCE
@@ -48,7 +47,7 @@ kubectl logs -l app.kubernetes.io/name=pulp-operator -c manager --tail=10000
 echo ::endgroup::
 
 sudo pkill -f "port-forward" || true
-time kubectl wait --for condition=Galaxy-Operator-Finished-Execution galaxy.repo-manager.ansible.com/galaxy-example --timeout=800s
+time kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp.repo-manager.pulpproject.org/$PULP_CR --timeout=800s
 kubectl get pods -o wide
 
 KUBE="k3s"
@@ -57,7 +56,7 @@ WEB_PORT="24817"
 if [[ "$1" == "--minikube" ]] || [[ "$1" == "-m" ]]; then
   KUBE="minikube"
   SERVER="localhost"
-  if [[ "$CI_TEST" == "true" ]] || [[ "$CI_TEST" == "galaxy" ]]; then
+  if [[ "$CI_TEST" == "true" ]]; then
     services=$(kubectl get services)
     WEB_PORT=$( echo "$services" | awk -F '[ :/]+' '/web-svc/{print $5}')
     SVC_NAME=$( echo "$services" | awk -F '[ :/]+' '/web-svc/{print $1}')
@@ -81,9 +80,6 @@ if [ -z "$(pip freeze | grep pulp-cli)" ]; then
   pip install pulp-cli[pygments]
 fi
 
-if [[ "$CI_TEST" == "galaxy" ]]; then
-  API_ROOT="/api/galaxy/pulp/"
-fi
 API_ROOT=${API_ROOT:-"/pulp/"}
 
 if [ ! -f ~/.config/pulp/settings.toml ]; then

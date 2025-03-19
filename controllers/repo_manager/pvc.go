@@ -19,11 +19,9 @@ package repo_manager
 import (
 	"context"
 
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
 	"github.com/pulp/pulp-operator/controllers/settings"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,12 +30,12 @@ import (
 )
 
 // pulpFileStorage will provision a PVC when spec.file_storage_storage_class is defined
-func (r *RepoManagerReconciler) pulpFileStorage(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) (*ctrl.Result, error) {
+func (r *RepoManagerReconciler) pulpFileStorage(ctx context.Context, pulp *pulpv1.Pulp) (*ctrl.Result, error) {
 	if !storageClassProvided(pulp) {
 		return nil, nil
 	}
 
-	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-API-Ready"
+	conditionType := "Pulp-API-Ready"
 	if requeue, err := r.createPulpResource(ResourceDefinition{ctx, &corev1.PersistentVolumeClaim{}, settings.DefaultPulpFileStorage(pulp.Name), "FileStorage", conditionType, pulp}, fileStoragePVC); err != nil {
 		return &ctrl.Result{}, err
 	} else if requeue {
@@ -79,7 +77,7 @@ func fileStoragePVC(resources controllers.FunctionResources) client.Object {
 }
 
 // storageClassProvided returns true if a StorageClass is provided in Pulp CR
-func storageClassProvided(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
+func storageClassProvided(pulp *pulpv1.Pulp) bool {
 	_, storageType := controllers.MultiStorageConfigured(pulp, "Pulp")
 	return storageType[0] == controllers.SCNameType
 }

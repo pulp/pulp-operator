@@ -1,0 +1,40 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: settings
+data:
+  analytics: "False"
+  token_server: '"http://nodeport.local:30000/token/"'
+  content_origin: '"http://nodeport.local:30000"'
+  ansible_api_hostname: '"http://nodeport.local:30000"'
+  pypi_api_hostname: '"http://nodeport.local:30000"'
+  api_root: '"/pulp/"'
+  allowed_export_paths: '[ "/tmp" ]'
+  allowed_import_paths: '[ "/tmp" ]'
+
+---
+apiVersion: repo-manager.pulpproject.org/v1
+kind: Pulp
+metadata:
+  name: example-pulp
+spec:
+  custom_pulp_settings: settings
+  ingress_type: nodeport
+  api:
+    replicas: 1
+  cache:
+    enabled: true
+  content:
+    replicas: 1
+  worker:
+    replicas: 1
+  web:
+    replicas: 1
+
+  database:
+    postgres_storage_class: standard
+
+  file_storage_access_mode: "ReadWriteMany"
+  file_storage_size: "2Gi"
+  file_storage_storage_class: standard

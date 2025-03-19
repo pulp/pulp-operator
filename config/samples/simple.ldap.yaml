@@ -1,0 +1,57 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pulp-ldap-secret
+stringData:
+  auth_ldap_server_uri: "ldap://ldap.pulp-operator-system.svc"
+  auth_ldap_bind_dn: "cn=admin,dc=example,dc=org"
+  auth_ldap_bind_password: "admin"
+  auth_ldap_group_search: LDAPSearch("ou=groups,dc=example,dc=org",ldap.SCOPE_SUBTREE,"(objectClass=posixGroup)")
+  auth_ldap_user_search: LDAPSearch("ou=users,dc=example,dc=org", ldap.SCOPE_SUBTREE, "(uid=%(user)s)")
+  auth_ldap_group_type: PosixGroupType(name_attr='cn')
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: settings
+data:
+  analytics: "False"
+  token_server: '"http://nodeport.local:30000/token/"'
+  content_origin: '"http://nodeport.local:30000"'
+  ansible_api_hostname: '"http://nodeport.local:30000"'
+  pypi_api_hostname: '"http://nodeport.local:30000"'
+  api_root: '"/pulp/"'
+  allowed_export_paths: '[ "/tmp" ]'
+  allowed_import_paths: '[ "/tmp" ]'
+
+---
+apiVersion: repo-manager.pulpproject.org/v1
+kind: Pulp
+metadata:
+  name: example-pulp
+spec:
+  image: localhost/pulp-minimal
+  image_version: stable
+  ldap:
+    config: pulp-ldap-secret
+  api:
+    replicas: 1
+  content:
+    replicas: 1
+  worker:
+    replicas: 1
+  web:
+    replicas: 1
+  ingress_type: nodeport
+  nodeport_port: 30000
+
+  database:
+    postgres_storage_class: standard
+
+  file_storage_access_mode: "ReadWriteMany"
+  file_storage_size: "2Gi"
+  file_storage_storage_class: standard
+
+  custom_pulp_settings: settings

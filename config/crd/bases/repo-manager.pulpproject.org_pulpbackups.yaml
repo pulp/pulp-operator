@@ -14,7 +14,7 @@ spec:
     singular: pulpbackup
   scope: Namespaced
   versions:
-  - name: v1beta2
+  - name: v1
     schema:
       openAPIV3Schema:
         description: PulpBackup is the Schema for the pulpbackups API
@@ -975,10 +975,7 @@ spec:
                 description: Storage requirements for the backup
                 type: string
               deployment_name:
-                description: Name of the deployment to be backed up
-                type: string
-              deployment_type:
-                description: Name of the deployment type. Can be one of {galaxy,pulp}.
+                description: Name of Pulp CR to be backed up
                 type: string
               postgres_configuration_secret:
                 description: Secret where the database configuration can be found

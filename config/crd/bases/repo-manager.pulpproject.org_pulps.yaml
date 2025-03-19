@@ -14,7 +14,7 @@ spec:
     singular: pulp
   scope: Namespaced
   versions:
-  - name: v1beta2
+  - name: v1
     schema:
       openAPIV3Schema:
         description: Pulp is the Schema for the pulps API
@@ -241,7 +241,7 @@ spec:
               allowed_content_checksums:
                 description: |-
                   List of allowed checksum algorithms used to verify repository's integrity.
-                  Valid options: ["md5","sha1","sha256","sha512"].
+                  Valid options: ["md5","sha1","sha224","sha256","sha384","sha512"].
                 items:
                   type: string
                 type: array
@@ -1303,13 +1303,11 @@ spec:
                       type: object
                     type: array
                   gunicorn_timeout:
-                    default: 90
                     description: |-
                       The timeout for the gunicorn process.
                       Default: 90
                     type: integer
                   gunicorn_workers:
-                    default: 2
                     description: |-
                       The number of gunicorn workers to use for the api.
                       Default: 2
@@ -1510,7 +1508,7 @@ spec:
                       Container will be restarted if the probe fails.
                     properties:
                       exec:
-                        description: Exec specifies the action to take.
+                        description: Exec specifies a command to execute in the container.
                         properties:
                           command:
                             description: |-
@@ -1531,7 +1529,7 @@ spec:
                         format: int32
                         type: integer
                       grpc:
-                        description: GRPC specifies an action involving a GRPC port.
+                        description: GRPC specifies a GRPC HealthCheckRequest.
                         properties:
                           port:
                             description: Port number of the gRPC service. Number must
@@ -1550,7 +1548,7 @@ spec:
                         - port
                         type: object
                       httpGet:
-                        description: HTTPGet specifies the http request to perform.
+                        description: HTTPGet specifies an HTTP GET request to perform.
                         properties:
                           host:
                             description: |-
@@ -1617,8 +1615,7 @@ spec:
                         format: int32
                         type: integer
                       tcpSocket:
-                        description: TCPSocket specifies an action involving a TCP
-                          port.
+                        description: TCPSocket specifies a connection to a TCP port.
                         properties:
                           host:
                             description: 'Optional: Host name to connect to, defaults
@@ -1772,7 +1769,7 @@ spec:
                       Container will be removed from service endpoints if the probe fails.
                     properties:
                       exec:
-                        description: Exec specifies the action to take.
+                        description: Exec specifies a command to execute in the container.
                         properties:
                           command:
                             description: |-
@@ -1793,7 +1790,7 @@ spec:
                         format: int32
                         type: integer
                       grpc:
-                        description: GRPC specifies an action involving a GRPC port.
+                        description: GRPC specifies a GRPC HealthCheckRequest.
                         properties:
                           port:
                             description: Port number of the gRPC service. Number must
@@ -1812,7 +1809,7 @@ spec:
                         - port
                         type: object
                       httpGet:
-                        description: HTTPGet specifies the http request to perform.
+                        description: HTTPGet specifies an HTTP GET request to perform.
                         properties:
                           host:
                             description: |-
@@ -1879,8 +1876,7 @@ spec:
                         format: int32
                         type: integer
                       tcpSocket:
-                        description: TCPSocket specifies an action involving a TCP
-                          port.
+                        description: TCPSocket specifies a connection to a TCP port.
                         properties:
                           host:
                             description: 'Optional: Host name to connect to, defaults
@@ -3203,7 +3199,7 @@ spec:
                       Container will be restarted if the probe fails.
                     properties:
                       exec:
-                        description: Exec specifies the action to take.
+                        description: Exec specifies a command to execute in the container.
                         properties:
                           command:
                             description: |-
@@ -3224,7 +3220,7 @@ spec:
                         format: int32
                         type: integer
                       grpc:
-                        description: GRPC specifies an action involving a GRPC port.
+                        description: GRPC specifies a GRPC HealthCheckRequest.
                         properties:
                           port:
                             description: Port number of the gRPC service. Number must
@@ -3243,7 +3239,7 @@ spec:
                         - port
                         type: object
                       httpGet:
-                        description: HTTPGet specifies the http request to perform.
+                        description: HTTPGet specifies an HTTP GET request to perform.
                         properties:
                           host:
                             description: |-
@@ -3310,8 +3306,7 @@ spec:
                         format: int32
                         type: integer
                       tcpSocket:
-                        description: TCPSocket specifies an action involving a TCP
-                          port.
+                        description: TCPSocket specifies a connection to a TCP port.
                         properties:
                           host:
                             description: 'Optional: Host name to connect to, defaults
@@ -3368,7 +3363,7 @@ spec:
                       Container will be removed from service endpoints if the probe fails.
                     properties:
                       exec:
-                        description: Exec specifies the action to take.
+                        description: Exec specifies a command to execute in the container.
                         properties:
                           command:
                             description: |-
@@ -3389,7 +3384,7 @@ spec:
                         format: int32
                         type: integer
                       grpc:
-                        description: GRPC specifies an action involving a GRPC port.
+                        description: GRPC specifies a GRPC HealthCheckRequest.
                         properties:
                           port:
                             description: Port number of the gRPC service. Number must
@@ -3408,7 +3403,7 @@ spec:
                         - port
                         type: object
                       httpGet:
-                        description: HTTPGet specifies the http request to perform.
+                        description: HTTPGet specifies an HTTP GET request to perform.
                         properties:
                           host:
                             description: |-
@@ -3475,8 +3470,7 @@ spec:
                         format: int32
                         type: integer
                       tcpSocket:
-                        description: TCPSocket specifies an action involving a TCP
-                          port.
+                        description: TCPSocket specifies a connection to a TCP port.
                         properties:
                           host:
                             description: 'Optional: Host name to connect to, defaults
@@ -3693,6 +3687,8 @@ spec:
                   Default: <operator's name> + "-container-auth"
                 type: string
               content:
+                default:
+                  replicas: 1
                 description: Content defines desired state of pulpcore-content resources
                 properties:
                   affinity:
@@ -4749,13 +4745,11 @@ spec:
                       type: object
                     type: array
                   gunicorn_timeout:
-                    default: 90
                     description: |-
                       The timeout for the gunicorn process.
                       Default: 90
                     type: integer
                   gunicorn_workers:
-                    default: 2
                     description: |-
                       The number of gunicorn workers to use for the api.
                       Default: 2
@@ -4956,7 +4950,7 @@ spec:
                       Container will be restarted if the probe fails.
                     properties:
                       exec:
-                        description: Exec specifies the action to take.
+                        description: Exec specifies a command to execute in the container.
                         properties:
                           command:
                             description: |-
@@ -4977,7 +4971,7 @@ spec:
                         format: int32
                         type: integer
                       grpc:
-                        description: GRPC specifies an action involving a GRPC port.
+                        description: GRPC specifies a GRPC HealthCheckRequest.
                         properties:
                           port:
                             description: Port number of the gRPC service. Number must
@@ -4996,7 +4990,7 @@ spec:
                         - port
                         type: object
                       httpGet:
-                        description: HTTPGet specifies the http request to perform.
+                        description: HTTPGet specifies an HTTP GET request to perform.
                         properties:
                           host:
                             description: |-
@@ -5063,8 +5057,7 @@ spec:
                         format: int32
                         type: integer
                       tcpSocket:
-                        description: TCPSocket specifies an action involving a TCP
-                          port.
+                        description: TCPSocket specifies a connection to a TCP port.
                         properties:
                           host:
                             description: 'Optional: Host name to connect to, defaults
@@ -5218,7 +5211,7 @@ spec:
                       Container will be removed from service endpoints if the probe fails.
                     properties:
                       exec:
-                        description: Exec specifies the action to take.
+                        description: Exec specifies a command to execute in the container.
                         properties:
                           command:
                             description: |-
@@ -5239,7 +5232,7 @@ spec:
                         format: int32
                         type: integer
                       grpc:
-                        description: GRPC specifies an action involving a GRPC port.
+                        description: GRPC specifies a GRPC HealthCheckRequest.
                         properties:
                           port:
                             description: Port number of the gRPC service. Number must
@@ -5258,7 +5251,7 @@ spec:
                         - port
                         type: object
                       httpGet:
-                        description: HTTPGet specifies the http request to perform.
+                        description: HTTPGet specifies an HTTP GET request to perform.
                         properties:
                           host:
                             description: |-
@@ -5325,8 +5318,7 @@ spec:
                         format: int32
                         type: integer
                       tcpSocket:
-                        description: TCPSocket specifies an action involving a TCP
-                          port.
+                        description: TCPSocket specifies a connection to a TCP port.
                         properties:
                           host:
                             description: 'Optional: Host name to connect to, defaults
@@ -5367,10 +5359,10 @@ spec:
                         type: integer
                     type: object
                   replicas:
-                    default: 2
+                    default: 1
                     description: |-
                       Size is the size of number of pulp-content replicas.
-                      Default: 2
+                      Default: 1
                     format: int32
                     minimum: 0
                     nullable: true
@@ -5699,9 +5691,8 @@ spec:
                     type: array
                 type: object
               custom_pulp_settings:
-                description: |-
-                  Name of the ConfigMap to define Pulp configurations not available
-                  through this CR.
+                description: Name of the ConfigMap to define Pulp configurations not
+                  available through this CR.
                 type: string
               database:
                 description: Database defines desired state of postgres resources
@@ -6643,7 +6634,7 @@ spec:
                       Container will be restarted if the probe fails.
                     properties:
                       exec:
-                        description: Exec specifies the action to take.
+                        description: Exec specifies a command to execute in the container.
                         properties:
                           command:
                             description: |-
@@ -6664,7 +6655,7 @@ spec:
                         format: int32
                         type: integer
                       grpc:
-                        description: GRPC specifies an action involving a GRPC port.
+                        description: GRPC specifies a GRPC HealthCheckRequest.
                         properties:
                           port:
                             description: Port number of the gRPC service. Number must
@@ -6683,7 +6674,7 @@ spec:
                         - port
                         type: object
                       httpGet:
-                        description: HTTPGet specifies the http request to perform.
+                        description: HTTPGet specifies an HTTP GET request to perform.
                         properties:
                           host:
                             description: |-
@@ -6750,8 +6741,7 @@ spec:
                         format: int32
                         type: integer
                       tcpSocket:
-                        description: TCPSocket specifies an action involving a TCP
-                          port.
+                        description: TCPSocket specifies a connection to a TCP port.
                         properties:
                           host:
                             description: 'Optional: Host name to connect to, defaults
@@ -6911,7 +6901,7 @@ spec:
                       Container will be removed from service endpoints if the probe fails.
                     properties:
                       exec:
-                        description: Exec specifies the action to take.
+                        description: Exec specifies a command to execute in the container.
                         properties:
                           command:
                             description: |-
@@ -6932,7 +6922,7 @@ spec:
                         format: int32
                         type: integer
                       grpc:
-                        description: GRPC specifies an action involving a GRPC port.
+                        description: GRPC specifies a GRPC HealthCheckRequest.
                         properties:
                           port:
                             description: Port number of the gRPC service. Number must
@@ -6951,7 +6941,7 @@ spec:
                         - port
                         type: object
                       httpGet:
-                        description: HTTPGet specifies the http request to perform.
+                        description: HTTPGet specifies an HTTP GET request to perform.
                         properties:
                           host:
                             description: |-
@@ -7018,8 +7008,7 @@ spec:
                         format: int32
                         type: integer
                       tcpSocket:
-                        description: TCPSocket specifies an action involving a TCP
-                          port.
+                        description: TCPSocket specifies a connection to a TCP port.
                         properties:
                           host:
                             description: 'Optional: Host name to connect to, defaults
@@ -7107,30 +7096,11 @@ spec:
                   Secret where the Fernet symmetric encryption key is stored.
                   Default: <operators's name>-"-db-fields-encryption"
                 type: string
-              deploy_ee_defaults:
-                description: |-
-                  Define if the operator should or should not deploy the default Execution Environments.
-                  Default: false
-                type: boolean
-              deployment_type:
-                default: pulp
-                description: |-
-                  Name of the deployment type.
-                  Default: "pulp"
-                enum:
-                - pulp
-                - galaxy
-                type: string
               disable_migrations:
                 description: |-
                   Disable database migrations. Useful for situations in which we don't want
                   to automatically run the database migrations, for example, during restore.
                 type: boolean
-              ee_defaults:
-                description: |-
-                  Name of the ConfigMap with the list of Execution Environments that should be synchronized.
-                  Default: ee-default-images
-                type: string
               enable_debugging:
                 description: |-
                   By default Pulp logs at INFO level, but enabling DEBUG logging can be a
@@ -7165,10 +7135,7 @@ spec:
                   Default: "quay.io/pulp/pulp-minimal:stable"
                 type: string
               image_pull_policy:
-                default: IfNotPresent
-                description: |-
-                  Image pull policy for container image.
-                  Default: "IfNotPresent"
+                description: Image pull policy for container image.
                 enum:
                 - IfNotPresent
                 - Always
@@ -7463,7 +7430,6 @@ spec:
                     type: object
                 type: object
               mount_trusted_ca:
-                default: false
                 description: |-
                   Define if the operator should or should not mount the custom CA certificates added to the cluster via cluster-wide proxy config.
                   Default: false
@@ -7508,13 +7474,6 @@ spec:
                   Name of the Secret to provide Django cryptographic signing.
                   Default: "pulp-secret-key"
                 type: string
-              pulp_settings:
-                description: |-
-                  [DEPRECATED] Definition of /etc/pulp/settings.py config file.
-                  This field is deprecated and will be removed in the future, use the
-                  custom_pulp_settings field instead.
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
               pvc:
                 description: |-
                   PersistenVolumeClaim name that will be used by Pulp pods.
@@ -7752,12 +7711,6 @@ spec:
               signing_scripts:
                 description: Name of the Secret where the signing scripts are stored.
                 type: string
-              signing_scripts_configmap:
-                description: |-
-                  [DEPRECATED] ConfigMap where the signing scripts are stored.
-                  This field is deprecated and will be removed in the future, use the
-                  signing_scripts field instead.
-                type: string
               signing_secret:
                 description: Name of the Secret where the gpg key is stored.
                 type: string
@@ -7988,7 +7941,7 @@ spec:
                       Container will be restarted if the probe fails.
                     properties:
                       exec:
-                        description: Exec specifies the action to take.
+                        description: Exec specifies a command to execute in the container.
                         properties:
                           command:
                             description: |-
@@ -8009,7 +7962,7 @@ spec:
                         format: int32
                         type: integer
                       grpc:
-                        description: GRPC specifies an action involving a GRPC port.
+                        description: GRPC specifies a GRPC HealthCheckRequest.
                         properties:
                           port:
                             description: Port number of the gRPC service. Number must
@@ -8028,7 +7981,7 @@ spec:
                         - port
                         type: object
                       httpGet:
-                        description: HTTPGet specifies the http request to perform.
+                        description: HTTPGet specifies an HTTP GET request to perform.
                         properties:
                           host:
                             description: |-
@@ -8095,8 +8048,7 @@ spec:
                         format: int32
                         type: integer
                       tcpSocket:
-                        description: TCPSocket specifies an action involving a TCP
-                          port.
+                        description: TCPSocket specifies a connection to a TCP port.
                         properties:
                           host:
                             description: 'Optional: Host name to connect to, defaults
@@ -8250,7 +8202,7 @@ spec:
                       Container will be removed from service endpoints if the probe fails.
                     properties:
                       exec:
-                        description: Exec specifies the action to take.
+                        description: Exec specifies a command to execute in the container.
                         properties:
                           command:
                             description: |-
@@ -8271,7 +8223,7 @@ spec:
                         format: int32
                         type: integer
                       grpc:
-                        description: GRPC specifies an action involving a GRPC port.
+                        description: GRPC specifies a GRPC HealthCheckRequest.
                         properties:
                           port:
                             description: Port number of the gRPC service. Number must
@@ -8290,7 +8242,7 @@ spec:
                         - port
                         type: object
                       httpGet:
-                        description: HTTPGet specifies the http request to perform.
+                        description: HTTPGet specifies an HTTP GET request to perform.
                         properties:
                           host:
                             description: |-
@@ -8357,8 +8309,7 @@ spec:
                         format: int32
                         type: integer
                       tcpSocket:
-                        description: TCPSocket specifies an action involving a TCP
-                          port.
+                        description: TCPSocket specifies a connection to a TCP port.
                         properties:
                           host:
                             description: 'Optional: Host name to connect to, defaults
@@ -8531,6 +8482,8 @@ spec:
                     type: string
                 type: object
               worker:
+                default:
+                  replicas: 1
                 description: Worker defines desired state of pulpcore-worker resources
                 properties:
                   affinity:
@@ -9781,7 +9734,7 @@ spec:
                       Container will be restarted if the probe fails.
                     properties:
                       exec:
-                        description: Exec specifies the action to take.
+                        description: Exec specifies a command to execute in the container.
                         properties:
                           command:
                             description: |-
@@ -9802,7 +9755,7 @@ spec:
                         format: int32
                         type: integer
                       grpc:
-                        description: GRPC specifies an action involving a GRPC port.
+                        description: GRPC specifies a GRPC HealthCheckRequest.
                         properties:
                           port:
                             description: Port number of the gRPC service. Number must
@@ -9821,7 +9774,7 @@ spec:
                         - port
                         type: object
                       httpGet:
-                        description: HTTPGet specifies the http request to perform.
+                        description: HTTPGet specifies an HTTP GET request to perform.
                         properties:
                           host:
                             description: |-
@@ -9888,8 +9841,7 @@ spec:
                         format: int32
                         type: integer
                       tcpSocket:
-                        description: TCPSocket specifies an action involving a TCP
-                          port.
+                        description: TCPSocket specifies a connection to a TCP port.
                         properties:
                           host:
                             description: 'Optional: Host name to connect to, defaults
@@ -10043,7 +9995,7 @@ spec:
                       Container will be removed from service endpoints if the probe fails.
                     properties:
                       exec:
-                        description: Exec specifies the action to take.
+                        description: Exec specifies a command to execute in the container.
                         properties:
                           command:
                             description: |-
@@ -10064,7 +10016,7 @@ spec:
                         format: int32
                         type: integer
                       grpc:
-                        description: GRPC specifies an action involving a GRPC port.
+                        description: GRPC specifies a GRPC HealthCheckRequest.
                         properties:
                           port:
                             description: Port number of the gRPC service. Number must
@@ -10083,7 +10035,7 @@ spec:
                         - port
                         type: object
                       httpGet:
-                        description: HTTPGet specifies the http request to perform.
+                        description: HTTPGet specifies an HTTP GET request to perform.
                         properties:
                           host:
                             description: |-
@@ -10150,8 +10102,7 @@ spec:
                         format: int32
                         type: integer
                       tcpSocket:
-                        description: TCPSocket specifies an action involving a TCP
-                          port.
+                        description: TCPSocket specifies a connection to a TCP port.
                         properties:
                           host:
                             description: 'Optional: Host name to connect to, defaults
@@ -10192,10 +10143,10 @@ spec:
                         type: integer
                     type: object
                   replicas:
-                    default: 2
+                    default: 1
                     description: |-
                       Size is the size of number of pulp-worker replicas.
-                      Default: 2
+                      Default: 1
                     format: int32
                     minimum: 0
                     nullable: true
@@ -10597,9 +10548,6 @@ spec:
                 type: string
               db_fields_encryption_secret:
                 description: Secret where the Fernet symmetric encryption key is stored.
-                type: string
-              deployment_type:
-                description: Name of the deployment type.
                 type: string
               external_cache_secret:
                 description: Name of the secret with the parameters to connect to

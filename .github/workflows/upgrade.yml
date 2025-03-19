@@ -1,0 +1,128 @@
+name: "bundle upgrade"
+
+on:
+  workflow_call:
+
+jobs:
+  bundle-upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go environment
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: false
+      - name: Install kind
+        run: |
+          .ci/scripts/kind_with_registry.sh
+        shell: bash
+      - name: Install OLM
+        run: |
+          make sdkbin OPERATOR_SDK_VERSION=v1.29.0 LOCALBIN=/tmp
+          /tmp/operator-sdk olm install
+        shell: bash
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          repository: pulp/pulp-operator
+          ref: 1.0.0-beta.4
+      - name: Install Pulp CRD
+        run: |
+          make install CONTROLLER_TOOLS_VERSION=v0.14.0
+        shell: bash
+      - name: Build bundle image
+        run: |
+          make bundle-build bundle-push BUNDLE_IMG=localhost:5001/pulp-operator-bundle:old
+        shell: bash
+      - name: Install the operator
+        run: |
+          /tmp/operator-sdk run bundle --skip-tls localhost:5001/pulp-operator-bundle:old
+        shell: bash
+      - uses: actions/checkout@v4
+      - name: Build bundle image
+        run: |
+          make bundle-build  bundle-push BUNDLE_IMG=localhost:5001/pulp-operator-bundle:new
+        shell: bash
+      - name: Upgrade the operator
+        run: |
+          /tmp/operator-sdk run bundle-upgrade --use-http localhost:5001/pulp-operator-bundle:new
+        shell: bash
+
+  test-upgrade:
+    runs-on: ubuntu-latest
+    if: github.ref_name != 'main'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - INGRESS_TYPE: ingress
+          - INGRESS_TYPE: nodeport
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/pre-reqs
+        with:
+          ingress-type:  ${{ matrix.INGRESS_TYPE }}
+
+      - uses: actions/checkout@v4
+        with:
+          repository: pulp/pulp-operator
+          ref: main
+
+      - name: Deploy pulp-operator to K8s
+        run: |
+          make local
+          kubectl get namespace
+          kubectl config set-context --current --namespace=pulp-operator-system
+          kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
+          if [[ "$INGRESS_TYPE" == "ingress" ]]; then
+            kubectl apply -f config/samples/simple.ingress.yaml
+          else
+            kubectl apply -f config/samples/simple.yaml
+            kubectl patch pulp example-pulp --type=merge -p '{"spec":{"api":{"strategy":{"type":"Recreate"}}}}'
+          fi
+        shell: bash
+      - name: Check and wait pulp-operator deploy [before upgrade]
+        run: |
+          journalctl --unit=pulp-operator -f &
+          kubectl logs -f -l app.kubernetes.io/component=operator -c manager &
+          kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
+        shell: bash
+      - name: Logs [before upgrade]
+        if: always()
+        run: .github/workflows/scripts/show_logs.sh
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Upgrade pulp-operator
+        run: |
+          make install
+          sleep 1
+          kubectl get pulps.repo-manager.pulpproject.org
+          sudo systemctl stop pulp-operator.service
+          make local
+          if [[ "$INGRESS_TYPE" == "ingress" ]]; then
+            kubectl apply -f config/samples/simple.ingress.yaml
+            kubectl patch pulp example-pulp --type=merge -p '{"spec": { "web": {"replicas": 1 }}}'
+            kubectl patch pulp example-pulp --type=merge -p '{"spec": { "ingress_annotations": { "nginx.ingress.kubernetes.io/proxy-body-size": "0" } }}'
+          else
+            kubectl apply -f config/samples/simple.yaml
+            kubectl patch pulp example-pulp --type=merge -p '{"spec":{"api":{"strategy":{"type":"Recreate"}}}}'
+          fi
+          sleep 10
+        shell: bash
+      - name: Check and wait pulp-operator deploy
+        run: kubectl wait --for condition=Pulp-Operator-Finished-Execution pulp/example-pulp --timeout=900s
+        shell: bash
+      - name: KubeLinter
+        if: github.event_name == 'pull_request'
+        run: .ci/scripts/kubelinter.sh
+      - name: Test all components
+        run: |
+          .ci/scripts/pulp_tests.sh -m
+        shell: bash
+        env:
+          PY_COLORS: '1'
+      - name: Logs
+        if: always()
+        run: .github/workflows/scripts/show_logs.sh

@@ -1,13 +1,24 @@
-apiVersion: repo-manager.pulpproject.org/v1beta2
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: settings
+data:
+  analytics: "False"
+  token_server: '"http://nodeport.local:30000/token/"'
+  content_origin: '"http://nodeport.local:30000"'
+  ansible_api_hostname: '"http://nodeport.local:30000"'
+  pypi_api_hostname: '"http://nodeport.local:30000"'
+  api_root: '"/pulp/"'
+  allowed_export_paths: '[ "/tmp" ]'
+  allowed_import_paths: '[ "/tmp" ]'
+
+---
+apiVersion: repo-manager.pulpproject.org/v1
 kind: Pulp
 metadata:
   name: test-pulp
 spec:
-  telemetry:
-    enabled: true
-  deployment_type: pulp
-  image_version: stable
-  image_web_version: stable
   api:
     replicas: 1
   content:
@@ -16,13 +27,6 @@ spec:
     replicas: 1
   web:
     replicas: 1
-  migration_job:
-    container:
-      resource_requirements:
-        requests:
-          cpu: "250m"
-        limits:
-          cpu: "250m"
 
   database:
     postgres_storage_class: standard
@@ -31,22 +35,7 @@ spec:
   file_storage_size: "2Gi"
   file_storage_storage_class: standard
 
-  # Redis configs
-  cache:
-    enabled: true
-    redis_storage_class: standard
-
   ingress_type: nodeport
   nodeport_port: 30001
 
-  pulp_settings:
-    api_root: "/pulp/"
-    allowed_export_paths:
-      - /tmp
-    allowed_import_paths:
-      - /tmp
-    telemetry: false
-    token_server: http://nodeport.local:30001/token/
-    content_origin: http://nodeport.local:30001
-    ansible_api_hostname: http://nodeport.local:30001
-
+  custom_pulp_settings: settings

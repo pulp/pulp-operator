@@ -4,7 +4,7 @@ import (
 	"context"
 	"reflect"
 
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -92,7 +92,7 @@ const (
 )
 
 // restoreSecret restores the operator secrets created by pulpbackup CR
-func (r *RepoManagerRestoreReconciler) restoreSecret(ctx context.Context, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore, backupDir string, pod *corev1.Pod) error {
+func (r *RepoManagerRestoreReconciler) restoreSecret(ctx context.Context, pulpRestore *pulpv1.PulpRestore, backupDir string, pod *corev1.Pod) error {
 
 	// [TODO]
 	// type secretTypes struct {resourceType string, secretNameKey string, backupFile string}
@@ -102,7 +102,7 @@ func (r *RepoManagerRestoreReconciler) restoreSecret(ctx context.Context, pulpRe
 	r.RawLogger.V(1).Info("Restoring from golang backup version")
 
 	// restore pulp-secret-key secret
-	if _, err := r.restoreSecretFromYaml(ctx, resourceTypePulpSecretKey, "secret_key", backupDir, "pulp_secret_key.yaml", pod, pulpRestore); err != nil {
+	if _, err := r.restoreSecretFromYaml(ctx, resourceTypePulpSecretKey, backupDir, "pulp_secret_key.yaml", pod, pulpRestore); err != nil {
 		return err
 	}
 
@@ -138,7 +138,7 @@ func (r *RepoManagerRestoreReconciler) restoreSecret(ctx context.Context, pulpRe
 	if found, err := r.secret(ctx, resourceTypeSigningSecret, "signing_secret", backupDir, "signing_secret.yaml", pod, pulpRestore); found && err != nil {
 		return err
 	}
-	if found, err := r.restoreSecretFromYaml(ctx, resourceTypeSigningScripts, "signing_scripts", backupDir, "signing_scripts.yaml", pod, pulpRestore); found && err != nil {
+	if found, err := r.restoreSecretFromYaml(ctx, resourceTypeSigningScripts, backupDir, "signing_scripts.yaml", pod, pulpRestore); found && err != nil {
 		return err
 	}
 
@@ -149,10 +149,10 @@ func (r *RepoManagerRestoreReconciler) restoreSecret(ctx context.Context, pulpRe
 	}
 
 	// restore ldap secret(s)
-	if found, err := r.restoreSecretFromYaml(ctx, resourceTypeLDAP, "ldap_secret", backupDir, "ldap_secret.yaml", pod, pulpRestore); found && err != nil {
+	if found, err := r.restoreSecretFromYaml(ctx, resourceTypeLDAP, backupDir, "ldap_secret.yaml", pod, pulpRestore); found && err != nil {
 		return err
 	}
-	if found, err := r.restoreSecretFromYaml(ctx, resourceTypeLDAP, "ldap_ca_secret", backupDir, "ldap_ca_secret.yaml", pod, pulpRestore); found && err != nil {
+	if found, err := r.restoreSecretFromYaml(ctx, resourceTypeLDAP, backupDir, "ldap_ca_secret.yaml", pod, pulpRestore); found && err != nil {
 		return err
 	}
 
@@ -163,7 +163,7 @@ func (r *RepoManagerRestoreReconciler) restoreSecret(ctx context.Context, pulpRe
 // resourceType: the type of the secret (like AdminPassword, or ObjectStorage, or ContainerToken, etc)
 // secretNameKey: is the secret's key that contains the secret name to be restored
 // it returns false and the error if the file is not found
-func (r *RepoManagerRestoreReconciler) secret(ctx context.Context, resourceType, secretNameKey, backupDir, backupFile string, pod *corev1.Pod, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore) (bool, error) {
+func (r *RepoManagerRestoreReconciler) secret(ctx context.Context, resourceType, secretNameKey, backupDir, backupFile string, pod *corev1.Pod, pulpRestore *pulpv1.PulpRestore) (bool, error) {
 
 	log := r.RawLogger
 
@@ -171,7 +171,7 @@ func (r *RepoManagerRestoreReconciler) secret(ctx context.Context, resourceType,
 	execCmd := []string{
 		"test", "-f", backupDir + "/" + backupFile,
 	}
-	_, err := controllers.ContainerExec(r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
+	_, err := controllers.ContainerExec(ctx, r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
 
 	// if backupFile file is not found return the error
 	if err != nil {
@@ -183,7 +183,7 @@ func (r *RepoManagerRestoreReconciler) secret(ctx context.Context, resourceType,
 		execCmd = []string{
 			"cat", backupDir + "/" + backupFile,
 		}
-		cmdOutput, err := controllers.ContainerExec(r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
+		cmdOutput, err := controllers.ContainerExec(ctx, r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
 		if err != nil {
 			log.Error(err, "Failed to get "+backupFile+"!")
 			r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Failed to get "+backupFile, "FailedGet"+resourceType+"Secret")
@@ -273,7 +273,7 @@ func (r *RepoManagerRestoreReconciler) secret(ctx context.Context, resourceType,
 }
 
 // setStatusField sets the pulpRestore.Status.FieldName with fieldValue
-func setStatusField(fieldName, fieldValue string, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore) error {
+func setStatusField(fieldName, fieldValue string, pulpRestore *pulpv1.PulpRestore) error {
 
 	s := reflect.ValueOf(pulpRestore.Status)
 	// iterate over the fields from pulpRestore.Status struct
@@ -296,14 +296,14 @@ func setStatusField(fieldName, fieldValue string, pulpRestore *repomanagerpulppr
 // restoreSecretFromYaml restores the Secret from a YAML file.
 // Since we don't need to keep compatibility with ansible version anymore, this
 // method does not need to follow an specific struct and should work with any Secret.
-func (r *RepoManagerRestoreReconciler) restoreSecretFromYaml(ctx context.Context, resourceType, secretNameKey, backupDir, backupFile string, pod *corev1.Pod, pulpRestore *repomanagerpulpprojectorgv1beta2.PulpRestore) (bool, error) {
+func (r *RepoManagerRestoreReconciler) restoreSecretFromYaml(ctx context.Context, resourceType, backupDir, backupFile string, pod *corev1.Pod, pulpRestore *pulpv1.PulpRestore) (bool, error) {
 
 	log := r.RawLogger
 	ldapSecretFile := backupDir + "/" + backupFile
 	execCmd := []string{
 		"test", "-f", ldapSecretFile,
 	}
-	_, err := controllers.ContainerExec(r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
+	_, err := controllers.ContainerExec(ctx, r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
 
 	// if no ldap secret found there is nothing to be restored
 	if err != nil {
@@ -312,7 +312,7 @@ func (r *RepoManagerRestoreReconciler) restoreSecretFromYaml(ctx context.Context
 	execCmd = []string{
 		"cat", ldapSecretFile,
 	}
-	cmdOutput, err := controllers.ContainerExec(r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
+	cmdOutput, err := controllers.ContainerExec(ctx, r, pod, execCmd, pulpRestore.Name+"-backup-manager", pod.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to get "+backupFile+"!")
 		r.updateStatus(ctx, pulpRestore, metav1.ConditionFalse, "RestoreComplete", "Failed to get "+backupFile, "FailedGet"+resourceType+"Secret")

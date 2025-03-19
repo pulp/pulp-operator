@@ -20,15 +20,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
 	"github.com/pulp/pulp-operator/controllers/settings"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -36,10 +33,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (r *RepoManagerReconciler) createSecrets(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp) (*ctrl.Result, error) {
+func (r *RepoManagerReconciler) createSecrets(ctx context.Context, pulp *pulpv1.Pulp) (*ctrl.Result, error) {
 
 	// conditionType is used to update .status.conditions with the current resource state
-	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-API-Ready"
+	conditionType := "Pulp-API-Ready"
 
 	// if .spec.admin_password_secret is not defined, operator will default to pulp-admin-password
 	adminSecretName := settings.DefaultAdminPassword(pulp.Name)
@@ -112,7 +109,7 @@ func (r *RepoManagerReconciler) createSecrets(ctx context.Context, pulp *repoman
 	expectedServerSecret := pulpServerSecret(funcResources)
 	if requeue, err := controllers.ReconcileObject(funcResources, expectedServerSecret, serverSecret, conditionType, controllers.PulpSecret{}); err != nil || requeue {
 		// restart pulpcore pods if the secret has changed
-		r.restartPulpCorePods(pulp)
+		r.restartPulpCorePods(ctx, pulp)
 		return &ctrl.Result{Requeue: requeue}, err
 	}
 
@@ -373,15 +370,25 @@ func azureSettings(resources controllers.FunctionResources, pulpSettings *string
 		return
 	}
 
-	*pulpSettings = *pulpSettings + `AZURE_CONNECTION_STRING = '` + storageData["azure-connection-string"] + `'
-AZURE_LOCATION = '` + storageData["azure-container-path"] + `'
-AZURE_ACCOUNT_NAME = '` + storageData["azure-account-name"] + `'
-AZURE_ACCOUNT_KEY = '` + storageData["azure-account-key"] + `'
-AZURE_CONTAINER = '` + storageData["azure-container"] + `'
-AZURE_URL_EXPIRATION_SECS = 60
-AZURE_OVERWRITE_FILES = True
-DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
+	*pulpSettings = *pulpSettings + `REDIRECT_TO_OBJECT_STORAGE = True
+MEDIA_ROOT = ""
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.azure_storage.AzureStorage",
+        "OPTIONS": {
+            "connection_string": '` + storageData["azure-connection-string"] + `',
+            "account_name": '` + storageData["azure-account-name"] + `',
+            "azure_container": '` + storageData["azure-container"] + `',
+            "account_key": '` + storageData["azure-account-key"] + `',
+            "expiration_secs": 60,
+            "overwrite_files": 'True',
+            "location": '` + storageData["azure-container-path"] + `'
+        },
+    },
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
 `
+
 }
 
 // s3Settings appends s3 object storage settings into pulpSettings
@@ -409,30 +416,46 @@ func s3Settings(resources controllers.FunctionResources, pulpSettings *string) {
 		return
 	}
 
+	var s3SecretKey, s3KeyId, s3Endpoint, s3Region string
 	if len(optionalKey["s3-secret-access-key"]) > 0 {
-		*pulpSettings = *pulpSettings + fmt.Sprintf("AWS_SECRET_ACCESS_KEY = \"%v\"\n", optionalKey["s3-secret-access-key"])
+		s3SecretKey = fmt.Sprintf("%12s\"secret_key\": \"%v\",\n", "", optionalKey["s3-secret-access-key"])
 	}
 
 	if len(optionalKey["s3-access-key-id"]) > 0 {
-		*pulpSettings = *pulpSettings + fmt.Sprintf("AWS_ACCESS_KEY_ID = \"%v\"\n", optionalKey["s3-access-key-id"])
+		s3KeyId = fmt.Sprintf("%12s\"access_key\": \"%v\",\n", "", optionalKey["s3-access-key-id"])
 	}
 
 	if len(optionalKey["s3-endpoint"]) > 0 {
-		*pulpSettings = *pulpSettings + fmt.Sprintf("AWS_S3_ENDPOINT_URL = \"%v\"\n", optionalKey["s3-endpoint"])
+		s3Endpoint = fmt.Sprintf("%12s\"endpoint_url\": \"%v\",\n", "", optionalKey["s3-endpoint"])
 	}
 
 	if len(optionalKey["s3-region"]) > 0 {
-		*pulpSettings = *pulpSettings + fmt.Sprintf("AWS_S3_REGION_NAME = \"%v\"\n", optionalKey["s3-region"])
+		s3Region = fmt.Sprintf("%12s\"region_name\": \"%v\",\n", "", optionalKey["s3-region"])
 	}
 
-	*pulpSettings = *pulpSettings + `AWS_STORAGE_BUCKET_NAME = '` + storageData["s3-bucket-name"] + `'
-AWS_DEFAULT_ACL = "@none None"
-S3_USE_SIGV4 = True
-AWS_S3_SIGNATURE_VERSION = "s3v4"
-AWS_S3_ADDRESSING_STYLE = "path"
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-MEDIA_ROOT = ""
+	s3Options := `        "OPTIONS": {
+            "signature_version": "s3v4",
+            "addressing_style": "path",
+            "bucket_name": '` + storageData["s3-bucket-name"] + `',
 `
+	s3Options += s3SecretKey
+	s3Options += s3KeyId
+	s3Options += s3Endpoint
+	s3Options += s3Region
+	s3Options += fmt.Sprintf("%8s},\n", "")
+
+	*pulpSettings += `REDIRECT_TO_OBJECT_STORAGE = True
+MEDIA_ROOT = ""
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+`
+	*pulpSettings += s3Options
+	*pulpSettings += `    },
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+`
+	*pulpSettings += fmt.Sprintln("}")
+
 }
 
 // tokenSettings appends the TOKEN_SERVER setting into pulpSettings
@@ -467,7 +490,7 @@ func secretKeySettings(resources controllers.FunctionResources, pulpSettings *st
 		return
 	}
 
-	*pulpSettings = *pulpSettings + fmt.Sprintln("SECRET_KEY = \""+secretKey["secret_key"]+"\"")
+	*pulpSettings = *pulpSettings + fmt.Sprintf("SECRET_KEY = \"%v\"\n", secretKey["secret_key"])
 }
 
 // allowedContentChecksumsSettings appends the allowed_content_checksums into pulpSettings
@@ -480,75 +503,8 @@ func allowedContentChecksumsSettings(resources controllers.FunctionResources, pu
 	*pulpSettings = *pulpSettings + fmt.Sprintln("ALLOWED_CONTENT_CHECKSUMS = ", string(settings))
 }
 
-func convertSettings(key string, settings interface{}) string {
-	var converted string
-	switch s := settings.(type) {
-
-	case map[string]interface{}:
-		var settingsJson map[string]interface{}
-		settingsMarshalled, _ := json.Marshal(s)
-		json.Unmarshal(settingsMarshalled, &settingsJson)
-
-		sortedKeys := sortKeys(settingsJson)
-		converted = converted + fmt.Sprintf("%v = {\n", strings.ToUpper(key))
-		for _, k := range sortedKeys {
-			rc, _ := regexp.Compile(`(?s)(.*) = (.*)\n`)
-			rp := rc.ReplaceAllString(convertSettings(k, settingsJson[k]), `'$1': $2`)
-			converted = converted + fmt.Sprintf("  %v,\n", rp)
-		}
-		converted = fmt.Sprintf("%v}\n", converted)
-	case []interface{}:
-		converted = fmt.Sprintf("%v = [\n", strings.ToUpper(key))
-		for i := range s {
-			rc, _ := regexp.Compile(`(?s)(.*) = (.*)\n`)
-			rp := rc.ReplaceAllString(convertSettings(key, s[i]), `$2`)
-			converted = converted + fmt.Sprintf("  %v,\n", rp)
-		}
-		converted = fmt.Sprintf("%v]\n", converted)
-	case bool:
-		// Pulp expects True or False, but golang boolean values are true or false
-		// so we are converting to string and changing to capital T or F
-		convertToString := cases.Title(language.English, cases.Compact).String(strconv.FormatBool(s))
-		converted = converted + fmt.Sprintf("%v = %v\n", strings.ToUpper(key), convertToString)
-	case float32, float64:
-		converted = converted + fmt.Sprintf("%v = %v\n", strings.ToUpper(key), s)
-	default:
-		// if it is a tuple, we should not parse it as a string (do not add the quotes)
-		r, _ := regexp.Compile(`\(.*\)`)
-		if r.MatchString(s.(string)) {
-			converted = converted + fmt.Sprintf("%v = %v\n", strings.ToUpper(key), s)
-		} else {
-			converted = converted + fmt.Sprintf("%v = \"%v\"\n", strings.ToUpper(key), s)
-		}
-	}
-
-	return converted
-}
-
-// [DEPRECATED] PulppSettings should not be used anymore. Keeping it to avoid compatibility issues
-// oldCustomPulpSettings appends custom settings defined in Pulp CR into pulpSettings
-func oldCustomPulpSettings(pulp *repomanagerpulpprojectorgv1beta2.Pulp, pulpSettings *string) {
-	settings := pulp.Spec.PulpSettings.Raw
-	var settingsJson map[string]interface{}
-	json.Unmarshal(settings, &settingsJson)
-
-	var convertedSettings string
-	sortedKeys := sortKeys(settingsJson)
-	for _, k := range sortedKeys {
-		convertedSettings = convertedSettings + convertSettings(k, settingsJson[k])
-	}
-
-	*pulpSettings = *pulpSettings + convertedSettings
-}
-
 func addCustomPulpSettings(resources controllers.FunctionResources, pulpSettings *string) {
 	pulp := resources.Pulp
-
-	// [DEPRECATED] PulppSettings should not be used anymore. Keeping it to avoid compatibility issues
-	if pulp.Spec.PulpSettings.Raw != nil {
-		oldCustomPulpSettings(pulp, pulpSettings)
-		return
-	}
 
 	if pulp.Spec.CustomPulpSettings == "" {
 		return

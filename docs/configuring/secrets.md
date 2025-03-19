@@ -51,8 +51,6 @@ Here is an example of a `Secret` created by the Operator:
 
 ```
 DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
-GALAXY_COLLECTION_SIGNING_SERVICE = "ansible-default"
-GALAXY_CONTAINER_SIGNING_SERVICE = "container-default"
 ANSIBLE_API_HOSTNAME = "http://pulp-web-svc.pulp.svc.cluster.local:24880"
 ANSIBLE_CERTS_DIR = "/etc/pulp/keys/"
 CONTENT_ORIGIN = "http://pulp-web-svc.pulp.svc.cluster.local:24880"
@@ -67,9 +65,6 @@ DATABASES = {
                 'CONN_MAX_AGE': 0,
                 'OPTIONS': { 'sslmode': 'prefer' },
         }
-}
-GALAXY_FEATURE_FLAGS = {
-        'execution_environments': 'True',
 }
 PRIVATE_KEY_PATH = "/etc/pulp/keys/container_auth_private_key.pem"
 PUBLIC_KEY_PATH = "/etc/pulp/keys/container_auth_public_key.pem"

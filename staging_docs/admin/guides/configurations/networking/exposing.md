@@ -46,7 +46,7 @@ Defining `ingress_type: ingress` will create `Ingress` resources to Pulp endpoin
 Since the k8s [`Ingressess`](https://kubernetes.io/docs/concepts/services-networking/ingress/) will redirect the traffic to pulpcore components, there
 will be no need to provision `pulp-web` objects.
 
-More information on configuring Pulp operator with `Ingress` can be found in [Reverse Proxy section](https://docs.pulpproject.org/pulp_operator/configuring/networking/reverse_proxy/) .
+More information on configuring Pulp operator with `Ingress` can be found in [Reverse Proxy section](https://pulpproject.org/pulp-operator/docs/admin/guides/configurations/networking/reverse_proxy/) .
 
 
 # Route
@@ -59,7 +59,7 @@ Defining `ingress_type: route` will create `Route` resources to Pulp endpoints.
 Since OCP [`Routes`](https://docs.openshift.com/container-platform/4.13/networking/routes/route-configuration.html) will redirect the traffic to pulpcore components, there
 will be no need to provision `pulp-web` objects.
 
-More information on configuring Pulp operator with `Routes` can be found in [Routes section](https://docs.pulpproject.org/pulp_operator/configuring/networking/routes/).
+More information on configuring Pulp operator with `Routes` can be found in [Routes section](https://pulpproject.org/pulp-operator/docs/admin/guides/configurations/networking/routes/).
 
 
 # LoadBalancer

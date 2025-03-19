@@ -11,15 +11,13 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/format"
 	routev1 "github.com/openshift/api/route/v1"
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -720,7 +718,7 @@ exec "${PULP_API_ENTRYPOINT[@]}" \
 					Containers: []corev1.Container{{
 						Name:            "content",
 						Image:           "quay.io/pulp/pulp-minimal:latest",
-						ImagePullPolicy: corev1.PullPolicy("IfNotPresent"),
+						ImagePullPolicy: corev1.PullPolicy("Always"),
 						Command:         []string{"/bin/sh"},
 						Args: []string{
 							"-c",
@@ -808,7 +806,7 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 					Containers: []corev1.Container{{
 						Name:            "worker",
 						Image:           "quay.io/pulp/pulp-minimal:latest",
-						ImagePullPolicy: corev1.PullPolicy("IfNotPresent"),
+						ImagePullPolicy: corev1.PullPolicy("Always"),
 						Command:         []string{"/usr/bin/pulp-worker"},
 						Env:             envVarsWorker,
 						// LivenessProbe:  livenessProbe,
@@ -821,7 +819,7 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 		},
 	}
 
-	createdPulp := &repomanagerpulpprojectorgv1beta2.Pulp{}
+	createdPulp := &pulpv1.Pulp{}
 	createdSts := &appsv1.StatefulSet{}
 	createdApiDeployment := &appsv1.Deployment{}
 	createdContentDeployment := &appsv1.Deployment{}
@@ -830,45 +828,40 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 	// instantiate a pulp CR
 	BeforeAll(func() {
 
-		pulpSettings := runtime.RawExtension{
-			Raw: []byte(`{"Api_Root": "/pulp/"}`),
-		}
-
 		postgresStorageClass := "standard"
 
 		// [TODO] Instead of using this hardcoded pulp CR we should
 		// use the samples from config/samples/ folder during each
 		// pipeline workflow execution
 		// this is the example pulp CR
-		pulp := &repomanagerpulpprojectorgv1beta2.Pulp{
+		pulp := &pulpv1.Pulp{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      PulpName,
 				Namespace: PulpNamespace,
 			},
-			Spec: repomanagerpulpprojectorgv1beta2.PulpSpec{
-				DeploymentType: OperatorType,
-				Cache: repomanagerpulpprojectorgv1beta2.Cache{
+			Spec: pulpv1.PulpSpec{
+				Cache: pulpv1.Cache{
 					Enabled:           true,
 					RedisStorageClass: "standard",
 				},
 				ImageVersion:    "latest",
 				ImageWebVersion: "latest",
-				Api: repomanagerpulpprojectorgv1beta2.Api{
+				Api: pulpv1.Api{
 					Replicas: 1,
 					EnvVars:  []corev1.EnvVar{customEnvVar},
 				},
-				Content: repomanagerpulpprojectorgv1beta2.Content{
+				Content: pulpv1.Content{
 					Replicas: 1,
 					EnvVars:  []corev1.EnvVar{customEnvVar},
 				},
-				Worker: repomanagerpulpprojectorgv1beta2.Worker{
+				Worker: pulpv1.Worker{
 					Replicas: 1,
 					EnvVars:  []corev1.EnvVar{customEnvVar},
 				},
-				Web: repomanagerpulpprojectorgv1beta2.Web{
+				Web: pulpv1.Web{
 					Replicas: 1,
 				},
-				Database: repomanagerpulpprojectorgv1beta2.Database{
+				Database: pulpv1.Database{
 					PostgresStorageClass:        &postgresStorageClass,
 					PostgresStorageRequirements: "5Gi",
 				},
@@ -876,7 +869,6 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 				FileStorageSize:       "2Gi",
 				FileStorageClass:      "standard",
 				IngressType:           "nodeport",
-				PulpSettings:          pulpSettings,
 			},
 		}
 
@@ -1240,19 +1232,6 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 
 })
 
-// isDefaultSCDefined returns true if found a StorageClass marked as default
-func isDefaultSCDefined() bool {
-	scList := &storagev1.StorageClassList{}
-	k8sClient.List(ctx, scList)
-	for _, sc := range scList.Items {
-		annotation := sc.ObjectMeta.GetAnnotations()
-		if _, found := annotation["storageclass.kubernetes.io/is-default-class"]; found {
-			return true
-		}
-	}
-	return false
-}
-
 // objectUpdate waits and retries until an update request returns without error.
 // a common cause that it is needed is because sometimes the object has been modified
 // during the update request and we try to modify an old version of it
@@ -1276,24 +1255,3 @@ func objectGet[T client.Object](ctx context.Context, object T, objectName string
 		return true
 	}, timeout, interval).Should(BeTrue())
 }
-
-/*
-// Alternative implementation without generics because i'm not sure if github runner is
-// installed with golang 1.18+ and in case we need backward compatibility
-// (keeping it just in case, but we should clean this up if not needed)
-func objectUpdate(pulp any) {
-	var obj client.Object
-	switch objType := pulp.(type) {
-	case client.Object:
-		obj = objType
-	}
-
-	Eventually(func() bool {
-		if err := k8sClient.Update(ctx, obj); err != nil {
-			fmt.Println("Error trying to update pulp: ", err)
-			return false
-		}
-		return true
-	}, timeout, interval).Should(BeTrue())
-}
-*/

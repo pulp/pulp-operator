@@ -31,7 +31,7 @@ git remote add $REMOTE_NAME https://github.com/redhat-openshift-ecosystem/commun
 
 * build the container image (run this command from inside the `release` directory of pulp-operator source):
 ```sh
-podman build -t pulp-operator-release .
+podman build --build-arg GOLANG_VERSION=1.23.0 --build-arg CONTROLLER_TOOLS_VERSION=v0.16.5 -t pulp-operator-release .
 ```
 
 ## RUN

@@ -8,7 +8,7 @@ $ kubectl apply -f- <<EOF
 apiVersion: v1
 data:
   pulp_backup.yaml: |
-    apiVersion: repo-manager.pulpproject.org/v1beta2
+    apiVersion: repo-manager.pulpproject.org/v1
     kind: PulpBackup
     metadata:
       name: pulpbackup

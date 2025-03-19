@@ -1,2 +1,0 @@
-Removed the validation for version mismatch between pulp-minimal and pulp-web images
-when the number of replicas for pulp-web is set to 0.

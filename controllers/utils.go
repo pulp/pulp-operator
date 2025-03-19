@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -31,13 +30,11 @@ import (
 
 	"github.com/go-logr/logr"
 	routev1 "github.com/openshift/api/route/v1"
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers/settings"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/crypto/openpgp"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
@@ -72,11 +69,9 @@ const (
 # This file is managed by Pulp operator.
 # DO NOT EDIT IT.
 #
-# To modify custom fields, use the pulp_settings from Pulp CR, for example:
+# To modify custom fields, use the custom_pulp_settings from Pulp CR, for example:
 # spec:
-#   pulp_settings:
-#     allowed_export_paths:
-#     - /tmp
+#   custom_pulp_settings: <configmap name>
 
 `
 	DefaultOCPIngressClass = "openshift-default"
@@ -87,7 +82,7 @@ const (
 type FunctionResources struct {
 	context.Context
 	client.Client
-	*repomanagerpulpprojectorgv1beta2.Pulp
+	*pulpv1.Pulp
 	Scheme *runtime.Scheme
 	logr.Logger
 }
@@ -126,7 +121,7 @@ func IsOpenShift() (bool, error) {
 // MultiStorageConfigured returns true if Pulp CR is configured with more than one "storage type"
 // for example, if ObjectStorageAzureSecret and FileStorageClass are defined we can't determine
 // which one the operator should use.
-func MultiStorageConfigured(pulp *repomanagerpulpprojectorgv1beta2.Pulp, resource string) (bool, []string) {
+func MultiStorageConfigured(pulp *pulpv1.Pulp, resource string) (bool, []string) {
 	var names []string
 
 	switch resource {
@@ -187,7 +182,7 @@ func MultiStorageConfigured(pulp *repomanagerpulpprojectorgv1beta2.Pulp, resourc
 }
 
 // ContainerExec runs a command in the container
-func ContainerExec[T any](client T, pod *corev1.Pod, command []string, container, namespace string) (string, error) {
+func ContainerExec[T any](ctx context.Context, client T, pod *corev1.Pod, command []string, container, namespace string) (string, error) {
 
 	// get the concrete value of client ({PulpBackup,RepoManagerBackupReconciler,RepoManagerRestoreReconciler})
 	clientConcrete := reflect.ValueOf(client)
@@ -222,7 +217,7 @@ func ContainerExec[T any](client T, pod *corev1.Pod, command []string, container
 
 	stdout := new(bytes.Buffer)
 	stderr := new(bytes.Buffer)
-	err = exec.StreamWithContext(context.TODO(), remotecommand.StreamOptions{
+	err = exec.StreamWithContext(ctx, remotecommand.StreamOptions{
 		Stdout: stdout,
 		Stderr: stderr,
 		Tty:    false,
@@ -238,12 +233,12 @@ func ContainerExec[T any](client T, pod *corev1.Pod, command []string, container
 	// I think the exec.Stream command is not synchronous and sometimes when a task depends
 	// on the results of the previous one it is failing.
 	// But this is just a guess!!! We need to investigate it further.
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 500)
 	return result, nil
 }
 
 // IsNginxIngressSupported returns true if the operator was instructed that this is a nginx ingress controller
-func IsNginxIngressSupported(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
+func IsNginxIngressSupported(pulp *pulpv1.Pulp) bool {
 	return pulp.Spec.IsNginxIngress
 }
 
@@ -284,50 +279,25 @@ func CustomZapLogger() *zap.Logger {
 
 // CheckImageVersionModified verifies if the container image tag defined in
 // Pulp CR matches the one in the Deployment
-func ImageChanged(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
+func ImageChanged(pulp *pulpv1.Pulp) bool {
 	definedImage := pulp.Spec.Image + ":" + pulp.Spec.ImageVersion
 	currentImage := pulp.Status.Image
 	return currentImage != definedImage
 }
 
 // StorageTypeChanged verifies if the storage type has been modified
-func StorageTypeChanged(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
+func StorageTypeChanged(pulp *pulpv1.Pulp) bool {
 	currentStorageType := pulp.Status.StorageType
 	definedStorageType := GetStorageType(*pulp)
 	return currentStorageType != definedStorageType[0]
 }
 
-// WaitAPIPods waits until all API pods are in a READY state
-func WaitAPIPods[T any](resource T, pulp *repomanagerpulpprojectorgv1beta2.Pulp, deployment *appsv1.Deployment, timeout time.Duration) {
-
-	// we need to add a litte "stand by" to give time for the operator get the updated status from database/cluster
-	time.Sleep(time.Millisecond * 500)
-	clientConcrete := reflect.ValueOf(resource)
-	restClient := reflect.Indirect(clientConcrete).FieldByName("Client").Elem().Interface().(client.Client)
-	for i := 0; i < int(timeout.Seconds()); i++ {
-		apiDeployment := &appsv1.Deployment{}
-		restClient.Get(context.TODO(), types.NamespacedName{Name: pulp.Name + "-api", Namespace: pulp.Namespace}, apiDeployment)
-		if apiDeployment.Status.ReadyReplicas == apiDeployment.Status.Replicas {
-			return
-		}
-		time.Sleep(time.Second)
-	}
-}
-
 // getPulpSetting returns the value of a Pulp setting field
-func getPulpSetting(r client.Client, pulp *repomanagerpulpprojectorgv1beta2.Pulp, key string) string {
-	// [DEPRECATED] PulppSettings should not be used anymore. Keeping it to avoid compatibility issues
-	if settings := pulp.Spec.PulpSettings.Raw; settings != nil {
-		var settingsJson map[string]interface{}
-		json.Unmarshal(settings, &settingsJson)
-		if setting := settingsJson[key]; setting != nil && setting.(string) != "" {
-			return setting.(string)
-		}
-	}
+func getPulpSetting(ctx context.Context, r client.Client, pulp *pulpv1.Pulp, key string) string {
 
 	if pulp.Spec.CustomPulpSettings != "" {
 		settingsCM := &corev1.ConfigMap{}
-		r.Get(context.TODO(), types.NamespacedName{Name: pulp.Spec.CustomPulpSettings, Namespace: pulp.Namespace}, settingsCM)
+		r.Get(ctx, types.NamespacedName{Name: pulp.Spec.CustomPulpSettings, Namespace: pulp.Namespace}, settingsCM)
 		if setting := getCMData(settingsCM, key); setting != nil {
 			return *setting
 		}
@@ -349,8 +319,8 @@ func getCMData(cm *corev1.ConfigMap, key string) *string {
 }
 
 // domainEnabled returns the definition of DOMAIN_ENABLED in settings.py
-func domainEnabled(r client.Client, pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
-	if domainEnabled := getPulpSetting(r, pulp, "domain_enabled"); domainEnabled != "" {
+func domainEnabled(ctx context.Context, r client.Client, pulp *pulpv1.Pulp) bool {
+	if domainEnabled := getPulpSetting(ctx, r, pulp, "domain_enabled"); domainEnabled != "" {
 		enabled, _ := strconv.ParseBool(domainEnabled)
 		return enabled
 	}
@@ -358,8 +328,8 @@ func domainEnabled(r client.Client, pulp *repomanagerpulpprojectorgv1beta2.Pulp)
 }
 
 // GetAPIRoot returns the definition of API_ROOT in settings.py or /pulp/
-func GetAPIRoot(r client.Client, pulp *repomanagerpulpprojectorgv1beta2.Pulp) string {
-	if apiRoot := getPulpSetting(r, pulp, "api_root"); apiRoot != "" {
+func GetAPIRoot(ctx context.Context, r client.Client, pulp *pulpv1.Pulp) string {
+	if apiRoot := getPulpSetting(ctx, r, pulp, "api_root"); apiRoot != "" {
 		return strings.Replace(apiRoot, "\"", "", -1)
 	}
 	return "/pulp/"
@@ -368,21 +338,20 @@ func GetAPIRoot(r client.Client, pulp *repomanagerpulpprojectorgv1beta2.Pulp) st
 // GetContentPathPrefix returns the definition of CONTENT_PATH_PREFIX in settings.py or
 // * /pulp/content/default/ if domain is enabled
 // * /pulp/content/ otherwise
-func GetContentPathPrefix(r client.Client, pulp *repomanagerpulpprojectorgv1beta2.Pulp) string {
-	if contentPath := getPulpSetting(r, pulp, "content_path_prefix"); contentPath != "" {
+func GetContentPathPrefix(ctx context.Context, r client.Client, pulp *pulpv1.Pulp) string {
+	if contentPath := getPulpSetting(ctx, r, pulp, "content_path_prefix"); contentPath != "" {
 		return strings.Replace(contentPath, "\"", "", -1)
 	}
 
-	if domainEnabled(r, pulp) {
+	if domainEnabled(ctx, r, pulp) {
 		return "/pulp/content/default/"
 	}
 	return "/pulp/content/"
 }
 
 // getSigningKeyFingerprint returns the signing key fingerprint from secret object
-func GetSigningKeyFingerprint(r client.Client, secretName, secretNamespace string) (string, error) {
+func GetSigningKeyFingerprint(ctx context.Context, r client.Client, secretName, secretNamespace string) (string, error) {
 
-	ctx := context.TODO()
 	secretData, err := RetrieveSecretData(ctx, secretName, secretNamespace, true, r, "signing_service.gpg")
 	if err != nil {
 		return "", err
@@ -428,13 +397,13 @@ func RetrieveSecretData(ctx context.Context, secretName, secretNamespace string,
 
 // UpdateStatus will set the new condition value for a .status.conditions[]
 // it will also set Pulp-Operator-Finished-Execution to false
-func UpdateStatus(ctx context.Context, r client.Client, pulp *repomanagerpulpprojectorgv1beta2.Pulp, conditionStatus metav1.ConditionStatus, conditionType, conditionReason, conditionMessage string) {
+func UpdateStatus(ctx context.Context, r client.Client, pulp *pulpv1.Pulp, conditionStatus metav1.ConditionStatus, conditionType, conditionReason, conditionMessage string) {
 
 	// if we are updating a status it means that operator didn't finish its execution
 	// set Pulp-Operator-Finished-Execution to false
-	if v1.IsStatusConditionPresentAndEqual(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Operator-Finished-Execution", metav1.ConditionTrue) {
+	if v1.IsStatusConditionPresentAndEqual(pulp.Status.Conditions, "Pulp-Operator-Finished-Execution", metav1.ConditionTrue) {
 		v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
-			Type:               cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Operator-Finished-Execution",
+			Type:               "Pulp-Operator-Finished-Execution",
 			Status:             metav1.ConditionFalse,
 			Reason:             "OperatorRunning",
 			LastTransitionTime: metav1.Now(),
@@ -759,7 +728,7 @@ func ReconcileMetadata(funcResources FunctionResources, expectedState, currentSt
 }
 
 // UpdatCRField patches fieldName in Pulp CR with fieldValue
-func UpdateCRField(ctx context.Context, r client.Client, pulp *repomanagerpulpprojectorgv1beta2.Pulp, fieldName, fieldValue string) error {
+func UpdateCRField(ctx context.Context, r client.Client, pulp *pulpv1.Pulp, fieldName, fieldValue string) error {
 	field := reflect.Indirect(reflect.ValueOf(&pulp.Spec)).FieldByName(fieldName)
 
 	// we will only set the field (with default values) if there is nothing defined yet
@@ -783,18 +752,14 @@ func RemovePulpWebResources(resources FunctionResources) error {
 	webDeployment := &appsv1.Deployment{}
 	if err := resources.Get(ctx, types.NamespacedName{Name: settings.WEB.DeploymentName(pulp.Name), Namespace: pulp.Namespace}, webDeployment); err == nil {
 		resources.Delete(ctx, webDeployment)
-	} else {
-		return err
 	}
 
 	webSvc := &corev1.Service{}
 	if err := resources.Get(ctx, types.NamespacedName{Name: settings.PulpWebService(pulp.Name), Namespace: pulp.Namespace}, webSvc); err == nil {
 		resources.Delete(ctx, webSvc)
-	} else {
-		return err
 	}
 
-	webConditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Web-Ready"
+	webConditionType := "Pulp-Web-Ready"
 	v1.RemoveStatusCondition(&pulp.Status.Conditions, webConditionType)
 
 	return nil
@@ -827,7 +792,7 @@ func GetCurrentHash(obj client.Object) string {
 func HashFromMutated(dep *appsv1.Deployment, resources FunctionResources) string {
 	// execute a "dry run" to update the local "deploy" variable with all
 	// mutated configurations
-	resources.Update(context.TODO(), dep, client.DryRunAll)
+	resources.Update(resources.Context, dep, client.DryRunAll)
 	return CalculateHash(dep.Spec)
 }
 
@@ -860,7 +825,7 @@ func isPulpcoreEnvVar(envVar string) bool {
 }
 
 // setCustomEnvVars returns the list of custom environment variables defined in Pulp CR
-func SetCustomEnvVars(pulp repomanagerpulpprojectorgv1beta2.Pulp, component string) []corev1.EnvVar {
+func SetCustomEnvVars(pulp pulpv1.Pulp, component string) []corev1.EnvVar {
 	userDefinedVars := []corev1.EnvVar{}
 
 	switch component {
@@ -882,12 +847,12 @@ func SetCustomEnvVars(pulp repomanagerpulpprojectorgv1beta2.Pulp, component stri
 }
 
 // setPulpcoreCustomEnvVars returns the list of custom environment variables defined in Pulp CR
-func SetPulpcoreCustomEnvVars(pulp repomanagerpulpprojectorgv1beta2.Pulp, pulpcoreType settings.PulpcoreType) []corev1.EnvVar {
+func SetPulpcoreCustomEnvVars(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) []corev1.EnvVar {
 	return SetCustomEnvVars(pulp, string(pulpcoreType))
 }
 
 // GetStorageType retrieves the storage type defined in pulp CR
-func GetStorageType(pulp repomanagerpulpprojectorgv1beta2.Pulp) []string {
+func GetStorageType(pulp pulpv1.Pulp) []string {
 	_, storageType := MultiStorageConfigured(&pulp, "Pulp")
 	return storageType
 }
@@ -931,6 +896,6 @@ func SetDefaultSecurityContext() *corev1.SecurityContext {
 	}
 }
 
-func Ipv6Disabled(pulp repomanagerpulpprojectorgv1beta2.Pulp) bool {
+func Ipv6Disabled(pulp pulpv1.Pulp) bool {
 	return pulp.Spec.IPv6Disabled != nil && *pulp.Spec.IPv6Disabled
 }

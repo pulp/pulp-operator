@@ -23,11 +23,9 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
 	"github.com/pulp/pulp-operator/controllers/settings"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -37,17 +35,17 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *RepoManagerReconciler) pulpWebController(ctx context.Context, pulp *repomanagerpulpprojectorgv1beta2.Pulp, log logr.Logger) (ctrl.Result, error) {
+func (r *RepoManagerReconciler) pulpWebController(ctx context.Context, pulp *pulpv1.Pulp, log logr.Logger) (ctrl.Result, error) {
 	funcResources := controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: log}
 
 	// conditionType is used to update .status.conditions with the current resource state
-	conditionType := cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Web-Ready"
+	conditionType := "Pulp-Web-Ready"
 
 	// pulp-web Configmap
 	configMapName := settings.PulpWebConfigMapName(pulp.Name)
 	webConfigMap := &corev1.ConfigMap{}
 	err := r.Get(ctx, types.NamespacedName{Name: configMapName, Namespace: pulp.Namespace}, webConfigMap)
-	newWebConfigMap := r.pulpWebConfigMap(pulp)
+	newWebConfigMap := r.pulpWebConfigMap(ctx, pulp)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new Pulp Web ConfigMap", "ConfigMap.Namespace", newWebConfigMap.Namespace, "ConfigMap.Name", newWebConfigMap.Name)
 		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingWebConfigmap", "Creating "+pulp.Name+"-web configmap resource")
@@ -138,12 +136,13 @@ func (r *RepoManagerReconciler) pulpWebController(ctx context.Context, pulp *rep
 }
 
 // deploymentForPulpWeb returns a pulp-web Deployment object
-func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojectorgv1beta2.Pulp, funcResources controllers.FunctionResources) *appsv1.Deployment {
+func (r *RepoManagerReconciler) deploymentForPulpWeb(m *pulpv1.Pulp, funcResources controllers.FunctionResources) *appsv1.Deployment {
 
 	ls := labelsForPulpWeb(m)
 	replicas := m.Spec.Web.Replicas
 	resources := m.Spec.Web.ResourceRequirements
 	ImageWeb := os.Getenv("RELATED_IMAGE_PULP_WEB")
+	ctx := funcResources.Context
 	if len(m.Spec.ImageWeb) > 0 && len(m.Spec.ImageWebVersion) > 0 {
 		ImageWeb = m.Spec.ImageWeb + ":" + m.Spec.ImageWebVersion
 	} else if ImageWeb == "" {
@@ -164,7 +163,7 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 			FailureThreshold: 2,
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
-					Path: controllers.GetAPIRoot(funcResources.Client, m) + "api/v3/status/",
+					Path: controllers.GetAPIRoot(ctx, funcResources.Client, m) + "api/v3/status/",
 					Port: intstr.IntOrString{
 						IntVal: 8080,
 					},
@@ -199,6 +198,10 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 
 	runAsUser := int64(700)
 	fsGroup := int64(700)
+	podSecurityContext := &corev1.PodSecurityContext{RunAsUser: &runAsUser, FSGroup: &fsGroup}
+	if isOpenShift, _ := controllers.IsOpenShift(); isOpenShift {
+		podSecurityContext = &corev1.PodSecurityContext{}
+	}
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -241,7 +244,7 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 						},
 						SecurityContext: controllers.SetDefaultSecurityContext(),
 					}},
-					SecurityContext: &corev1.PodSecurityContext{RunAsUser: &runAsUser, FSGroup: &fsGroup},
+					SecurityContext: podSecurityContext,
 					Volumes: []corev1.Volume{
 						{
 							Name: m.Name + "-nginx-conf",
@@ -270,12 +273,12 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *repomanagerpulpprojector
 
 // labelsForPulpWeb returns the labels for selecting the resources
 // belonging to the given pulp CR name.
-func labelsForPulpWeb(m *repomanagerpulpprojectorgv1beta2.Pulp) map[string]string {
+func labelsForPulpWeb(m *pulpv1.Pulp) map[string]string {
 	return settings.PulpcoreLabels(*m, "web")
 }
 
 // serviceForPulpWeb returns a service object for pulp-web
-func serviceForPulpWeb(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Service {
+func serviceForPulpWeb(m *pulpv1.Pulp) *corev1.Service {
 	annotations := m.Spec.Web.ServiceAnnotations
 
 	var serviceType corev1.ServiceType
@@ -349,7 +352,7 @@ func serviceForPulpWeb(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.Service
 }
 
 // wouldn't it be better to handle the configmap content by loading it from a file?
-func (r *RepoManagerReconciler) pulpWebConfigMap(m *repomanagerpulpprojectorgv1beta2.Pulp) *corev1.ConfigMap {
+func (r *RepoManagerReconciler) pulpWebConfigMap(ctx context.Context, m *pulpv1.Pulp) *corev1.ConfigMap {
 
 	// Nginx default values
 	nginxProxyReadTimeout := m.Spec.NginxProxyReadTimeout
@@ -481,7 +484,7 @@ func (r *RepoManagerReconciler) pulpWebConfigMap(m *repomanagerpulpprojectorgv1b
 				proxy_pass http://pulp-content;
 			}
 
-			location ` + controllers.GetAPIRoot(r.Client, m) + `api/v3/ {
+			location ` + controllers.GetAPIRoot(ctx, r.Client, m) + `api/v3/ {
 				proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 				proxy_set_header X-Forwarded-Proto $scheme;
 				proxy_set_header Host $http_host;

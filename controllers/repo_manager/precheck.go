@@ -22,10 +22,8 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,7 +32,7 @@ import (
 )
 
 // prechecks verifies pulp cr fields inconsistencies
-func prechecks(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp) (*ctrl.Result, error) {
+func prechecks(ctx context.Context, r *RepoManagerReconciler, pulp *pulpv1.Pulp) (*ctrl.Result, error) {
 
 	// initialize pulp .status.condition field
 	if reconcile, err := initializeStatusCondition(ctx, r, pulp); err != nil {
@@ -61,11 +59,6 @@ func prechecks(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerp
 		return reconcile, nil
 	}
 
-	// verify if a change in an immutable field has been tried
-	if reconcile := checkImmutableFields(ctx, r, pulp); reconcile != nil {
-		return reconcile, nil
-	}
-
 	// verify if all secrets defined in pulp cr are available
 	if reconcile := checkSecretsAvailability(ctx, r, pulp); reconcile != nil {
 		return reconcile, nil
@@ -77,7 +70,7 @@ func prechecks(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerp
 	}
 
 	// verify inconsistency in allowed_content_checksums definition
-	if reconcile := checkAllowedContentChecksums(ctx, r, pulp); reconcile != nil {
+	if reconcile := checkAllowedContentChecksums(pulp); reconcile != nil {
 		return reconcile, nil
 	}
 
@@ -87,7 +80,7 @@ func prechecks(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerp
 	}
 
 	// verify the metadata signing definitions
-	if reconcile := checkSigningScripts(ctx, r, pulp); reconcile != nil {
+	if reconcile := checkSigningScripts(r, pulp); reconcile != nil {
 		return reconcile, nil
 	}
 
@@ -95,14 +88,14 @@ func prechecks(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerp
 }
 
 // initializeStatusCondition sets the .status.condition field with the initial value
-func initializeStatusCondition(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp) (ctrl.Result, error) {
+func initializeStatusCondition(ctx context.Context, r *RepoManagerReconciler, pulp *pulpv1.Pulp) (ctrl.Result, error) {
 	log := r.RawLogger
 
 	// "initialize" operator's .status.condition field
-	if v1.FindStatusCondition(pulp.Status.Conditions, cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType)+"-Operator-Finished-Execution") == nil {
+	if v1.FindStatusCondition(pulp.Status.Conditions, "Pulp-Operator-Finished-Execution") == nil {
 		log.V(1).Info("Creating operator's .status.conditions[] field ...")
 		v1.SetStatusCondition(&pulp.Status.Conditions, metav1.Condition{
-			Type:               cases.Title(language.English, cases.Compact).String(pulp.Spec.DeploymentType) + "-Operator-Finished-Execution",
+			Type:               "Pulp-Operator-Finished-Execution",
 			Status:             metav1.ConditionFalse,
 			Reason:             "OperatorRunning",
 			LastTransitionTime: metav1.Now(),
@@ -118,7 +111,7 @@ func initializeStatusCondition(ctx context.Context, r *RepoManagerReconciler, pu
 }
 
 // checkImageVersion verifies if pulp-webcheckImageVersion image version matches pulp-minimal
-func checkImageVersion(r *RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
+func checkImageVersion(r *RepoManagerReconciler, pulp *pulpv1.Pulp) *ctrl.Result {
 	if r.needsPulpWeb(pulp) && pulp.Spec.ImageVersion != pulp.Spec.ImageWebVersion && pulp.Spec.Web.Replicas > 0 {
 		if pulp.Spec.InhibitVersionConstraint {
 			controllers.CustomZapLogger().Warn("image_version should be equal to image_web_version! Using different versions is not recommended and can make the application unreachable")
@@ -131,7 +124,7 @@ func checkImageVersion(r *RepoManagerReconciler, pulp *repomanagerpulpprojectorg
 }
 
 // checkIngressDefinition verifies if all ingress fields are defined when ingress_type==ingress
-func checkIngressDefinition(log logr.Logger, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
+func checkIngressDefinition(log logr.Logger, pulp *pulpv1.Pulp) *ctrl.Result {
 	// in case of ingress_type == ingress.
 	if isIngress(pulp) {
 
@@ -148,7 +141,7 @@ func checkIngressDefinition(log logr.Logger, pulp *repomanagerpulpprojectorgv1be
 		//   "A required string containing the protocol, fqdn, and port where the content app is reachable by users.
 		//   This is used by pulpcore and various plugins when referring users to the content app."
 		if len(pulp.Spec.IngressHost) == 0 {
-			log.Error(nil, "ingress_type defined as ingress but no ingress_host provided. Please, define the ingress_host field with the fqdn where "+pulp.Spec.DeploymentType+" should be accessed. This field is required to access API and also redirect "+pulp.Spec.DeploymentType+" CONTENT requests")
+			log.Error(nil, "ingress_type defined as ingress but no ingress_host provided. Please, define the ingress_host field with the fqdn where Pulp should be accessed. This field is required to access API and also redirect Pulp CONTENT requests")
 			return &ctrl.Result{}
 		}
 	}
@@ -158,7 +151,7 @@ func checkIngressDefinition(log logr.Logger, pulp *repomanagerpulpprojectorgv1be
 // checkStorageDefinitions verifies if there is more than one storage type defined or none.
 // Only a single type should be provided, if more the operator will not be able to
 // determine which one should be used.
-func checkStorageDefinitions(log logr.Logger, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
+func checkStorageDefinitions(log logr.Logger, pulp *pulpv1.Pulp) *ctrl.Result {
 	for _, resource := range []string{controllers.PulpResource, controllers.CacheResource, controllers.DatabaseResource} {
 		foundMultiStorage, storageType := controllers.MultiStorageConfigured(pulp, resource)
 		if foundMultiStorage {
@@ -189,7 +182,7 @@ func checkStorageDefinitions(log logr.Logger, pulp *repomanagerpulpprojectorgv1b
 }
 
 // checkRouteNotOCP verifies if this is an non-OCP cluster and "ingress_type: route".
-func checkRouteNotOCP(log logr.Logger, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
+func checkRouteNotOCP(log logr.Logger, pulp *pulpv1.Pulp) *ctrl.Result {
 	isOpenShift, _ := controllers.IsOpenShift()
 	if !isOpenShift && isRoute(pulp) {
 		log.Error(nil, "ingress_type is configured with route in a non-ocp environment. Please, choose another ingress_type (options: [ingress,nodeport]). Route resources are specific to OpenShift installations.")
@@ -198,33 +191,11 @@ func checkRouteNotOCP(log logr.Logger, pulp *repomanagerpulpprojectorgv1beta2.Pu
 	return nil
 }
 
-// checkImmutableFields verifies if an immutable field had changed
-func checkImmutableFields(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
-	// Checking immutable fields update
-	immutableFields := []immutableField{
-		{FieldName: "DeploymentType", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
-		{FieldName: "ObjectStorageAzureSecret", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
-		{FieldName: "ObjectStorageS3Secret", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
-		{FieldName: "DBFieldsEncryptionSecret", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
-		{FieldName: "ContainerTokenSecret", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
-		{FieldName: "AdminPasswordSecret", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
-		{FieldName: "ExternalCacheSecret", FieldPath: repomanagerpulpprojectorgv1beta2.Cache{}},
-		{FieldName: "PulpSecretKey", FieldPath: repomanagerpulpprojectorgv1beta2.PulpSpec{}},
-	}
-	for _, field := range immutableFields {
-		// if tried to modify an immutable field we should trigger a reconcile loop
-		if r.checkImmutableFields(ctx, pulp, field, r.RawLogger) {
-			return &ctrl.Result{}
-		}
-	}
-	return nil
-}
-
 // checkSecretsAvailability verifies if the secrets defined in Pulp CR are available.
 // If an expected secret is not found, the operator will fail early and
 // NOT trigger a reconciliation loop to avoid "spamming" error messages until
 // the expected secret is found.
-func checkSecretsAvailability(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
+func checkSecretsAvailability(ctx context.Context, r *RepoManagerReconciler, pulp *pulpv1.Pulp) *ctrl.Result {
 	if err := checkSecretsAvailable(controllers.FunctionResources{Context: ctx, Client: r.Client, Pulp: pulp, Scheme: r.Scheme, Logger: r.RawLogger}); err != nil {
 		r.RawLogger.Error(err, "Secret defined in Pulp CR not found!")
 		return &ctrl.Result{}
@@ -235,7 +206,7 @@ func checkSecretsAvailability(ctx context.Context, r *RepoManagerReconciler, pul
 // checkFileStorage verifies if there is a file_storage definition but the storage_class is not provided
 // the file_storage_* fields are used to provision the PVC using the provided file_storage_class
 // if no file_storage_class is provided, the other fields will not be useful and can cause confusion
-func checkFileStorage(r *RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
+func checkFileStorage(r *RepoManagerReconciler, pulp *pulpv1.Pulp) *ctrl.Result {
 	if hasFileStorageDefinition(pulp) && len(pulp.Spec.FileStorageClass) == 0 {
 		r.RawLogger.Error(nil, "No file_storage_class provided for the file_storage_{access_mode,size} definition(s)!")
 		r.RawLogger.Error(nil, "Provide a file_storage_storage_class with the file_storage_{access_mode,size} fields to deploy Pulp with persistent data.")
@@ -251,7 +222,7 @@ func checkFileStorage(r *RepoManagerReconciler, pulp *repomanagerpulpprojectorgv
 }
 
 // hasFileStorageDefinition returns true if any file_storage field is defined
-func hasFileStorageDefinition(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool {
+func hasFileStorageDefinition(pulp *pulpv1.Pulp) bool {
 	return len(pulp.Spec.FileStorageAccessMode) > 0 || len(pulp.Spec.FileStorageSize) > 0
 }
 
@@ -259,7 +230,7 @@ func hasFileStorageDefinition(pulp *repomanagerpulpprojectorgv1beta2.Pulp) bool 
 // * deprecated checksums algorithms
 // * mandatory checksums present (for now, only sha256 is required)
 // * checksums provided are valid
-func checkAllowedContentChecksums(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
+func checkAllowedContentChecksums(pulp *pulpv1.Pulp) *ctrl.Result {
 	logger := controllers.CustomZapLogger()
 
 	if len(pulp.Spec.AllowedContentChecksums) == 0 {
@@ -287,7 +258,7 @@ func checkAllowedContentChecksums(ctx context.Context, r *RepoManagerReconciler,
 
 // checkLDAPCA verifies if there is a file provided in auth_ldap_ca_file (from pulp.Spec.LDAP.Config) field and if it does
 // we need to ensure that .spec.LDAP.CA is provided
-func checkLDAPCA(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
+func checkLDAPCA(ctx context.Context, r *RepoManagerReconciler, pulp *pulpv1.Pulp) *ctrl.Result {
 	if len(pulp.Spec.LDAP.Config) == 0 {
 		return nil
 	}
@@ -320,7 +291,7 @@ func checkLDAPCA(ctx context.Context, r *RepoManagerReconciler, pulp *repomanage
 }
 
 // checkSigningScripts verifies if signing_script and/or signing_secret is/are defined
-func checkSigningScripts(ctx context.Context, r *RepoManagerReconciler, pulp *repomanagerpulpprojectorgv1beta2.Pulp) *ctrl.Result {
+func checkSigningScripts(r *RepoManagerReconciler, pulp *pulpv1.Pulp) *ctrl.Result {
 	if len(pulp.Spec.SigningScripts) > 0 && len(pulp.Spec.SigningSecret) == 0 {
 		r.RawLogger.Error(nil, "spec.signing_scripts is defined but spec.signing_secret was not found! Provide both values or none to avoid error in Pulp execution.")
 		return &ctrl.Result{}

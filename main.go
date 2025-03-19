@@ -27,10 +27,6 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	configv1 "github.com/openshift/api/config/v1"
 	routev1 "github.com/openshift/api/route/v1"
-	repomanagerpulpprojectorgv1beta2 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1beta2"
-	repo_manager_backup "github.com/pulp/pulp-operator/controllers/backup"
-	repo_manager "github.com/pulp/pulp-operator/controllers/repo_manager"
-	repo_manager_restore "github.com/pulp/pulp-operator/controllers/restore"
 	uzap "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -46,10 +42,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+
+	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
+	repo_manager_backup "github.com/pulp/pulp-operator/controllers/backup"
+	repo_manager "github.com/pulp/pulp-operator/controllers/repo_manager"
+	repo_manager_restore "github.com/pulp/pulp-operator/controllers/restore"
 	//+kubebuilder:scaffold:imports
 )
 
 var (
+	Version  = "devel"
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 )
@@ -59,7 +61,7 @@ func init() {
 
 	utilruntime.Must(configv1.AddToScheme(scheme))
 	utilruntime.Must(routev1.AddToScheme(scheme))
-	utilruntime.Must(repomanagerpulpprojectorgv1beta2.AddToScheme(scheme))
+	utilruntime.Must(pulpv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -201,7 +203,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info("pulp-operator version: 1.0.8-beta.5")
+	setupLog.Info("pulp-operator version: " + Version)
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")

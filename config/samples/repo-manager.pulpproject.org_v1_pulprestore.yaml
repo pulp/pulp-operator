@@ -1,0 +1,7 @@
+apiVersion: repo-manager.pulpproject.org/v1
+kind: PulpRestore
+metadata:
+  name: ci-pulprestore
+spec:
+  backup_name: pulpbackup-sample
+  deployment_name: example-pulp

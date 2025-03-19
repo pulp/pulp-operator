@@ -37,7 +37,7 @@ containerdConfigPatches:
     config_path = "/etc/containerd/certs.d"
 nodes:
   - role: control-plane
-    image: kindest/node:v1.23.0@sha256:49824ab1727c04e56a21a5d8372a402fcd32ea51ac96a2706a12af38934f81ac
+    image: kindest/node:$1
     kubeadmConfigPatches:
       - |
         kind: JoinConfiguration

@@ -32,18 +32,18 @@ After installing `pulp-operator` we need to create a `Pulp CR` with the configur
 For example:
 ```
 $ oc apply -f- <<EOF
-apiVersion: repo-manager.pulpproject.org/v1beta2
+apiVersion: repo-manager.pulpproject.org/v1
 kind: Pulp
 metadata:
   name: pulp
   namespace: pulp
 spec:
-  api:
-    replicas: 1
-  content:
-    replicas: 1
-  worker:
-    replicas: 1
+  database:
+    postgres_storage_class: standard
+
+  file_storage_access_mode: "ReadWriteOnce"
+  file_storage_size: "2Gi"
+  file_storage_storage_class: standard
 EOF
 ```
 

@@ -1,73 +1,36 @@
-apiVersion: repo-manager.pulpproject.org/v1beta2
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: settings
+data:
+  analytics: "False"
+  api_root: '"/pulp/"'
+  allowed_export_paths: '[ "/tmp" ]'
+  allowed_import_paths: '[ "/tmp" ]'
+
+---
+apiVersion: repo-manager.pulpproject.org/v1
 kind: Pulp
 metadata:
   name: example-pulp
 spec:
-  deployment_type: pulp
-  image_version: stable
-  image_web_version: stable
-#  affinity:
-#    nodeAffinity:
-#      requiredDuringSchedulingIgnoredDuringExecution:
-#        nodeSelectorTerms:
-#        - matchExpressions:
-#          - key: test
-#            operator: In
-#            values:
-#            - test
+  custom_pulp_settings: settings
+
   api:
     replicas: 1
   content:
     replicas: 1
   worker:
     replicas: 1
-  migration_job:
-    container:
-      resource_requirements:
-        requests:
-          cpu: 1
-        limits:
-          cpu: 1
   database:
     postgres_storage_class: standard
-#    postgres_storage_requirements: "5Gi"
 
-  file_storage_access_mode: "ReadWriteOnce"
+  file_storage_access_mode: "ReadWriteMany"
   file_storage_size: "2Gi"
   file_storage_storage_class: standard
-
-  # Redis configs
-  cache:
-    enabled: true
-    redis_storage_class: standard
 
   ingress_type: ingress
   ingress_host: ingress.local
   ingress_class_name: nginx
   is_nginx_ingress: true
-
-  pulp_settings:
-    api_root: "/pulp/"
-    allowed_export_paths:
-      - /tmp
-    allowed_import_paths:
-      - /tmp
-    telemetry: false
-    # cache_enabled: true
-    # db_encryption_key: "/etc/pulp/keys/database_fields.symmetric.key"
-    # galaxy_collection_signing_service: ansible-default
-    # ansible_certs_dir: "/etc/pulp/keys/"
-    # databases:
-    #   default:
-    #     HOST: "pulp-database-svc.pulp.svc.cluster.local"
-    #     ENGINE: django.db.backends.postgresql_psycopg2
-    #     NAME: "pulp"
-    #     USER: "pulp"
-    #     PASSWORD: "{{ postgres_pass }}"
-    #     PORT: "5432"
-    #     CONN_MAX_AGE: 0
-    #     OPTIONS:
-    #       sslmode: "prefer"
-    # redis_host: "pulp-redis-svc.pulp"
-    # redis_port: 6379
-    # redis_password: ""
