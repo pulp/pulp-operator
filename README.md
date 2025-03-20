@@ -16,16 +16,16 @@ If you have dozens, hundreds, or thousands of software packages and need a bette
 Pulp is completely free and open-source!
 
 * License: GPLv2+
-* Documentation: [https://docs.pulpproject.org/](https://docs.pulpproject.org/)
+* Documentation: [https://pulpproject.org/](https://pulpproject.org/)
 * Source: [https://github.com/pulp/pulpcore/](https://github.com/pulp/pulpcore/)
 
 For more information, check out the project website: [https://pulpproject.org](https://pulpproject.org)
 
-If you want to evaluate Pulp quickly, try [Pulp in One Container](https://pulpproject.org/pulp-in-one-container/)
+If you want to evaluate Pulp quickly, try [Pulp in One Container](https://pulpproject.org/pulp-oci-images/docs/admin/tutorials/quickstart/#single-container)
 
 ## Pulp Operator
 
-See our documentation on [Pulp Operator page](https://docs.pulpproject.org/pulp_operator/).
+See our documentation on [Pulp Operator page](https://pulpproject.org/pulp_operator/).
 
 Pulp Operator is in beta stage and under active development, with the goal to provide a scalable and robust cluster for Pulp 3.
 If you find any problem, please check our [issue page](https://github.com/pulp/pulp-operator/issues?q=is%3Aissue+is%3Aopen+label%3Ago-alpha) with the current known issues or feel free to fill a new bug or rfe in case it is not addressed yet.
@@ -35,9 +35,8 @@ Note that Pulp operator works with three different types of service containers (
 |           | Operator | Main | Web |
 | --------- | -------- | ---- | --- |
 | **Image** | [pulp-operator](https://quay.io/repository/pulp/pulp-operator?tab=tags) |[pulp-minimal](https://quay.io/repository/pulp/pulp-minimal?tab=tags) | [pulp-web](https://quay.io/repository/pulp/pulp-web?tab=tags) |
-| **Image** | [pulp-operator](https://quay.io/repository/pulp/pulp-operator?tab=tags) |[galaxy-minimal](https://quay.io/repository/pulp/galaxy-minimal?tab=tags) | [galaxy-web](https://quay.io/repository/pulp/galaxy-web?tab=tags) |
 
-<br>Pulp operator is manually built and [hosted on quay.io](https://quay.io/repository/pulp/pulp-operator). Read more about the container images [here](https://docs.pulpproject.org/pulp_operator/container/).
+<br>Pulp operator is manually built and [hosted on quay.io](https://quay.io/repository/pulp/pulp-operator). Read more about the container images [here](https://pulpproject.org/pulp-oci-images/docs/admin/reference/available-images/single-process-images/).
 
 ## Custom Resource Definitions
 Pulp Operator currently provides three different kinds of [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#custom-resources): Pulp, Pulp Backup and Pulp Restore.
@@ -50,7 +49,7 @@ Manages pulp backup
 Manages the restoration of a pulp backup
 ## Get Help
 
-Documentation: [https://docs.pulpproject.org/pulp_operator/](https://docs.pulpproject.org/pulp_operator/)
+Documentation: [https://pulpproject.org/pulp_operator/](https://pulpproject.org/pulp_operator/)
 
 Issue Tracker: [https://github.com/pulp/pulp-operator/issues](https://github.com/pulp/pulp-operator/issues)
 
