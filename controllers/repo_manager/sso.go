@@ -2,6 +2,8 @@ package repo_manager
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/pulp/pulp-operator/controllers"
@@ -61,7 +63,7 @@ func ssoConfig(resource controllers.FunctionResources, pulpSettings *string) err
 	}
 
 	// Inject SSO settings into pulp_settings
-	for key := range settings {
+	for _, key := range slices.Sorted(maps.Keys(settings)) {
 		*pulpSettings = *pulpSettings + fmt.Sprintf("%v = \"%v\"\n", strings.ToUpper(key), settings[key])
 	}
 
