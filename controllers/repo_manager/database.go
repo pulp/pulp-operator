@@ -409,9 +409,12 @@ func statefulSetForDatabase(m *repomanagerpulpprojectorgv1beta2.Pulp) *appsv1.St
 	if isOpenshift, _ := controllers.IsOpenShift(); !isOpenshift {
 		runAsUser := int64(999)
 		fsGroup := int64(999)
+		fsGroupChangeOnRootMismatch := corev1.FSGroupChangeOnRootMismatch
 		podSecurityContext = &corev1.PodSecurityContext{
-			RunAsUser:  &runAsUser,
-			RunAsGroup: &fsGroup,
+			RunAsUser:           &runAsUser,
+			RunAsGroup:          &fsGroup,
+			FSGroup:             &fsGroup,
+			FSGroupChangePolicy: &fsGroupChangeOnRootMismatch,
 		}
 	}
 
