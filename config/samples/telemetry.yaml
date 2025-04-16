@@ -6,8 +6,7 @@ spec:
   telemetry:
     enabled: true
   image_version: stable
-  image_web_version: 3.63.4
-  inhibit_version_constraint: true
+  image_web_version: stable
   api:
     replicas: 1
   content:
