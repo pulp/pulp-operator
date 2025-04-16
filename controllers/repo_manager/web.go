@@ -502,6 +502,7 @@ func (r *RepoManagerReconciler) pulpWebConfigMap(m *repomanagerpulpprojectorgv1b
 			}
 
 			include /opt/app-root/etc/nginx.default.d/*.conf;
+			include /etc/nginx/pulp/*.conf;
 
 			location / {
 				proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
