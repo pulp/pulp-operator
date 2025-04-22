@@ -14,39 +14,55 @@ jobs:
           go-version-file: 'go.mod'
           cache: false
       - name: Install kind
-        run: |
-          .ci/scripts/kind_with_registry.sh
-        shell: bash
+        run: .ci/scripts/kind_with_registry.sh v1.31.6
       - name: Install OLM
         run: |
-          make sdkbin OPERATOR_SDK_VERSION=v1.29.0 LOCALBIN=/tmp
+          make sdkbin LOCALBIN=/tmp
           /tmp/operator-sdk olm install
         shell: bash
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           repository: pulp/pulp-operator
-          ref: 1.0.0-beta.4
-      - name: Install Pulp CRD
-        run: |
-          make install CONTROLLER_TOOLS_VERSION=v0.14.0
-        shell: bash
+          ref: 1.0.0
       - name: Build bundle image
-        run: |
-          make bundle-build bundle-push BUNDLE_IMG=localhost:5001/pulp-operator-bundle:old
-        shell: bash
+        run: make bundle-build bundle-push BUNDLE_IMG=localhost:5001/pulp-operator-bundle:old
       - name: Install the operator
-        run: |
-          /tmp/operator-sdk run bundle --skip-tls localhost:5001/pulp-operator-bundle:old
-        shell: bash
+        run: /tmp/operator-sdk run bundle --skip-tls localhost:5001/pulp-operator-bundle:old
       - uses: actions/checkout@v4
       - name: Build bundle image
-        run: |
-          make bundle-build  bundle-push BUNDLE_IMG=localhost:5001/pulp-operator-bundle:new
-        shell: bash
+        run: make docker-build docker-push bundle bundle-build bundle-push VERSION=1.0.0-dev IMG=localhost:5001/pulp-operator:upgrade BUNDLE_IMG=localhost:5001/pulp-operator-bundle:new
       - name: Upgrade the operator
+        run: /tmp/operator-sdk run bundle-upgrade --use-http localhost:5001/pulp-operator-bundle:new
+      - name: Logs
+        if: always()
+        run: .github/workflows/scripts/show_logs.sh --kind
+      - name: OLM Logs
+        if: always()
         run: |
-          /tmp/operator-sdk run bundle-upgrade --use-http localhost:5001/pulp-operator-bundle:new
+          echo ::group::SUB
+          kubectl get sub -oyaml -A
+          echo ::endgroup::
+
+          echo ::group::InstallPlan
+          kubectl get ip -A -oyaml
+          echo ::endgroup::
+
+          echo ::group::PODS
+          kubectl -nolm get pods
+          kubectl get pods -A
+          echo ::endgroup::
+
+          echo ::group::CATALOG-OPERATOR-LOGS
+          kubectl -nolm logs deployment/catalog-operator
+          echo ::endgroup::
+
+          echo ::group::OLM-OPERATOR-LOGS
+          kubectl -nolm logs deployment/olm-operator
+          echo ::endgroup::
+
+          echo ::group::CSV
+          kubectl get csv -A -oyaml
+          echo ::endgroup::
         shell: bash
 
   test-upgrade:
@@ -92,8 +108,6 @@ jobs:
         if: always()
         run: .github/workflows/scripts/show_logs.sh
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Upgrade pulp-operator
         run: |
           make install
