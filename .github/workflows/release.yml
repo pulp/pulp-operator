@@ -18,8 +18,8 @@ jobs:
         run: echo "$QUAY_BOT_PASSWORD" | docker login -u "$QUAY_BOT_USERNAME" --password-stdin quay.io
       - name: Build and Push images
         run: |
-          export IMG=quay.io/pulp/pulp-operator:${{ github.ref_name }}
-          export CATALOG_IMG=quay.io/pulp/pulp-operator-catalog:${{ github.ref_name }}
-          export BUNDLE_IMG=quay.io/pulp/pulp-operator-bundle:${{ github.ref_name }}
+          export IMG=quay.io/pulp/pulp-operator:v${{ github.ref_name }}
+          export CATALOG_IMG=quay.io/pulp/pulp-operator-catalog:v${{ github.ref_name }}
+          export BUNDLE_IMG=quay.io/pulp/pulp-operator-bundle:v${{ github.ref_name }}
           make docker-buildx bundle-build bundle-push catalog-build catalog-push
         shell: bash
