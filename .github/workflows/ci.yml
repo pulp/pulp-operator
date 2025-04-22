@@ -66,9 +66,8 @@ jobs:
           .ci/scripts/bundle_check.sh
         shell: bash
 
-  # tmp disabling it
-  #upgrade:
-  #  uses: "./.github/workflows/upgrade.yml"
+  upgrade:
+    uses: "./.github/workflows/upgrade.yml"
 
   two-deployments:
     runs-on: ubuntu-latest
@@ -256,6 +255,8 @@ jobs:
             export IMG=quay.io/pulp/pulp-operator:nightly
             export CATALOG_IMG=quay.io/pulp/pulp-operator-catalog:nightly
             export BUNDLE_IMG=quay.io/pulp/pulp-operator-bundle:nightly
+          else
+            export VERSION=$(awk '/^VERSION \?= / {print $3}' Makefile)-dev
           fi
           make docker-buildx bundle-build bundle-push catalog-build catalog-push
         shell: bash
