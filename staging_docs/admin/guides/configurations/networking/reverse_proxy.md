@@ -26,12 +26,25 @@ $ kubectl apply -f ingress.yaml
 ```
 
 and update Pulp CR with the `hostname` used in `Ingress`:
+
+* create/update the `ConfigMap` (used by [`custom_pulp_settings`](https://pulpproject.org/pulp-operator/docs/admin/guides/configurations/pulp_settings/#custom-settings)):
+```yaml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: settings
+data:
+  token_server: '"http://<ingress_host>/token/"'
+  content_origin: '"http://<ingress_host>"'
+  ansible_api_hostname: '"http://<ingress_host>"'
+  pypi_api_hostname: '"http://<ingress_host>"'
+```
+
+* update `Pulp CR` with the CM:
 ```yaml
 spec:
-  pulp_settings:
-    content_origin: http://<ingress host>
-    ansible_api_hostname: http://<ingress host>
-    token_server: http://<ingress host>/token/
+  custom_pulp_settings: settings
 ```
 
 !!! note
