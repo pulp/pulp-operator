@@ -8,7 +8,7 @@ RUN pip3 install -U pip  && \
     pip3 install ansible jmespath molecule more-itertools openshift yamllint pulp-cli
 
 RUN curl -Lo /usr/local/bin/kind https://kind.sigs.k8s.io/dl/v0.11.1/kind-linux-amd64  && \
-    curl -Lo ocp.tar.gz https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable/openshift-client-linux.tar.gz  && \
+    curl -Lo ocp.tar.gz https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable/openshift-client-linux-amd64-rhel8.tar.gz  && \
     tar xvzf ocp.tar.gz -C /usr/local/bin oc --skip-old-files && rm ocp.tar.gz  && \
     chmod ug+x /usr/local/bin/kind /usr/local/bin/oc
 
