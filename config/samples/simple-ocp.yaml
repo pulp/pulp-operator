@@ -24,11 +24,11 @@ spec:
   admin_password_secret: "example-pulp-admin-password"
 
   database:
-    postgres_storage_class: gp3-csi
+    postgres_storage_class: managed-csi
 
   file_storage_access_mode: "ReadWriteOnce"
   file_storage_size: "2Gi"
-  file_storage_storage_class: gp3-csi
+  file_storage_storage_class: azurefile-csi
 
   ingress_type: route
   route_host: route_host_placeholder
