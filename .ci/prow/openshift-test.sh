@@ -34,7 +34,7 @@ CR_FILE=config/samples/simple-ocp.yaml
 
 sed -i "s/route_host_placeholder/$ROUTE_HOST/g" $CR_FILE
 oc apply -f $CR_FILE
-oc wait --for condition=Pulp-Operator-Finished-Execution --timeout=600s -f $CR_FILE || show_logs
+oc wait --for condition=Pulp-Operator-Finished-Execution --timeout=600s pulp.repo-manager.pulpproject.org/example-pulp  || show_logs
 
 API_POD=$(oc get pods -l app.kubernetes.io/component=api -oname)
 oc exec ${API_POD} -- curl -L http://localhost:24817${API_ROOT}api/v3/status/ || show_logs
