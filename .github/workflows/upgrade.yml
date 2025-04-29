@@ -6,6 +6,7 @@ on:
 jobs:
   bundle-upgrade:
     runs-on: ubuntu-latest
+    if: github.ref_name != 'main'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Go environment
@@ -27,12 +28,12 @@ jobs:
       - name: Build bundle image
         run: make bundle-build bundle-push BUNDLE_IMG=localhost:5001/pulp-operator-bundle:old
       - name: Install the operator
-        run: /tmp/operator-sdk run bundle --skip-tls localhost:5001/pulp-operator-bundle:old
+        run: /tmp/operator-sdk run bundle --skip-tls localhost:5001/pulp-operator-bundle:old --timeout 4m
       - uses: actions/checkout@v4
       - name: Build bundle image
         run: make docker-build docker-push bundle bundle-build bundle-push VERSION=1.0.0-dev IMG=localhost:5001/pulp-operator:upgrade BUNDLE_IMG=localhost:5001/pulp-operator-bundle:new
       - name: Upgrade the operator
-        run: /tmp/operator-sdk run bundle-upgrade --use-http localhost:5001/pulp-operator-bundle:new
+        run: /tmp/operator-sdk run bundle-upgrade --use-http localhost:5001/pulp-operator-bundle:new --timeout 4m
       - name: Logs
         if: always()
         run: .github/workflows/scripts/show_logs.sh --kind

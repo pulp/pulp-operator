@@ -371,20 +371,20 @@ func (r *RepoManagerReconciler) isNginxIngress(pulp *pulpv1.Pulp) bool {
 }
 
 // getRootURL handles user facing URLs
-func getRootURL(resource controllers.FunctionResources) string {
+func getRootURL(pulp pulpv1.Pulp) string {
 	scheme := "https"
-	if isIngress(resource.Pulp) {
-		if resource.Pulp.Spec.IngressTLSSecret == "" {
+	if isIngress(&pulp) {
+		if pulp.Spec.IngressTLSSecret == "" {
 			scheme = "http"
 		}
-		hostname := resource.Pulp.Spec.IngressHost
+		hostname := pulp.Spec.IngressHost
 		return scheme + "://" + hostname
 	}
-	if isRoute(resource.Pulp) {
-		return "https://" + pulp_ocp.GetRouteHost(resource.Pulp)
+	if isRoute(&pulp) {
+		return "https://" + pulp_ocp.GetRouteHost(&pulp)
 	}
 
-	return "http://" + settings.PulpWebService(resource.Pulp.Name) + "." + resource.Pulp.Namespace + ".svc.cluster.local:24880"
+	return "http://" + settings.PulpWebService(pulp.Name) + "." + pulp.Namespace + ".svc.cluster.local:24880"
 }
 
 // ignoreUpdateCRStatusPredicate filters update events on pulpbackup CR status

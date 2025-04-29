@@ -121,43 +121,40 @@ func (r *RepoManagerReconciler) createSecrets(ctx context.Context, pulp *pulpv1.
 func pulpServerSecret(resources controllers.FunctionResources) client.Object {
 
 	pulp := resources.Pulp
-	pulp_settings := ""
+	pulp_settings := controllers.DotNotEditMessage
 
-	// default settings.py configuration
-	defaultPulpSettings(resources, &pulp_settings)
+	// add custom settings to the secret
+	customSettings := addCustomPulpSettings(resources, &pulp_settings)
 
 	// pulpcore debug log
 	debugLogging(resources, &pulp_settings)
 
 	// db settings
-	databaseSettings(resources, &pulp_settings)
+	databaseSettings(resources, &pulp_settings, customSettings)
 
 	// add cache settings
 	cacheSettings(resources, &pulp_settings)
 
 	// azure settings
-	azureSettings(resources, &pulp_settings)
+	azureSettings(resources, &pulp_settings, customSettings)
 
 	// s3 settings
-	s3Settings(resources, &pulp_settings)
+	s3Settings(resources, &pulp_settings, customSettings)
 
 	// configure settings.py with keycloak integration variables
 	ssoConfig(resources, &pulp_settings)
 
 	// configure TOKEN_SERVER based on ingress_type
-	tokenSettings(resources, &pulp_settings)
+	tokenSettings(resources, &pulp_settings, customSettings)
 
 	// django SECRET_KEY
-	secretKeySettings(resources, &pulp_settings)
+	secretKeySettings(resources, &pulp_settings, customSettings)
 
 	// allowed content checksum
-	allowedContentChecksumsSettings(resources, &pulp_settings)
+	allowedContentChecksumsSettings(resources, &pulp_settings, customSettings)
 
 	// ldap auth config
 	ldapSettings(resources, &pulp_settings)
-
-	// add custom settings to the secret
-	addCustomPulpSettings(resources, &pulp_settings)
 
 	sec := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -244,22 +241,6 @@ func pulpContainerAuth(resources controllers.FunctionResources) client.Object {
 	}
 }
 
-// defaultPulpSettings appends some common settings into pulpSettings
-func defaultPulpSettings(resources controllers.FunctionResources, pulpSettings *string) {
-	rootUrl := getRootURL(resources)
-	*pulpSettings = *pulpSettings + controllers.DotNotEditMessage + `
-DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
-ANSIBLE_API_HOSTNAME = "` + rootUrl + `"
-ANSIBLE_CERTS_DIR = "/etc/pulp/keys/"
-CONTENT_ORIGIN = "` + rootUrl + `"
-PRIVATE_KEY_PATH = "/etc/pulp/keys/container_auth_private_key.pem"
-PUBLIC_KEY_PATH = "/etc/pulp/keys/container_auth_public_key.pem"
-STATIC_ROOT = "/var/lib/operator/static/"
-TOKEN_AUTH_DISABLED = False
-TOKEN_SIGNATURE_ALGORITHM = "ES256"
-`
-}
-
 // cacheSettings appends redis/cache settings into pulpSettings
 func cacheSettings(resources controllers.FunctionResources, pulpSettings *string) {
 	pulp := resources.Pulp
@@ -296,7 +277,11 @@ REDIS_DB = "` + cacheDB + `"
 }
 
 // databaseSettings appends postgres settings into pulpSettings
-func databaseSettings(resources controllers.FunctionResources, pulpSettings *string) {
+func databaseSettings(resources controllers.FunctionResources, pulpSettings *string, customSettings map[string]struct{}) {
+	if _, exists := customSettings["DATABASES"]; exists {
+		return
+	}
+
 	pulp := resources.Pulp
 	logger := resources.Logger
 	context := resources.Context
@@ -352,7 +337,11 @@ func databaseSettings(resources controllers.FunctionResources, pulpSettings *str
 }
 
 // azureSettings appends azure blob object storage settings into pulpSettings
-func azureSettings(resources controllers.FunctionResources, pulpSettings *string) {
+func azureSettings(resources controllers.FunctionResources, pulpSettings *string, customSettings map[string]struct{}) {
+	if _, exists := customSettings["STORAGES"]; exists {
+		return
+	}
+
 	pulp := resources.Pulp
 	logger := resources.Logger
 	context := resources.Context
@@ -392,7 +381,10 @@ STORAGES = {
 }
 
 // s3Settings appends s3 object storage settings into pulpSettings
-func s3Settings(resources controllers.FunctionResources, pulpSettings *string) {
+func s3Settings(resources controllers.FunctionResources, pulpSettings *string, customSettings map[string]struct{}) {
+	if _, exists := customSettings["STORAGES"]; exists {
+		return
+	}
 	pulp := resources.Pulp
 	logger := resources.Logger
 	context := resources.Context
@@ -459,9 +451,13 @@ STORAGES = {
 }
 
 // tokenSettings appends the TOKEN_SERVER setting into pulpSettings
-func tokenSettings(resources controllers.FunctionResources, pulpSettings *string) {
+func tokenSettings(resources controllers.FunctionResources, pulpSettings *string, customSettings map[string]struct{}) {
+	if _, exists := customSettings["TOKEN_SERVER"]; exists {
+		return
+	}
+
 	pulp := resources.Pulp
-	rootUrl := getRootURL(resources)
+	rootUrl := getRootURL(*pulp)
 
 	// configure TOKEN_SERVER based on ingress_type
 	tokenServer := "http://" + pulp.Name + "-api-svc." + pulp.Namespace + ".svc.cluster.local:24817/token/"
@@ -478,7 +474,11 @@ func tokenSettings(resources controllers.FunctionResources, pulpSettings *string
 }
 
 // secretKeySettings appends djange SECRET_KEY setting into pulpSettings
-func secretKeySettings(resources controllers.FunctionResources, pulpSettings *string) {
+func secretKeySettings(resources controllers.FunctionResources, pulpSettings *string, customSettings map[string]struct{}) {
+	if _, exists := customSettings["SECRET_KEY"]; exists {
+		return
+	}
+
 	pulp := resources.Pulp
 	logger := resources.Logger
 	pulpSecretKey := pulp.Spec.PulpSecretKey
@@ -494,7 +494,11 @@ func secretKeySettings(resources controllers.FunctionResources, pulpSettings *st
 }
 
 // allowedContentChecksumsSettings appends the allowed_content_checksums into pulpSettings
-func allowedContentChecksumsSettings(resources controllers.FunctionResources, pulpSettings *string) {
+func allowedContentChecksumsSettings(resources controllers.FunctionResources, pulpSettings *string, customSettings map[string]struct{}) {
+	if _, exists := customSettings["ALLOWED_CONTENT_CHECKSUMS"]; exists {
+		return
+	}
+
 	pulp := resources.Pulp
 	if len(pulp.Spec.AllowedContentChecksums) == 0 {
 		return
@@ -503,23 +507,38 @@ func allowedContentChecksumsSettings(resources controllers.FunctionResources, pu
 	*pulpSettings = *pulpSettings + fmt.Sprintln("ALLOWED_CONTENT_CHECKSUMS = ", string(settings))
 }
 
-func addCustomPulpSettings(resources controllers.FunctionResources, pulpSettings *string) {
+// addCustomPulpSettings defines settings.py with the configurations defined in custom_pulp_settings configmap
+// and returns a map with all the custom keys defined
+func addCustomPulpSettings(resources controllers.FunctionResources, pulpSettings *string) map[string]struct{} {
 	pulp := resources.Pulp
+	rootUrl := getRootURL(*pulp)
+	defaultSettings := settings.DefaultPulpSettings(rootUrl)
 
+	// if custom_pulp_settings is not defined, append the default values and return
 	if pulp.Spec.CustomPulpSettings == "" {
-		return
+		for _, k := range sortKeys(defaultSettings) {
+			*pulpSettings = *pulpSettings + fmt.Sprintf("%v = %v\n", k, defaultSettings[k])
+		}
+		return nil
 	}
 
 	settingsCM := &corev1.ConfigMap{}
 	resources.Client.Get(resources.Context, types.NamespacedName{Name: pulp.Spec.CustomPulpSettings, Namespace: pulp.Namespace}, settingsCM)
 
-	settings := ""
+	// store the keys found in custom_pulp_settings configmap
+	settings := map[string]struct{}{}
 	for _, k := range sortKeys(settingsCM.Data) {
-		settings = settings + fmt.Sprintf("%v = %v\n", strings.ToUpper(k), settingsCM.Data[k])
+		*pulpSettings = *pulpSettings + fmt.Sprintf("%v = %v\n", strings.ToUpper(k), settingsCM.Data[k])
+		settings[strings.ToUpper(k)] = struct{}{}
+
+		// remove the settings from defaultSettings dict to avoid duplicate config
+		delete(defaultSettings, strings.ToUpper(k))
 	}
 
-	*pulpSettings = *pulpSettings + settings
-
+	for _, k := range sortKeys(defaultSettings) {
+		*pulpSettings = *pulpSettings + fmt.Sprintf("%v = %v\n", k, defaultSettings[k])
+	}
+	return settings
 }
 
 // debugLogging will set the log level from Pulpcore pods to DEBUG
