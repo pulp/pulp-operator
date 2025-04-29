@@ -1,0 +1,1 @@
+Fixed an issue with duplicate configuration when custom_pulp_settings is defined.

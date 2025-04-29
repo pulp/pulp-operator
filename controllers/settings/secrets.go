@@ -39,3 +39,18 @@ func RedHatOperatorPullSecret(pulpName string) string {
 func DefaultDBSecret(pulpName string) string {
 	return pulpName + "-" + postgresConfiguration
 }
+
+// Default configurations for settings.py
+func DefaultPulpSettings(rootUrl string) map[string]string {
+	return map[string]string{
+		"DB_ENCRYPTION_KEY":         `"/etc/pulp/keys/database_fields.symmetric.key"`,
+		"ANSIBLE_CERTS_DIR":         `"/etc/pulp/keys/"`,
+		"PRIVATE_KEY_PATH":          `"/etc/pulp/keys/container_auth_private_key.pem"`,
+		"PUBLIC_KEY_PATH":           `"/etc/pulp/keys/container_auth_public_key.pem"`,
+		"STATIC_ROOT":               `"/var/lib/operator/static/"`,
+		"TOKEN_AUTH_DISABLED":       "False",
+		"TOKEN_SIGNATURE_ALGORITHM": `"ES256"`,
+		"ANSIBLE_API_HOSTNAME":      `"` + rootUrl + `"`,
+		"CONTENT_ORIGIN":            `"` + rootUrl + `"`,
+	}
+}
