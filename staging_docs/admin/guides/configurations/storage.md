@@ -4,10 +4,10 @@ Before installing Pulp, it is necessary to configure how Pulp should persist the
 
 [Pulp uses django-storages](https://docs.pulpproject.org/pulpcore/installation/storage.html) to support multiple types of storage backends. The current version of pulp-operator supports the following types of storage installation:
 
-* [Storage Class](#configuring-pulp-operator-storage-to-use-a-storage-class)
-* [Persistent Volume Claim](#configuring-pulp-operator-storage-to-use-a-persistent-volume-claim)
-* [Azure Blob](#configuring-pulp-operator-to-use-object-storage)
-* [Amazon Simple Storage Service (S3)](#configuring-pulp-operator-to-use-object-storage)
+* [Storage Class](https://pulpproject.org/pulp-operator/docs/admin/guides/configurations/storage/#configure-pulp-operator-storage-to-use-a-storage-class)
+* [Persistent Volume Claim](https://pulpproject.org/pulp-operator/docs/admin/guides/configurations/storage/#configure-pulp-operator-storage-to-use-a-persistent-volume-claim)
+* [Azure Blob](https://pulpproject.org/pulp-operator/docs/admin/guides/configurations/storage/#configure-azure-blob-storage)
+* [Amazon Simple Storage Service (S3)](https://pulpproject.org/pulp-operator/docs/admin/guides/configurations/storage/#configure-aws-s3-storage)
 
 !!! info
     Only one storage type should be provided, trying to configure Pulp CR with multiple storage types will fail operator execution.
