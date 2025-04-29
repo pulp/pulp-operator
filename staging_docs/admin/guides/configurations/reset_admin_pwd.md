@@ -1,7 +1,7 @@
 # Reset Pulp Admin Password
 
 The password from Pulp admin user is managed by Pulp Operator. If a custom `Secret` is not provided
-during operator's installation, a [random password](/pulp_operator/configuring/secrets/#pulp-admin-password) will be provided.
+during operator's installation, a [random password](https://pulpproject.org/pulp-operator/docs/admin/guides/configurations/secrets/#pulp-admin-password) will be provided.
 
 To change the admin password, the first thing to do is to get the name of the `admin_password_secret` `Secret`:
 ```sh
