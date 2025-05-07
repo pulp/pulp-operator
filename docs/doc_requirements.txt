@@ -1,4 +1,0 @@
-mkdocs
-mike
-mkdocs-git-revision-date-plugin
-mkdocs-material
