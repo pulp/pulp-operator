@@ -56,7 +56,11 @@ jobs:
           make tidy fmt vet
         shell: bash
   docs:
-    uses: "./.github/workflows/docs-ci.yml"
+    # The workflow tag and the pulpdocs_ref must match.
+    uses: "pulp/pulp-docs/.github/workflows/docs-ci.yml@rewrite-as-mkdocs-plugin"
+    with:
+      pulpdocs_ref: "rewrite-as-mkdocs-plugin"
+
   bundle:
     runs-on: ubuntu-latest
     steps:
