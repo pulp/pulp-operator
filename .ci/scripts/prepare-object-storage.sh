@@ -17,7 +17,7 @@ elif [[ "$COMPONENT_TYPE" == "s3" ]]; then
   while ! nc -z $(minikube ip) 9000; do echo 'Wait minio to startup...' && sleep 0.1; done;
   echo $(minikube ip)   pulp_minio | sudo tee -a /etc/hosts
   sed -i "s/pulp_minio/$(minikube ip)/g" config/samples/simple.s3.ci.yaml
-  mc config host add s3 http://$(minikube ip):9000 AKIAIT2Z5TDYPX3ARJBA fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS --api S3v4
-  mc config host rm local
+  mc alias set s3 http://$(minikube ip):9000 AKIAIT2Z5TDYPX3ARJBA fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS --api S3v4
+  mc alias rm local
   mc mb s3/pulp3 --region us-east-1
 fi
