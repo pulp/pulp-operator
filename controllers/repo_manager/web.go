@@ -474,7 +474,7 @@ func (r *RepoManagerReconciler) pulpWebConfigMap(ctx context.Context, m *pulpv1.
 			# purposes are served through the webserver.
 			root "/opt/app-root/src";
 
-			location /pulp/content/ {
+			location ` + controllers.GetContentPathPrefix(ctx, r.Client, m) + ` {
 				proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 				proxy_set_header X-Forwarded-Proto $scheme;
 				proxy_set_header Host $http_host;
