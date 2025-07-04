@@ -59,7 +59,7 @@ WATCH_NAMESPACE ?= $(NAMESPACE)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.24.2
 
-GOLANG_VERSION=1.23.0
+GOLANG_VERSION=1.24.0
 GOLANG_ARCH=linux-amd64
 GOLANG_INSTALL_PATH=/tmp
 
