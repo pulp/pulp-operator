@@ -359,8 +359,7 @@ func azureSettings(resources controllers.FunctionResources, pulpSettings *string
 		return
 	}
 
-	*pulpSettings = *pulpSettings + `REDIRECT_TO_OBJECT_STORAGE = True
-MEDIA_ROOT = ""
+	*pulpSettings = *pulpSettings + `MEDIA_ROOT = ""
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.azure_storage.AzureStorage",
@@ -436,8 +435,7 @@ func s3Settings(resources controllers.FunctionResources, pulpSettings *string, c
 	s3Options += s3Region
 	s3Options += fmt.Sprintf("%8s},\n", "")
 
-	*pulpSettings += `REDIRECT_TO_OBJECT_STORAGE = True
-MEDIA_ROOT = ""
+	*pulpSettings += `MEDIA_ROOT = ""
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
