@@ -19,7 +19,7 @@ chmod 600 ~/.ssh/pulp-infra
 echo "docs.pulpproject.org,8.43.85.236 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBGXG+8vjSQvnAkq33i0XWgpSrbco3rRqNZr0SfVeiqFI7RN/VznwXMioDDhc+hQtgVhd6TYBOrV07IMcKj+FAzg=" >> /home/runner/.ssh/known_hosts
 chmod 644 /home/runner/.ssh/known_hosts
 
-pip3 install -r docs/doc_requirements.txt
+pip3 install -r doc_requirements.txt
 
 eval "$(ssh-agent -s)" #start the ssh agent
 ssh-add ~/.ssh/pulp-infra
