@@ -45,17 +45,17 @@ corresponding field or resource.
 If `database.external_db_secret` is defined, Pulp Operator will configure the `settings.py`
 file with the values from the Secret. If not, it will use the configs from the
 self-managed database.
-```
+```python
 DATABASES = {
-  'default': {
-    'HOST': ...,
-    'ENGINE': ...,
-    'NAME': ...,
-    'USER': ...,
-    'PASSWORD': ...,
-    'PORT': ...,
-    'CONN_MAX_AGE': 0,
-    'OPTIONS': { 'sslmode': ... },
+  "default": {
+    "HOST": ...,
+    "ENGINE": ...,
+    "NAME": ...,
+    "USER": ...,
+    "PASSWORD": ...,
+    "PORT": ...,
+    "CONN_MAX_AGE": 0,
+    "OPTIONS": { "sslmode": ... },
   }
 }
 ```
@@ -68,7 +68,7 @@ information on how to configure Pulp database.
 If `cache.enabled: true`, Pulp Operator will define the `REDIS_*` settings with
 the definitions from `cache.external_cache_secret` Secret or from the self-managed
 redis instance.
-```
+```python
 CACHE_ENABLED = True
 REDIS_HOST =  ...
 REDIS_PORT =  ...
@@ -83,28 +83,41 @@ information on how to configure Pulp cache.
 
 If `object_storage_azure_secret` is defined, Pulp Operator will define the following
 fields with the Secret's content:
-```
-AZURE_CONNECTION_STRING = ...
-AZURE_LOCATION = ...
-AZURE_ACCOUNT_NAME = ...
-AZURE_ACCOUNT_KEY = ...
-AZURE_CONTAINER = ...
-AZURE_URL_EXPIRATION_SECS = 60
-AZURE_OVERWRITE_FILES = True
-DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
+```python
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.azure_storage.AzureStorage",
+        "OPTIONS": {
+            "connection_string": ...,
+            "location": ...,
+            "account_name": ...,
+            "azure_container": ...,
+            "account_key": ...,
+            "expiration_secs": 60,
+            "overwrite_files": True,
+        },
+    },
+}
+MEDIA_ROOT = ""
 ```
 
 If `object_storage_s3_secret` is defined, Pulp Operator will define the following
 fields with the Secret's content:
-```
-AWS_ACCESS_KEY_ID = ...
-AWS_SECRET_ACCESS_KEY = ...
-AWS_STORAGE_BUCKET_NAME = ...
-AWS_DEFAULT_ACL = "@none None"
-S3_USE_SIGV4 = True
-AWS_S3_SIGNATURE_VERSION = "s3v4"
-AWS_S3_ADDRESSING_STYLE = "path"
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+```python
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "bucket_name": ...,
+            "access_key": ...,
+            "secret_key": ...,
+            "region_name": ...,
+            "endpoint_url": ...,
+            "signature_version": "s3v4",
+            "addressing_style": "path",
+        },
+    },
+}
 MEDIA_ROOT = ""
 ```
 
@@ -114,7 +127,7 @@ for more information on how to configure Pulp storage.
 ### Fields that depend on `ingress_type`
 
 Some fields are defined based on the `ingress_type`:
-```
+```python
 ANSIBLE_API_HOSTNAME = ...
 CONTENT_ORIGIN = ...
 TOKEN_SERVER = ...
@@ -174,7 +187,7 @@ information on how to configure Pulp to authenticate using LDAP.
 ### Default Settings
 
 These fields are defined with default values.
-```
+```python
 DB_ENCRYPTION_KEY = "/etc/pulp/keys/database_fields.symmetric.key"
 ANSIBLE_CERTS_DIR = "/etc/pulp/keys/"
 PRIVATE_KEY_PATH = "/etc/pulp/keys/container_auth_private_key.pem"
