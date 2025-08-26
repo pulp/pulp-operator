@@ -57,9 +57,9 @@ jobs:
         shell: bash
   docs:
     # The workflow tag and the pulpdocs_ref must match.
-    uses: "pulp/pulp-docs/.github/workflows/docs-ci.yml@rewrite-as-mkdocs-plugin"
+    uses: "pulp/pulp-docs/.github/workflows/docs-ci.yml@main"
     with:
-      pulpdocs_ref: "rewrite-as-mkdocs-plugin"
+      pulpdocs_ref: "main"
 
   bundle:
     runs-on: ubuntu-latest
