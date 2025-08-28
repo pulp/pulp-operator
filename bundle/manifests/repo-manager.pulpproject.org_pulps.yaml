@@ -7466,6 +7466,9 @@ spec:
               object_storage_azure_secret:
                 description: The secret for Azure compliant object storage configuration.
                 type: string
+              object_storage_gcs_secret:
+                description: The secret for GCS compliant object storage configuration.
+                type: string
               object_storage_s3_secret:
                 description: The secret for S3 compliant object storage configuration.
                 type: string
@@ -10571,6 +10574,9 @@ spec:
                 type: boolean
               object_storage_azure_secret:
                 description: The secret for Azure compliant object storage configuration.
+                type: string
+              object_storage_gcs_secret:
+                description: The secret for GCS compliant object storage configuration.
                 type: string
               object_storage_s3_secret:
                 description: The secret for S3 compliant object storage configuration.

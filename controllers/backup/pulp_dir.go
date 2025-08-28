@@ -21,7 +21,7 @@ func (r *RepoManagerBackupReconciler) backupPulpDir(ctx context.Context, pulpBac
 		return err
 	}
 
-	if len(pulp.Spec.ObjectStorageAzureSecret) == 0 && len(pulp.Spec.ObjectStorageS3Secret) == 0 {
+	if len(pulp.Spec.ObjectStorageAzureSecret) == 0 && len(pulp.Spec.ObjectStorageS3Secret) == 0 && len(pulp.Spec.ObjectStorageGCSSecret) == 0 {
 		log.Info("Starting pulp dir backup ...")
 		execCmd := []string{
 			"mkdir", "-p", backupDir + "/pulp",

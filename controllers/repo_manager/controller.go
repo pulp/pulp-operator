@@ -300,7 +300,7 @@ func indexerFunc(obj client.Object) []string {
 	pulp := obj.(*pulpv1.Pulp)
 	var keys []string
 
-	secrets := []string{"ObjectStorageAzureSecret", "ObjectStorageS3Secret", "SSOSecret", "AdminPasswordSecret", "PulpSecretKey", "SigningScripts", "SigningSecret"}
+	secrets := []string{"ObjectStorageAzureSecret", "ObjectStorageGCSSecret", "ObjectStorageS3Secret", "SSOSecret", "AdminPasswordSecret", "PulpSecretKey", "SigningScripts", "SigningSecret"}
 	for _, secretField := range secrets {
 		structField := reflect.Indirect(reflect.ValueOf(pulp)).FieldByName("Spec").FieldByName(secretField).String()
 		if structField != "" {

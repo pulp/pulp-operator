@@ -53,6 +53,10 @@ type storageObjectSecret struct {
 	AzureContainer        string `json:"azure-container"`
 	AzureContainerPath    string `json:"azure-container-path"`
 	AzureConnectionString string `json:"azure-connection-string"`
+	GCSBucketName         string `json:"gcs-bucket-name"`
+	GCSIamSignBlob        string `json:"gcs-iam-sign-blob"`
+	GCSQueryStringAuth    string `json:"gcs-querystring-auth"`
+	GCSFileOverwrite      string `json:"gcs-file-overwrite"`
 }
 
 type signingSecret struct {
