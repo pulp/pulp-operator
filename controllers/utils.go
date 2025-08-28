@@ -56,6 +56,7 @@ import (
 
 const (
 	AzureObjType = "azure blob"
+	GCSObjType   = "gcs"
 	S3ObjType    = "s3"
 	SCNameType   = "StorageClass"
 	PVCType      = "PVC"
@@ -128,6 +129,10 @@ func MultiStorageConfigured(pulp *pulpv1.Pulp, resource string) (bool, []string)
 	case PulpResource:
 		if len(pulp.Spec.ObjectStorageAzureSecret) > 0 {
 			names = append(names, AzureObjType)
+		}
+
+		if len(pulp.Spec.ObjectStorageGCSSecret) > 0 {
+			names = append(names, GCSObjType)
 		}
 
 		if len(pulp.Spec.ObjectStorageS3Secret) > 0 {

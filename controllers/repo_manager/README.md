@@ -185,6 +185,7 @@ PulpSpec defines the desired state of Pulp
 | file_storage_access_mode | The file storage access mode. This field should be used only if file_storage_storage_class is provided | string | false |
 | file_storage_storage_class | Storage class to use for the file persistentVolumeClaim | string | false |
 | object_storage_azure_secret | The secret for Azure compliant object storage configuration. | string | false |
+| object_storage_gcs_secret | The secret for GCS compliant object storage configuration. | string | false |
 | object_storage_s3_secret | The secret for S3 compliant object storage configuration. | string | false |
 | pvc | PersistenVolumeClaim name that will be used by Pulp pods. If defined, the PVC must be provisioned by the user and the operator will only configure the deployment to use it | string | false |
 | db_fields_encryption_secret | Secret where the Fernet symmetric encryption key is stored. Default: <operators's name>-\"-db-fields-encryption\" | string | false |
@@ -251,6 +252,7 @@ PulpStatus defines the observed state of Pulp
 | ----- | ----------- | ------ | -------- |
 | conditions |  | []metav1.Condition | true |
 | object_storage_azure_secret | The secret for Azure compliant object storage configuration. | string | false |
+| object_storage_gcs_secret | The secret for GCS compliant object storage configuration. | string | false |
 | object_storage_s3_secret | The secret for S3 compliant object storage configuration. | string | false |
 | db_fields_encryption_secret | Secret where the Fernet symmetric encryption key is stored. | string | false |
 | image | Name of pulp image deployed. | string | false |

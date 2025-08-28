@@ -60,6 +60,12 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:hidden"}
 	ObjectStorageAzureSecret string `json:"object_storage_azure_secret,omitempty"`
 
+	// The secret for GCS compliant object storage configuration.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="GCS secret"
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:hidden"}
+	ObjectStorageGCSSecret string `json:"object_storage_gcs_secret,omitempty"`
+
 	// The secret for S3 compliant object storage configuration.
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="S3 secret"
@@ -926,6 +932,8 @@ type PulpStatus struct {
 	Conditions []metav1.Condition `json:"conditions"`
 	// The secret for Azure compliant object storage configuration.
 	ObjectStorageAzureSecret string `json:"object_storage_azure_secret,omitempty"`
+	// The secret for GCS compliant object storage configuration.
+	ObjectStorageGCSSecret string `json:"object_storage_gcs_secret,omitempty"`
 	// The secret for S3 compliant object storage configuration.
 	ObjectStorageS3Secret string `json:"object_storage_s3_secret,omitempty"`
 	// Secret where the Fernet symmetric encryption key is stored.

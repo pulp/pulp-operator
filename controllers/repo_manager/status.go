@@ -174,6 +174,7 @@ func setStatusFields(ctx context.Context, pulp *pulpv1.Pulp, r RepoManagerReconc
 		fieldName  string
 	}{
 		{verifyFunc: objAzureSecretCondition(), fieldName: "ObjectStorageAzureSecret"},
+		{verifyFunc: objGCSSecretCondition(), fieldName: "ObjectStorageGCSSecret"},
 		{verifyFunc: objS3SecretCondition(), fieldName: "ObjectStorageS3Secret"},
 		{verifyFunc: dbFieldsEncrSecretCondition(), fieldName: "DBFieldsEncryptionSecret"},
 		{verifyFunc: ingressTypeCondition(), fieldName: "IngressType"},
@@ -223,6 +224,13 @@ func setStatusFields(ctx context.Context, pulp *pulpv1.Pulp, r RepoManagerReconc
 func objAzureSecretCondition() func(*pulpv1.Pulp) bool {
 	return func(pulp *pulpv1.Pulp) bool {
 		return len(pulp.Status.ObjectStorageAzureSecret) == 0 || pulp.Spec.ObjectStorageAzureSecret != pulp.Status.ObjectStorageAzureSecret
+	}
+}
+
+// objGCSSecretCondition returns the function to verify if a new pulp.Status.ObjectStorageGCSSecret should be set
+func objGCSSecretCondition() func(*pulpv1.Pulp) bool {
+	return func(pulp *pulpv1.Pulp) bool {
+		return len(pulp.Status.ObjectStorageGCSSecret) == 0 || pulp.Spec.ObjectStorageGCSSecret != pulp.Status.ObjectStorageGCSSecret
 	}
 }
 

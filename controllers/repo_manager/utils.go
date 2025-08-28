@@ -103,7 +103,7 @@ func checkSecretsAvailable(funcResources controllers.FunctionResources) error {
 	ctx := funcResources.Context
 	pulp := funcResources.Pulp
 
-	secrets := []string{"ObjectStorageAzureSecret", "ObjectStorageS3Secret", "SSOSecret"}
+	secrets := []string{"ObjectStorageAzureSecret", "ObjectStorageGCSSecret", "ObjectStorageS3Secret", "SSOSecret"}
 	for _, secretField := range secrets {
 		structField := reflect.Indirect(reflect.ValueOf(pulp)).FieldByName("Spec").FieldByName(secretField)
 		if structField.IsValid() && len(structField.Interface().(string)) != 0 {
