@@ -819,6 +819,12 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:Secret
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: The secret for GCS compliant object storage configuration.
+        displayName: GCS secret
+        path: object_storage_gcs_secret
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: The secret for S3 compliant object storage configuration.
         displayName: S3 secret
         path: object_storage_s3_secret

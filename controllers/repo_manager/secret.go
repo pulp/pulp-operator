@@ -138,6 +138,9 @@ func pulpServerSecret(resources controllers.FunctionResources) client.Object {
 	// azure settings
 	azureSettings(resources, &pulp_settings, customSettings)
 
+	// gcs settings
+	gcsSettings(resources, &pulp_settings, customSettings)
+
 	// s3 settings
 	s3Settings(resources, &pulp_settings, customSettings)
 
@@ -371,6 +374,44 @@ STORAGES = {
             "expiration_secs": 60,
             "overwrite_files": 'True',
             "location": '` + storageData["azure-container-path"] + `'
+        },
+    },
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+`
+
+}
+
+// gcsSettings appends GCS object storage settings into pulpSettings
+func gcsSettings(resources controllers.FunctionResources, pulpSettings *string, customSettings map[string]struct{}) {
+	if _, exists := customSettings["STORAGES"]; exists {
+		return
+	}
+
+	pulp := resources.Pulp
+	logger := resources.Logger
+	context := resources.Context
+	client := resources.Client
+
+	_, storageType := controllers.MultiStorageConfigured(pulp, "Pulp")
+	if storageType[0] != controllers.GCSObjType {
+		return
+	}
+
+	logger.V(1).Info("Retrieving GCS data from " + resources.Pulp.Spec.ObjectStorageGCSSecret)
+	storageData, err := controllers.RetrieveSecretData(context, pulp.Spec.ObjectStorageGCSSecret, pulp.Namespace, true, client, "gcs-project-id", "gcs-bucket-name")
+	if err != nil {
+		logger.Error(err, "Secret Not Found!", "Secret.Namespace", pulp.Namespace, "Secret.Name", pulp.Spec.ObjectStorageGCSSecret)
+		return
+	}
+
+	*pulpSettings = *pulpSettings + `MEDIA_ROOT = ""
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.gcloud.GoogleCloudStorage"",
+        "OPTIONS": {
+            "bucket_name": '` + storageData["gcs-bucket-name"] + `',
+            "project_id": '` + storageData["gcs-project-id"] + `'
         },
     },
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
