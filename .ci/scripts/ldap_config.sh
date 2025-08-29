@@ -107,10 +107,10 @@ function build_pulp_minimal_image {
 cat<<EOF>/tmp/Dockerfile
 FROM quay.io/pulp/pulp-minimal:stable
 RUN pip3 install django-auth-ldap==4.6.0
-RUN sed -i '126i \            if options != None:' /usr/local/lib/python3.9/site-packages/django_auth_ldap/backend.py
-RUN sed -i '127i \                options = {int(k):v for k,v in options.items()}' /usr/local/lib/python3.9/site-packages/django_auth_ldap/backend.py
-RUN sed -i '859i \                optInt = int(opt)' /usr/local/lib/python3.9/site-packages/django_auth_ldap/backend.py
-RUN sed -i '860s/opt, value/optInt, value/' /usr/local/lib/python3.9/site-packages/django_auth_ldap/backend.py
+RUN sed -i '126i \            if options != None:' /usr/local/lib/python3.11/site-packages/django_auth_ldap/backend.py
+RUN sed -i '127i \                options = {int(k):v for k,v in options.items()}' /usr/local/lib/python3.11/site-packages/django_auth_ldap/backend.py
+RUN sed -i '859i \                optInt = int(opt)' /usr/local/lib/python3.11/site-packages/django_auth_ldap/backend.py
+RUN sed -i '860s/opt, value/optInt, value/' /usr/local/lib/python3.11/site-packages/django_auth_ldap/backend.py
 EOF
 
 docker build --no-cache -t localhost/pulp-minimal:stable -f /tmp/Dockerfile /tmp
