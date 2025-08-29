@@ -25,10 +25,10 @@ jobs:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
-      - name: Set up Python 3.8
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: '3.8'
+          python-version: '3.11'
       - name: Setup Go environment
         uses: actions/setup-go@v5
         with:

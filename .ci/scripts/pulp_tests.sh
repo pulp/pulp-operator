@@ -42,10 +42,9 @@ echo $BASE_ADDR
 # https://github.com/pulp/pulp-operator/actions/runs/4238998943/jobs/7366637198#step:15:37
 pip install pulp-cli
 
-if [ ! -f ~/.config/pulp/settings.toml ]; then
-  echo "Configuring pulp-cli"
-  mkdir -p ~/.config/pulp
-  cat > ~/.config/pulp/cli.toml << EOF
+echo "Configuring pulp-cli"
+mkdir -p ~/.config/pulp
+cat > ~/.config/pulp/cli.toml << EOF
 [cli]
 base_url = "$BASE_ADDR"
 verify_ssl = false
@@ -53,9 +52,6 @@ format = "json"
 username = "admin"
 password = "password"
 EOF
-fi
-
-cat ~/.config/pulp/cli.toml | tee ~/.config/pulp/settings.toml
 
 pulp status | jq
 

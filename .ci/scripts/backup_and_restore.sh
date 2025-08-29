@@ -72,7 +72,12 @@ login admin
 password password\
 " > ~/.netrc
 
-export BASE_ADDR="http://$SERVER:$WEB_PORT"
+if [[ "$COMPONENT_TYPE" == "ingress" ]]; then
+    SERVER=ingress.local
+    export BASE_ADDR="http://$SERVER"
+else
+    export BASE_ADDR="http://$SERVER:$WEB_PORT"
+fi
 echo $BASE_ADDR
 
 if [ -z "$(pip freeze | grep pulp-cli)" ]; then
@@ -82,10 +87,9 @@ fi
 
 API_ROOT=${API_ROOT:-"/pulp/"}
 
-if [ ! -f ~/.config/pulp/settings.toml ]; then
-  echo "Configuring pulp-cli"
-  mkdir -p ~/.config/pulp
-  cat > ~/.config/pulp/cli.toml << EOF
+echo "Configuring pulp-cli"
+mkdir -p ~/.config/pulp
+cat > ~/.config/pulp/cli.toml << EOF
 [cli]
 base_url = "$BASE_ADDR"
 api_root = "$API_ROOT"
@@ -94,7 +98,6 @@ format = "json"
 username = "admin"
 password = "password"
 EOF
-fi
 
 cat ~/.config/pulp/cli.toml | tee ~/.config/pulp/settings.toml
 
