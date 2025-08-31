@@ -113,6 +113,14 @@ func (r *RepoManagerBackupReconciler) backupSecret(ctx context.Context, pulpBack
 		log.Info("Object storage azure secret backup finished")
 	}
 
+	// OBJECT STORAGE GCS SECRET
+	if len(pulp.Spec.ObjectStorageGCSSecret) > 0 {
+		if err := r.createBackupFile(ctx, secretType{"storage_secret", pulpBackup, backupDir, "objectstorage_secret.yaml", pulp.Spec.ObjectStorageGCSSecret, pod}); err != nil {
+			return err
+		}
+		log.Info("Object storage gcs secret backup finished")
+	}
+
 	// OBJECT SSO CONFIG SECRET
 	if len(pulp.Spec.SSOSecret) > 0 {
 		if err := r.createBackupFile(ctx, secretType{"sso_secret", pulpBackup, backupDir, "sso_secret.yaml", pulp.Spec.SSOSecret, pod}); err != nil {
