@@ -432,7 +432,7 @@ func (r *RepoManagerReconciler) restartPulpCorePods(ctx context.Context, pulp *p
 	r.Status().Update(ctx, pulp)
 }
 
-// runMigration deploys a k8s Job to run django migrations in case of pulpcore image change
+// runMigration deploys a k8s Job to run django migrations
 func (r *RepoManagerReconciler) runMigration(ctx context.Context, pulp *pulpv1.Pulp) {
 	if !r.needsMigration(ctx, pulp) {
 		return
@@ -440,12 +440,11 @@ func (r *RepoManagerReconciler) runMigration(ctx context.Context, pulp *pulpv1.P
 	r.migrationJob(ctx, pulp)
 }
 
-// needsMigration verifies if the pulpcore image has changed and no migration
-// has been done yet.
+// needsMigration verifies if the condition(s) to run django migrations is satisfied
 func (r *RepoManagerReconciler) needsMigration(ctx context.Context, pulp *pulpv1.Pulp) bool {
 
 	// if migrations are disabled in spec, we should not run it even if
-	// the image has changed
+	// any of the conditions are met
 	if pulp.Spec.DisableMigrations {
 		return false
 	}
@@ -459,11 +458,26 @@ func (r *RepoManagerReconciler) needsMigration(ctx context.Context, pulp *pulpv1
 		return true
 	}
 
+	// run a migration if some specific Pulp settings change
+	if settingsChanged := controllers.SettingNeedsMigrationChanged(pulp); len(settingsChanged) > 0 {
+		// we need to update the status now to avoid a new reconciliation
+		// recreating a new job
+		for _, setting := range settingsChanged {
+			currentSpec := reflect.ValueOf(pulp.Spec).FieldByName(setting).Bool()
+			reflect.ValueOf(&pulp.Status).Elem().FieldByName(setting).SetBool(currentSpec)
+			r.Status().Update(ctx, pulp)
+		}
+		// avoid deploying a new job if a migration is already running
+		if !r.hasActiveJobRunning(ctx, pulp) {
+			return true
+		}
+	}
+
 	return controllers.ImageChanged(pulp) && !r.migrationDone(ctx, pulp)
 }
 
-// migrationDone checks if there is a migration Job with the expected image
-func (r *RepoManagerReconciler) migrationDone(ctx context.Context, pulp *pulpv1.Pulp) bool {
+// getMigrationJobs retrieves the list of jobs managed by pulp-operator
+func (r *RepoManagerReconciler) getMigrationJobs(ctx context.Context, pulp *pulpv1.Pulp) batchv1.JobList {
 	jobList := &batchv1.JobList{}
 	labels := jobLabels(*pulp)
 	listOpts := []client.ListOption{
@@ -472,7 +486,13 @@ func (r *RepoManagerReconciler) migrationDone(ctx context.Context, pulp *pulpv1.
 	}
 
 	r.List(ctx, jobList, listOpts...)
-	return hasActiveJob(*jobList, pulp)
+	return *jobList
+}
+
+// migrationDone checks if there is a migration Job with the expected image
+func (r *RepoManagerReconciler) migrationDone(ctx context.Context, pulp *pulpv1.Pulp) bool {
+	jobList := r.getMigrationJobs(ctx, pulp)
+	return hasActiveJob(jobList, pulp)
 }
 
 // jobImageEqualsCurrent verifies if the image used in migration job is the same
@@ -487,6 +507,18 @@ func jobImageEqualsCurrent(job batchv1.Job, pulp *pulpv1.Pulp) bool {
 func hasActiveJob(jobList batchv1.JobList, pulp *pulpv1.Pulp) bool {
 	for _, job := range jobList.Items {
 		if jobImageEqualsCurrent(job, pulp) {
+			return true
+		}
+	}
+	return false
+}
+
+// hasActiveJob will iterate over the JobList looking for any Job running.
+// it does not take into consideration if the image is the same
+func (r *RepoManagerReconciler) hasActiveJobRunning(ctx context.Context, pulp *pulpv1.Pulp) bool {
+	jobList := r.getMigrationJobs(ctx, pulp)
+	for _, job := range jobList.Items {
+		if job.Status.Active > 0 {
 			return true
 		}
 	}

@@ -297,6 +297,30 @@ func StorageTypeChanged(pulp *pulpv1.Pulp) bool {
 	return currentStorageType != definedStorageType[0]
 }
 
+// MigrationSettingsList returns a map[string]string of configurations that should trigger a migration job
+// note: in the current implementation, all fields should be boolean. Trying to add a non-bool field
+// to the list will fail SettingNeedsMigrationChanged execution.
+func MigrationSettingsList() map[string]string {
+	return map[string]string{
+		"RedirectToObjectStorage":  "REDIRECT_TO_OBJECT_STORAGE",
+		"HideGuardedDistributions": "HIDE_GUARDED_DISTRIBUTIONS",
+	}
+}
+
+// SettingNeedsMigrationChanged verifies if a Pulp setting that needs migration has been modified
+// returns a list with the settings modified
+func SettingNeedsMigrationChanged(pulp *pulpv1.Pulp) []string {
+	settingsChanged := []string{}
+	for setting := range MigrationSettingsList() {
+		currentSpec := reflect.ValueOf(pulp.Spec).FieldByName(setting).Bool()
+		oldSpec := reflect.ValueOf(pulp.Status).FieldByName(setting).Bool()
+		if currentSpec != oldSpec {
+			settingsChanged = append(settingsChanged, setting)
+		}
+	}
+	return settingsChanged
+}
+
 // getPulpSetting returns the value of a Pulp setting field
 func getPulpSetting(ctx context.Context, r client.Client, pulp *pulpv1.Pulp, key string) string {
 

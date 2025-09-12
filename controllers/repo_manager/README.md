@@ -241,6 +241,8 @@ PulpSpec defines the desired state of Pulp
 | telemetry | Telemetry defines the OpenTelemetry configuration | [Telemetry](#telemetry) | false |
 | ldap | LDAP defines the ldap resources used by pulpcore containers to integrate Pulp with LDAP authentication | [LDAP](#ldap) | false |
 | ipv6_disabled | Disable ipv6 for pulpcore and pulp-web pods | *bool | false |
+| redirect_to_object_storage | When set to True access to artifacts is redirected to the corresponding Cloud storage. When set to False artifacts are always served by the content app instead. Default: false | bool | false |
+| hide_guarded_distributions | If True, the distributions, that are protected by a content guard, will not be shown on the directory listing in the content app. Default: false | bool | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -267,6 +269,8 @@ PulpStatus defines the observed state of Pulp
 | last_deployment_update | Controller status to keep tracking of deployment updates | string | false |
 | managed_cache_enabled | Cache deployed by pulp-operator enabled | bool | false |
 | storage_type | Type of storage in use by pulpcore pods | string | false |
+| redirect_to_object_storage | The current REDIRECT_TO_OBJECT_STORAGE definition | bool | false |
+| hide_guarded_distributions | The current HIDE_GUARDED_DISTRIBUTIONS definition | bool | false |
 
 [Back to Custom Resources](#custom-resources)
 
