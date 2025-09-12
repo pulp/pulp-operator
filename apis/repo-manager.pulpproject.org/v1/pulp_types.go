@@ -372,6 +372,19 @@ type PulpSpec struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	IPv6Disabled *bool `json:"ipv6_disabled,omitempty"`
+
+	// When set to True access to artifacts is redirected to the corresponding Cloud storage.
+	// When set to False artifacts are always served by the content app instead.
+	// Default: false
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	RedirectToObjectStorage bool `json:"redirect_to_object_storage,omitempty"`
+
+	// If True, the distributions, that are protected by a content guard, will not be shown on the directory listing in the content app.
+	// Default: false
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
+	HideGuardedDistributions bool `json:"hide_guarded_distributions,omitempty"`
 }
 
 // Api defines desired state of pulpcore-api resources
@@ -962,6 +975,10 @@ type PulpStatus struct {
 	ManagedCacheEnabled bool `json:"managed_cache_enabled,omitempty"`
 	// Type of storage in use by pulpcore pods
 	StorageType string `json:"storage_type,omitempty"`
+	// The current REDIRECT_TO_OBJECT_STORAGE definition
+	RedirectToObjectStorage bool `json:"redirect_to_object_storage,omitempty"`
+	// The current HIDE_GUARDED_DISTRIBUTIONS definition
+	HideGuardedDistributions bool `json:"hide_guarded_distributions,omitempty"`
 }
 
 // +kubebuilder:object:root=true

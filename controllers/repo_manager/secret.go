@@ -20,12 +20,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
 	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
 	"github.com/pulp/pulp-operator/controllers/settings"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -158,6 +161,9 @@ func pulpServerSecret(resources controllers.FunctionResources) client.Object {
 
 	// ldap auth config
 	ldapSettings(resources, &pulp_settings)
+
+	// pulp configurations that need to run a django migrations
+	needsMigrationSetting(resources, &pulp_settings, customSettings)
 
 	sec := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -589,7 +595,8 @@ func addCustomPulpSettings(resources controllers.FunctionResources, pulpSettings
 	// store the keys found in custom_pulp_settings configmap
 	settings := map[string]struct{}{}
 	for _, k := range sortKeys(settingsCM.Data) {
-		*pulpSettings = *pulpSettings + fmt.Sprintf("%v = %v\n", strings.ToUpper(k), settingsCM.Data[k])
+		configName, configValue := strings.ToUpper(k), settingsCM.Data[k]
+		*pulpSettings = *pulpSettings + fmt.Sprintf("%v = %v\n", configName, configValue)
 		settings[strings.ToUpper(k)] = struct{}{}
 
 		// remove the settings from defaultSettings dict to avoid duplicate config
@@ -607,5 +614,29 @@ func debugLogging(resources controllers.FunctionResources, pulpSettings *string)
 
 	if resources.Pulp.Spec.EnableDebugging {
 		*pulpSettings = *pulpSettings + fmt.Sprintln("LOGGING = {'dynaconf_merge': True, 'loggers': {'': {'handlers': ['console'], 'level': 'DEBUG'}}}")
+	}
+}
+
+// needsMigrationSetting defines settings.py with some specific configurations that when changed will
+// also trigger a migration job
+func needsMigrationSetting(resources controllers.FunctionResources, pulpSettings *string, customSettings map[string]struct{}) {
+	for operatorFieldName, pulpFieldName := range controllers.MigrationSettingsList() {
+		customSettingsFound := false
+		if _, exists := customSettings[pulpFieldName]; exists {
+			logMessage := fmt.Sprintf("%v should not be defined in custom_pulp_settings. Use pulp.Spec.%v instead", pulpFieldName, strings.ToLower(pulpFieldName))
+			controllers.CustomZapLogger().Warn(logMessage)
+			customSettingsFound = true
+		}
+		if customSettingsFound {
+			continue
+		}
+
+		config := reflect.ValueOf(resources.Pulp.Spec).FieldByName(operatorFieldName).Bool()
+		if !config {
+			return
+		}
+		configCapitalized := cases.Title(language.English, cases.Compact).String(strconv.FormatBool(config))
+		*pulpSettings = *pulpSettings + fmt.Sprintf("%v = %v\n", pulpFieldName, configCapitalized)
+
 	}
 }

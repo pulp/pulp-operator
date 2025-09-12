@@ -650,6 +650,13 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: 'If True, the distributions, that are protected by a content
+          guard, will not be shown on the directory listing in the content app. Default:
+          false'
+        displayName: Hide Guarded Distributions
+        path: hide_guarded_distributions
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: 'The image name (repo name) for the pulp image. Default: "quay.io/pulp/pulp-minimal:stable"'
         displayName: Image
         path: image
@@ -845,6 +852,13 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: 'When set to True access to artifacts is redirected to the corresponding
+          Cloud storage. When set to False artifacts are always served by the content
+          app instead. Default: false'
+        displayName: Redirect To Object Storage
+        path: redirect_to_object_storage
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: RouteAnnotations will append custom annotation(s) into routes
           (used by router shard routeSelector).
         displayName: Route Annotations
