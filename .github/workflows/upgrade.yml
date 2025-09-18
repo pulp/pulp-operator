@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: pulp/pulp-operator
-          ref: 1.0.0
+          ref: 1.0.1
       - name: Build bundle image
         run: make bundle-build bundle-push BUNDLE_IMG=localhost:5001/pulp-operator-bundle:old
       - name: Install the operator
