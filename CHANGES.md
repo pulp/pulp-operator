@@ -12,6 +12,24 @@
 
 <!-- TOWNCRIER -->
 
+## 1.1.0 (2025-09-18) {: #1.1.0 }
+
+
+#### Features {: #1.1.0-feature }
+
+- Added automatic migration job trigger for Pulp settings changes.
+  [#1522](https://github.com/pulp/pulp-operator/issues/1522)
+
+#### Bugfixes {: #1.1.0-bugfix }
+
+- Fixed an issue with duplicate configuration when custom_pulp_settings is defined.
+  [#1411](https://github.com/pulp/pulp-operator/issues/1411)
+- Modified the ConfigMap used by pulp-web to set the content-path location based on the value defined in custom_pulp_settings.
+  [#1466](https://github.com/pulp/pulp-operator/issues/1466)
+
+---
+
+
 ## 1.0.0-beta.4 (2024-01-18) {: #1.0.0-beta.4 }
 
 #### Features
