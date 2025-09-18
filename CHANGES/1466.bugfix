@@ -1,1 +1,0 @@
-Modified the ConfigMap used by pulp-web to set the content-path location based on the value defined in custom_pulp_settings.
