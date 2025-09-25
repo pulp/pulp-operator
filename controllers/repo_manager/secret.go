@@ -470,13 +470,13 @@ func s3Settings(resources controllers.FunctionResources, pulpSettings *string, c
 		return
 	}
 
-	optionalKey, _ := controllers.RetrieveSecretData(resources.Context, resources.Pulp.Spec.ObjectStorageS3Secret, resources.Pulp.Namespace, false, client, "s3-endpoint", "s3-region", "s3-access-key-id", "s3-secret-access-key")
+	optionalKey, _ := controllers.RetrieveSecretData(resources.Context, resources.Pulp.Spec.ObjectStorageS3Secret, resources.Pulp.Namespace, false, client, "s3-endpoint", "s3-region", "s3-access-key-id", "s3-secret-access-key", "s3-addressing-style")
 	if len(optionalKey["s3-endpoint"]) == 0 && len(optionalKey["s3-region"]) == 0 {
 		logger.Error(err, "Either s3-endpoint or s3-region needs to be specified", "Secret.Namespace", resources.Pulp.Namespace, "Secret.Name", resources.Pulp.Spec.ObjectStorageS3Secret)
 		return
 	}
 
-	var s3SecretKey, s3KeyId, s3Endpoint, s3Region string
+	var s3SecretKey, s3KeyId, s3Endpoint, s3Region, s3AddressingStyle string
 	if len(optionalKey["s3-secret-access-key"]) > 0 {
 		s3SecretKey = fmt.Sprintf("%12s\"secret_key\": \"%v\",\n", "", optionalKey["s3-secret-access-key"])
 	}
@@ -493,15 +493,20 @@ func s3Settings(resources controllers.FunctionResources, pulpSettings *string, c
 		s3Region = fmt.Sprintf("%12s\"region_name\": \"%v\",\n", "", optionalKey["s3-region"])
 	}
 
+	if len(optionalKey["s3-addressing-style"]) > 0 {
+		s3AddressingStyle = fmt.Sprintf("%12s\"addressing_style\": \"%v\",\n", "", optionalKey["s3-addressing-style"])
+	}
+
 	s3Options := `        "OPTIONS": {
             "signature_version": "s3v4",
-            "addressing_style": "path",
+            "addressing_style": "` + getAddressingStyle(optionalKey) + `",
             "bucket_name": '` + storageData["s3-bucket-name"] + `',
 `
 	s3Options += s3SecretKey
 	s3Options += s3KeyId
 	s3Options += s3Endpoint
 	s3Options += s3Region
+	s3Options += s3AddressingStyle
 	s3Options += fmt.Sprintf("%8s},\n", "")
 
 	*pulpSettings += `MEDIA_ROOT = ""
@@ -639,4 +644,12 @@ func needsMigrationSetting(resources controllers.FunctionResources, pulpSettings
 		*pulpSettings = *pulpSettings + fmt.Sprintf("%v = %v\n", pulpFieldName, configCapitalized)
 
 	}
+}
+
+// getAddressingStyle returns the addressing style from secret or defaults to "path"
+func getAddressingStyle(optionalKey map[string]string) string {
+    if addressingStyle, exists := optionalKey["s3-addressing-style"]; exists && len(addressingStyle) > 0 {
+        return addressingStyle
+    }
+    return "path" // default value
 }

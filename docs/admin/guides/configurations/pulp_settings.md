@@ -114,7 +114,7 @@ STORAGES = {
             "region_name": ...,
             "endpoint_url": ...,
             "signature_version": "s3v4",
-            "addressing_style": "path",
+            "addressing_style": ...,
         },
     },
 }
