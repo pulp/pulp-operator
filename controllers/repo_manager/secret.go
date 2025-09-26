@@ -476,7 +476,7 @@ func s3Settings(resources controllers.FunctionResources, pulpSettings *string, c
 		return
 	}
 
-	var s3SecretKey, s3KeyId, s3Endpoint, s3Region, s3AddressingStyle string
+	var s3SecretKey, s3KeyId, s3Endpoint, s3Region string
 	if len(optionalKey["s3-secret-access-key"]) > 0 {
 		s3SecretKey = fmt.Sprintf("%12s\"secret_key\": \"%v\",\n", "", optionalKey["s3-secret-access-key"])
 	}
@@ -493,10 +493,6 @@ func s3Settings(resources controllers.FunctionResources, pulpSettings *string, c
 		s3Region = fmt.Sprintf("%12s\"region_name\": \"%v\",\n", "", optionalKey["s3-region"])
 	}
 
-	if len(optionalKey["s3-addressing-style"]) > 0 {
-		s3AddressingStyle = fmt.Sprintf("%12s\"addressing_style\": \"%v\",\n", "", optionalKey["s3-addressing-style"])
-	}
-
 	s3Options := `        "OPTIONS": {
             "signature_version": "s3v4",
             "addressing_style": "` + getAddressingStyle(optionalKey) + `",
@@ -506,7 +502,6 @@ func s3Settings(resources controllers.FunctionResources, pulpSettings *string, c
 	s3Options += s3KeyId
 	s3Options += s3Endpoint
 	s3Options += s3Region
-	s3Options += s3AddressingStyle
 	s3Options += fmt.Sprintf("%8s},\n", "")
 
 	*pulpSettings += `MEDIA_ROOT = ""
