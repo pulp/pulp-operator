@@ -427,8 +427,10 @@ echo "${PULP_SIGNING_KEY_FINGERPRINT}:6" | gpg --import-ownertrust
 		envVars = append(envVars, corev1.EnvVar{Name: "APT_SIGNING_SERVICE", Value: "apt-signing-service"})
 	}
 	if controllers.DeployRpmSign(scriptsSecret) {
+		// Delete the signing service that might have been created with wrong class
 		args[0] += "/usr/local/bin/pulpcore-manager remove-signing-service rpm-signing-service --class rpm:RpmPackageSigningService\n"
-		args[0] += "/usr/local/bin/pulpcore-manager add-signing-service rpm-signing-service " + settings.SigningScriptPath + settings.RpmSigningScriptName + " " + fingerprint + " --class rpm:RpmPackageSigningService \n"
+		args[0] += "/usr/local/bin/pulpcore-manager remove-signing-service rpm-signing-service --class core:AsciiArmoredDetachedSigningService\n"
+		args[0] += "/usr/local/bin/pulpcore-manager add-signing-service rpm-signing-service " + settings.SigningScriptPath + settings.RpmSigningScriptName + " " + fingerprint + " --class core:AsciiArmoredDetachedSigningService \n"
 		envVars = append(envVars, corev1.EnvVar{Name: "RPM_SIGNING_SERVICE", Value: "rpm-signing-service"})
 	}
 
