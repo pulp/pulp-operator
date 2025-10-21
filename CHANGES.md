@@ -12,6 +12,19 @@
 
 <!-- TOWNCRIER -->
 
+## 1.1.1 (2025-10-21) {: #1.1.1 }
+
+
+#### Bugfixes {: #1.1.1-bugfix }
+
+- Use correct class while registering RPM metadata signing service.
+  Instead of the wrong class `rpm:RpmPackageSigningService`, use
+  the correct one `core:AsciiArmoredDetachedSigningService`
+  [#1536](https://github.com/pulp/pulp-operator/issues/1536)
+
+---
+
+
 ## 1.1.0 (2025-09-18) {: #1.1.0 }
 
 
