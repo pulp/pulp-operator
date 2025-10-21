@@ -1,3 +1,0 @@
-Use correct class while registering RPM metadata signing service.
-Instead of the wrong class `rpm:RpmPackageSigningService`, use
-the correct one `core:AsciiArmoredDetachedSigningService`
