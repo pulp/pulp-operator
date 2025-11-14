@@ -36,7 +36,7 @@ import (
 
 // CommonDeployment has the common definition for all pulpcore deployments
 type CommonDeployment struct {
-	replicas                          int32
+	replicas                          *int32
 	podLabels                         map[string]string
 	deploymentLabels                  map[string]string
 	affinity                          *corev1.Affinity
@@ -80,7 +80,7 @@ func (d CommonDeployment) Deploy(resources any, pulpcoreType settings.PulpcoreTy
 			Labels:      d.deploymentLabels,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &d.replicas,
+			Replicas: d.replicas,
 			Strategy: d.strategy,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: d.podLabels,
@@ -146,8 +146,34 @@ func (d DeploymentWorkerCommon) Deploy(resources any) client.Object {
 }
 
 // setReplicas defines the number of pod replicas
+// When HPA is enabled, replicas should not be set in the deployment spec
+// to allow HPA to manage the replica count
 func (d *CommonDeployment) setReplicas(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
-	d.replicas = int32(reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("Replicas").Int())
+	// Check if HPA is enabled for this component
+	hpaConfig := getHPAConfigForDeployment(pulp, pulpcoreType)
+	if hpaConfig != nil && hpaConfig.Enabled {
+		d.replicas = nil
+		return
+	}
+
+	// Use the static replica count from the spec
+	val := int32(reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("Replicas").Int())
+	d.replicas = &val
+}
+
+// getHPAConfigForDeployment retrieves HPA configuration for a specific component
+func getHPAConfigForDeployment(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) *pulpv1.HPA {
+	specField := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType))
+	if !specField.IsValid() {
+		return nil
+	}
+
+	hpaField := specField.FieldByName("HPA")
+	if !hpaField.IsValid() || hpaField.IsNil() {
+		return nil
+	}
+
+	return hpaField.Interface().(*pulpv1.HPA)
 }
 
 // setLabels defines the pod and deployment labels
@@ -1109,13 +1135,25 @@ func (d *CommonDeployment) setTelemetryConfig(resources any, pulpcoreType settin
 
 // AddHashLabel creates a label with the calculated hash from the mutated deployment
 func AddHashLabel(r FunctionResources, deployment *appsv1.Deployment) {
+	var hash string
+
 	// if the object does not exist yet we need to mutate the object to get the
 	// default values (I think they are added by the admission controller)
 	if err := r.Create(r.Context, deployment, client.DryRunAll); err != nil {
-		SetHashLabel(HashFromMutated(deployment, r), deployment)
+		hash = HashFromMutated(deployment, r)
 	} else {
-		SetHashLabel(CalculateHash(deployment.Spec), deployment)
+		// When HPA is enabled, exclude replicas from hash calculation
+		// to avoid race condition between operator and HPA
+		if isHPAManagedDeployment(deployment.Name, r.Pulp) {
+			depCopy := deployment.DeepCopy()
+			depCopy.Spec.Replicas = nil
+			hash = CalculateHash(depCopy.Spec)
+		} else {
+			hash = CalculateHash(deployment.Spec)
+		}
 	}
+
+	SetHashLabel(hash, deployment)
 }
 
 func (d *CommonDeployment) setLDAPConfigs(resources any) {
