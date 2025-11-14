@@ -1,0 +1,66 @@
+---
+apiVersion: repo-manager.pulpproject.org/v1
+kind: Pulp
+metadata:
+  name: pulp-with-hpa
+spec:
+  # API component with HPA enabled
+  api:
+    replicas: 2  # Ignored when HPA is enabled
+    resource_requirements:
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "1Gi"
+    hpa:
+      enabled: true
+      min_replicas: 2
+      max_replicas: 10
+      target_cpu_utilization_percentage: 70
+      target_memory_utilization_percentage: 80
+
+  # Content component with HPA enabled
+  content:
+    replicas: 2
+    resource_requirements:
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "1Gi"
+    hpa:
+      enabled: true
+      min_replicas: 2
+      max_replicas: 8
+      target_cpu_utilization_percentage: 75
+
+  # Worker component with HPA enabled
+  worker:
+    replicas: 2
+    resource_requirements:
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "1Gi"
+    hpa:
+      enabled: true
+      min_replicas: 1
+      max_replicas: 20
+      target_cpu_utilization_percentage: 80
+
+  # Database configuration
+  database:
+    postgres_storage_requirements: "8Gi"
+
+  # Cache configuration
+  cache:
+    enabled: true
+
+  # Storage configuration
+  file_storage_size: "50Gi"
+  file_storage_access_mode: "ReadWriteMany"
