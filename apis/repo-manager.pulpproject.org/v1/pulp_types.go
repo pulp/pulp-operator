@@ -399,6 +399,10 @@ type Api struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:podCount"}
 	Replicas int32 `json:"replicas"`
 
+	// HPA defines the Horizontal Pod Autoscaler configuration for the pulp-api deployment
+	// +kubebuilder:validation:Optional
+	HPA *HPA `json:"hpa,omitempty"`
+
 	// Affinity is a group of affinity scheduling rules.
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
@@ -480,6 +484,10 @@ type Content struct {
 	// +nullable
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:podCount"}
 	Replicas int32 `json:"replicas"`
+
+	// HPA defines the Horizontal Pod Autoscaler configuration for the pulp-content deployment
+	// +kubebuilder:validation:Optional
+	HPA *HPA `json:"hpa,omitempty"`
 
 	// Resource requirements for the pulp-content container
 	// +kubebuilder:validation:Optional
@@ -565,6 +573,10 @@ type Worker struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:podCount"}
 	Replicas int32 `json:"replicas"`
 
+	// HPA defines the Horizontal Pod Autoscaler configuration for the pulp-worker deployment
+	// +kubebuilder:validation:Optional
+	HPA *HPA `json:"hpa,omitempty"`
+
 	// Resource requirements for the pulp-api container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	ResourceRequirements corev1.ResourceRequirements `json:"resource_requirements,omitempty"`
@@ -633,6 +645,10 @@ type Web struct {
 	// +nullable
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:podCount"}
 	Replicas int32 `json:"replicas"`
+
+	// HPA defines the Horizontal Pod Autoscaler configuration for the pulp-web deployment
+	// +kubebuilder:validation:Optional
+	HPA *HPA `json:"hpa,omitempty"`
 
 	// Resource requirements for the pulp-web container
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:resourceRequirements","urn:alm:descriptor:com.tectonic.ui:advanced"}
@@ -1001,6 +1017,41 @@ type PulpList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Pulp `json:"items"`
+}
+
+// HPA defines the configuration for HorizontalPodAutoscaler
+type HPA struct {
+	// Enabled determines whether HPA should be created for this component
+	// Default: false
+	// +kubebuilder:default:=false
+	// +kubebuilder:validation:Optional
+	Enabled bool `json:"enabled,omitempty"`
+
+	// MinReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.
+	// Default: 1
+	// +kubebuilder:default:=1
+	// +kubebuilder:validation:Minimum:=1
+	// +kubebuilder:validation:Optional
+	MinReplicas *int32 `json:"min_replicas,omitempty"`
+
+	// MaxReplicas is the upper limit for the number of replicas to which the autoscaler can scale up.
+	// It cannot be less than MinReplicas.
+	// +kubebuilder:validation:Minimum:=1
+	// +kubebuilder:validation:Required
+	MaxReplicas int32 `json:"max_replicas"`
+
+	// TargetCPUUtilizationPercentage is the target average CPU utilization (represented as a percentage of requested CPU) over all the pods.
+	// If not specified, a default value of 50 is used.
+	// +kubebuilder:validation:Minimum:=1
+	// +kubebuilder:validation:Maximum:=100
+	// +kubebuilder:validation:Optional
+	TargetCPUUtilizationPercentage *int32 `json:"target_cpu_utilization_percentage,omitempty"`
+
+	// TargetMemoryUtilizationPercentage is the target average memory utilization (represented as a percentage of requested memory) over all the pods.
+	// +kubebuilder:validation:Minimum:=1
+	// +kubebuilder:validation:Maximum:=100
+	// +kubebuilder:validation:Optional
+	TargetMemoryUtilizationPercentage *int32 `json:"target_memory_utilization_percentage,omitempty"`
 }
 
 func init() {

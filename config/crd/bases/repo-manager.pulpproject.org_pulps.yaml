@@ -1380,6 +1380,50 @@ spec:
                       The number of gunicorn workers to use for the api.
                       Default: 2
                     type: integer
+                  hpa:
+                    description: HPA defines the Horizontal Pod Autoscaler configuration
+                      for the pulp-api deployment
+                    properties:
+                      enabled:
+                        default: false
+                        description: |-
+                          Enabled determines whether HPA should be created for this component
+                          Default: false
+                        type: boolean
+                      max_replicas:
+                        description: |-
+                          MaxReplicas is the upper limit for the number of replicas to which the autoscaler can scale up.
+                          It cannot be less than MinReplicas.
+                        format: int32
+                        minimum: 1
+                        type: integer
+                      min_replicas:
+                        default: 1
+                        description: |-
+                          MinReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.
+                          Default: 1
+                        format: int32
+                        minimum: 1
+                        type: integer
+                      target_cpu_utilization_percentage:
+                        description: |-
+                          TargetCPUUtilizationPercentage is the target average CPU utilization (represented as a percentage of requested CPU) over all the pods.
+                          If not specified, a default value of 50 is used.
+                        format: int32
+                        maximum: 100
+                        minimum: 1
+                        type: integer
+                      target_memory_utilization_percentage:
+                        description: TargetMemoryUtilizationPercentage is the target
+                          average memory utilization (represented as a percentage
+                          of requested memory) over all the pods.
+                        format: int32
+                        maximum: 100
+                        minimum: 1
+                        type: integer
+                    required:
+                    - max_replicas
+                    type: object
                   init_container:
                     description: InitContainer defines configuration of the init-containers
                       that run in pulpcore pods
@@ -4877,6 +4921,50 @@ spec:
                       The number of gunicorn workers to use for the api.
                       Default: 2
                     type: integer
+                  hpa:
+                    description: HPA defines the Horizontal Pod Autoscaler configuration
+                      for the pulp-content deployment
+                    properties:
+                      enabled:
+                        default: false
+                        description: |-
+                          Enabled determines whether HPA should be created for this component
+                          Default: false
+                        type: boolean
+                      max_replicas:
+                        description: |-
+                          MaxReplicas is the upper limit for the number of replicas to which the autoscaler can scale up.
+                          It cannot be less than MinReplicas.
+                        format: int32
+                        minimum: 1
+                        type: integer
+                      min_replicas:
+                        default: 1
+                        description: |-
+                          MinReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.
+                          Default: 1
+                        format: int32
+                        minimum: 1
+                        type: integer
+                      target_cpu_utilization_percentage:
+                        description: |-
+                          TargetCPUUtilizationPercentage is the target average CPU utilization (represented as a percentage of requested CPU) over all the pods.
+                          If not specified, a default value of 50 is used.
+                        format: int32
+                        maximum: 100
+                        minimum: 1
+                        type: integer
+                      target_memory_utilization_percentage:
+                        description: TargetMemoryUtilizationPercentage is the target
+                          average memory utilization (represented as a percentage
+                          of requested memory) over all the pods.
+                        format: int32
+                        maximum: 100
+                        minimum: 1
+                        type: integer
+                    required:
+                    - max_replicas
+                    type: object
                   init_container:
                     description: InitContainer defines configuration of the init-containers
                       that run in pulpcore pods
@@ -8211,6 +8299,50 @@ spec:
                       - name
                       type: object
                     type: array
+                  hpa:
+                    description: HPA defines the Horizontal Pod Autoscaler configuration
+                      for the pulp-web deployment
+                    properties:
+                      enabled:
+                        default: false
+                        description: |-
+                          Enabled determines whether HPA should be created for this component
+                          Default: false
+                        type: boolean
+                      max_replicas:
+                        description: |-
+                          MaxReplicas is the upper limit for the number of replicas to which the autoscaler can scale up.
+                          It cannot be less than MinReplicas.
+                        format: int32
+                        minimum: 1
+                        type: integer
+                      min_replicas:
+                        default: 1
+                        description: |-
+                          MinReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.
+                          Default: 1
+                        format: int32
+                        minimum: 1
+                        type: integer
+                      target_cpu_utilization_percentage:
+                        description: |-
+                          TargetCPUUtilizationPercentage is the target average CPU utilization (represented as a percentage of requested CPU) over all the pods.
+                          If not specified, a default value of 50 is used.
+                        format: int32
+                        maximum: 100
+                        minimum: 1
+                        type: integer
+                      target_memory_utilization_percentage:
+                        description: TargetMemoryUtilizationPercentage is the target
+                          average memory utilization (represented as a percentage
+                          of requested memory) over all the pods.
+                        format: int32
+                        maximum: 100
+                        minimum: 1
+                        type: integer
+                    required:
+                    - max_replicas
+                    type: object
                   livenessProbe:
                     description: |-
                       Periodic probe of container liveness.
@@ -9841,6 +9973,50 @@ spec:
                       - name
                       type: object
                     type: array
+                  hpa:
+                    description: HPA defines the Horizontal Pod Autoscaler configuration
+                      for the pulp-worker deployment
+                    properties:
+                      enabled:
+                        default: false
+                        description: |-
+                          Enabled determines whether HPA should be created for this component
+                          Default: false
+                        type: boolean
+                      max_replicas:
+                        description: |-
+                          MaxReplicas is the upper limit for the number of replicas to which the autoscaler can scale up.
+                          It cannot be less than MinReplicas.
+                        format: int32
+                        minimum: 1
+                        type: integer
+                      min_replicas:
+                        default: 1
+                        description: |-
+                          MinReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.
+                          Default: 1
+                        format: int32
+                        minimum: 1
+                        type: integer
+                      target_cpu_utilization_percentage:
+                        description: |-
+                          TargetCPUUtilizationPercentage is the target average CPU utilization (represented as a percentage of requested CPU) over all the pods.
+                          If not specified, a default value of 50 is used.
+                        format: int32
+                        maximum: 100
+                        minimum: 1
+                        type: integer
+                      target_memory_utilization_percentage:
+                        description: TargetMemoryUtilizationPercentage is the target
+                          average memory utilization (represented as a percentage
+                          of requested memory) over all the pods.
+                        format: int32
+                        maximum: 100
+                        minimum: 1
+                        type: integer
+                    required:
+                    - max_replicas
+                    type: object
                   init_container:
                     description: InitContainer defines configuration of the init-containers
                       that run in pulpcore pods
