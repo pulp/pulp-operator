@@ -468,8 +468,28 @@ func checkSpecModification(fields ...interface{}) bool {
 func CheckDeploymentSpec(fields ...interface{}) bool {
 	expected := fields[0].(appsv1.Deployment)
 	current := fields[1].(appsv1.Deployment)
+	resources := fields[2].(FunctionResources)
+
+	// When HPA is enabled, exclude replicas field from comparison
+	// to avoid race condition between operator and HPA
+	if isHPAManagedDeployment(expected.Name, resources.Pulp) {
+		// Create copies to avoid modifying the original objects
+		expectedCopy := expected.DeepCopy()
+		currentCopy := current.DeepCopy()
+
+		// Set both replicas to nil for comparison purposes
+		// This ensures HPA-managed replica counts don't trigger reconciliation
+		expectedCopy.Spec.Replicas = nil
+		currentCopy.Spec.Replicas = nil
+
+		hashFromLabel := GetCurrentHash(&current)
+		hashFromExpected := HashFromMutated(expectedCopy, resources)
+		hashFromCurrent := CalculateHash(currentCopy.Spec)
+		return deploymentChanged(hashFromLabel, hashFromExpected, hashFromCurrent)
+	}
+
 	hashFromLabel := GetCurrentHash(&current)
-	hashFromExpected := HashFromMutated(&expected, fields[2].(FunctionResources))
+	hashFromExpected := HashFromMutated(&expected, resources)
 	hashFromCurrent := CalculateHash(current.Spec)
 	return deploymentChanged(hashFromLabel, hashFromExpected, hashFromCurrent)
 }
@@ -479,6 +499,39 @@ func CheckDeploymentSpec(fields ...interface{}) bool {
 // * the hash calculated from the current deployment spec is equal to the hash calculated from the expected spec
 func deploymentChanged(hashFromLabel, hashFromExpected, hashFromCurrent string) bool {
 	return hashFromLabel != hashFromExpected || hashFromCurrent != hashFromExpected
+}
+
+// isHPAManagedDeployment checks if a deployment is managed by HPA
+func isHPAManagedDeployment(deploymentName string, pulp *pulpv1.Pulp) bool {
+	// Check each component type to see if this deployment has HPA enabled
+	components := map[string]*pulpv1.HPA{
+		settings.API.DeploymentName(pulp.Name):     GetHPAConfig(*pulp, settings.API),
+		settings.CONTENT.DeploymentName(pulp.Name): GetHPAConfig(*pulp, settings.CONTENT),
+		settings.WORKER.DeploymentName(pulp.Name):  GetHPAConfig(*pulp, settings.WORKER),
+		settings.WEB.DeploymentName(pulp.Name):     GetHPAConfig(*pulp, settings.WEB),
+	}
+
+	if hpaConfig, exists := components[deploymentName]; exists && hpaConfig != nil {
+		return hpaConfig.Enabled
+	}
+
+	return false
+}
+
+// GetHPAConfig retrieves HPA configuration for a specific component
+// This is a shared utility function used across the operator
+func GetHPAConfig(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) *pulpv1.HPA {
+	specField := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType))
+	if !specField.IsValid() {
+		return nil
+	}
+
+	hpaField := specField.FieldByName("HPA")
+	if !hpaField.IsValid() || hpaField.IsNil() {
+		return nil
+	}
+
+	return hpaField.Interface().(*pulpv1.HPA)
 }
 
 // checkPulpServerSecretModification returns true if the settings.py from pulp-server secret
@@ -822,6 +875,15 @@ func HashFromMutated(dep *appsv1.Deployment, resources FunctionResources) string
 	// execute a "dry run" to update the local "deploy" variable with all
 	// mutated configurations
 	resources.Update(resources.Context, dep, client.DryRunAll)
+
+	// When HPA is enabled, exclude replicas from hash calculation
+	// to avoid race condition between operator and HPA
+	if isHPAManagedDeployment(dep.Name, resources.Pulp) {
+		depCopy := dep.DeepCopy()
+		depCopy.Spec.Replicas = nil
+		return CalculateHash(depCopy.Spec)
+	}
+
 	return CalculateHash(dep.Spec)
 }
 

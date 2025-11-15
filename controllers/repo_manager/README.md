@@ -9,6 +9,7 @@
 * [Cache](#cache)
 * [Content](#content)
 * [Database](#database)
+* [HPA](#hpa)
 * [LDAP](#ldap)
 * [PulpContainer](#pulpcontainer)
 * [PulpJob](#pulpjob)
@@ -26,6 +27,7 @@ Api defines desired state of pulpcore-api resources
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
 | replicas | Size is the size of number of pulp-api replicas. Default: 1 | int32 | true |
+| hpa | HPA defines the Horizontal Pod Autoscaler configuration for the pulp-api deployment | *[HPA](#hpa) | false |
 | affinity | Affinity is a group of affinity scheduling rules. | *corev1.Affinity | false |
 | node_selector | NodeSelector for the Pulp pods. | map[string]string | false |
 | tolerations | Node tolerations for the Pulp pods. | []corev1.Toleration | false |
@@ -73,6 +75,7 @@ Content defines desired state of pulpcore-content resources
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
 | replicas | Size is the size of number of pulp-content replicas. Default: 1 | int32 | true |
+| hpa | HPA defines the Horizontal Pod Autoscaler configuration for the pulp-content deployment | *[HPA](#hpa) | false |
 | resource_requirements | Resource requirements for the pulp-content container | corev1.ResourceRequirements | false |
 | affinity | Affinity is a group of affinity scheduling rules. | *corev1.Affinity | false |
 | node_selector | NodeSelector for the Pulp pods. | map[string]string | false |
@@ -114,6 +117,20 @@ Database defines desired state of postgres
 | pvc | PersistenVolumeClaim name that will be used by database pods If defined, the PVC must be provisioned by the user and the operator will only configure the deployment to use it | string | false |
 | readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |
 | livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
+
+[Back to Custom Resources](#custom-resources)
+
+#### HPA
+
+HPA defines the configuration for HorizontalPodAutoscaler
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| enabled | Enabled determines whether HPA should be created for this component Default: false | bool | false |
+| min_replicas | MinReplicas is the lower limit for the number of replicas to which the autoscaler can scale down. Default: 1 | *int32 | false |
+| max_replicas | MaxReplicas is the upper limit for the number of replicas to which the autoscaler can scale up. It cannot be less than MinReplicas. | int32 | true |
+| target_cpu_utilization_percentage | TargetCPUUtilizationPercentage is the target average CPU utilization (represented as a percentage of requested CPU) over all the pods. If not specified, a default value of 50 is used. | *int32 | false |
+| target_memory_utilization_percentage | TargetMemoryUtilizationPercentage is the target average memory utilization (represented as a percentage of requested memory) over all the pods. | *int32 | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -295,6 +312,7 @@ Web defines desired state of pulpcore-web (reverse-proxy) resources
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
 | replicas | Size is the size of number of pulp-web replicas. Default: 1 | int32 | true |
+| hpa | HPA defines the Horizontal Pod Autoscaler configuration for the pulp-web deployment | *[HPA](#hpa) | false |
 | resource_requirements | Resource requirements for the pulp-web container | corev1.ResourceRequirements | false |
 | readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |
 | livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
@@ -315,6 +333,7 @@ Worker defines desired state of pulpcore-worker resources
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
 | replicas | Size is the size of number of pulp-worker replicas. Default: 1 | int32 | true |
+| hpa | HPA defines the Horizontal Pod Autoscaler configuration for the pulp-worker deployment | *[HPA](#hpa) | false |
 | resource_requirements | Resource requirements for the pulp-api container | corev1.ResourceRequirements | false |
 | affinity | Affinity is a group of affinity scheduling rules. | *corev1.Affinity | false |
 | node_selector | NodeSelector for the Pulp pods. | map[string]string | false |

@@ -63,6 +63,7 @@ type RepoManagerReconciler struct {
 //+kubebuilder:rbac:groups=apps,namespace=pulp-operator-system,resources=deployments;statefulsets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=policy,namespace=pulp-operator-system,resources=poddisruptionbudgets,verbs=get;list;create;delete;patch;update;watch
 //+kubebuilder:rbac:groups=batch,namespace=pulp-operator-system,resources=cronjobs;jobs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=autoscaling,namespace=pulp-operator-system,resources=horizontalpodautoscalers,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -258,6 +259,11 @@ func pulpCoreTasks(ctx context.Context, pulp *pulpv1.Pulp, r RepoManagerReconcil
 
 	log.V(1).Info("Running PDB tasks")
 	if pulpController, err := r.pdbController(ctx, pulp, log); needsRequeue(err, pulpController) {
+		return &pulpController, err
+	}
+
+	log.V(1).Info("Running HPA tasks")
+	if pulpController, err := r.hpaController(ctx, pulp, log); needsRequeue(err, pulpController) {
 		return &pulpController, err
 	}
 
