@@ -38,6 +38,7 @@ import (
 type CommonDeployment struct {
 	replicas                          *int32
 	podLabels                         map[string]string
+	podSelectorLabels                 map[string]string
 	deploymentLabels                  map[string]string
 	affinity                          *corev1.Affinity
 	strategy                          appsv1.DeploymentStrategy
@@ -83,7 +84,7 @@ func (d CommonDeployment) Deploy(resources any, pulpcoreType settings.PulpcoreTy
 			Replicas: d.replicas,
 			Strategy: d.strategy,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: d.podLabels,
+				MatchLabels: d.podSelectorLabels,
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
@@ -178,11 +179,9 @@ func getHPAConfigForDeployment(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreT
 
 // setLabels defines the pod and deployment labels
 func (d *CommonDeployment) setLabels(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
-	d.podLabels = settings.PulpcoreLabels(pulp, pulpcoreType)
-	d.deploymentLabels = make(map[string]string)
-	for k, v := range d.podLabels {
-		d.deploymentLabels[k] = v
-	}
+	d.podLabels = settings.PulpcorePodLabels(pulp, pulpcoreType)
+	d.podSelectorLabels = settings.PulpcoreLabels(pulp, pulpcoreType)
+	d.deploymentLabels = settings.PulpcoreLabels(pulp, pulpcoreType)
 }
 
 // setAffinity defines the affinity rules

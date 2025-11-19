@@ -472,6 +472,11 @@ type Api struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	DeploymentAnnotations map[string]string `json:"deployment_annotations,omitempty"`
+
+	// Labels to add to api pods
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	PodLabels map[string]string `json:"pod_labels,omitempty"`
 }
 
 // Content defines desired state of pulpcore-content resources
@@ -560,6 +565,11 @@ type Content struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	DeploymentAnnotations map[string]string `json:"deployment_annotations,omitempty"`
+
+	// Labels to add to content pods
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	PodLabels map[string]string `json:"pod_labels,omitempty"`
 }
 
 // Worker defines desired state of pulpcore-worker resources
@@ -633,6 +643,11 @@ type Worker struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	DeploymentAnnotations map[string]string `json:"deployment_annotations,omitempty"`
+
+	// Labels to add to worker pods
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	PodLabels map[string]string `json:"pod_labels,omitempty"`
 }
 
 // Web defines desired state of pulpcore-web (reverse-proxy) resources
@@ -700,6 +715,11 @@ type Web struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	DeploymentAnnotations map[string]string `json:"deployment_annotations,omitempty"`
+
+	// Labels to add to web pods
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	PodLabels map[string]string `json:"pod_labels,omitempty"`
 }
 
 // Database defines desired state of postgres
@@ -807,6 +827,11 @@ type Database struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Probe","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	LivenessProbe *corev1.Probe `json:"livenessProbe,omitempty"`
+
+	// Labels to add to database pods
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	PodLabels map[string]string `json:"pod_labels,omitempty"`
 }
 
 // Cache defines desired state of redis resources
@@ -888,6 +913,11 @@ type Cache struct {
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	DeploymentAnnotations map[string]string `json:"deployment_annotations,omitempty"`
+
+	// Labels to add to cache pods
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	PodLabels map[string]string `json:"pod_labels,omitempty"`
 }
 
 // Telemetry defines the configuration for OpenTelemetry used by Pulp

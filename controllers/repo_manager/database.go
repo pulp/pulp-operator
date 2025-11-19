@@ -429,7 +429,7 @@ func statefulSetForDatabase(m *pulpv1.Pulp) *appsv1.StatefulSet {
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: ls,
+					Labels: labelsForDatabasePods(m),
 				},
 				Spec: corev1.PodSpec{
 					Affinity:           affinity,
@@ -464,6 +464,12 @@ func statefulSetForDatabase(m *pulpv1.Pulp) *appsv1.StatefulSet {
 // belonging to the given pulp CR name.
 func labelsForDatabase(m *pulpv1.Pulp) map[string]string {
 	return settings.PulpcoreLabels(*m, settings.DATABASE)
+}
+
+// labelsForDatabasePods returns the labels for the Pods
+// belonging to the given pulp CR name.
+func labelsForDatabasePods(m *pulpv1.Pulp) map[string]string {
+	return settings.PulpcorePodLabels(*m, settings.DATABASE)
 }
 
 // serviceForDatabase returns a service object for postgres pods
