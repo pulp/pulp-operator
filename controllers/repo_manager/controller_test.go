@@ -50,6 +50,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		"app.kubernetes.io/managed-by": OperatorType + "-operator",
 		"app":                          "pulp-database",
 		"pulp_cr":                      PulpName,
+		"custom":                       "database",
 	}
 
 	labelsApi := map[string]string{
@@ -60,6 +61,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		"app.kubernetes.io/managed-by": PulpName,
 		"app":                          "pulp-api",
 		"pulp_cr":                      PulpName,
+		"custom":                       "api",
 	}
 
 	labelsContent := map[string]string{
@@ -70,6 +72,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		"app.kubernetes.io/managed-by": PulpName,
 		"app":                          "pulp-content",
 		"pulp_cr":                      PulpName,
+		"custom":                       "content",
 	}
 
 	labelsWorker := map[string]string{
@@ -80,6 +83,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		"app.kubernetes.io/managed-by": PulpName,
 		"app":                          "pulp-worker",
 		"pulp_cr":                      PulpName,
+		"custom":                       "worker",
 	}
 
 	replicasSts := int32(1)
@@ -537,6 +541,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				"app.kubernetes.io/managed-by": OperatorType + "-operator",
 				"app":                          "pulp-database",
 				"pulp_cr":                      PulpName,
+				"custom":                       "database",
 			},
 		},
 		Spec: appsv1.StatefulSetSpec{
@@ -649,6 +654,7 @@ exec "${PULP_API_ENTRYPOINT[@]}" \
 				"app":                          "pulp-api",
 				"pulp_cr":                      PulpName,
 				"owner":                        "pulp-dev",
+				"custom":                       "api",
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -692,6 +698,7 @@ exec "${PULP_API_ENTRYPOINT[@]}" \
 				"app":                          "pulp-content",
 				"pulp_cr":                      PulpName,
 				"owner":                        "pulp-dev",
+				"custom":                       "content",
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -780,6 +787,7 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 				"app.kubernetes.io/part-of":    OperatorType,
 				"app.kubernetes.io/managed-by": PulpName,
 				"owner":                        "pulp-dev",
+				"custom":                       "worker",
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -843,27 +851,45 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 				Cache: pulpv1.Cache{
 					Enabled:           true,
 					RedisStorageClass: "standard",
+					CustomLabels: map[string]string{
+						"custom": "cache",
+					},
 				},
 				ImageVersion:    "latest",
 				ImageWebVersion: "latest",
 				Api: pulpv1.Api{
 					Replicas: 1,
 					EnvVars:  []corev1.EnvVar{customEnvVar},
+					CustomLabels: map[string]string{
+						"custom": "api",
+					},
 				},
 				Content: pulpv1.Content{
 					Replicas: 1,
 					EnvVars:  []corev1.EnvVar{customEnvVar},
+					CustomLabels: map[string]string{
+						"custom": "content",
+					},
 				},
 				Worker: pulpv1.Worker{
 					Replicas: 1,
 					EnvVars:  []corev1.EnvVar{customEnvVar},
+					CustomLabels: map[string]string{
+						"custom": "worker",
+					},
 				},
 				Web: pulpv1.Web{
 					Replicas: 1,
+					CustomLabels: map[string]string{
+						"custom": "web",
+					},
 				},
 				Database: pulpv1.Database{
 					PostgresStorageClass:        &postgresStorageClass,
 					PostgresStorageRequirements: "5Gi",
+					CustomLabels: map[string]string{
+						"custom": "database",
+					},
 				},
 				FileStorageAccessMode: "ReadWriteOnce",
 				FileStorageSize:       "2Gi",
