@@ -123,7 +123,7 @@ func getHPAConfig(pulp *pulpv1.Pulp, pulpcoreType settings.PulpcoreType) *pulpv1
 // buildHPA constructs a HorizontalPodAutoscaler object
 func buildHPA(pulp *pulpv1.Pulp, pulpcoreType settings.PulpcoreType, hpaConfig *pulpv1.HPA) *autoscalingv2.HorizontalPodAutoscaler {
 	hpaName := pulpcoreType.DeploymentName(pulp.Name)
-	labels := settings.PulpcoreLabels(*pulp, string(pulpcoreType))
+	labels := settings.PulpcoreLabels(*pulp, pulpcoreType)
 
 	// Set default min replicas if not specified
 	minReplicas := hpaConfig.MinReplicas

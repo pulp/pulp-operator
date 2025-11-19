@@ -434,7 +434,7 @@ func (r *RepoManagerReconciler) deprovisionCache(ctx context.Context, pulp *pulp
 // labelsForCache returns the labels for selecting the resources
 // belonging to the given pulp CR name.
 func labelsForCache(m *pulpv1.Pulp) map[string]string {
-	return settings.PulpcoreLabels(*m, "cache")
+	return settings.PulpcoreLabels(*m, settings.CACHE)
 }
 
 // managedCacheDisabled returns true if

@@ -1,17 +1,21 @@
 package settings
 
 import (
+	"reflect"
+
 	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 )
 
-func PulpcoreLabels(pulp pulpv1.Pulp, pulpType string) map[string]string {
+func PulpcoreLabels(pulp pulpv1.Pulp, pulpcoreType PulpcoreType) map[string]string {
+	typeLabel := pulpcoreType.ToLabel()
+
 	return map[string]string{
-		"app.kubernetes.io/name":       "pulp-" + pulpType,
-		"app.kubernetes.io/instance":   "pulp-" + pulpType + "-" + pulp.Name,
-		"app.kubernetes.io/component":  pulpType,
+		"app.kubernetes.io/name":       "pulp-" + typeLabel,
+		"app.kubernetes.io/instance":   "pulp-" + typeLabel + "-" + pulp.Name,
+		"app.kubernetes.io/component":  typeLabel,
 		"app.kubernetes.io/part-of":    "pulp",
 		"app.kubernetes.io/managed-by": "pulp-operator",
-		"app":                          "pulp-" + pulpType,
+		"app":                          "pulp-" + typeLabel,
 		"pulp_cr":                      pulp.Name,
 	}
 }
