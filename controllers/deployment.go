@@ -152,7 +152,7 @@ func (d *CommonDeployment) setReplicas(pulp pulpv1.Pulp, pulpcoreType settings.P
 
 // setLabels defines the pod and deployment labels
 func (d *CommonDeployment) setLabels(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
-	d.podLabels = settings.PulpcoreLabels(pulp, strings.ToLower(string(pulpcoreType)))
+	d.podLabels = settings.PulpcoreLabels(pulp, pulpcoreType)
 	d.deploymentLabels = make(map[string]string)
 	for k, v := range d.podLabels {
 		d.deploymentLabels[k] = v

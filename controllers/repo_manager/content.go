@@ -105,7 +105,7 @@ func serviceContentObject(pulp pulpv1.Pulp) *corev1.Service {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      settings.ContentService(name),
 			Namespace: namespace,
-			Labels:    settings.PulpcoreLabels(pulp, "content"),
+			Labels:    settings.PulpcoreLabels(pulp, settings.CONTENT),
 		},
 		Spec: serviceContentSpec(pulp),
 	}
@@ -131,7 +131,7 @@ func serviceContentSpec(pulp pulpv1.Pulp) corev1.ServiceSpec {
 			Protocol:   servicePortProto,
 			TargetPort: targetPort,
 		}},
-		Selector:        settings.PulpcoreLabels(pulp, "content"),
+		Selector:        settings.PulpcoreLabels(pulp, settings.CONTENT),
 		SessionAffinity: serviceAffinity,
 		Type:            serviceType,
 	}

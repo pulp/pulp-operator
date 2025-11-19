@@ -274,7 +274,7 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *pulpv1.Pulp, funcResourc
 // labelsForPulpWeb returns the labels for selecting the resources
 // belonging to the given pulp CR name.
 func labelsForPulpWeb(m *pulpv1.Pulp) map[string]string {
-	return settings.PulpcoreLabels(*m, "web")
+	return settings.PulpcoreLabels(*m, settings.WEB)
 }
 
 // serviceForPulpWeb returns a service object for pulp-web
