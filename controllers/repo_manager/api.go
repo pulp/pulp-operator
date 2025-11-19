@@ -134,7 +134,7 @@ func serviceAPIObject(pulp pulpv1.Pulp) *corev1.Service {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      settings.ApiService(name),
 			Namespace: namespace,
-			Labels:    settings.PulpcoreLabels(pulp, "api"),
+			Labels:    settings.PulpcoreLabels(pulp, settings.API),
 		},
 		Spec: serviceAPISpec(pulp),
 	}
@@ -160,7 +160,7 @@ func serviceAPISpec(pulp pulpv1.Pulp) corev1.ServiceSpec {
 			Protocol:   servicePortProto,
 			TargetPort: targetPort,
 		}},
-		Selector:        settings.PulpcoreLabels(pulp, "api"),
+		Selector:        settings.PulpcoreLabels(pulp, settings.API),
 		SessionAffinity: serviceAffinity,
 		Type:            serviceType,
 	}

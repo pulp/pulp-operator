@@ -463,7 +463,7 @@ func statefulSetForDatabase(m *pulpv1.Pulp) *appsv1.StatefulSet {
 // labelsForDatabase returns the labels for selecting the resources
 // belonging to the given pulp CR name.
 func labelsForDatabase(m *pulpv1.Pulp) map[string]string {
-	return settings.PulpcoreLabels(*m, "database")
+	return settings.PulpcoreLabels(*m, settings.DATABASE)
 }
 
 // serviceForDatabase returns a service object for postgres pods
