@@ -70,7 +70,7 @@ func PulpRouteController(resources controllers.FunctionResources, restClient res
 	conditionType := "Pulp-Route-Ready"
 
 	podList := &corev1.PodList{}
-	labels := settings.PulpcoreLabels(*pulp, "worker")
+	labels := settings.PulpcoreLabels(*pulp, settings.WORKER)
 	listOpts := []client.ListOption{
 		client.InNamespace(pulp.Namespace),
 		client.MatchingLabels(labels),

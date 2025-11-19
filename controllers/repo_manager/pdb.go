@@ -19,7 +19,6 @@ package repo_manager
 import (
 	"context"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -59,7 +58,7 @@ func (r *RepoManagerReconciler) pdbController(ctx context.Context, pulp *pulpv1.
 			// add label selector to PDBSpec
 			// even though it is possible to pass a selector through PodDisruptionBudgetSpec we will overwrite
 			// any config passed through pulp CR with the following
-			labels := settings.PulpcoreLabels(*pulp, strings.ToLower(string(component)))
+			labels := settings.PulpcoreLabels(*pulp, component)
 			pdb.Selector = &metav1.LabelSelector{
 				MatchLabels: labels,
 			}

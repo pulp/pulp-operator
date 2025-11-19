@@ -205,7 +205,7 @@ func ServiceOtel(resources FunctionResources) client.Object {
 				Protocol:   servicePortProto,
 				TargetPort: targetPort,
 			}},
-			Selector:                 settings.PulpcoreLabels(*resources.Pulp, "api"),
+			Selector:                 settings.PulpcoreLabels(*resources.Pulp, settings.API),
 			SessionAffinity:          serviceAffinity,
 			Type:                     serviceType,
 			PublishNotReadyAddresses: true,

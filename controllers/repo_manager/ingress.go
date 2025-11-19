@@ -43,7 +43,7 @@ func (r *RepoManagerReconciler) pulpIngressController(ctx context.Context, pulp 
 	conditionType := "Pulp-Ingress-Ready"
 
 	podList := &corev1.PodList{}
-	labels := settings.PulpcoreLabels(*pulp, "content")
+	labels := settings.PulpcoreLabels(*pulp, settings.CONTENT)
 	listOpts := []client.ListOption{
 		client.InNamespace(pulp.Namespace),
 		client.MatchingLabels(labels),
