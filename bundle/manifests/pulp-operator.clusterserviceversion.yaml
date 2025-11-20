@@ -64,7 +64,7 @@ metadata:
     capabilities: Full Lifecycle
     categories: Integration & Delivery
     containerImage: quay.io/pulp/pulp-operator:v1.0.0
-    createdAt: "2025-11-15T11:04:25Z"
+    createdAt: "2025-11-24T09:59:39Z"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
     metadata.annotations.support: Community
@@ -260,6 +260,11 @@ spec:
         path: api.pdb
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: Labels to add to api pods
+        displayName: Pod Labels
+        path: api.pod_labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container service readiness. Container will
           be removed from service endpoints if the probe fails.
         displayName: Readiness Probe
@@ -331,6 +336,11 @@ spec:
       - description: NodeSelector for the Pulp pods.
         displayName: Node Selector
         path: cache.node_selector
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Labels to add to cache pods
+        displayName: Pod Labels
+        path: cache.pod_labels
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: PersistenVolumeClaim name that will be used by Redis pods If
@@ -459,6 +469,11 @@ spec:
         path: content.pdb
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: Labels to add to content pods
+        displayName: Pod Labels
+        path: content.pod_labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container service readiness. Container will
           be removed from service endpoints if the probe fails.
         displayName: Readiness Probe
@@ -526,6 +541,11 @@ spec:
       - description: NodeSelector for the database pod.
         displayName: Node Selector
         path: database.node_selector
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Labels to add to database pods
+        displayName: Pod Labels
+        path: database.pod_labels
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'Registry path to the PostgreSQL container to use. Default: "/var/lib/postgresql/data/pgdata"'
@@ -959,6 +979,11 @@ spec:
         path: web.pdb
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: Labels to add to web pods
+        displayName: Pod Labels
+        path: web.pod_labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container service readiness. Container will
           be removed from service endpoints if the probe fails.
         displayName: Readiness Probe
@@ -1038,6 +1063,11 @@ spec:
         path: worker.pdb
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: Labels to add to worker pods
+        displayName: Pod Labels
+        path: worker.pod_labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container service readiness. Container will
           be removed from service endpoints if the probe fails.
         displayName: Readiness Probe

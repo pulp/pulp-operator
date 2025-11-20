@@ -1910,6 +1910,11 @@ spec:
                           if they encounter an unrecognized policy in this field.
                         type: string
                     type: object
+                  pod_labels:
+                    additionalProperties:
+                      type: string
+                    description: Labels to add to api pods
+                    type: object
                   readinessProbe:
                     description: |-
                       Periodic probe of container service readiness.
@@ -3487,6 +3492,11 @@ spec:
                     additionalProperties:
                       type: string
                     description: NodeSelector for the Pulp pods.
+                    type: object
+                  pod_labels:
+                    additionalProperties:
+                      type: string
+                    description: Labels to add to cache pods
                     type: object
                   pvc:
                     description: |-
@@ -5451,6 +5461,11 @@ spec:
                           if they encounter an unrecognized policy in this field.
                         type: string
                     type: object
+                  pod_labels:
+                    additionalProperties:
+                      type: string
+                    description: Labels to add to content pods
+                    type: object
                   readinessProbe:
                     description: |-
                       Periodic probe of container service readiness.
@@ -7021,6 +7036,11 @@ spec:
                     additionalProperties:
                       type: string
                     description: NodeSelector for the database pod.
+                    type: object
+                  pod_labels:
+                    additionalProperties:
+                      type: string
+                    description: Labels to add to database pods
                     type: object
                   postgres_data_path:
                     description: |-
@@ -8600,6 +8620,11 @@ spec:
                           Clients making eviction decisions should disallow eviction of unhealthy pods
                           if they encounter an unrecognized policy in this field.
                         type: string
+                    type: object
+                  pod_labels:
+                    additionalProperties:
+                      type: string
+                    description: Labels to add to web pods
                     type: object
                   readinessProbe:
                     description: |-
@@ -10502,6 +10527,11 @@ spec:
                           Clients making eviction decisions should disallow eviction of unhealthy pods
                           if they encounter an unrecognized policy in this field.
                         type: string
+                    type: object
+                  pod_labels:
+                    additionalProperties:
+                      type: string
+                    description: Labels to add to worker pods
                     type: object
                   readinessProbe:
                     description: |-
