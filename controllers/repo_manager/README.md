@@ -40,6 +40,7 @@ Api defines desired state of pulpcore-api resources
 | init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [PulpContainer](#pulpcontainer) | false |
 | env_vars | Environment variables to add to pulpcore-api container | []corev1.EnvVar | false |
 | deployment_annotations | Annotations for the api deployment | map[string]string | false |
+| custom_labels | Custom labels to add to api resources | map[string]string | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -63,6 +64,7 @@ Cache defines desired state of redis resources
 | node_selector | NodeSelector for the Pulp pods. | map[string]string | false |
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
 | deployment_annotations | Annotations for the cache deployment | map[string]string | false |
+| custom_labels | Custom labels to add to cache resources | map[string]string | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -87,6 +89,7 @@ Content defines desired state of pulpcore-content resources
 | init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [PulpContainer](#pulpcontainer) | false |
 | env_vars | Environment variables to add to pulpcore-content container | []corev1.EnvVar | false |
 | deployment_annotations | Annotations for the content deployment | map[string]string | false |
+| custom_labels | Custom labels to add to content resources | map[string]string | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -114,6 +117,7 @@ Database defines desired state of postgres
 | pvc | PersistenVolumeClaim name that will be used by database pods If defined, the PVC must be provisioned by the user and the operator will only configure the deployment to use it | string | false |
 | readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |
 | livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
+| custom_labels | Custom labels to add to database resources | map[string]string | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -305,6 +309,7 @@ Web defines desired state of pulpcore-web (reverse-proxy) resources
 | tls_termination_mechanism | The secure TLS termination mechanism to use Default: \"edge\" | string | false |
 | env_vars | Environment variables to add to pulpcore-web container | []corev1.EnvVar | false |
 | deployment_annotations | Annotations for the web deployment | map[string]string | false |
+| custom_labels | Custom labels to add to web resources | map[string]string | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -327,5 +332,6 @@ Worker defines desired state of pulpcore-worker resources
 | init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [PulpContainer](#pulpcontainer) | false |
 | env_vars | Environment variables to add to pulpcore-worker container | []corev1.EnvVar | false |
 | deployment_annotations | Annotations for the worker deployment | map[string]string | false |
+| custom_labels | Custom labels to add to worker resources | map[string]string | false |
 
 [Back to Custom Resources](#custom-resources)

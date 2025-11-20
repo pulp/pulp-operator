@@ -1207,6 +1207,11 @@ spec:
                             x-kubernetes-list-type: atomic
                         type: object
                     type: object
+                  custom_labels:
+                    additionalProperties:
+                      type: string
+                    description: Custom labels to add to api resources
+                    type: object
                   deployment_annotations:
                     additionalProperties:
                       type: string
@@ -3271,6 +3276,11 @@ spec:
                             x-kubernetes-list-type: atomic
                         type: object
                     type: object
+                  custom_labels:
+                    additionalProperties:
+                      type: string
+                    description: Custom labels to add to cache resources
+                    type: object
                   deployment_annotations:
                     additionalProperties:
                       type: string
@@ -4702,6 +4712,11 @@ spec:
                             type: array
                             x-kubernetes-list-type: atomic
                         type: object
+                    type: object
+                  custom_labels:
+                    additionalProperties:
+                      type: string
+                    description: Custom labels to add to content resources
                     type: object
                   deployment_annotations:
                     additionalProperties:
@@ -6772,6 +6787,11 @@ spec:
                             x-kubernetes-list-type: atomic
                         type: object
                     type: object
+                  custom_labels:
+                    additionalProperties:
+                      type: string
+                    description: Custom labels to add to database resources
+                    type: object
                   external_db_secret:
                     description: Secret name with the configuration to use an external
                       database
@@ -8048,6 +8068,11 @@ spec:
                 description: Web defines desired state of pulpcore-web (reverse-proxy)
                   resources
                 properties:
+                  custom_labels:
+                    additionalProperties:
+                      type: string
+                    description: Custom labels to add to web resources
+                    type: object
                   deployment_annotations:
                     additionalProperties:
                       type: string
@@ -9677,6 +9702,11 @@ spec:
                             type: array
                             x-kubernetes-list-type: atomic
                         type: object
+                    type: object
+                  custom_labels:
+                    additionalProperties:
+                      type: string
+                    description: Custom labels to add to worker resources
                     type: object
                   deployment_annotations:
                     additionalProperties:

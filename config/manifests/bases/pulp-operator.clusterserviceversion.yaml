@@ -221,6 +221,11 @@ spec:
         path: api.affinity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Custom labels to add to api resources
+        displayName: Custom Labels
+        path: api.custom_labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Annotations for the api deployment
         displayName: Deployment Annotations
         path: api.deployment_annotations
@@ -313,6 +318,11 @@ spec:
       - description: Affinity is a group of affinity scheduling rules.
         displayName: Affinity
         path: cache.affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Custom labels to add to cache resources
+        displayName: Custom Labels
+        path: cache.custom_labels
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Annotations for the cache deployment
@@ -420,6 +430,11 @@ spec:
         path: content.affinity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Custom labels to add to content resources
+        displayName: Custom Labels
+        path: content.custom_labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Annotations for the content deployment
         displayName: Deployment Annotations
         path: content.deployment_annotations
@@ -519,6 +534,11 @@ spec:
       - description: Affinity is a group of affinity scheduling rules.
         displayName: Affinity
         path: database.affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Custom labels to add to database resources
+        displayName: Custom Labels
+        path: database.custom_labels
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Secret name with the configuration to use an external database
@@ -946,6 +966,11 @@ spec:
         path: web
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: Custom labels to add to web resources
+        displayName: Custom Labels
+        path: web.custom_labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Annotations for the web deployment
         displayName: Deployment Annotations
         path: web.deployment_annotations
@@ -1010,6 +1035,11 @@ spec:
       - description: Affinity is a group of affinity scheduling rules.
         displayName: Affinity
         path: worker.affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Custom labels to add to worker resources
+        displayName: Custom Labels
+        path: worker.custom_labels
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Annotations for the worker deployment
