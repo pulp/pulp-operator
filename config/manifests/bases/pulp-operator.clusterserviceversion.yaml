@@ -221,11 +221,6 @@ spec:
         path: api.affinity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Custom labels to add to api resources
-        displayName: Custom Labels
-        path: api.custom_labels
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Annotations for the api deployment
         displayName: Deployment Annotations
         path: api.deployment_annotations
@@ -275,6 +270,11 @@ spec:
         path: api.pdb
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: Labels to add to api pods
+        displayName: Pod Labels
+        path: api.pod_labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container service readiness. Container will
           be removed from service endpoints if the probe fails.
         displayName: Readiness Probe
@@ -320,11 +320,6 @@ spec:
         path: cache.affinity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Custom labels to add to cache resources
-        displayName: Custom Labels
-        path: cache.custom_labels
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Annotations for the cache deployment
         displayName: Deployment Annotations
         path: cache.deployment_annotations
@@ -351,6 +346,11 @@ spec:
       - description: NodeSelector for the Pulp pods.
         displayName: Node Selector
         path: cache.node_selector
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Labels to add to cache pods
+        displayName: Pod Labels
+        path: cache.pod_labels
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: PersistenVolumeClaim name that will be used by Redis pods If
@@ -430,11 +430,6 @@ spec:
         path: content.affinity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Custom labels to add to content resources
-        displayName: Custom Labels
-        path: content.custom_labels
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Annotations for the content deployment
         displayName: Deployment Annotations
         path: content.deployment_annotations
@@ -484,6 +479,11 @@ spec:
         path: content.pdb
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: Labels to add to content pods
+        displayName: Pod Labels
+        path: content.pod_labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container service readiness. Container will
           be removed from service endpoints if the probe fails.
         displayName: Readiness Probe
@@ -536,11 +536,6 @@ spec:
         path: database.affinity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Custom labels to add to database resources
-        displayName: Custom Labels
-        path: database.custom_labels
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Secret name with the configuration to use an external database
         displayName: External DBSecret
         path: database.external_db_secret
@@ -556,6 +551,11 @@ spec:
       - description: NodeSelector for the database pod.
         displayName: Node Selector
         path: database.node_selector
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Labels to add to database pods
+        displayName: Pod Labels
+        path: database.pod_labels
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'Registry path to the PostgreSQL container to use. Default: "/var/lib/postgresql/data/pgdata"'
@@ -966,11 +966,6 @@ spec:
         path: web
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - description: Custom labels to add to web resources
-        displayName: Custom Labels
-        path: web.custom_labels
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Annotations for the web deployment
         displayName: Deployment Annotations
         path: web.deployment_annotations
@@ -994,6 +989,11 @@ spec:
         path: web.pdb
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: Labels to add to web pods
+        displayName: Pod Labels
+        path: web.pod_labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container service readiness. Container will
           be removed from service endpoints if the probe fails.
         displayName: Readiness Probe
@@ -1037,11 +1037,6 @@ spec:
         path: worker.affinity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - description: Custom labels to add to worker resources
-        displayName: Custom Labels
-        path: worker.custom_labels
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Annotations for the worker deployment
         displayName: Deployment Annotations
         path: worker.deployment_annotations
@@ -1078,6 +1073,11 @@ spec:
         path: worker.pdb
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: Labels to add to worker pods
+        displayName: Pod Labels
+        path: worker.pod_labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container service readiness. Container will
           be removed from service endpoints if the probe fails.
         displayName: Readiness Probe

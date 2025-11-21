@@ -88,8 +88,8 @@ func (in *Api) DeepCopyInto(out *Api) {
 			(*out)[key] = val
 		}
 	}
-	if in.CustomLabels != nil {
-		in, out := &in.CustomLabels, &out.CustomLabels
+	if in.PodLabels != nil {
+		in, out := &in.PodLabels, &out.PodLabels
 		*out = make(map[string]string, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
@@ -148,8 +148,8 @@ func (in *Cache) DeepCopyInto(out *Cache) {
 			(*out)[key] = val
 		}
 	}
-	if in.CustomLabels != nil {
-		in, out := &in.CustomLabels, &out.CustomLabels
+	if in.PodLabels != nil {
+		in, out := &in.PodLabels, &out.PodLabels
 		*out = make(map[string]string, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
@@ -228,8 +228,8 @@ func (in *Content) DeepCopyInto(out *Content) {
 			(*out)[key] = val
 		}
 	}
-	if in.CustomLabels != nil {
-		in, out := &in.CustomLabels, &out.CustomLabels
+	if in.PodLabels != nil {
+		in, out := &in.PodLabels, &out.PodLabels
 		*out = make(map[string]string, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
@@ -290,8 +290,8 @@ func (in *Database) DeepCopyInto(out *Database) {
 		*out = new(corev1.Probe)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.CustomLabels != nil {
-		in, out := &in.CustomLabels, &out.CustomLabels
+	if in.PodLabels != nil {
+		in, out := &in.PodLabels, &out.PodLabels
 		*out = make(map[string]string, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
@@ -781,8 +781,8 @@ func (in *Web) DeepCopyInto(out *Web) {
 			(*out)[key] = val
 		}
 	}
-	if in.CustomLabels != nil {
-		in, out := &in.CustomLabels, &out.CustomLabels
+	if in.PodLabels != nil {
+		in, out := &in.PodLabels, &out.PodLabels
 		*out = make(map[string]string, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
@@ -861,8 +861,8 @@ func (in *Worker) DeepCopyInto(out *Worker) {
 			(*out)[key] = val
 		}
 	}
-	if in.CustomLabels != nil {
-		in, out := &in.CustomLabels, &out.CustomLabels
+	if in.PodLabels != nil {
+		in, out := &in.PodLabels, &out.PodLabels
 		*out = make(map[string]string, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
