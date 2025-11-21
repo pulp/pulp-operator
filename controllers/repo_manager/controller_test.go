@@ -3,6 +3,7 @@ package repo_manager_test
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strconv"
 	"strings"
 	"time"
@@ -50,8 +51,10 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		"app.kubernetes.io/managed-by": OperatorType + "-operator",
 		"app":                          "pulp-database",
 		"pulp_cr":                      PulpName,
-		"custom":                       "database",
 	}
+
+	labelsStsPods := map[string]string{"custom": "database"}
+	maps.Copy(labelsStsPods, labelsSts)
 
 	labelsApi := map[string]string{
 		"app.kubernetes.io/name":       OperatorType + "-api",
@@ -61,8 +64,10 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		"app.kubernetes.io/managed-by": PulpName,
 		"app":                          "pulp-api",
 		"pulp_cr":                      PulpName,
-		"custom":                       "api",
 	}
+
+	labelsApiPods := map[string]string{"custom": "api"}
+	maps.Copy(labelsApiPods, labelsApi)
 
 	labelsContent := map[string]string{
 		"app.kubernetes.io/name":       OperatorType + "-content",
@@ -72,8 +77,10 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		"app.kubernetes.io/managed-by": PulpName,
 		"app":                          "pulp-content",
 		"pulp_cr":                      PulpName,
-		"custom":                       "content",
 	}
+
+	labelsContentPods := map[string]string{"custom": "content"}
+	maps.Copy(labelsContentPods, labelsContent)
 
 	labelsWorker := map[string]string{
 		"app.kubernetes.io/name":       OperatorType + "-worker",
@@ -83,8 +90,10 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		"app.kubernetes.io/managed-by": PulpName,
 		"app":                          "pulp-worker",
 		"pulp_cr":                      PulpName,
-		"custom":                       "worker",
 	}
+
+	labelsWorkerPods := map[string]string{"custom": "worker"}
+	maps.Copy(labelsWorkerPods, labelsWorker)
 
 	replicasSts := int32(1)
 	replicasApi := int32(1)
@@ -541,7 +550,6 @@ var _ = Describe("Pulp controller", Ordered, func() {
 				"app.kubernetes.io/managed-by": OperatorType + "-operator",
 				"app":                          "pulp-database",
 				"pulp_cr":                      PulpName,
-				"custom":                       "database",
 			},
 		},
 		Spec: appsv1.StatefulSetSpec{
@@ -551,7 +559,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: labelsSts,
+					Labels: labelsStsPods,
 				},
 				Spec: corev1.PodSpec{
 					Affinity:           &corev1.Affinity{},
@@ -654,7 +662,6 @@ exec "${PULP_API_ENTRYPOINT[@]}" \
 				"app":                          "pulp-api",
 				"pulp_cr":                      PulpName,
 				"owner":                        "pulp-dev",
-				"custom":                       "api",
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -664,7 +671,7 @@ exec "${PULP_API_ENTRYPOINT[@]}" \
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: labelsApi,
+					Labels: labelsApiPods,
 					Annotations: map[string]string{
 						"kubectl.kubernetes.io/default-container": "api",
 					},
@@ -698,7 +705,6 @@ exec "${PULP_API_ENTRYPOINT[@]}" \
 				"app":                          "pulp-content",
 				"pulp_cr":                      PulpName,
 				"owner":                        "pulp-dev",
-				"custom":                       "content",
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -708,7 +714,7 @@ exec "${PULP_API_ENTRYPOINT[@]}" \
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: labelsContent,
+					Labels: labelsContentPods,
 					Annotations: map[string]string{
 						"kubectl.kubernetes.io/default-container": "content",
 					},
@@ -787,7 +793,6 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 				"app.kubernetes.io/part-of":    OperatorType,
 				"app.kubernetes.io/managed-by": PulpName,
 				"owner":                        "pulp-dev",
-				"custom":                       "worker",
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -797,7 +802,7 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: labelsWorker,
+					Labels: labelsWorkerPods,
 					Annotations: map[string]string{
 						"kubectl.kubernetes.io/default-container": "worker",
 					},
@@ -851,7 +856,7 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 				Cache: pulpv1.Cache{
 					Enabled:           true,
 					RedisStorageClass: "standard",
-					CustomLabels: map[string]string{
+					PodLabels: map[string]string{
 						"custom": "cache",
 					},
 				},
@@ -860,34 +865,34 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 				Api: pulpv1.Api{
 					Replicas: 1,
 					EnvVars:  []corev1.EnvVar{customEnvVar},
-					CustomLabels: map[string]string{
+					PodLabels: map[string]string{
 						"custom": "api",
 					},
 				},
 				Content: pulpv1.Content{
 					Replicas: 1,
 					EnvVars:  []corev1.EnvVar{customEnvVar},
-					CustomLabels: map[string]string{
+					PodLabels: map[string]string{
 						"custom": "content",
 					},
 				},
 				Worker: pulpv1.Worker{
 					Replicas: 1,
 					EnvVars:  []corev1.EnvVar{customEnvVar},
-					CustomLabels: map[string]string{
+					PodLabels: map[string]string{
 						"custom": "worker",
 					},
 				},
 				Web: pulpv1.Web{
 					Replicas: 1,
-					CustomLabels: map[string]string{
+					PodLabels: map[string]string{
 						"custom": "web",
 					},
 				},
 				Database: pulpv1.Database{
 					PostgresStorageClass:        &postgresStorageClass,
 					PostgresStorageRequirements: "5Gi",
-					CustomLabels: map[string]string{
+					PodLabels: map[string]string{
 						"custom": "database",
 					},
 				},

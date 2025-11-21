@@ -1,29 +1,36 @@
 package settings
 
 import (
+	"maps"
 	"reflect"
 
 	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 )
 
+func PulpcorePodLabels(pulp pulpv1.Pulp, pulpcoreType PulpcoreType) map[string]string {
+	podLabels := reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType.ToField()).FieldByName("PodLabels").Interface().(map[string]string)
+	if podLabels == nil {
+		podLabels = make(map[string]string)
+	}
+
+	// Merge with PulpcorePodLabels, PulpcorePodLabels has precedence
+	maps.Copy(podLabels, PulpcoreLabels(pulp, pulpcoreType))
+
+	return podLabels
+}
+
 func PulpcoreLabels(pulp pulpv1.Pulp, pulpcoreType PulpcoreType) map[string]string {
 	typeLabel := pulpcoreType.ToLabel()
 
 	labels := map[string]string{
-		"app.kubernetes.io/name":       "pulp-" + typeLabel,
-		"app.kubernetes.io/instance":   "pulp-" + typeLabel + "-" + pulp.Name,
-		"app.kubernetes.io/component":  typeLabel,
-		"app.kubernetes.io/part-of":    "pulp",
-		"app.kubernetes.io/managed-by": "pulp-operator",
-		"app":                          "pulp-" + typeLabel,
-		"pulp_cr":                      pulp.Name,
+		"app.kubernetes.io/name":      "pulp-" + typeLabel,
+		"app.kubernetes.io/instance":  "pulp-" + typeLabel + "-" + pulp.Name,
+		"app.kubernetes.io/component": typeLabel,
+		"app":                         "pulp-" + typeLabel,
 	}
 
-	// Merge custom labels from the CR spec
-	customLabels := reflect.ValueOf(pulp.Spec).FieldByName(pulpcoreType.ToField()).FieldByName("CustomLabels").Interface().(map[string]string)
-	for k, v := range customLabels {
-		labels[k] = v
-	}
+	// Merge with CommonLabels, CommonLabels has precedence
+	maps.Copy(labels, CommonLabels(pulp))
 
 	return labels
 }

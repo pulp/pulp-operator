@@ -358,7 +358,7 @@ func redisDeployment(m *pulpv1.Pulp, funcResources controllers.FunctionResources
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: ls,
+					Labels: labelsForCachePods(m),
 				},
 				Spec: corev1.PodSpec{
 					Affinity:           affinity,
@@ -435,6 +435,12 @@ func (r *RepoManagerReconciler) deprovisionCache(ctx context.Context, pulp *pulp
 // belonging to the given pulp CR name.
 func labelsForCache(m *pulpv1.Pulp) map[string]string {
 	return settings.PulpcoreLabels(*m, settings.CACHE)
+}
+
+// labelsForCachePods returns the labels for the Pods
+// belonging to the given pulp CR name.
+func labelsForCachePods(m *pulpv1.Pulp) map[string]string {
+	return settings.PulpcorePodLabels(*m, settings.CACHE)
 }
 
 // managedCacheDisabled returns true if
