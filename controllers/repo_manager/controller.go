@@ -27,6 +27,7 @@ import (
 	"github.com/pulp/pulp-operator/controllers"
 	pulp_ocp "github.com/pulp/pulp-operator/controllers/ocp"
 	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
@@ -352,6 +353,7 @@ func (r *RepoManagerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.ConfigMap{}).
 		Owns(&policy.PodDisruptionBudget{}).
 		Owns(&corev1.ServiceAccount{}).
+		Owns(&autoscalingv2.HorizontalPodAutoscaler{}).
 		Owns(&batchv1.CronJob{}, builder.WithPredicates(ignoreCronjobStatus())).
 		Owns(&netv1.Ingress{}).
 		Watches(
