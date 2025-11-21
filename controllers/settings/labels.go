@@ -13,7 +13,7 @@ func PulpcorePodLabels(pulp pulpv1.Pulp, pulpcoreType PulpcoreType) map[string]s
 		podLabels = make(map[string]string)
 	}
 
-	// Merge with PulpcorePodLabels, PulpcorePodLabels has precedence
+	// Merge with PulpcorePodLabels, PulpcoreLabels has precedence
 	maps.Copy(podLabels, PulpcoreLabels(pulp, pulpcoreType))
 
 	return podLabels
