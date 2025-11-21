@@ -1,1 +1,1 @@
-Add custom label support for Pulp components.
+Add pod label support for Pulp components.
