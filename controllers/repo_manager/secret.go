@@ -643,8 +643,8 @@ func needsMigrationSetting(resources controllers.FunctionResources, pulpSettings
 
 // getAddressingStyle returns the addressing style from secret or defaults to "path"
 func getAddressingStyle(optionalKey map[string]string) string {
-    if addressingStyle, exists := optionalKey["s3-addressing-style"]; exists && len(addressingStyle) > 0 {
-        return addressingStyle
-    }
-    return "path" // default value
+	if addressingStyle, exists := optionalKey["s3-addressing-style"]; exists && len(addressingStyle) > 0 {
+		return addressingStyle
+	}
+	return "path" // default value
 }

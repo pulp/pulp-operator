@@ -13,13 +13,26 @@ import "strings"
 type PulpcoreType string
 
 const (
-	API     PulpcoreType = "Api"
-	CONTENT PulpcoreType = "Content"
-	WORKER  PulpcoreType = "Worker"
-	WEB     PulpcoreType = "Web"
-	CACHE   PulpcoreType = "Redis"
+	API      PulpcoreType = "Api"
+	CONTENT  PulpcoreType = "Content"
+	WORKER   PulpcoreType = "Worker"
+	WEB      PulpcoreType = "Web"
+	CACHE    PulpcoreType = "Redis"
+	DATABASE PulpcoreType = "Database"
 )
 
 func (t PulpcoreType) DeploymentName(pulpName string) string {
 	return pulpName + "-" + strings.ToLower(string(t))
+}
+
+func (t PulpcoreType) ToField() string {
+	if t == CACHE {
+		return "Cache"
+	} else {
+		return string(t)
+	}
+}
+
+func (t PulpcoreType) ToLabel() string {
+	return strings.ToLower(string(t))
 }

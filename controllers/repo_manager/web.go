@@ -218,7 +218,7 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *pulpv1.Pulp, funcResourc
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: ls,
+					Labels: labelsForPulpWebPods(m),
 				},
 				Spec: corev1.PodSpec{
 					NodeSelector:       nodeSelector,
@@ -274,7 +274,13 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *pulpv1.Pulp, funcResourc
 // labelsForPulpWeb returns the labels for selecting the resources
 // belonging to the given pulp CR name.
 func labelsForPulpWeb(m *pulpv1.Pulp) map[string]string {
-	return settings.PulpcoreLabels(*m, "web")
+	return settings.PulpcoreLabels(*m, settings.WEB)
+}
+
+// labelsForPulpWebPods returns the labels for the Pods
+// belonging to the given pulp CR name.
+func labelsForPulpWebPods(m *pulpv1.Pulp) map[string]string {
+	return settings.PulpcorePodLabels(*m, settings.WEB)
 }
 
 // serviceForPulpWeb returns a service object for pulp-web
