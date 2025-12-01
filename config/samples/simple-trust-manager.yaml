@@ -1,0 +1,68 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: 'example-pulp-admin-password'
+stringData:
+  password: 'password'
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: settings
+data:
+  analytics: "False"
+
+---
+# Bundle resource managed by cert-manager's trust-manager
+# This will create a ConfigMap containing the aggregated CA bundle
+# See: https://cert-manager.io/docs/trust/trust-manager/
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  name: example-pulp-trusted-ca-bundle
+spec:
+  sources:
+  # Include the default system CA certificates
+  - useDefaultCAs: true
+  # Optionally include custom CAs from ConfigMaps
+  # - configMap:
+  #     name: custom-ca-certs
+  #     key: ca.crt
+  # Optionally include CAs from cert-manager Certificate resources
+  # - inLine: |
+  #     -----BEGIN CERTIFICATE-----
+  #     ...
+  #     -----END CERTIFICATE-----
+  target:
+    configMap:
+      key: "ca-bundle.crt"
+    # The ConfigMap will be created with the same name as the Bundle
+    # In this case: example-pulp-trusted-ca-bundle
+
+---
+apiVersion: repo-manager.pulpproject.org/v1
+kind: Pulp
+metadata:
+  name: example-pulp
+spec:
+  api:
+    replicas: 1
+  custom_pulp_settings: settings
+  admin_password_secret: "example-pulp-admin-password"
+
+  # Enable trust-manager CA bundle mounting
+  # Format: "configmap-name:key" or just "configmap-name" (mounts all keys)
+  mount_trusted_ca: true
+  mount_trusted_ca_configmap_key: "example-pulp-trusted-ca-bundle:ca-bundle.crt"
+
+  database:
+    postgres_storage_class: standard
+
+  file_storage_access_mode: "ReadWriteOnce"
+  file_storage_size: "2Gi"
+  file_storage_storage_class: standard
+
+  ingress_type: ingress
+  ingress_host: pulp.example.com

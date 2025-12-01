@@ -316,11 +316,19 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	SSOSecret string `json:"sso_secret,omitempty"`
 
-	// Define if the operator should or should not mount the custom CA certificates added to the cluster via cluster-wide proxy config.
+	// Enable mounting of custom CA certificates. On OpenShift, mounts CA certificates added to the cluster via cluster-wide proxy config. On vanilla Kubernetes with cert-manager's trust-manager, requires mount_trusted_ca_configmap_key to specify the ConfigMap and key containing the CA bundle.
 	// Default: false
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
 	TrustedCa bool `json:"mount_trusted_ca,omitempty"`
+
+	// Specifies the ConfigMap and key containing the CA bundle for vanilla Kubernetes clusters.
+	// The ConfigMap can be managed manually or kept up to date using cert-manager's trust-manager.
+	// Format: "configmap-name:key" (e.g., "vault-ca-defaults-bundle:ca.crt")
+	// Required on vanilla Kubernetes when mount_trusted_ca is true. Optional on OpenShift.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Trusted CA ConfigMap Key",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:mount_trusted_ca:true"}
+	TrustedCaConfigMapKey string `json:"mount_trusted_ca_configmap_key,omitempty"`
 
 	// Job to reset pulp admin password
 	AdminPasswordJob PulpJob `json:"admin_password_job,omitempty"`
