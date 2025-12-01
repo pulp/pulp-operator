@@ -250,7 +250,8 @@ PulpSpec defines the desired state of Pulp
 | sa_annotations | ServiceAccount.metadata.annotations that will be used in Pulp pods. | map[string]string | false |
 | sa_labels | ServiceAccount.metadata.labels that will be used in Pulp pods. | map[string]string | false |
 | sso_secret | Secret where Single Sign-on configuration can be found | string | false |
-| mount_trusted_ca | Define if the operator should or should not mount the custom CA certificates added to the cluster via cluster-wide proxy config. Default: false | bool | false |
+| mount_trusted_ca | Enable mounting of custom CA certificates. On OpenShift, mounts CA certificates added to the cluster via cluster-wide proxy config. On vanilla Kubernetes with cert-manager's trust-manager, requires mount_trusted_ca_configmap_key to specify the ConfigMap and key containing the CA bundle. Default: false | bool | false |
+| mount_trusted_ca_configmap_key | Specifies the ConfigMap and key containing the CA bundle for vanilla Kubernetes clusters. The ConfigMap can be managed manually or kept up to date using cert-manager's trust-manager. Format: \"configmap-name:key\" (e.g., \"vault-ca-defaults-bundle:ca.crt\") Required on vanilla Kubernetes when mount_trusted_ca is true. Optional on OpenShift. | string | false |
 | admin_password_job | Job to reset pulp admin password | [PulpJob](#pulpjob) | false |
 | migration_job | Job to run django migrations | [PulpJob](#pulpjob) | false |
 | signing_job | Job to store signing metadata scripts | [PulpJob](#pulpjob) | false |

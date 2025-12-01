@@ -463,6 +463,12 @@ func checkSpecModification(fields ...interface{}) bool {
 	return !equality.Semantic.DeepDerivative(expectedField, currentField)
 }
 
+// stripDeprecatedServiceAccount removes the deprecated serviceAccount field
+// before hash calculation to ensure compatibility across Kubernetes versions
+func stripDeprecatedServiceAccount(spec *appsv1.DeploymentSpec) {
+	spec.Template.Spec.DeprecatedServiceAccount = ""
+}
+
 // CheckDeployment returns true if a spec from deployment is not
 // with the expected contents defined in Pulp CR
 func CheckDeploymentSpec(fields ...interface{}) bool {
@@ -470,13 +476,13 @@ func CheckDeploymentSpec(fields ...interface{}) bool {
 	current := fields[1].(appsv1.Deployment)
 	resources := fields[2].(FunctionResources)
 
+	// Create copies to avoid modifying the original objects
+	expectedCopy := expected.DeepCopy()
+	currentCopy := current.DeepCopy()
+
 	// When HPA is enabled, exclude replicas field from comparison
 	// to avoid race condition between operator and HPA
 	if isHPAManagedDeployment(expected.Name, resources.Pulp) {
-		// Create copies to avoid modifying the original objects
-		expectedCopy := expected.DeepCopy()
-		currentCopy := current.DeepCopy()
-
 		// Set both replicas to nil for comparison purposes
 		// This ensures HPA-managed replica counts don't trigger reconciliation
 		expectedCopy.Spec.Replicas = nil
@@ -484,13 +490,15 @@ func CheckDeploymentSpec(fields ...interface{}) bool {
 
 		hashFromLabel := GetCurrentHash(&current)
 		hashFromExpected := HashFromMutated(expectedCopy, resources)
-		hashFromCurrent := CalculateHash(currentCopy.Spec)
+		hashFromCurrent := CalculateDeploymentHash(currentCopy.Spec)
+
 		return deploymentChanged(hashFromLabel, hashFromExpected, hashFromCurrent)
 	}
 
 	hashFromLabel := GetCurrentHash(&current)
-	hashFromExpected := HashFromMutated(&expected, resources)
-	hashFromCurrent := CalculateHash(current.Spec)
+	hashFromExpected := HashFromMutated(expectedCopy, resources)
+	hashFromCurrent := CalculateDeploymentHash(currentCopy.Spec)
+
 	return deploymentChanged(hashFromLabel, hashFromExpected, hashFromCurrent)
 }
 
@@ -856,6 +864,18 @@ func CalculateHash(obj any) string {
 	return hex.EncodeToString(calculatedHash.Sum(nil))
 }
 
+// CalculateDeploymentHash calculates the hash of a deployment spec after
+// stripping fields that should not trigger reconciliation (like DeprecatedServiceAccount)
+func CalculateDeploymentHash(spec appsv1.DeploymentSpec) string {
+	// Create a copy to avoid modifying the original
+	specCopy := spec.DeepCopy()
+
+	// Strip fields that shouldn't affect the hash
+	stripDeprecatedServiceAccount(specCopy)
+
+	return CalculateHash(*specCopy)
+}
+
 // SetHashLabel appends the operator's hash label into object
 func SetHashLabel(label string, obj client.Object) {
 	currentLabels := obj.GetLabels()
@@ -876,15 +896,16 @@ func HashFromMutated(dep *appsv1.Deployment, resources FunctionResources) string
 	// mutated configurations
 	resources.Update(resources.Context, dep, client.DryRunAll)
 
+	// Create a copy to strip fields we want to exclude from hash calculation
+	depCopy := dep.DeepCopy()
+
 	// When HPA is enabled, exclude replicas from hash calculation
 	// to avoid race condition between operator and HPA
 	if isHPAManagedDeployment(dep.Name, resources.Pulp) {
-		depCopy := dep.DeepCopy()
 		depCopy.Spec.Replicas = nil
-		return CalculateHash(depCopy.Spec)
 	}
 
-	return CalculateHash(dep.Spec)
+	return CalculateDeploymentHash(depCopy.Spec)
 }
 
 // pulpcoreEnvVars retuns the list of variable names that are defined by pulp-operator

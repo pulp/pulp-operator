@@ -1141,15 +1141,16 @@ func AddHashLabel(r FunctionResources, deployment *appsv1.Deployment) {
 	if err := r.Create(r.Context, deployment, client.DryRunAll); err != nil {
 		hash = HashFromMutated(deployment, r)
 	} else {
+		// Create a copy to avoid modifying the original deployment
+		depCopy := deployment.DeepCopy()
+
 		// When HPA is enabled, exclude replicas from hash calculation
 		// to avoid race condition between operator and HPA
 		if isHPAManagedDeployment(deployment.Name, r.Pulp) {
-			depCopy := deployment.DeepCopy()
 			depCopy.Spec.Replicas = nil
-			hash = CalculateHash(depCopy.Spec)
-		} else {
-			hash = CalculateHash(deployment.Spec)
 		}
+
+		hash = CalculateDeploymentHash(depCopy.Spec)
 	}
 
 	SetHashLabel(hash, deployment)

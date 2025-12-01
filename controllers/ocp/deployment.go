@@ -34,7 +34,7 @@ func defaultsForOCPDeployment(deployment *appsv1.Deployment, pulp *pulpv1.Pulp) 
 	volumeMounts := deployment.Spec.Template.Spec.Containers[0].VolumeMounts
 
 	// append the CA configmap to the volumes/volumemounts slice
-	volumes, volumeMounts = mountCASpec(pulp, volumes, volumeMounts)
+	volumes, volumeMounts = MountCASpec(pulp, volumes, volumeMounts)
 	deployment.Spec.Template.Spec.Volumes = volumes
 	deployment.Spec.Template.Spec.Containers[0].VolumeMounts = volumeMounts
 }
