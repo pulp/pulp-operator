@@ -69,6 +69,9 @@ function operatorhub {
   CSV_FILE=${CATALOG_DIR}/manifests/pulp-operator.clusterserviceversion.yaml
   echo "  replaces: pulp-operator.v${PULP_OPERATOR_REPLACE_VERSION}" >> $CSV_FILE
 
+  ANNOTATIONS_FILE=${CATALOG_DIR}/metadata/annotations.yaml
+  echo 'com.redhat.openshift.versions: "v4.17-v4.18"' >> $ANNOTATIONS_FILE
+
   echo "Commiting changes ..."
   git add operators/pulp-operator/
   git commit -sm "operator pulp-operator ($PULP_OPERATOR_RELEASE_VERSION)"
