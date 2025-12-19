@@ -32,6 +32,10 @@ function bump_version {
   echo "Updating the manifests with the changes ..."
   make generate manifests bundle
 
+  echo "Updating containerImage annotation"
+  CSV_FILE=manifests/pulp-operator.clusterserviceversion.yaml
+  sed -i "s#containerImage: quay.io/pulp/pulp-operator:devel#containerImage: quay.io/pulp/pulp-operator:v${PULP_OPERATOR_RELEASE_VERSION}#g" $CSV_FILE
+
   echo "Commiting changes ..."
   git commit -am "Bump version from Makefile to $PULP_OPERATOR_RELEASE_VERSION" -m "[noissue]"
 }
@@ -63,7 +67,6 @@ function operatorhub {
 
   cp -a ${PULP_OPERATOR_SOURCE_PATH}/bundle/* ${CATALOG_DIR}/
   CSV_FILE=${CATALOG_DIR}/manifests/pulp-operator.clusterserviceversion.yaml
-  sed -i "s#containerImage: quay.io/pulp/pulp-operator:devel#containerImage: quay.io/pulp/pulp-operator:v${PULP_OPERATOR_RELEASE_VERSION}#g" $CSV_FILE
   echo "  replaces: pulp-operator.v${PULP_OPERATOR_REPLACE_VERSION}" >> $CSV_FILE
 
   echo "Commiting changes ..."
