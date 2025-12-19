@@ -12,6 +12,19 @@
 
 <!-- TOWNCRIER -->
 
+## 1.2.0 (2025-12-19) {: #1.2.0 }
+
+
+#### Features {: #1.2.0-feature }
+
+- Add HPA support for automatic scaling of Pulp components.
+  [#1544](https://github.com/pulp/pulp-operator/issues/1544)
+- Add pod label support for Pulp components.
+  [#1553](https://github.com/pulp/pulp-operator/issues/1553)
+
+---
+
+
 ## 1.1.1 (2025-10-21) {: #1.1.1 }
 
 
