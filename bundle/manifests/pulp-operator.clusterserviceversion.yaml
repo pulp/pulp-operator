@@ -64,14 +64,14 @@ metadata:
     capabilities: Full Lifecycle
     categories: Integration & Delivery
     containerImage: quay.io/pulp/pulp-operator:v1.0.0
-    createdAt: "2025-12-19T03:33:03Z"
+    createdAt: "2025-12-19T03:33:08Z"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
     metadata.annotations.support: Community
     operators.operatorframework.io/builder: operator-sdk-v1.31.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/pulp/pulp-operator
-  name: pulp-operator.v1.1.1
+  name: pulp-operator.v1.2.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -1225,7 +1225,7 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.annotations['olm.targetNamespaces']
-                image: quay.io/pulp/pulp-operator:v1.1.1
+                image: quay.io/pulp/pulp-operator:v1.2.0
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -1483,4 +1483,4 @@ spec:
     name: pulp-redis
   - image: docker.io/library/postgres:13
     name: pulp-postgres
-  version: 1.1.1
+  version: 1.2.0

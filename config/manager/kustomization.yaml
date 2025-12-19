@@ -13,4 +13,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: quay.io/pulp/pulp-operator
-  newTag: v1.1.1
+  newTag: v1.2.0
