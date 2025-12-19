@@ -23,11 +23,8 @@ function new_release {
 
 
 function bump_version {
-  echo "Bumping main.go version ..."
-  sed -i -E "s/(pulp-operator version:) .*/\1 ${PULP_OPERATOR_DEV_VERSION}\")/g" main.go
-
   echo "Bumping Makefile operator's version ..."
-  sed -i -E "s/^(VERSION \?=) .*/\1 ${PULP_OPERATOR_DEV_VERSION}/g" Makefile
+  sed -i -E "s/^(VERSION \?=) .*/\1 ${PULP_OPERATOR_RELEASE_VERSION}/g" Makefile
 
   echo "Bumping the tag used in bundle-upgrade pipeline  ..."
   sed -i -E "s/(ref:) ${PULP_OPERATOR_REPLACE_VERSION}/\1 ${PULP_OPERATOR_RELEASE_VERSION}/g" .github/workflows/ci.yml
@@ -36,7 +33,7 @@ function bump_version {
   make generate manifests bundle
 
   echo "Commiting changes ..."
-  git commit -am "Bump version from Makefile to $PULP_OPERATOR_DEV_VERSION" -m "[noissue]"
+  git commit -am "Bump version from Makefile to $PULP_OPERATOR_RELEASE_VERSION" -m "[noissue]"
 }
 
 function stash_files {
