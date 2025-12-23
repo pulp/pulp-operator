@@ -1011,3 +1011,86 @@ func SetDefaultSecurityContext() *corev1.SecurityContext {
 func Ipv6Disabled(pulp pulpv1.Pulp) bool {
 	return pulp.Spec.IPv6Disabled != nil && *pulp.Spec.IPv6Disabled
 }
+
+// SetCAVolumes adds the trusted-ca bundle into []volume
+// On OpenShift: uses the operator-created ConfigMap with CNO injection
+// On vanilla K8s: uses a user-specified ConfigMap (which can be managed manually or by trust-manager)
+func SetCAVolumes(pulp *pulpv1.Pulp, volumes []corev1.Volume) []corev1.Volume {
+
+	if !pulp.Spec.TrustedCa {
+		return volumes
+	}
+
+	var configMapName string
+	var configMapKey string
+
+	// Determine ConfigMap name and key based on configuration
+	if pulp.Spec.TrustedCaConfigMapKey != nil {
+		configMapName, configMapKey = SplitCAConfigMapNameKey(*pulp)
+	} else {
+		// OpenShift mode: use the operator-created ConfigMap with CNO injection
+		configMapName = settings.EmptyCAConfigMapName(pulp.Name)
+		configMapKey = "ca-bundle.crt"
+	}
+
+	// trustedCAVolume contains the configmap with the custom ca bundle
+	defaultMode := int32(420)
+	configMapVolumeSource := &corev1.ConfigMapVolumeSource{
+		LocalObjectReference: corev1.LocalObjectReference{
+			Name: configMapName,
+		},
+		DefaultMode: &defaultMode,
+	}
+
+	// If a specific key is provided, map it to the expected path
+	// Otherwise, mount all keys from the ConfigMap (first key will be used)
+	if configMapKey != "" {
+		configMapVolumeSource.Items = []corev1.KeyToPath{
+			{Key: configMapKey, Path: "tls-ca-bundle.pem"},
+		}
+	}
+
+	trustedCAVolume := corev1.Volume{
+		Name: "trusted-ca",
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: configMapVolumeSource,
+		},
+	}
+	volumes = append(volumes, trustedCAVolume)
+
+	return volumes
+}
+
+// SetCAVolumeMounts defines the container mount point for the trusted ca configmap
+func SetCAVolumeMounts(pulp *pulpv1.Pulp, volumeMounts []corev1.VolumeMount) []corev1.VolumeMount {
+	if !pulp.Spec.TrustedCa {
+		return volumeMounts
+	}
+
+	// trustedCAMount defines the mount point of the configmap
+	// with the custom ca bundle
+	trustedCAMount := corev1.VolumeMount{
+		Name:      "trusted-ca",
+		MountPath: "/etc/pki/ca-trust/extracted/pem",
+		ReadOnly:  true,
+	}
+	return append(volumeMounts, trustedCAMount)
+}
+
+// SplitCAConfigMapNameKey returns the configmap name and the key from mount_trusted_ca_configmap_key
+func SplitCAConfigMapNameKey(pulp pulpv1.Pulp) (string, string) {
+
+	var configMapName, configMapKey string
+	// Vanilla K8s mode: parse "configmap-name:key" format
+	// If no separator, assume it's just the ConfigMap name and use the first key in the map
+	parts := strings.Split(*pulp.Spec.TrustedCaConfigMapKey, ":")
+	if len(parts) == 2 {
+		configMapName = parts[0]
+		configMapKey = parts[1]
+	} else {
+		// Just ConfigMap name provided, use empty key to get first key in map
+		configMapName = parts[0]
+		configMapKey = ""
+	}
+	return configMapName, configMapKey
+}

@@ -708,6 +708,11 @@ func (in *PulpSpec) DeepCopyInto(out *PulpSpec) {
 			(*out)[key] = val
 		}
 	}
+	if in.TrustedCaConfigMapKey != nil {
+		in, out := &in.TrustedCaConfigMapKey, &out.TrustedCaConfigMapKey
+		*out = new(string)
+		**out = **in
+	}
 	in.AdminPasswordJob.DeepCopyInto(&out.AdminPasswordJob)
 	in.MigrationJob.DeepCopyInto(&out.MigrationJob)
 	in.SigningJob.DeepCopyInto(&out.SigningJob)

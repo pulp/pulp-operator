@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
+	"github.com/pulp/pulp-operator/controllers"
 	"github.com/pulp/pulp-operator/controllers/settings"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -35,7 +36,8 @@ func TestMountCASpec_Disabled(t *testing.T) {
 	volumes := []corev1.Volume{}
 	volumeMounts := []corev1.VolumeMount{}
 
-	resultVolumes, resultVolumeMounts := MountCASpec(pulp, volumes, volumeMounts)
+	resultVolumes := controllers.SetCAVolumes(pulp, volumes)
+	resultVolumeMounts := controllers.SetCAVolumeMounts(pulp, volumeMounts)
 
 	if len(resultVolumes) != 0 {
 		t.Errorf("Expected 0 volumes when TrustedCa is false, got %d", len(resultVolumes))
@@ -52,7 +54,7 @@ func TestMountCASpec_OpenShiftMode(t *testing.T) {
 	pulp := &pulpv1.Pulp{
 		Spec: pulpv1.PulpSpec{
 			TrustedCa:             true,
-			TrustedCaConfigMapKey: "", // Empty means OpenShift mode
+			TrustedCaConfigMapKey: nil, // Empty means OpenShift mode
 		},
 	}
 	pulp.Name = pulpName
@@ -60,7 +62,8 @@ func TestMountCASpec_OpenShiftMode(t *testing.T) {
 	volumes := []corev1.Volume{}
 	volumeMounts := []corev1.VolumeMount{}
 
-	resultVolumes, resultVolumeMounts := MountCASpec(pulp, volumes, volumeMounts)
+	resultVolumes := controllers.SetCAVolumes(pulp, volumes)
+	resultVolumeMounts := controllers.SetCAVolumeMounts(pulp, volumeMounts)
 
 	// Verify we got exactly one volume and one mount
 	if len(resultVolumes) != 1 {
@@ -117,7 +120,7 @@ func TestMountCASpec_TrustManagerMode(t *testing.T) {
 	pulp := &pulpv1.Pulp{
 		Spec: pulpv1.PulpSpec{
 			TrustedCa:             true,
-			TrustedCaConfigMapKey: configMapName, // Just ConfigMap name, no ":"
+			TrustedCaConfigMapKey: &configMapName, // Just ConfigMap name, no ":"
 		},
 	}
 	pulp.Name = pulpName
@@ -125,7 +128,8 @@ func TestMountCASpec_TrustManagerMode(t *testing.T) {
 	volumes := []corev1.Volume{}
 	volumeMounts := []corev1.VolumeMount{}
 
-	resultVolumes, resultVolumeMounts := MountCASpec(pulp, volumes, volumeMounts)
+	resultVolumes := controllers.SetCAVolumes(pulp, volumes)
+	resultVolumeMounts := controllers.SetCAVolumeMounts(pulp, volumeMounts)
 
 	// Verify we got exactly one volume and one mount
 	if len(resultVolumes) != 1 {
@@ -176,15 +180,13 @@ func TestMountCASpec_CustomKey(t *testing.T) {
 	pulp := &pulpv1.Pulp{
 		Spec: pulpv1.PulpSpec{
 			TrustedCa:             true,
-			TrustedCaConfigMapKey: separatorFormat,
+			TrustedCaConfigMapKey: &separatorFormat,
 		},
 	}
 	pulp.Name = pulpName
 
 	volumes := []corev1.Volume{}
-	volumeMounts := []corev1.VolumeMount{}
-
-	resultVolumes, _ := MountCASpec(pulp, volumes, volumeMounts)
+	resultVolumes := controllers.SetCAVolumes(pulp, volumes)
 
 	if len(resultVolumes) != 1 {
 		t.Fatalf("Expected 1 volume, got %d", len(resultVolumes))
@@ -206,10 +208,11 @@ func TestMountCASpec_CustomKey(t *testing.T) {
 
 // TestMountCASpec_PreservesExistingVolumes verifies that existing volumes are preserved
 func TestMountCASpec_PreservesExistingVolumes(t *testing.T) {
+	configMapName := "my-bund:ca-bundle.crt"
 	pulp := &pulpv1.Pulp{
 		Spec: pulpv1.PulpSpec{
 			TrustedCa:             true,
-			TrustedCaConfigMapKey: "my-bundle:ca-bundle.crt",
+			TrustedCaConfigMapKey: &configMapName,
 		},
 	}
 	pulp.Name = "test-pulp"
@@ -224,7 +227,8 @@ func TestMountCASpec_PreservesExistingVolumes(t *testing.T) {
 		{Name: "existing-mount-2"},
 	}
 
-	resultVolumes, resultVolumeMounts := MountCASpec(pulp, existingVolumes, existingVolumeMounts)
+	resultVolumes := controllers.SetCAVolumes(pulp, existingVolumes)
+	resultVolumeMounts := controllers.SetCAVolumeMounts(pulp, existingVolumeMounts)
 
 	// Should have 3 volumes (2 existing + 1 new)
 	if len(resultVolumes) != 3 {
@@ -269,7 +273,7 @@ func TestMountCASpec_SeparatorFormat(t *testing.T) {
 	pulp := &pulpv1.Pulp{
 		Spec: pulpv1.PulpSpec{
 			TrustedCa:             true,
-			TrustedCaConfigMapKey: separatorFormat,
+			TrustedCaConfigMapKey: &separatorFormat,
 		},
 	}
 	pulp.Name = pulpName
@@ -277,7 +281,8 @@ func TestMountCASpec_SeparatorFormat(t *testing.T) {
 	volumes := []corev1.Volume{}
 	volumeMounts := []corev1.VolumeMount{}
 
-	resultVolumes, resultVolumeMounts := MountCASpec(pulp, volumes, volumeMounts)
+	resultVolumes := controllers.SetCAVolumes(pulp, volumes)
+	resultVolumeMounts := controllers.SetCAVolumeMounts(pulp, volumeMounts)
 
 	// Verify we got exactly one volume and one mount
 	if len(resultVolumes) != 1 {
@@ -361,12 +366,12 @@ func TestMountCASpec_MountPathConsistency(t *testing.T) {
 			pulp := &pulpv1.Pulp{
 				Spec: pulpv1.PulpSpec{
 					TrustedCa:             tc.trustedCa,
-					TrustedCaConfigMapKey: tc.trustedCaConfigMapKey,
+					TrustedCaConfigMapKey: &tc.trustedCaConfigMapKey,
 				},
 			}
 			pulp.Name = pulpName
 
-			_, resultVolumeMounts := MountCASpec(pulp, []corev1.Volume{}, []corev1.VolumeMount{})
+			resultVolumeMounts := controllers.SetCAVolumeMounts(pulp, []corev1.VolumeMount{})
 
 			if len(resultVolumeMounts) != 1 {
 				t.Fatalf("Expected 1 volumeMount, got %d", len(resultVolumeMounts))

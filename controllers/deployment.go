@@ -554,6 +554,10 @@ func (d *CommonDeployment) setVolumes(resources any, pulpcoreType settings.Pulpc
 		}
 		volumes = append(volumes, containerTokenSecretVolume)
 	}
+
+	// append the CA configmap to the volumes
+	volumes = SetCAVolumes(&pulp, volumes)
+
 	d.volumes = append([]corev1.Volume(nil), volumes...)
 }
 
@@ -724,6 +728,10 @@ func (d *CommonDeployment) setVolumeMounts(pulp pulpv1.Pulp, pulpcoreType settin
 		}
 		volumeMounts = append(volumeMounts, containerTokenSecretMount...)
 	}
+
+	// append the CA configmap to the volumeMounts
+	volumeMounts = SetCAVolumeMounts(&pulp, volumeMounts)
+
 	d.volumeMounts = append([]corev1.VolumeMount(nil), volumeMounts...)
 }
 
