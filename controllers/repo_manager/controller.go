@@ -194,6 +194,11 @@ func pulpCoreTasks(ctx context.Context, pulp *pulpv1.Pulp, r RepoManagerReconcil
 		return pulpController, err
 	}
 
+	log.V(1).Info("Running configMap tasks ...")
+	if pulpController, err := r.configMapTasks(ctx, pulp); pulpController != nil || err != nil {
+		return pulpController, err
+	}
+
 	log.V(1).Info("Running API tasks")
 	if pulpController, err := r.pulpApiController(ctx, pulp, log); needsRequeue(err, pulpController) {
 		return &pulpController, err
@@ -328,6 +333,10 @@ func indexerFunc(obj client.Object) []string {
 	}
 	if customSettings := pulp.Spec.CustomPulpSettings; customSettings != "" {
 		keys = append(keys, customSettings)
+	}
+	if pulp.Spec.TrustedCaConfigMapKey != nil {
+		caConfigMap, _ := controllers.SplitCAConfigMapNameKey(*pulp)
+		keys = append(keys, caConfigMap)
 	}
 
 	return keys

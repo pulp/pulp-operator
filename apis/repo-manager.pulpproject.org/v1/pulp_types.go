@@ -328,7 +328,7 @@ type PulpSpec struct {
 	// Required on vanilla Kubernetes when mount_trusted_ca is true. Optional on OpenShift.
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Trusted CA ConfigMap Key",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced","urn:alm:descriptor:com.tectonic.ui:fieldDependency:mount_trusted_ca:true"}
-	TrustedCaConfigMapKey string `json:"mount_trusted_ca_configmap_key,omitempty"`
+	TrustedCaConfigMapKey *string `json:"mount_trusted_ca_configmap_key,omitempty"`
 
 	// Job to reset pulp admin password
 	AdminPasswordJob PulpJob `json:"admin_password_job,omitempty"`

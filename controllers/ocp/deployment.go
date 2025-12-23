@@ -28,15 +28,6 @@ import (
 func defaultsForOCPDeployment(deployment *appsv1.Deployment, pulp *pulpv1.Pulp) {
 	// in OCP we use SCC so there is no need to define PodSecurityContext
 	deployment.Spec.Template.Spec.SecurityContext = &corev1.PodSecurityContext{}
-
-	// get the current volume mount points
-	volumes := deployment.Spec.Template.Spec.Volumes
-	volumeMounts := deployment.Spec.Template.Spec.Containers[0].VolumeMounts
-
-	// append the CA configmap to the volumes/volumemounts slice
-	volumes, volumeMounts = MountCASpec(pulp, volumes, volumeMounts)
-	deployment.Spec.Template.Spec.Volumes = volumes
-	deployment.Spec.Template.Spec.Containers[0].VolumeMounts = volumeMounts
 }
 
 // DeploymentAPIOCP is the pulpcore-api Deployment definition for common OCP clusters

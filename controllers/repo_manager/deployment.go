@@ -16,10 +16,8 @@ limitations under the License.
 package repo_manager
 
 import (
-	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
 	pulp_ocp "github.com/pulp/pulp-operator/controllers/ocp"
-	appsv1 "k8s.io/api/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -72,41 +70,13 @@ type Deployer interface {
 	Deploy(controllers.FunctionResources) client.Object
 }
 
-// defaultsForVanillaDeployment sets the common Deployment configurations for vanilla k8s clusters
-// This includes CA bundle mounting from ConfigMaps when configured
-func defaultsForVanillaDeployment(deployment client.Object, pulp *pulpv1.Pulp) {
-	dep := deployment.(*appsv1.Deployment)
-
-	// Validate CA ConfigMap configuration on vanilla K8s
-	if pulp.Spec.TrustedCa && len(pulp.Spec.TrustedCaConfigMapKey) == 0 {
-		controllers.CustomZapLogger().Error(`mount_trusted_ca is true but mount_trusted_ca_configmap_key is not set. ` +
-			`On vanilla Kubernetes, you must specify mount_trusted_ca_configmap_key to reference a ConfigMap containing CA certificates. ` +
-			`This field is only optional on OpenShift where CNO injection is used.`)
-		return
-	}
-
-	// Only mount CA bundles if ConfigMap is specified
-	if pulp.Spec.TrustedCa && len(pulp.Spec.TrustedCaConfigMapKey) > 0 {
-		// get the current volume mount points
-		volumes := dep.Spec.Template.Spec.Volumes
-		volumeMounts := dep.Spec.Template.Spec.Containers[0].VolumeMounts
-
-		// append the CA configmap to the volumes/volumemounts slice
-		volumes, volumeMounts = pulp_ocp.MountCASpec(pulp, volumes, volumeMounts)
-		dep.Spec.Template.Spec.Volumes = volumes
-		dep.Spec.Template.Spec.Containers[0].VolumeMounts = volumeMounts
-	}
-}
-
 // DeploymentAPIVanilla is the pulpcore-api Deployment definition for common k8s distributions
 type DeploymentAPIVanilla struct{}
 
 // Deploy returns a pulp-api Deployment object
 func (DeploymentAPIVanilla) Deploy(resources controllers.FunctionResources) client.Object {
 	dep := controllers.DeploymentAPICommon{}
-	deployment := dep.Deploy(resources)
-	defaultsForVanillaDeployment(deployment, resources.Pulp)
-	return deployment
+	return dep.Deploy(resources)
 }
 
 // DeploymentContentVanilla is the pulpcore-content Deployment definition for common k8s distributions
@@ -115,9 +85,7 @@ type DeploymentContentVanilla struct{}
 // Deploy returns a pulp-content Deployment object
 func (DeploymentContentVanilla) Deploy(resources controllers.FunctionResources) client.Object {
 	dep := controllers.DeploymentContentCommon{}
-	deployment := dep.Deploy(resources)
-	defaultsForVanillaDeployment(deployment, resources.Pulp)
-	return deployment
+	return dep.Deploy(resources)
 }
 
 // DeploymentWorkerVanilla is the pulpcore-worker Deployment definition for common k8s distributions
@@ -126,7 +94,5 @@ type DeploymentWorkerVanilla struct{}
 // Deploy returns a pulp-worker Deployment object
 func (DeploymentWorkerVanilla) Deploy(resources controllers.FunctionResources) client.Object {
 	dep := controllers.DeploymentWorkerCommon{}
-	deployment := dep.Deploy(resources)
-	defaultsForVanillaDeployment(deployment, resources.Pulp)
-	return deployment
+	return dep.Deploy(resources)
 }
