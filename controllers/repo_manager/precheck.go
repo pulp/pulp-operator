@@ -84,6 +84,11 @@ func prechecks(ctx context.Context, r *RepoManagerReconciler, pulp *pulpv1.Pulp)
 		return reconcile, nil
 	}
 
+	// verify if configmap is defined when mount_trusted_ca is true
+	if reconcile := checkCAConfigmap(r, *pulp); reconcile != nil {
+		return reconcile, nil
+	}
+
 	return nil, nil
 }
 
@@ -301,5 +306,20 @@ func checkSigningScripts(r *RepoManagerReconciler, pulp *pulpv1.Pulp) *ctrl.Resu
 		return &ctrl.Result{}
 	}
 
+	return nil
+}
+
+// checCAConfigmap validates CA ConfigMap configuration on vanilla K8s
+func checkCAConfigmap(r *RepoManagerReconciler, pulp pulpv1.Pulp) *ctrl.Result {
+	if isOpenShift, _ := controllers.IsOpenShift(); isOpenShift {
+		return nil
+	}
+
+	if pulp.Spec.TrustedCa && pulp.Spec.TrustedCaConfigMapKey == nil {
+		r.RawLogger.Error(nil, `mount_trusted_ca is true but mount_trusted_ca_configmap_key is not set. `+
+			`On vanilla Kubernetes, you must specify mount_trusted_ca_configmap_key to reference a ConfigMap containing CA certificates. `+
+			`This field is only optional on OpenShift where CNO injection is used.`)
+		return &ctrl.Result{}
+	}
 	return nil
 }

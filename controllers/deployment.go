@@ -554,6 +554,10 @@ func (d *CommonDeployment) setVolumes(resources any, pulpcoreType settings.Pulpc
 		}
 		volumes = append(volumes, containerTokenSecretVolume)
 	}
+
+	// append the CA configmap to the volumes
+	volumes = SetCAVolumes(&pulp, volumes)
+
 	d.volumes = append([]corev1.Volume(nil), volumes...)
 }
 
@@ -724,6 +728,10 @@ func (d *CommonDeployment) setVolumeMounts(pulp pulpv1.Pulp, pulpcoreType settin
 		}
 		volumeMounts = append(volumeMounts, containerTokenSecretMount...)
 	}
+
+	// append the CA configmap to the volumeMounts
+	volumeMounts = SetCAVolumeMounts(&pulp, volumeMounts)
+
 	d.volumeMounts = append([]corev1.VolumeMount(nil), volumeMounts...)
 }
 
@@ -1141,15 +1149,16 @@ func AddHashLabel(r FunctionResources, deployment *appsv1.Deployment) {
 	if err := r.Create(r.Context, deployment, client.DryRunAll); err != nil {
 		hash = HashFromMutated(deployment, r)
 	} else {
+		// Create a copy to avoid modifying the original deployment
+		depCopy := deployment.DeepCopy()
+
 		// When HPA is enabled, exclude replicas from hash calculation
 		// to avoid race condition between operator and HPA
 		if isHPAManagedDeployment(deployment.Name, r.Pulp) {
-			depCopy := deployment.DeepCopy()
 			depCopy.Spec.Replicas = nil
-			hash = CalculateHash(depCopy.Spec)
-		} else {
-			hash = CalculateHash(deployment.Spec)
 		}
+
+		hash = CalculateDeploymentHash(depCopy.Spec)
 	}
 
 	SetHashLabel(hash, deployment)

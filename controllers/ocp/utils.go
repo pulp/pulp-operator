@@ -101,40 +101,6 @@ func CreateEmptyConfigMap(r client.Client, scheme *runtime.Scheme, ctx context.C
 	return ctrl.Result{}, nil
 }
 
-// mountCASpec adds the trusted-ca bundle into []volume and []volumeMount if pulp.Spec.TrustedCA is true
-func mountCASpec(pulp *pulpv1.Pulp, volumes []corev1.Volume, volumeMounts []corev1.VolumeMount) ([]corev1.Volume, []corev1.VolumeMount) {
-
-	if pulp.Spec.TrustedCa {
-
-		// trustedCAVolume contains the configmap with the custom ca bundle
-		trustedCAVolume := corev1.Volume{
-			Name: "trusted-ca",
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: settings.EmptyCAConfigMapName(pulp.Name),
-					},
-					Items: []corev1.KeyToPath{
-						{Key: "ca-bundle.crt", Path: "tls-ca-bundle.pem"},
-					},
-				},
-			},
-		}
-		volumes = append(volumes, trustedCAVolume)
-
-		// trustedCAMount defines the mount point of the configmap
-		// with the custom ca bundle
-		trustedCAMount := corev1.VolumeMount{
-			Name:      "trusted-ca",
-			MountPath: "/etc/pki/ca-trust/extracted/pem",
-			ReadOnly:  true,
-		}
-		volumeMounts = append(volumeMounts, trustedCAMount)
-	}
-
-	return volumes, volumeMounts
-}
-
 // GetRouteHost defines route host based on ingress default cluster domain if no .spec.route_host defined
 func GetRouteHost(pulp *pulpv1.Pulp) string {
 	if len(pulp.Spec.RouteHost) == 0 {
