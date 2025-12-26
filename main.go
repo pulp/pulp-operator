@@ -157,7 +157,14 @@ func main() {
 		Kind:    "Pod",
 	}
 
-	restClient, err := apiutil.RESTClientForGVK(gvk, false, mgr.GetConfig(), serializer.NewCodecFactory(mgr.GetScheme()), mgr.GetHTTPClient())
+	restClient, err := apiutil.RESTClientForGVK(
+		gvk,
+		false,
+		false,
+		mgr.GetConfig(),
+		serializer.NewCodecFactory(mgr.GetScheme()),
+		mgr.GetHTTPClient(),
+	)
 	if err != nil {
 		setupLog.Error(err, "failed to construct a new REST client")
 	}
