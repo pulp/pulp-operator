@@ -1370,6 +1370,10 @@ spec:
                       - name
                       type: object
                     type: array
+                  gunicorn_access_logformat:
+                    description: For the gunicorn --access-logformat CLI command used
+                      to format the access logs.
+                    type: string
                   gunicorn_timeout:
                     description: |-
                       The timeout for the gunicorn process.
@@ -4921,6 +4925,10 @@ spec:
                       - name
                       type: object
                     type: array
+                  gunicorn_access_logformat:
+                    description: For the gunicorn --access-logformat CLI command used
+                      to format the access logs.
+                    type: string
                   gunicorn_timeout:
                     description: |-
                       The timeout for the gunicorn process.
