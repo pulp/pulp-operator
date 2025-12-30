@@ -34,6 +34,7 @@ Api defines desired state of pulpcore-api resources
 | topology_spread_constraints | Topology rule(s) for the pods. | []corev1.TopologySpreadConstraint | false |
 | gunicorn_timeout | The timeout for the gunicorn process. Default: 90 | int | false |
 | gunicorn_workers | The number of gunicorn workers to use for the api. Default: 2 | int | false |
+| gunicorn_access_logformat | For the gunicorn --access-logformat CLI command used to format the access logs. | string | false |
 | resource_requirements | Resource requirements for the pulp api container. | corev1.ResourceRequirements | false |
 | readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |
 | livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
@@ -85,6 +86,7 @@ Content defines desired state of pulpcore-content resources
 | topology_spread_constraints | Topology rule(s) for the pods. | []corev1.TopologySpreadConstraint | false |
 | gunicorn_timeout | The timeout for the gunicorn process. Default: 90 | int | false |
 | gunicorn_workers | The number of gunicorn workers to use for the api. Default: 2 | int | false |
+| gunicorn_access_logformat | For the gunicorn --access-logformat CLI command used to format the access logs. | string | false |
 | readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |
 | livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
 | pdb | PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods | *policy.PodDisruptionBudgetSpec | false |
