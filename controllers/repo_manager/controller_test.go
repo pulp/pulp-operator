@@ -183,6 +183,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		customEnvVar,
 		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(90)},
 		{Name: "PULP_API_WORKERS", Value: strconv.Itoa(2)},
+		{Name: "PULP_GUNICORN_ACCESS_LOGFORMAT", Value: `pulp [%({correlation-id}o)s]: %(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"`},
 		{Name: "POSTGRES_SERVICE_HOST", Value: PulpName + "-database-svc"},
 		{Name: "POSTGRES_SERVICE_PORT", Value: "5432"},
 		{Name: "REDIS_SERVICE_HOST", Value: PulpName + "-redis-svc." + PulpNamespace},
@@ -193,6 +194,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		customEnvVar,
 		{Name: "PULP_GUNICORN_TIMEOUT", Value: strconv.Itoa(90)},
 		{Name: "PULP_CONTENT_WORKERS", Value: strconv.Itoa(2)},
+		{Name: "PULP_GUNICORN_ACCESS_LOGFORMAT", Value: `%a %t "%r" %s %b "%{Referer}i" "%{User-Agent}i"`},
 		{Name: "POSTGRES_SERVICE_HOST", Value: PulpName + "-database-svc"},
 		{Name: "POSTGRES_SERVICE_PORT", Value: "5432"},
 		{Name: "REDIS_SERVICE_HOST", Value: PulpName + "-redis-svc." + PulpNamespace},
@@ -626,12 +628,13 @@ var _ = Describe("Pulp controller", Ordered, func() {
 then
   PULP_API_ENTRYPOINT=("pulpcore-api")
 else
-  PULP_API_ENTRYPOINT=("gunicorn" "pulpcore.app.wsgi:application" "--name" "pulp-api" "--access-logformat" "pulp [%({correlation-id}o)s]: %(h)s %(l)s %(u)s %(t)s \"%(r)s\" %(s)s %(b)s \"%(f)s\" \"%(a)s\"")
+  PULP_API_ENTRYPOINT=("gunicorn" "pulpcore.app.wsgi:application" "--name" "pulp-api")
 fi
 exec "${PULP_API_ENTRYPOINT[@]}" \
 --bind "[::]:24817" \
 --timeout "${PULP_GUNICORN_TIMEOUT}" \
 --workers "${PULP_API_WORKERS}" \
+--access-logformat "${PULP_GUNICORN_ACCESS_LOGFORMAT}" \
 --access-logfile -`,
 		},
 		Env: envVarsApi,
@@ -745,6 +748,7 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 --bind "[::]:24816" \
 --timeout "${PULP_GUNICORN_TIMEOUT}" \
 --workers "${PULP_CONTENT_WORKERS}" \
+--access-logformat "${PULP_GUNICORN_ACCESS_LOGFORMAT}" \
 --access-logfile -
 `,
 						},

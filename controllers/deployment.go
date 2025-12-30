@@ -268,9 +268,21 @@ func (d *CommonDeployment) setEnvVars(resources any, pulpcoreType settings.Pulpc
 			gunicornTimeout = "90"
 		}
 
+		// get gunicornAccessLogformat defintion from CR
+		gunicornAccessLogformat := pulpcoreTypeField.FieldByName("GunicornAccessLogformat").String()
+		if gunicornAccessLogformat == "" {
+			if pulpcoreType == settings.CONTENT {
+				// aiohttp format for content pods using GunicornWebWorker
+				gunicornAccessLogformat = `%a %t "%r" %s %b "%{Referer}i" "%{User-Agent}i"`
+			} else {
+				gunicornAccessLogformat = `pulp [%({correlation-id}o)s]: %(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"`
+			}
+		}
+
 		gunicornEnvVars := []corev1.EnvVar{
 			{Name: "PULP_GUNICORN_TIMEOUT", Value: gunicornTimeout},
 			{Name: "PULP_" + strings.ToUpper(string(pulpcoreType)) + "_WORKERS", Value: gunicornWorkers},
+			{Name: "PULP_GUNICORN_ACCESS_LOGFORMAT", Value: gunicornAccessLogformat},
 		}
 		envVars = append(envVars, gunicornEnvVars...)
 	}
@@ -992,12 +1004,13 @@ func pulpcoreApiContainerArgs(pulp pulpv1.Pulp) []string {
 then
   PULP_API_ENTRYPOINT=("pulpcore-api")
 else
-  PULP_API_ENTRYPOINT=("gunicorn" "pulpcore.app.wsgi:application" "--name" "pulp-api" "--access-logformat" "pulp [%({correlation-id}o)s]: %(h)s %(l)s %(u)s %(t)s \"%(r)s\" %(s)s %(b)s \"%(f)s\" \"%(a)s\"")
+  PULP_API_ENTRYPOINT=("gunicorn" "pulpcore.app.wsgi:application" "--name" "pulp-api")
 fi
 exec "${PULP_API_ENTRYPOINT[@]}" \
 --bind "` + gunicornBindAddress + `" \
 --timeout "${PULP_GUNICORN_TIMEOUT}" \
 --workers "${PULP_API_WORKERS}" \
+--access-logformat "${PULP_GUNICORN_ACCESS_LOGFORMAT}" \
 --access-logfile -`,
 	}
 }
@@ -1019,6 +1032,7 @@ exec "${PULP_CONTENT_ENTRYPOINT[@]}" \
 --bind "` + gunicornBindAddress + `" \
 --timeout "${PULP_GUNICORN_TIMEOUT}" \
 --workers "${PULP_CONTENT_WORKERS}" \
+--access-logformat "${PULP_GUNICORN_ACCESS_LOGFORMAT}" \
 --access-logfile -
 `,
 	}
