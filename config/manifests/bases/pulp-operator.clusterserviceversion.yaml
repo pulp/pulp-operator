@@ -226,6 +226,13 @@ spec:
         path: api.deployment_annotations
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: For the gunicorn --access-logformat CLI command used to format
+          the access logs.
+        displayName: Gunicorn Access Logformat
+        path: api.gunicorn_access_logformat
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'The timeout for the gunicorn process. Default: 90'
         displayName: Gunicorn Timeout
         path: api.gunicorn_timeout
@@ -435,6 +442,13 @@ spec:
         path: content.deployment_annotations
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: For the gunicorn --access-logformat CLI command used to format
+          the access logs.
+        displayName: Gunicorn Access Logformat
+        path: content.gunicorn_access_logformat
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'The timeout for the gunicorn process. Default: 90'
         displayName: Gunicorn Timeout
         path: content.gunicorn_timeout
