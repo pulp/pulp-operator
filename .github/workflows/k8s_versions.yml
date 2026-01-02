@@ -13,9 +13,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - K8S_VERSION: v1.34.0
           - K8S_VERSION: v1.33.1
           - K8S_VERSION: v1.32.0
-          - K8S_VERSION: v1.31.2
     steps:
       - uses: actions/checkout@v4
       - uses: "./.github/actions/pre-reqs"
@@ -52,9 +52,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - K8S_VERSION: v1.33.1
-          - K8S_VERSION: v1.32.5
-          - K8S_VERSION: v1.31.9
+          - K8S_VERSION: v1.34.3
+          - K8S_VERSION: v1.33.7
+          - K8S_VERSION: v1.32.11
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python 3.11
@@ -148,9 +148,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - K8S_VERSION: 1.34
           - K8S_VERSION: 1.33
           - K8S_VERSION: 1.32
-          - K8S_VERSION: 1.31
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python 3.11
