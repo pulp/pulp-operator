@@ -77,10 +77,10 @@ metadata:
     createdAt: "2021-03-26 16:57:40"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
-    metadata.annotations.support: Community
     operators.operatorframework.io/builder: operator-sdk-v1.22.2
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/pulp/pulp-operator
+    support: Community
   name: pulp-operator.v1.0.0
   namespace: placeholder
 spec:

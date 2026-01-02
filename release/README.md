@@ -39,7 +39,6 @@ podman build --build-arg GOLANG_VERSION=1.23.0 --build-arg CONTROLLER_TOOLS_VERS
 GIT_RELEASE_BRANCH=release-beta-4
 PULP_OPERATOR_REPLACE_VERSION=1.0.0-beta.3
 PULP_OPERATOR_RELEASE_VERSION=1.0.0-beta.4
-PULP_OPERATOR_DEV_VERSION=1.0.0-beta.5
 GITHUB_SSH_KEY=~/.ssh/github
 PULP_OPERATOR_REPO_PATH=/tmp/pulp-operator/
 OPERATORHUB_REPO_PATH=/tmp/community-operators/
@@ -63,7 +62,6 @@ podman run -dit --name pulp-operator-release \
   -e GIT_REMOTE_BRANCH \
   -e PULP_OPERATOR_REPLACE_VERSION \
   -e PULP_OPERATOR_RELEASE_VERSION \
-  -e PULP_OPERATOR_DEV_VERSION \
   -e GIT_OPERATORHUB_RELEASE_BRANCH \
   -e GIT_OPERATORHUB_UPSTREAM_REMOTE_NAME \
   -e GIT_OPERATORHUB_REMOTE_NAME \
@@ -85,7 +83,6 @@ podman run -dit --name pulp-operator-release \
 |GIT_REMOTE_NAME|`pulp-operator` fork git remote name. For example: origin|
 |PULP_OPERATOR_REPLACE_VERSION|`pulp-operator` version to be replaced by this release. For example:1.0.0-beta.3|
 |PULP_OPERATOR_RELEASE_VERSION|`pulp-operator` release version. For example: 1.0.0-beta.4|
-|PULP_OPERATOR_DEV_VERSION|`pulp-operator` development version (version that will be worked on after this release). For example: 1.0.0-beta.5|
 |GIT_OPERATORHUB_RELEASE_BRANCH|name of the release branch that will be created on `operatorhub catalog`. For example: "pulp-operator-$PULP_OPERATOR_RELEASE_VERSION"|
 |GIT_OPERATORHUB_UPSTREAM_REMOTE_NAME|`operatorhub catalog` upstream git remote name. For example: upstream|
 |GIT_OPERATORHUB_REMOTE_NAME|`operatorhub catalog` fork git remote name. For example: origin|
