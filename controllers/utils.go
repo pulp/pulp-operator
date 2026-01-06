@@ -463,6 +463,12 @@ func checkSpecModification(fields ...interface{}) bool {
 	return !equality.Semantic.DeepDerivative(expectedField, currentField)
 }
 
+// stripDeprecatedServiceAccount removes the deprecated serviceAccount field
+// before hash calculation to ensure compatibility across Kubernetes versions
+func stripDeprecatedServiceAccount(spec *appsv1.DeploymentSpec) {
+	spec.Template.Spec.DeprecatedServiceAccount = ""
+}
+
 // CheckDeployment returns true if a spec from deployment is not
 // with the expected contents defined in Pulp CR
 func CheckDeploymentSpec(fields ...interface{}) bool {
@@ -470,13 +476,13 @@ func CheckDeploymentSpec(fields ...interface{}) bool {
 	current := fields[1].(appsv1.Deployment)
 	resources := fields[2].(FunctionResources)
 
+	// Create copies to avoid modifying the original objects
+	expectedCopy := expected.DeepCopy()
+	currentCopy := current.DeepCopy()
+
 	// When HPA is enabled, exclude replicas field from comparison
 	// to avoid race condition between operator and HPA
 	if isHPAManagedDeployment(expected.Name, resources.Pulp) {
-		// Create copies to avoid modifying the original objects
-		expectedCopy := expected.DeepCopy()
-		currentCopy := current.DeepCopy()
-
 		// Set both replicas to nil for comparison purposes
 		// This ensures HPA-managed replica counts don't trigger reconciliation
 		expectedCopy.Spec.Replicas = nil
@@ -484,13 +490,15 @@ func CheckDeploymentSpec(fields ...interface{}) bool {
 
 		hashFromLabel := GetCurrentHash(&current)
 		hashFromExpected := HashFromMutated(expectedCopy, resources)
-		hashFromCurrent := CalculateHash(currentCopy.Spec)
+		hashFromCurrent := CalculateDeploymentHash(currentCopy.Spec)
+
 		return deploymentChanged(hashFromLabel, hashFromExpected, hashFromCurrent)
 	}
 
 	hashFromLabel := GetCurrentHash(&current)
-	hashFromExpected := HashFromMutated(&expected, resources)
-	hashFromCurrent := CalculateHash(current.Spec)
+	hashFromExpected := HashFromMutated(expectedCopy, resources)
+	hashFromCurrent := CalculateDeploymentHash(currentCopy.Spec)
+
 	return deploymentChanged(hashFromLabel, hashFromExpected, hashFromCurrent)
 }
 
@@ -856,6 +864,18 @@ func CalculateHash(obj any) string {
 	return hex.EncodeToString(calculatedHash.Sum(nil))
 }
 
+// CalculateDeploymentHash calculates the hash of a deployment spec after
+// stripping fields that should not trigger reconciliation (like DeprecatedServiceAccount)
+func CalculateDeploymentHash(spec appsv1.DeploymentSpec) string {
+	// Create a copy to avoid modifying the original
+	specCopy := spec.DeepCopy()
+
+	// Strip fields that shouldn't affect the hash
+	stripDeprecatedServiceAccount(specCopy)
+
+	return CalculateHash(*specCopy)
+}
+
 // SetHashLabel appends the operator's hash label into object
 func SetHashLabel(label string, obj client.Object) {
 	currentLabels := obj.GetLabels()
@@ -876,15 +896,16 @@ func HashFromMutated(dep *appsv1.Deployment, resources FunctionResources) string
 	// mutated configurations
 	resources.Update(resources.Context, dep, client.DryRunAll)
 
+	// Create a copy to strip fields we want to exclude from hash calculation
+	depCopy := dep.DeepCopy()
+
 	// When HPA is enabled, exclude replicas from hash calculation
 	// to avoid race condition between operator and HPA
 	if isHPAManagedDeployment(dep.Name, resources.Pulp) {
-		depCopy := dep.DeepCopy()
 		depCopy.Spec.Replicas = nil
-		return CalculateHash(depCopy.Spec)
 	}
 
-	return CalculateHash(dep.Spec)
+	return CalculateDeploymentHash(depCopy.Spec)
 }
 
 // pulpcoreEnvVars retuns the list of variable names that are defined by pulp-operator
@@ -989,4 +1010,87 @@ func SetDefaultSecurityContext() *corev1.SecurityContext {
 
 func Ipv6Disabled(pulp pulpv1.Pulp) bool {
 	return pulp.Spec.IPv6Disabled != nil && *pulp.Spec.IPv6Disabled
+}
+
+// SetCAVolumes adds the trusted-ca bundle into []volume
+// On OpenShift: uses the operator-created ConfigMap with CNO injection
+// On vanilla K8s: uses a user-specified ConfigMap (which can be managed manually or by trust-manager)
+func SetCAVolumes(pulp *pulpv1.Pulp, volumes []corev1.Volume) []corev1.Volume {
+
+	if !pulp.Spec.TrustedCa {
+		return volumes
+	}
+
+	var configMapName string
+	var configMapKey string
+
+	// Determine ConfigMap name and key based on configuration
+	if pulp.Spec.TrustedCaConfigMapKey != nil {
+		configMapName, configMapKey = SplitCAConfigMapNameKey(*pulp)
+	} else {
+		// OpenShift mode: use the operator-created ConfigMap with CNO injection
+		configMapName = settings.EmptyCAConfigMapName(pulp.Name)
+		configMapKey = "ca-bundle.crt"
+	}
+
+	// trustedCAVolume contains the configmap with the custom ca bundle
+	defaultMode := int32(420)
+	configMapVolumeSource := &corev1.ConfigMapVolumeSource{
+		LocalObjectReference: corev1.LocalObjectReference{
+			Name: configMapName,
+		},
+		DefaultMode: &defaultMode,
+	}
+
+	// If a specific key is provided, map it to the expected path
+	// Otherwise, mount all keys from the ConfigMap (first key will be used)
+	if configMapKey != "" {
+		configMapVolumeSource.Items = []corev1.KeyToPath{
+			{Key: configMapKey, Path: "tls-ca-bundle.pem"},
+		}
+	}
+
+	trustedCAVolume := corev1.Volume{
+		Name: "trusted-ca",
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: configMapVolumeSource,
+		},
+	}
+	volumes = append(volumes, trustedCAVolume)
+
+	return volumes
+}
+
+// SetCAVolumeMounts defines the container mount point for the trusted ca configmap
+func SetCAVolumeMounts(pulp *pulpv1.Pulp, volumeMounts []corev1.VolumeMount) []corev1.VolumeMount {
+	if !pulp.Spec.TrustedCa {
+		return volumeMounts
+	}
+
+	// trustedCAMount defines the mount point of the configmap
+	// with the custom ca bundle
+	trustedCAMount := corev1.VolumeMount{
+		Name:      "trusted-ca",
+		MountPath: "/etc/pki/ca-trust/extracted/pem",
+		ReadOnly:  true,
+	}
+	return append(volumeMounts, trustedCAMount)
+}
+
+// SplitCAConfigMapNameKey returns the configmap name and the key from mount_trusted_ca_configmap_key
+func SplitCAConfigMapNameKey(pulp pulpv1.Pulp) (string, string) {
+
+	var configMapName, configMapKey string
+	// Vanilla K8s mode: parse "configmap-name:key" format
+	// If no separator, assume it's just the ConfigMap name and use the first key in the map
+	parts := strings.Split(*pulp.Spec.TrustedCaConfigMapKey, ":")
+	if len(parts) == 2 {
+		configMapName = parts[0]
+		configMapKey = parts[1]
+	} else {
+		// Just ConfigMap name provided, use empty key to get first key in map
+		configMapName = parts[0]
+		configMapKey = ""
+	}
+	return configMapName, configMapKey
 }
