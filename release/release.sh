@@ -23,11 +23,8 @@ function new_release {
 
 
 function bump_version {
-  echo "Bumping main.go version ..."
-  sed -i -E "s/(pulp-operator version:) .*/\1 ${PULP_OPERATOR_DEV_VERSION}\")/g" main.go
-
   echo "Bumping Makefile operator's version ..."
-  sed -i -E "s/^(VERSION \?=) .*/\1 ${PULP_OPERATOR_DEV_VERSION}/g" Makefile
+  sed -i -E "s/^(VERSION \?=) .*/\1 ${PULP_OPERATOR_RELEASE_VERSION}/g" Makefile
 
   echo "Bumping the tag used in bundle-upgrade pipeline  ..."
   sed -i -E "s/(ref:) ${PULP_OPERATOR_REPLACE_VERSION}/\1 ${PULP_OPERATOR_RELEASE_VERSION}/g" .github/workflows/ci.yml
@@ -35,8 +32,12 @@ function bump_version {
   echo "Updating the manifests with the changes ..."
   make generate manifests bundle
 
+  echo "Updating containerImage annotation"
+  CSV_FILE=manifests/pulp-operator.clusterserviceversion.yaml
+  sed -i "s#containerImage: quay.io/pulp/pulp-operator:devel#containerImage: quay.io/pulp/pulp-operator:v${PULP_OPERATOR_RELEASE_VERSION}#g" $CSV_FILE
+
   echo "Commiting changes ..."
-  git commit -am "Bump version from Makefile to $PULP_OPERATOR_DEV_VERSION" -m "[noissue]"
+  git commit -am "Bump version from Makefile to $PULP_OPERATOR_RELEASE_VERSION" -m "[noissue]"
 }
 
 function stash_files {
@@ -66,8 +67,10 @@ function operatorhub {
 
   cp -a ${PULP_OPERATOR_SOURCE_PATH}/bundle/* ${CATALOG_DIR}/
   CSV_FILE=${CATALOG_DIR}/manifests/pulp-operator.clusterserviceversion.yaml
-  sed -i "s#containerImage: quay.io/pulp/pulp-operator:devel#containerImage: quay.io/pulp/pulp-operator:v${PULP_OPERATOR_RELEASE_VERSION}#g" $CSV_FILE
   echo "  replaces: pulp-operator.v${PULP_OPERATOR_REPLACE_VERSION}" >> $CSV_FILE
+
+  ANNOTATIONS_FILE=${CATALOG_DIR}/metadata/annotations.yaml
+  echo 'com.redhat.openshift.versions: "v4.17-v4.18"' >> $ANNOTATIONS_FILE
 
   echo "Commiting changes ..."
   git add operators/pulp-operator/
