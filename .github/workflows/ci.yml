@@ -188,7 +188,7 @@ jobs:
 
       - name: Install helm chart from source
         run: |
-          helm install --skip-crds --set namespace=pulp-operator-system --set image=localhost/pulp-operator:devel pulp helm-charts/
+          helm install --skip-crds --set namespace=pulp-operator-system --set image=localhost/pulp-operator:devel pulp helm-charts/chart
 
       - uses: actions/checkout@v4
       - name: Create Pulp Operator CR
