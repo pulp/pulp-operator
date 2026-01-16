@@ -1,1 +1,1 @@
-CI: Fix helm source location
+CI: Fix helm source location and skip azurite version check
