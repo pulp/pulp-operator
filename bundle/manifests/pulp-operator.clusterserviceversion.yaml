@@ -64,7 +64,7 @@ metadata:
     capabilities: Full Lifecycle
     categories: Integration & Delivery
     containerImage: quay.io/pulp/pulp-operator:v1.0.0
-    createdAt: "2025-12-19T03:33:08Z"
+    createdAt: "2026-01-27T16:51:45Z"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
     metadata.annotations.support: Community

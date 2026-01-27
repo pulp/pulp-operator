@@ -12,6 +12,22 @@
 
 <!-- TOWNCRIER -->
 
+## 1.3.0 (2026-01-27) {: #1.3.0 }
+
+
+#### Features {: #1.3.0-feature }
+
+- Added gunicorn_access_logformat field to customize access log format for api and content pods.
+  [#1564](https://github.com/pulp/pulp-operator/issues/1564)
+
+#### Bugfixes {: #1.3.0-bugfix }
+
+- CI: Fix helm source location
+  [#1583](https://github.com/pulp/pulp-operator/issues/1583)
+
+---
+
+
 ## 1.2.0 (2025-12-19) {: #1.2.0 }
 
 
