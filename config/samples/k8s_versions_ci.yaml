@@ -38,6 +38,7 @@ spec:
   database:
     postgres_storage_class: standard
     postgres_storage_requirements: "1Gi"
+    postgres_image: 'postgres:14'
   cache:
     enabled: true
     redis_storage_class: standard
