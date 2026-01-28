@@ -44,3 +44,4 @@ spec:
     replicas: 1
   database:
     postgres_storage_class: standard
+    postgres_image: 'postgres:14'
