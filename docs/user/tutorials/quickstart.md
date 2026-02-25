@@ -94,12 +94,12 @@ So we don't have to keep repeating `-n $NAMESPACE`, let's set the current namesp
 $ kubectl config set-context --current --namespace=$NAMESPACE
 ```
 
-Next, review `config/samples/pulpproject_v1beta1_pulp_cr.default.yaml`. If the variables' default values are not correct for your environment, copy to `config/samples/pulpproject_v1beta1_pulp_cr.yaml`, uncomment "spec:", and uncomment and adjust the variables.
+Next, review `config/samples/simple.yaml` or one of the other example configurations. If the variables' default values are not correct for your environment, copy to `config/samples/simple.yaml`, and adjust the variables.
 
 Finally, use `kubectl` to create the pulp instance in your cluster:
 
 ```
-$ kubectl apply -f config/samples/config/samples/pulpproject_v1beta1_pulp_cr.yaml
+$ kubectl apply -f config/samples/simple.yaml
 pulp.pulp.pulpproject.org/example-pulp created
 ```
 
