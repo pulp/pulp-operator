@@ -46,3 +46,4 @@ spec:
   database:
     postgres_image: postgres:15
     postgres_storage_class: standard
+    postgres_image: 'postgres:14'
