@@ -5,6 +5,7 @@ metadata:
   name: example-pulp
 spec:
   database:
+    postgres_image: postgres:15
     postgres_storage_class: standard
 
   file_storage_storage_class: standard

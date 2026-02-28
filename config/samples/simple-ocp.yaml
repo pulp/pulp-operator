@@ -24,6 +24,7 @@ spec:
   admin_password_secret: "example-pulp-admin-password"
 
   database:
+    postgres_image: postgres:15
     postgres_storage_class: managed-csi
 
   file_storage_access_mode: "ReadWriteOnce"

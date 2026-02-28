@@ -36,6 +36,7 @@ spec:
   web:
     replicas: 1
   database:
+    postgres_image: postgres:15
     postgres_storage_class: standard
     postgres_storage_requirements: "1Gi"
   cache:
