@@ -58,6 +58,7 @@ spec:
   mount_trusted_ca_configmap_key: "example-pulp-trusted-ca-bundle:ca-bundle.crt"
 
   database:
+    postgres_image: postgres:15
     postgres_storage_class: standard
 
   file_storage_access_mode: "ReadWriteOnce"

@@ -55,6 +55,7 @@ spec:
 
   # Database configuration
   database:
+    postgres_image: postgres:15
     postgres_storage_requirements: "8Gi"
 
   # Cache configuration

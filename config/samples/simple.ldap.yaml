@@ -48,6 +48,7 @@ spec:
   nodeport_port: 30000
 
   database:
+    postgres_image: postgres:15
     postgres_storage_class: standard
 
   file_storage_access_mode: "ReadWriteMany"
