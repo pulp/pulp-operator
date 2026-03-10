@@ -7071,7 +7071,7 @@ spec:
                   postgres_image:
                     description: |-
                       PostgreSQL container image.
-                      Default: "postgres:13"
+                      Default: "postgres:15"
                     type: string
                   postgres_initdb_args:
                     description: |-
