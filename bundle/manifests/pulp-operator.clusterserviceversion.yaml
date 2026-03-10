@@ -65,7 +65,7 @@ metadata:
     capabilities: Full Lifecycle
     categories: Integration & Delivery
     containerImage: quay.io/pulp/pulp-operator:v1.0.0
-    createdAt: "2026-01-27T16:51:52Z"
+    createdAt: "2026-03-10T13:08:55Z"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
     operators.operatorframework.io/builder: operator-sdk-v1.31.0
@@ -572,7 +572,7 @@ spec:
       - description: 'PostgreSQL host authentication method. Default: "scram-sha-256"'
         displayName: Postgres Host Auth Method
         path: database.postgres_host_auth_method
-      - description: 'PostgreSQL container image. Default: "postgres:13"'
+      - description: 'PostgreSQL container image. Default: "postgres:15"'
         displayName: Postgres Image
         path: database.postgres_image
       - description: 'Arguments to pass to PostgreSQL initdb command when creating
@@ -1246,7 +1246,7 @@ spec:
                 - name: RELATED_IMAGE_PULP_REDIS
                   value: docker.io/library/redis:latest
                 - name: RELATED_IMAGE_PULP_POSTGRES
-                  value: docker.io/library/postgres:13
+                  value: docker.io/library/postgres:15
                 - name: WATCH_NAMESPACE
                   valueFrom:
                     fieldRef:
@@ -1507,6 +1507,6 @@ spec:
     name: pulp-web
   - image: docker.io/library/redis:latest
     name: pulp-redis
-  - image: docker.io/library/postgres:13
+  - image: docker.io/library/postgres:15
     name: pulp-postgres
   version: 1.3.0

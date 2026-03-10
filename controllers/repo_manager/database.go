@@ -393,7 +393,7 @@ func statefulSetForDatabase(m *pulpv1.Pulp) *appsv1.StatefulSet {
 	if len(m.Spec.Database.PostgresImage) > 0 {
 		postgresImage = m.Spec.Database.PostgresImage
 	} else if postgresImage == "" {
-		postgresImage = "docker.io/library/postgres:13"
+		postgresImage = "docker.io/library/postgres:15"
 	}
 
 	containerPort := int32(0)

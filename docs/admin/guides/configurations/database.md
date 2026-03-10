@@ -12,7 +12,7 @@ Pulp operator will deploy PostgreSQL with the following configuration:
 
 * a `StatefulSet` will be provisioned to handle PostgreSQL pod
 * a single PostgreSQL replica will be available (it is **not** possible to form a cluster with this container)
-* it will deploy a `docker.io/library/postgres:13` image
+* it will deploy a `docker.io/library/postgres:15` image
 
 
 A new `Secret` (<deployment-name>-postgres-configuration) will also be created with some information like:
