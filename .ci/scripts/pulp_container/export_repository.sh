@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-podman pull ghcr.io/pulp/test-fixture-1:manifest_a
+podman pull quay.io/pulp/test-fixture-1:manifest_a
 
 # push a tagged image to the registry
 podman login ${REGISTRY_ADDR} -u admin -p password --tls-verify=false
-podman tag ghcr.io/pulp/test-fixture-1:manifest_a \
+podman tag quay.io/pulp/test-fixture-1:manifest_a \
   ${REGISTRY_ADDR}/test/fixture:manifest_a
 podman push ${REGISTRY_ADDR}/test/fixture:manifest_a --tls-verify=false
 
