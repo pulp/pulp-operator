@@ -17,7 +17,7 @@ jobs:
           - PULPCORE_VERSION: "3.85"
           - PULPCORE_VERSION: "3.73"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: "./.github/actions/pre-reqs"
         with:
