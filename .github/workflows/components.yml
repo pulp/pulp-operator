@@ -17,7 +17,7 @@ jobs:
           - COMPONENT_TYPE: s3
           - COMPONENT_TYPE: azure
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: "./.github/actions/pre-reqs"
         with:
           component-type: ${{ matrix.COMPONENT_TYPE }}

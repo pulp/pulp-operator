@@ -20,17 +20,17 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       - name: Setup Go environment
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           cache: false
@@ -64,7 +64,7 @@ jobs:
   bundle:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Check if bundle files are updated
         run: |
           .ci/scripts/bundle_check.sh
@@ -76,9 +76,9 @@ jobs:
   two-deployments:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup Go environment
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           cache: false
@@ -89,7 +89,7 @@ jobs:
           make sdkbin OPERATOR_SDK_VERSION=v1.31.0 LOCALBIN=/tmp
           /tmp/operator-sdk olm install --version v0.31.0
         shell: bash
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Pulp CRD
         run: make install
       - name: Build operator image
@@ -150,11 +150,11 @@ jobs:
   envtest:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Setup Go environment
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           cache: false
@@ -167,7 +167,7 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/pre-reqs
         with:
           ingress-type: nodeport
@@ -181,7 +181,7 @@ jobs:
           kubectl create ns pulp-operator-system
           kubectl config set-context --current --namespace=pulp-operator-system
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: pulp/pulp-k8s-resources
           ref: main
@@ -190,7 +190,7 @@ jobs:
         run: |
           helm install --skip-crds --set namespace=pulp-operator-system --set image=localhost/pulp-operator:devel pulp helm-charts/chart
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Create Pulp Operator CR
         run: |
           kubectl apply -f .ci/assets/kubernetes/pulp-admin-password.secret.yaml
@@ -218,7 +218,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/pre-reqs
         with:
           ingress-type: nodeport
@@ -258,7 +258,7 @@ jobs:
       github.event_name != 'pull_request' &&
       github.repository_owner == 'pulp'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/pre-reqs
         with:
           deploy: true
