@@ -108,7 +108,7 @@ Database defines desired state of postgres
 | version | PostgreSQL version [default: \"13\"] | string | false |
 | postgres_port | PostgreSQL port. Default: 5432 | int | false |
 | postgres_ssl_mode | Configure PostgreSQL connection sslmode option. Default: \"prefer\" | string | false |
-| postgres_image | PostgreSQL container image. Default: \"postgres:13\" | string | false |
+| postgres_image | PostgreSQL container image. Default: \"postgres:15\" | string | false |
 | postgres_extra_args | Arguments to pass to postgres process | []string | false |
 | postgres_data_path | Registry path to the PostgreSQL container to use. Default: \"/var/lib/postgresql/data/pgdata\" | string | false |
 | postgres_initdb_args | Arguments to pass to PostgreSQL initdb command when creating a new cluster. Default: \"--auth-host=scram-sha-256\" | string | false |

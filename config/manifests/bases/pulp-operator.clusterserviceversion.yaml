@@ -581,7 +581,7 @@ spec:
       - description: 'PostgreSQL host authentication method. Default: "scram-sha-256"'
         displayName: Postgres Host Auth Method
         path: database.postgres_host_auth_method
-      - description: 'PostgreSQL container image. Default: "postgres:13"'
+      - description: 'PostgreSQL container image. Default: "postgres:15"'
         displayName: Postgres Image
         path: database.postgres_image
       - description: 'Arguments to pass to PostgreSQL initdb command when creating
@@ -1492,6 +1492,6 @@ spec:
     name: pulp-web
   - image: docker.io/library/redis:latest
     name: pulp-redis
-  - image: docker.io/library/postgres:13
+  - image: docker.io/library/postgres:15
     name: pulp-postgres
   version: 1.0.0

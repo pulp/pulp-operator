@@ -768,7 +768,7 @@ type Database struct {
 	PostgresSSLMode string `json:"postgres_ssl_mode,omitempty"`
 
 	// PostgreSQL container image.
-	// Default: "postgres:13"
+	// Default: "postgres:15"
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	PostgresImage string `json:"postgres_image,omitempty"`
 
