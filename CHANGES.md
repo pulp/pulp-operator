@@ -12,6 +12,17 @@
 
 <!-- TOWNCRIER -->
 
+## 2.0.0 (2026-03-17) {: #2.0.0 }
+
+
+#### Bugfixes {: #2.0.0-bugfix }
+
+- Set the default PostgreSQL version to 15 to ensure compatibility with Django 5 and Pulpcore 3.100+.
+  [#1589](https://github.com/pulp/pulp-operator/issues/1589)
+
+---
+
+
 ## 1.3.0 (2026-01-27) {: #1.3.0 }
 
 
