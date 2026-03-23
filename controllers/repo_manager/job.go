@@ -198,6 +198,7 @@ func resetAdminPasswordContainer(pulp *pulpv1.Pulp) corev1.Container {
 		Resources:       resources,
 		VolumeMounts:    volumeMounts,
 		SecurityContext: controllers.SetDefaultSecurityContext(),
+		ImagePullPolicy: corev1.PullPolicy(pulp.Spec.ImagePullPolicy),
 	}
 }
 
