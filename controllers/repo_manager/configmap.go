@@ -25,8 +25,6 @@ func (r *RepoManagerReconciler) configMapTasks(ctx context.Context, pulp *pulpv1
 		}
 	}
 
-	// TODO: check pulp-web configmap change
-
 	// restart pulpcore pods if any of the configmaps changed
 	if needsPulpcoreRestart {
 		r.restartPulpCorePods(ctx, pulp)
