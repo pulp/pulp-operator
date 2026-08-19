@@ -8,9 +8,14 @@ podman tag quay.io/pulp/test-fixture-1:manifest_a \
   ${REGISTRY_ADDR}/test/fixture:manifest_a
 podman push ${REGISTRY_ADDR}/test/fixture:manifest_a --tls-verify=false
 
-# a repository of the push type is automatically created
-REPOSITORY_HREF=$(pulp container repository -t push show \
-  --name "test/fixture" | jq -r ".pulp_href")
+# a repository is automatically created (new versions use ContainerRepository,
+# older versions use ContainerPushRepository)
+REPOSITORY_HREF=$(pulp container repository show \
+  --name "test/fixture" 2>/dev/null | jq -r ".pulp_href // empty")
+if [ -z "$REPOSITORY_HREF" ]; then
+  REPOSITORY_HREF=$(pulp container repository -t push show \
+    --name "test/fixture" | jq -r ".pulp_href")
+fi
 
 # export the repository to the directory '/tmp/exports/test-fixture'
 EXPORTER_HREF=$(http ${BASE_ADDR}/pulp/api/v3/exporters/core/pulp/ \
