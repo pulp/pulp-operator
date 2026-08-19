@@ -52,9 +52,22 @@ runs:
           echo "INFO:
           Updating registries configuration
           "
-          echo "[registries.insecure]
-          registries = ['ingress.local','nodeport.local:30000']
-          " | sudo tee -a /etc/containers/registries.conf
+          # registries.conf v1 and v2 formats cannot be mixed in the same file;
+          # detect which format is in use and append accordingly.
+          if grep -q "unqualified-search-registries" /etc/containers/registries.conf; then
+            echo '
+        [[registry]]
+        location = "ingress.local"
+        insecure = true
+
+        [[registry]]
+        location = "nodeport.local:30000"
+        insecure = true' | sed 's/^ *//' | sudo tee -a /etc/containers/registries.conf
+          else
+            echo '
+        [registries.insecure]
+        registries = ["ingress.local","nodeport.local:30000"]' | sed 's/^ *//' | sudo tee -a /etc/containers/registries.conf
+          fi
         fi
       shell: bash
     - name: Start minikube
