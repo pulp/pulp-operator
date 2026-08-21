@@ -70,9 +70,8 @@ metadata:
     app.kubernetes.io/component: cache
 spec:
   internalTrafficPolicy: Cluster
-  ipFamilies:
-  - IPv4
-  ipFamilyPolicy: SingleStack
+  # Let Kubernetes default this from the cluster Service CIDR.
+  # Required for IPv6-only clusters.
   ports:
   - name: redis-6379
     port: 6379
