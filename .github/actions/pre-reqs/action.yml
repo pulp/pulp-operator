@@ -74,9 +74,9 @@ runs:
       if: ${{ !inputs.deploy }}
       run: |
         if [[ -z "${{ inputs.minikube-version }}" ]] ; then
-          minikube start --memory=max --cpus=max --driver=docker --extra-config=apiserver.service-node-port-range=80-32000
+          minikube start --memory=max --cpus=max --driver=docker --container-runtime=docker --extra-config=apiserver.service-node-port-range=80-32000
         else
-          minikube start --memory=max --cpus=max --vm-driver=docker --extra-config=apiserver.service-node-port-range=80-32000 --kubernetes-version=${{ inputs.minikube-version }}
+          minikube start --memory=max --cpus=max --vm-driver=docker --container-runtime=docker --extra-config=apiserver.service-node-port-range=80-32000 --kubernetes-version=${{ inputs.minikube-version }}
         fi
         minikube addons enable metrics-server
         minikube addons enable ingress
