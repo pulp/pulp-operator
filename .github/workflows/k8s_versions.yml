@@ -166,7 +166,6 @@ jobs:
       matrix:
         include:
           - K8S_VERSION: 1.34
-          - K8S_VERSION: 1.33
     steps:
       - uses: actions/checkout@v5
       - name: Set up Python 3.11
