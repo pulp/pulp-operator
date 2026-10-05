@@ -620,7 +620,11 @@ func debugLogging(resources controllers.FunctionResources, pulpSettings *string)
 // needsMigrationSetting defines settings.py with some specific configurations that when changed will
 // also trigger a migration job
 func needsMigrationSetting(resources controllers.FunctionResources, pulpSettings *string, customSettings map[string]struct{}) {
-	for operatorFieldName, pulpFieldName := range controllers.MigrationSettingsList() {
+	// iterate in a fixed order: settings.py is hashed to detect changes, so a random map order would
+	// make the Secret differ between reconciles and reprovision the pods every time
+	migrationSettings := controllers.MigrationSettingsList()
+	for _, operatorFieldName := range sortKeys(migrationSettings) {
+		pulpFieldName := migrationSettings[operatorFieldName]
 		customSettingsFound := false
 		if _, exists := customSettings[pulpFieldName]; exists {
 			logMessage := fmt.Sprintf("%v should not be defined in custom_pulp_settings. Use pulp.Spec.%v instead", pulpFieldName, strings.ToLower(pulpFieldName))
@@ -633,7 +637,7 @@ func needsMigrationSetting(resources controllers.FunctionResources, pulpSettings
 
 		config := reflect.ValueOf(resources.Pulp.Spec).FieldByName(operatorFieldName).Bool()
 		if !config {
-			return
+			continue
 		}
 		configCapitalized := cases.Title(language.English, cases.Compact).String(strconv.FormatBool(config))
 		*pulpSettings = *pulpSettings + fmt.Sprintf("%v = %v\n", pulpFieldName, configCapitalized)
