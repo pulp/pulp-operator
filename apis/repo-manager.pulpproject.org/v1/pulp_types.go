@@ -987,6 +987,21 @@ type PulpContainer struct {
 // PulpJob defines the jobs used by pulpcore containers to run single-shot administrative tasks
 type PulpJob struct {
 	PulpContainer PulpContainer `json:"container,omitempty"`
+
+	// NodeSelector for the Job pods.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	NodeSelector map[string]string `json:"node_selector,omitempty"`
+
+	// Node tolerations for the Job pods.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
+
+	// Affinity is a group of affinity scheduling rules for the Job pods.
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 }
 
 // LDAP defines the ldap resources used by pulpcore containers to integrate Pulp with LDAP authentication
