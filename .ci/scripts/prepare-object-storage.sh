@@ -8,16 +8,26 @@ if [[ "$COMPONENT_TYPE" == "azure" ]]; then
   echo $(minikube ip)   pulp-azurite | sudo tee -a /etc/hosts
   az storage container create --name pulp-test --connection-string $AZURE_CONNECTION_STRING
 elif [[ "$COMPONENT_TYPE" == "s3" ]]; then
-  export MINIO_ACCESS_KEY=AKIAIT2Z5TDYPX3ARJBA
-  export MINIO_SECRET_KEY=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
-  docker run -d -p 0.0.0.0:9000:9000 --name pulp_minio -e MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY -e MINIO_SECRET_KEY=$MINIO_SECRET_KEY minio/minio server /data
-  wget https://dl.min.io/client/mc/release/linux-amd64/mc
-  sudo mv mc /usr/local/bin/
-  sudo chmod +x /usr/local/bin/mc
-  while ! nc -z $(minikube ip) 9000; do echo 'Wait minio to startup...' && sleep 0.1; done;
-  echo $(minikube ip)   pulp_minio | sudo tee -a /etc/hosts
-  sed -i "s/pulp_minio/$(minikube ip)/g" config/samples/simple.s3.ci.yaml
-  mc alias set s3 http://$(minikube ip):9000 AKIAIT2Z5TDYPX3ARJBA fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS --api S3v4
-  mc alias rm local
-  mc mb s3/pulp3 --region us-east-1
+  export RUSTFS_ACCESS_KEY=AKIAIT2Z5TDYPX3ARJBA
+  export RUSTFS_SECRET_KEY=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
+  docker run -d -p 0.0.0.0:9000:9000 --name pulp_rustfs -e RUSTFS_ACCESS_KEY=$RUSTFS_ACCESS_KEY -e RUSTFS_SECRET_KEY=$RUSTFS_SECRET_KEY rustfs/rustfs server /data
+  while ! nc -z $(minikube ip) 9000; do echo 'Wait rustfs to startup...' && sleep 0.1; done;
+  echo $(minikube ip) pulp_rustfs | sudo tee -a /etc/hosts
+  sed -i "s/pulp_rustfs/$(minikube ip)/g" config/samples/simple.s3.ci.yaml
+  pip install boto3
+  python3 -c "
+import boto3
+from botocore.exceptions import ClientError
+client = boto3.client(
+    's3',
+    aws_access_key_id='${RUSTFS_ACCESS_KEY}',
+    aws_secret_access_key='${RUSTFS_SECRET_KEY}',
+    endpoint_url='http://$(minikube ip):9000',
+    region_name='us-east-1')
+try:
+    client.create_bucket(Bucket='pulp3', CreateBucketConfiguration={'LocationConstraint': 'us-east-1'})
+except ClientError as exc:
+    if exc.response['Error']['Code'] not in ('BucketAlreadyOwnedByYou', 'BucketAlreadyExists'):
+        raise
+"
 fi
