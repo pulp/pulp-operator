@@ -187,6 +187,12 @@ spec:
       kind: Pulp
       name: pulps.repo-manager.pulpproject.org
       specDescriptors:
+      - description: Affinity is a group of affinity scheduling rules for the Job
+          pods.
+        displayName: Affinity
+        path: admin_password_job.affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'The image name for the container. By default, if not provided,
           it will use the same image from .Spec.Image. WARN: defining a different
           image than the one used by API pods can cause unexpected behaviors!'
@@ -199,6 +205,16 @@ spec:
         path: admin_password_job.container.resource_requirements
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: NodeSelector for the Job pods.
+        displayName: Node Selector
+        path: admin_password_job.node_selector
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Node tolerations for the Job pods.
+        displayName: Tolerations
+        path: admin_password_job.tolerations
+        x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'Secret where the administrator password can be found. Default:
           <operator''s name> + "-admin-password"'
@@ -799,6 +815,12 @@ spec:
         path: loadbalancer_protocol
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Affinity is a group of affinity scheduling rules for the Job
+          pods.
+        displayName: Affinity
+        path: migration_job.affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'The image name for the container. By default, if not provided,
           it will use the same image from .Spec.Image. WARN: defining a different
           image than the one used by API pods can cause unexpected behaviors!'
@@ -811,6 +833,16 @@ spec:
         path: migration_job.container.resource_requirements
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: NodeSelector for the Job pods.
+        displayName: Node Selector
+        path: migration_job.node_selector
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Node tolerations for the Job pods.
+        displayName: Tolerations
+        path: migration_job.tolerations
+        x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'Enable mounting of custom CA certificates. On OpenShift, mounts
           CA certificates added to the cluster via cluster-wide proxy config. On vanilla
@@ -942,6 +974,12 @@ spec:
         path: sa_labels
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - description: Affinity is a group of affinity scheduling rules for the Job
+          pods.
+        displayName: Affinity
+        path: signing_job.affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: 'The image name for the container. By default, if not provided,
           it will use the same image from .Spec.Image. WARN: defining a different
           image than the one used by API pods can cause unexpected behaviors!'
@@ -954,6 +992,16 @@ spec:
         path: signing_job.container.resource_requirements
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: NodeSelector for the Job pods.
+        displayName: Node Selector
+        path: signing_job.node_selector
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Node tolerations for the Job pods.
+        displayName: Tolerations
+        path: signing_job.tolerations
+        x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Name of the Secret where the signing scripts are stored.
         displayName: Signing Scripts

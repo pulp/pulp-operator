@@ -1,0 +1,1 @@
+Added `node_selector`, `tolerations` and `affinity` to the `admin_password_job`, `migration_job` and `signing_job` fields, so the operator-managed Jobs can be scheduled like the other Pulp pods. The update-content-checksums Job uses the `migration_job` settings, as it already does for its resources.
