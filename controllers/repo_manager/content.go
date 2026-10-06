@@ -115,7 +115,6 @@ func serviceContentObject(pulp pulpv1.Pulp) *corev1.Service {
 func serviceContentSpec(pulp pulpv1.Pulp) corev1.ServiceSpec {
 
 	serviceInternalTrafficPolicyCluster := corev1.ServiceInternalTrafficPolicyType("Cluster")
-	ipFamilyPolicyType := corev1.IPFamilyPolicyType("SingleStack")
 	serviceAffinity := corev1.ServiceAffinity("None")
 	servicePortProto := corev1.Protocol("TCP")
 	targetPort := intstr.IntOrString{IntVal: 24816}
@@ -123,8 +122,8 @@ func serviceContentSpec(pulp pulpv1.Pulp) corev1.ServiceSpec {
 
 	return corev1.ServiceSpec{
 		InternalTrafficPolicy: &serviceInternalTrafficPolicyCluster,
-		IPFamilies:            []corev1.IPFamily{"IPv4"},
-		IPFamilyPolicy:        &ipFamilyPolicyType,
+		// Let Kubernetes default this from the cluster Service CIDR.
+		// Required for IPv6-only clusters.
 		Ports: []corev1.ServicePort{{
 			Name:       "content-24816",
 			Port:       24816,
