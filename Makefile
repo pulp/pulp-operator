@@ -56,8 +56,16 @@ IMG ?= $(IMAGE_TAG_BASE):v$(VERSION)
 NAMESPACE ?= pulp-operator-system
 WATCH_NAMESPACE ?= $(NAMESPACE)
 
-# ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.24.2
+# ENVTEST_K8S_VERSION is the Kubernetes version used for envtest control-plane binaries.
+# Derived from k8s.io/api so it matches the API types the operator builds against
+# (e.g. k8s.io/api v0.35.2 -> 1.35). Override with `make test ENVTEST_K8S_VERSION=1.34` if needed.
+ENVTEST_K8S_VERSION ?= $(shell go list -m -f '{{ .Version }}' k8s.io/api | awk -F '[v.]' '{printf "1.%d", $$3}')
+
+# ENVTEST_VERSION is the controller-runtime release branch used to install setup-envtest.
+# Pinning to the branch that matches sigs.k8s.io/controller-runtime in go.mod is the
+# pattern recommended by https://book.kubebuilder.io/reference/envtest.html
+# (e.g. controller-runtime v0.23.3 -> release-0.23).
+ENVTEST_VERSION ?= $(shell go list -m -f '{{ .Version }}' sigs.k8s.io/controller-runtime | awk -F '[v.]' '{printf "release-%d.%d", $$2, $$3}')
 
 GOLANG_VERSION=1.25.0
 GOLANG_ARCH=linux-amd64
@@ -133,15 +141,16 @@ test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test -v ./... -coverprofile cover.out
 
 .PHONY: testbin
-testbin:  ## Ensure envtest bins.
-# https://kubebuilder.io/reference/envtest.html
-ifneq ($(wildcard /usr/local/kubebuilder), )
-	@echo "/usr/local/kubebuilder already exists"
-else
-	curl -sSLo envtest-bins.tar.gz "https://go.kubebuilder.io/test-tools/$(ENVTEST_K8S_VERSION)/$(shell go env GOOS)/$(shell go env GOARCH)"
-	sudo mkdir -p /usr/local/kubebuilder
-	sudo tar -C /usr/local/kubebuilder --strip-components=1 -zvxf envtest-bins.tar.gz
-endif
+testbin: envtest ## Install envtest control-plane binaries (etcd, kube-apiserver, kubectl) into $(LOCALBIN)/k8s.
+# https://book.kubebuilder.io/reference/envtest.html
+# The old "go.kubebuilder.io/test-tools" tarballs were retired upstream; setup-envtest
+# is the current way to fetch envtest binaries.
+	@echo "Installing envtest binaries for Kubernetes $(ENVTEST_K8S_VERSION) into $(LOCALBIN)/k8s ..."
+	@$(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path
+
+.PHONY: envtest-path
+envtest-path: testbin ## Print the export command for KUBEBUILDER_ASSETS (useful for IDE / raw `go test` runs).
+	@printf 'export KUBEBUILDER_ASSETS=%s\n' "$$($(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)"
 
 .PHONY: golang
 golang: ## Ensure golang is installed
@@ -258,9 +267,9 @@ $(CRD_MARKDOWN): $(LOCALBIN)
 	test -s $(LOCALBIN)/crd-to-markdown || GOBIN=$(LOCALBIN) go install github.com/clamoriniere/crd-to-markdown@$(CRD_MARKDOWN_VERSION)
 
 .PHONY: envtest
-envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
+envtest: $(ENVTEST) ## Download setup-envtest locally if necessary.
 $(ENVTEST): $(LOCALBIN)
-	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@$(ENVTEST_VERSION)
 
 .PHONY: sdkbin
 sdkbin: ## Download operator-sdk locally if necessary, preferring the $(pwd)/bin path over global if both exist.

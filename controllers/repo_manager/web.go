@@ -64,11 +64,19 @@ func (r *RepoManagerReconciler) pulpWebController(ctx context.Context, pulp *pul
 		return ctrl.Result{}, err
 	}
 
+	// Reconcile pulp-web ConfigMap data (e.g. CONTENT_PATH_PREFIX overrides via
+	// custom_pulp_settings change the rendered nginx.conf). The pod rollout is
+	// driven by a hash annotation on the Deployment pod template below, because
+	// the nginx.conf key is mounted via subPath and is not auto-updated by kubelet.
+	if requeue, err := controllers.ReconcileObject(funcResources, newWebConfigMap, webConfigMap, conditionType, controllers.PulpConfigMap{}); err != nil || requeue {
+		return ctrl.Result{Requeue: requeue}, err
+	}
+
 	// pulp-web Deployment
 	deploymentName := settings.WEB.DeploymentName(pulp.Name)
 	webDeployment := &appsv1.Deployment{}
 	err = r.Get(ctx, types.NamespacedName{Name: deploymentName, Namespace: pulp.Namespace}, webDeployment)
-	newWebDeployment := r.deploymentForPulpWeb(pulp, funcResources)
+	newWebDeployment := r.deploymentForPulpWeb(pulp, funcResources, newWebConfigMap)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new Pulp Web Deployment", "Deployment.Namespace", newWebDeployment.Namespace, "Deployment.Name", newWebDeployment.Name)
 		controllers.UpdateStatus(ctx, r.Client, pulp, metav1.ConditionFalse, conditionType, "CreatingWebDeployment", "Creating "+deploymentName+" Deployment resource")
@@ -135,8 +143,11 @@ func (r *RepoManagerReconciler) pulpWebController(ctx context.Context, pulp *pul
 	return ctrl.Result{}, nil
 }
 
-// deploymentForPulpWeb returns a pulp-web Deployment object
-func (r *RepoManagerReconciler) deploymentForPulpWeb(m *pulpv1.Pulp, funcResources controllers.FunctionResources) *appsv1.Deployment {
+// deploymentForPulpWeb returns a pulp-web Deployment object.
+// The webConfigMap is used to derive a pod-template annotation that hashes the
+// rendered nginx.conf, so any change to the ConfigMap content rolls the pulp-web
+// pods (the config is mounted via subPath and is not auto-updated by kubelet).
+func (r *RepoManagerReconciler) deploymentForPulpWeb(m *pulpv1.Pulp, funcResources controllers.FunctionResources, webConfigMap *corev1.ConfigMap) *appsv1.Deployment {
 
 	ls := labelsForPulpWeb(m)
 	replicas := m.Spec.Web.Replicas
@@ -219,6 +230,9 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *pulpv1.Pulp, funcResourc
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labelsForPulpWebPods(m),
+					Annotations: map[string]string{
+						"repo-manager.pulpproject.org/web-config-hash": controllers.CalculateHash(webConfigMap.Data),
+					},
 				},
 				Spec: corev1.PodSpec{
 					NodeSelector:       nodeSelector,

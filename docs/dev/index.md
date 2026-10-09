@@ -21,10 +21,20 @@ The tests can be run with the following command:
 make test
 ```
 
-If you want to run the tests inside your editor/IDE, you may need download the required binaries,
-you can do it by running:
+This downloads the envtest control-plane binaries (etcd, kube-apiserver, kubectl) via
+[`setup-envtest`](https://book.kubebuilder.io/reference/envtest.html) into `bin/k8s/`
+on first run, then sets `KUBEBUILDER_ASSETS` for the test invocation.
+
+If you want to run the tests inside your editor/IDE (or directly with `go test`), install the
+binaries first:
 ```bash
 make testbin
+```
+The Ginkgo suite auto-discovers the installed binaries under `bin/k8s/`, so no environment
+variable is required. If you prefer setting `KUBEBUILDER_ASSETS` explicitly:
+```bash
+eval "$(make envtest-path)"
+go test ./...
 ```
 
 ### Test the Docs
