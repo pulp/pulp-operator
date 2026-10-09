@@ -297,13 +297,21 @@ func StorageTypeChanged(pulp *pulpv1.Pulp) bool {
 	return currentStorageType != definedStorageType[0]
 }
 
-// MigrationSettingsList returns a map[string]string of configurations that should trigger a migration job
-// note: in the current implementation, all fields should be boolean. Trying to add a non-bool field
+// MigrationSetting pairs a Pulp CR field name (on Spec/Status) with the
+// corresponding setting key written to settings.py.
+type MigrationSetting struct {
+	OperatorField string
+	PulpField     string
+}
+
+// MigrationSettingsList returns the configurations that should trigger a migration job,
+// in a stable, deterministic order.
+// Note: in the current implementation, all fields should be boolean. Trying to add a non-bool field
 // to the list will fail SettingNeedsMigrationChanged execution.
-func MigrationSettingsList() map[string]string {
-	return map[string]string{
-		"RedirectToObjectStorage":  "REDIRECT_TO_OBJECT_STORAGE",
-		"HideGuardedDistributions": "HIDE_GUARDED_DISTRIBUTIONS",
+func MigrationSettingsList() []MigrationSetting {
+	return []MigrationSetting{
+		{"HideGuardedDistributions", "HIDE_GUARDED_DISTRIBUTIONS"},
+		{"RedirectToObjectStorage", "REDIRECT_TO_OBJECT_STORAGE"},
 	}
 }
 
@@ -311,11 +319,11 @@ func MigrationSettingsList() map[string]string {
 // returns a list with the settings modified
 func SettingNeedsMigrationChanged(pulp *pulpv1.Pulp) []string {
 	settingsChanged := []string{}
-	for setting := range MigrationSettingsList() {
-		currentSpec := reflect.ValueOf(pulp.Spec).FieldByName(setting).Bool()
-		oldSpec := reflect.ValueOf(pulp.Status).FieldByName(setting).Bool()
+	for _, s := range MigrationSettingsList() {
+		currentSpec := reflect.ValueOf(pulp.Spec).FieldByName(s.OperatorField).Bool()
+		oldSpec := reflect.ValueOf(pulp.Status).FieldByName(s.OperatorField).Bool()
 		if currentSpec != oldSpec {
-			settingsChanged = append(settingsChanged, setting)
+			settingsChanged = append(settingsChanged, s.OperatorField)
 		}
 	}
 	return settingsChanged
