@@ -861,7 +861,7 @@ func (d *CommonDeployment) setLivenessProbe(resources any, pulp pulpv1.Pulp, pul
 				FailureThreshold: 10,
 				ProbeHandler: corev1.ProbeHandler{
 					HTTPGet: &corev1.HTTPGetAction{
-						Path: GetAPIRoot(ctx, resources.(FunctionResources).Client, &pulp) + "api/v3/status/",
+						Path: GetAPIRoot(ctx, resources.(FunctionResources).Client, &pulp) + "api/v3/livez/",
 						Port: intstr.IntOrString{
 							IntVal: 24817,
 						},
