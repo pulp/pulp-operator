@@ -144,7 +144,6 @@ func serviceAPIObject(pulp pulpv1.Pulp) *corev1.Service {
 func serviceAPISpec(pulp pulpv1.Pulp) corev1.ServiceSpec {
 
 	serviceInternalTrafficPolicyCluster := corev1.ServiceInternalTrafficPolicyType("Cluster")
-	ipFamilyPolicyType := corev1.IPFamilyPolicyType("SingleStack")
 	serviceAffinity := corev1.ServiceAffinity("None")
 	servicePortProto := corev1.Protocol("TCP")
 	targetPort := intstr.IntOrString{IntVal: 24817}
@@ -152,8 +151,8 @@ func serviceAPISpec(pulp pulpv1.Pulp) corev1.ServiceSpec {
 
 	return corev1.ServiceSpec{
 		InternalTrafficPolicy: &serviceInternalTrafficPolicyCluster,
-		IPFamilies:            []corev1.IPFamily{"IPv4"},
-		IPFamilyPolicy:        &ipFamilyPolicyType,
+		IPFamilies:            settings.IPFamilies(pulp),
+		IPFamilyPolicy:        settings.IPFamilyPolicy(pulp),
 		Ports: []corev1.ServicePort{{
 			Name:       "api-24817",
 			Port:       24817,
