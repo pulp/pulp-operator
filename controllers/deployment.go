@@ -97,7 +97,8 @@ func (d CommonDeployment) Deploy(resources any, pulpcoreType settings.PulpcoreTy
 					NodeSelector:                  d.nodeSelector,
 					Tolerations:                   d.toleration,
 					Volumes:                       d.volumes,
-					ServiceAccountName:            settings.PulpServiceAccount(pulp.Name),
+					ServiceAccountName:            PulpcoreServiceAccountName(*pulp, pulpcoreType),
+					ImagePullSecrets:              customSAImagePullSecrets(*pulp, pulpcoreType),
 					TopologySpreadConstraints:     d.topologySpreadConstraint,
 					InitContainers:                d.initContainers,
 					Containers:                    d.containers,
@@ -570,6 +571,9 @@ func (d *CommonDeployment) setVolumes(resources any, pulpcoreType settings.Pulpc
 	// append the CA configmap to the volumes
 	volumes = SetCAVolumes(&pulp, volumes)
 
+	// append the custom volumes
+	volumes = append(volumes, extraVolumes(pulp, pulpcoreType)...)
+
 	d.volumes = append([]corev1.Volume(nil), volumes...)
 }
 
@@ -743,6 +747,9 @@ func (d *CommonDeployment) setVolumeMounts(pulp pulpv1.Pulp, pulpcoreType settin
 
 	// append the CA configmap to the volumeMounts
 	volumeMounts = SetCAVolumeMounts(&pulp, volumeMounts)
+
+	// append the custom volume mounts
+	volumeMounts = append(volumeMounts, extraVolumeMounts(pulp, pulpcoreType)...)
 
 	d.volumeMounts = append([]corev1.VolumeMount(nil), volumeMounts...)
 }
