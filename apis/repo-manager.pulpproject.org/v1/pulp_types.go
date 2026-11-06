@@ -96,6 +96,35 @@ type PulpSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret","urn:alm:descriptor:com.tectonic.ui:advanced"}
 	SigningScripts string `json:"signing_scripts,omitempty"`
 
+	// The IP family policy to use for the Services the operator creates for
+	// pulp-api, pulp-content, the database, and otel. Does not apply to
+	// pulp-web or redis, which inherit the cluster's default IP family.
+	// Mirrors corev1.ServiceSpec.IPFamilyPolicy exactly: SingleStack,
+	// PreferDualStack, or RequireDualStack.
+	// Default: SingleStack
+	// Kubernetes only allows changing this on an existing Service from
+	// SingleStack to a dual-stack policy; other transitions are rejected
+	// by the API server as immutable, so set it before first creating a Pulp CR.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum:=SingleStack;PreferDualStack;RequireDualStack
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	IPFamilyPolicy *corev1.IPFamilyPolicy `json:"ip_family_policy,omitempty"`
+
+	// The IP families to assign to the Services the operator creates for
+	// pulp-api, pulp-content, the database, and otel. Does not apply to
+	// pulp-web or redis, which inherit the cluster's default IP family.
+	// Mirrors corev1.ServiceSpec.IPFamilies exactly: a list of "IPv4" and/or
+	// "IPv6", order determines primary family under PreferDualStack/RequireDualStack.
+	// Must match what the cluster's CNI/cluster-cidr actually supports; the
+	// operator does not validate this and passes it straight through.
+	// Default: ["IPv4"]
+	// See ip_family_policy for the same create-time-only caveat.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:MaxItems:=2
+	// +listType:=set
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:advanced"}
+	IPFamilies []corev1.IPFamily `json:"ip_families,omitempty"`
+
 	// The ingress type to use to reach the deployed instance.
 	// Default: none (will not expose the service)
 	// +kubebuilder:validation:Optional
