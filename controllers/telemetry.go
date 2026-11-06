@@ -180,7 +180,6 @@ service:
 // serviceOtel defines a service to expose otel metrics
 func ServiceOtel(resources FunctionResources) client.Object {
 	serviceInternalTrafficPolicyCluster := corev1.ServiceInternalTrafficPolicyType("Cluster")
-	ipFamilyPolicyType := corev1.IPFamilyPolicyType("SingleStack")
 	serviceAffinity := corev1.ServiceAffinity("None")
 	servicePortProto := corev1.Protocol("TCP")
 	targetPort := intstr.IntOrString{IntVal: settings.OtelContainerPort}
@@ -197,8 +196,8 @@ func ServiceOtel(resources FunctionResources) client.Object {
 		},
 		Spec: corev1.ServiceSpec{
 			InternalTrafficPolicy: &serviceInternalTrafficPolicyCluster,
-			IPFamilies:            []corev1.IPFamily{"IPv4"},
-			IPFamilyPolicy:        &ipFamilyPolicyType,
+			// Let Kubernetes default this from the cluster Service CIDR.
+			// Required for IPv6-only clusters.
 			Ports: []corev1.ServicePort{{
 				Name:       "otel-" + strconv.Itoa(settings.OtelContainerPort),
 				Port:       settings.OtelContainerPort,
