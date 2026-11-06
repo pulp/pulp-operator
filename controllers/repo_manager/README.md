@@ -42,6 +42,9 @@ Api defines desired state of pulpcore-api resources
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
 | init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [PulpContainer](#pulpcontainer) | false |
 | env_vars | Environment variables to add to pulpcore-api container | []corev1.EnvVar | false |
+| service_account_name | ServiceAccount to use in pulpcore-api pods | string | false |
+| extra_volumes | Volumes to add to pulpcore-api pods | []corev1.Volume | false |
+| extra_volume_mounts | Volume mounts to add to pulpcore-api container | []corev1.VolumeMount | false |
 | deployment_annotations | Annotations for the api deployment | map[string]string | false |
 | pod_labels | Labels to add to api pods | map[string]string | false |
 
@@ -93,6 +96,9 @@ Content defines desired state of pulpcore-content resources
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
 | init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [PulpContainer](#pulpcontainer) | false |
 | env_vars | Environment variables to add to pulpcore-content container | []corev1.EnvVar | false |
+| service_account_name | ServiceAccount to use in pulpcore-content pods | string | false |
+| extra_volumes | Volumes to add to pulpcore-content pods | []corev1.Volume | false |
+| extra_volume_mounts | Volume mounts to add to pulpcore-content container | []corev1.VolumeMount | false |
 | deployment_annotations | Annotations for the content deployment | map[string]string | false |
 | pod_labels | Labels to add to content pods | map[string]string | false |
 
@@ -353,6 +359,9 @@ Worker defines desired state of pulpcore-worker resources
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
 | init_container | InitContainer defines configuration of the init-containers that run in pulpcore pods | [PulpContainer](#pulpcontainer) | false |
 | env_vars | Environment variables to add to pulpcore-worker container | []corev1.EnvVar | false |
+| service_account_name | ServiceAccount to use in pulpcore-worker pods | string | false |
+| extra_volumes | Volumes to add to pulpcore-worker pods | []corev1.Volume | false |
+| extra_volume_mounts | Volume mounts to add to pulpcore-worker container | []corev1.VolumeMount | false |
 | deployment_annotations | Annotations for the worker deployment | map[string]string | false |
 | pod_labels | Labels to add to worker pods | map[string]string | false |
 
