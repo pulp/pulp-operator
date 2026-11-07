@@ -47,6 +47,11 @@ func (in *Api) DeepCopyInto(out *Api) {
 			(*out)[key] = val
 		}
 	}
+	if in.PodSecurityContext != nil {
+		in, out := &in.PodSecurityContext, &out.PodSecurityContext
+		*out = new(corev1.PodSecurityContext)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Tolerations != nil {
 		in, out := &in.Tolerations, &out.Tolerations
 		*out = make([]corev1.Toleration, len(*in))
@@ -192,6 +197,11 @@ func (in *Content) DeepCopyInto(out *Content) {
 		for key, val := range *in {
 			(*out)[key] = val
 		}
+	}
+	if in.PodSecurityContext != nil {
+		in, out := &in.PodSecurityContext, &out.PodSecurityContext
+		*out = new(corev1.PodSecurityContext)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Tolerations != nil {
 		in, out := &in.Tolerations, &out.Tolerations
@@ -804,6 +814,11 @@ func (in *Web) DeepCopyInto(out *Web) {
 			(*out)[key] = val
 		}
 	}
+	if in.PodSecurityContext != nil {
+		in, out := &in.PodSecurityContext, &out.PodSecurityContext
+		*out = new(corev1.PodSecurityContext)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.PDB != nil {
 		in, out := &in.PDB, &out.PDB
 		*out = new(policyv1.PodDisruptionBudgetSpec)
@@ -870,6 +885,11 @@ func (in *Worker) DeepCopyInto(out *Worker) {
 		for key, val := range *in {
 			(*out)[key] = val
 		}
+	}
+	if in.PodSecurityContext != nil {
+		in, out := &in.PodSecurityContext, &out.PodSecurityContext
+		*out = new(corev1.PodSecurityContext)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Tolerations != nil {
 		in, out := &in.Tolerations, &out.Tolerations

@@ -199,7 +199,9 @@ func (r *RepoManagerReconciler) deploymentForPulpWeb(m *pulpv1.Pulp, funcResourc
 	runAsUser := int64(700)
 	fsGroup := int64(700)
 	podSecurityContext := &corev1.PodSecurityContext{RunAsUser: &runAsUser, FSGroup: &fsGroup}
-	if isOpenShift, _ := controllers.IsOpenShift(); isOpenShift {
+	if m.Spec.Web.PodSecurityContext != nil {
+		podSecurityContext = m.Spec.Web.PodSecurityContext
+	} else if isOpenShift, _ := controllers.IsOpenShift(); isOpenShift {
 		podSecurityContext = &corev1.PodSecurityContext{}
 	}
 
