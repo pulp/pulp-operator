@@ -160,7 +160,9 @@ jobs:
           .github/workflows/scripts/show_logs.sh -k
         shell: bash
   eks:
-    runs-on: ubuntu-latest
+    # EKS Anywhere does not support Ubuntu 26.04 (ubuntu-latest) as an admin machine yet
+    # https://anywhere.eks.amazonaws.com/docs/getting-started/install/#system-and-network-requirements
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
