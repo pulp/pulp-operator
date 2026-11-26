@@ -43,7 +43,7 @@ func (r *RepoManagerReconciler) hpaController(ctx context.Context, pulp *pulpv1.
 	}
 
 	// Handle Web component HPA if web is deployed
-	if !isRoute(pulp) && !isIngress(pulp) {
+	if r.needsPulpWeb(pulp) {
 		if err := r.reconcileHPA(ctx, pulp, settings.WEB, log); err != nil {
 			return ctrl.Result{}, err
 		}
