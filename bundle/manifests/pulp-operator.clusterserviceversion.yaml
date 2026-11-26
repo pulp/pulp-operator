@@ -65,7 +65,7 @@ metadata:
     capabilities: Full Lifecycle
     categories: Integration & Delivery
     containerImage: quay.io/pulp/pulp-operator:v1.0.0
-    createdAt: "2026-03-17T12:18:57Z"
+    createdAt: "2026-11-05T15:58:44Z"
     description: Pulp is a platform for managing repositories of software packages
       and making them available to a large number of consumers.
     operators.operatorframework.io/builder: operator-sdk-v1.31.0
@@ -752,6 +752,29 @@ spec:
           Default: "false"'
         displayName: Inhibit Version Constraint
         path: inhibit_version_constraint
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: 'The IP families to assign to the Services the operator creates
+          for pulp-api, pulp-content, the database, and otel. Does not apply to pulp-web
+          or redis, which inherit the cluster''s default IP family. Mirrors corev1.ServiceSpec.IPFamilies
+          exactly: a list of "IPv4" and/or "IPv6", order determines primary family
+          under PreferDualStack/RequireDualStack. Must match what the cluster''s CNI/cluster-cidr
+          actually supports; the operator does not validate this and passes it straight
+          through. Default: ["IPv4"] See ip_family_policy for the same create-time-only
+          caveat.'
+        displayName: IPFamilies
+        path: ip_families
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: 'The IP family policy to use for the Services the operator creates
+          for pulp-api, pulp-content, the database, and otel. Does not apply to pulp-web
+          or redis, which inherit the cluster''s default IP family. Mirrors corev1.ServiceSpec.IPFamilyPolicy
+          exactly: SingleStack, PreferDualStack, or RequireDualStack. Default: SingleStack
+          Kubernetes only allows changing this on an existing Service from SingleStack
+          to a dual-stack policy; other transitions are rejected by the API server
+          as immutable, so set it before first creating a Pulp CR.'
+        displayName: IPFamily Policy
+        path: ip_family_policy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Disable ipv6 for pulpcore and pulp-web pods

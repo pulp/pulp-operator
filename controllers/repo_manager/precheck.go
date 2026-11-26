@@ -24,6 +24,7 @@ import (
 	"github.com/go-logr/logr"
 	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
+	"github.com/pulp/pulp-operator/controllers/settings"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -88,6 +89,14 @@ func prechecks(ctx context.Context, r *RepoManagerReconciler, pulp *pulpv1.Pulp)
 	if reconcile := checkCAConfigmap(r, *pulp); reconcile != nil {
 		return reconcile, nil
 	}
+
+	// verify ip_families only contains valid values
+	if reconcile := checkIPFamiliesValid(pulp); reconcile != nil {
+		return reconcile, nil
+	}
+
+	// warn (non-blocking) if ipv6_disabled and ip_families are inconsistent
+	checkIPv6DisabledConsistency(r, pulp)
 
 	return nil, nil
 }
@@ -320,6 +329,71 @@ func checkCAConfigmap(r *RepoManagerReconciler, pulp pulpv1.Pulp) *ctrl.Result {
 			`On vanilla Kubernetes, you must specify mount_trusted_ca_configmap_key to reference a ConfigMap containing CA certificates. `+
 			`This field is only optional on OpenShift where CNO injection is used.`)
 		return &ctrl.Result{}
+	}
+	return nil
+}
+
+// checkIPv6DisabledConsistency warns (but does not block reconciliation) if
+// spec.ipv6_disabled and spec.ip_families disagree about whether IPv6 should
+// be used. ipv6_disabled controls app-level binding (gunicorn/nginx listen
+// addresses); ip_families controls which ClusterIP(s) each Service gets.
+// Setting ipv6_disabled=true while ip_families includes IPv6 means a Service
+// would get a v6 ClusterIP routing to a pod that isn't actually listening on
+// v6, a real but non-fatal misconfiguration. This is intentionally a
+// warning, not a blocking precheck: the operator does not validate ip_families
+// against cluster/CNI capabilities either, by design (see controllers/settings
+// IPFamilies/IPFamilyPolicy).
+//
+// Surfaced via a Kubernetes Event, not a log line. The API server coalesces
+// repeated identical (reason, involvedObject) Events into one Event with an
+// incrementing count/lastTimestamp, so this avoids spamming the operator's
+// own logs every reconcile while still being visible via
+// `kubectl describe pulp`/`kubectl get events`.
+func checkIPv6DisabledConsistency(r *RepoManagerReconciler, pulp *pulpv1.Pulp) {
+	if !ipv6DisabledConflictsWithIPFamilies(*pulp) {
+		return
+	}
+	r.recorder.Event(pulp, corev1.EventTypeWarning, "IPv6FamilyMismatch",
+		"spec.ipv6_disabled is true but spec.ip_families includes IPv6. "+
+			"Services will get an IPv6 ClusterIP, but pulp-api/pulp-web will "+
+			"only be listening on IPv4 (ipv6_disabled forces 0.0.0.0-only "+
+			"binding), so traffic routed over IPv6 will not reach them. "+
+			"Set ip_families to [\"IPv4\"] to match ipv6_disabled, or unset "+
+			"ipv6_disabled to match ip_families.")
+}
+
+// ipv6DisabledConflictsWithIPFamilies reports whether spec.ipv6_disabled and
+// spec.ip_families are mutually inconsistent (ipv6_disabled forces IPv4-only
+// app-level binding, but ip_families requests an IPv6 ClusterIP). Pulled out
+// of checkIPv6DisabledConsistency as a pure predicate so it's directly
+// testable without needing to capture the zap logger's output.
+func ipv6DisabledConflictsWithIPFamilies(pulp pulpv1.Pulp) bool {
+	if !controllers.Ipv6Disabled(pulp) {
+		return false
+	}
+	for _, family := range settings.IPFamilies(pulp) {
+		if family == corev1.IPv6Protocol {
+			return true
+		}
+	}
+	return false
+}
+
+// checkIPFamiliesValid verifies that every entry in spec.ip_families is a
+// recognized IP family. x-kubernetes-list-type=set and MaxItems=2 (set via
+// kubebuilder markers on the field) already stop duplicates and
+// over-long lists at the API server; this catches invalid literal values
+// (e.g. "foo") that the field's underlying string type doesn't restrict on
+// its own, failing fast with a clear message instead of letting Service
+// creation be rejected downstream with a generic API server error.
+func checkIPFamiliesValid(pulp *pulpv1.Pulp) *ctrl.Result {
+	for _, family := range pulp.Spec.IPFamilies {
+		if family != corev1.IPv4Protocol && family != corev1.IPv6Protocol {
+			controllers.CustomZapLogger().Error(
+				"spec.ip_families contains an invalid value: \"" + string(family) + "\". " +
+					"Valid values are \"IPv4\" and \"IPv6\".")
+			return &ctrl.Result{}
+		}
 	}
 	return nil
 }
