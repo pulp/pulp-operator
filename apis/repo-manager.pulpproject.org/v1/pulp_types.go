@@ -481,6 +481,15 @@ type Api struct {
 	// Environment variables to add to pulpcore-api container
 	EnvVars []corev1.EnvVar `json:"env_vars,omitempty"`
 
+	// ServiceAccount to use in pulpcore-api pods
+	ServiceAccountName string `json:"service_account_name,omitempty"`
+
+	// Volumes to add to pulpcore-api pods
+	ExtraVolumes []corev1.Volume `json:"extra_volumes,omitempty"`
+
+	// Volume mounts to add to pulpcore-api container
+	ExtraVolumeMounts []corev1.VolumeMount `json:"extra_volume_mounts,omitempty"`
+
 	// Annotations for the api deployment
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
@@ -579,6 +588,15 @@ type Content struct {
 	// +kubebuilder:validation:Optional
 	EnvVars []corev1.EnvVar `json:"env_vars,omitempty"`
 
+	// ServiceAccount to use in pulpcore-content pods
+	ServiceAccountName string `json:"service_account_name,omitempty"`
+
+	// Volumes to add to pulpcore-content pods
+	ExtraVolumes []corev1.Volume `json:"extra_volumes,omitempty"`
+
+	// Volume mounts to add to pulpcore-content container
+	ExtraVolumeMounts []corev1.VolumeMount `json:"extra_volume_mounts,omitempty"`
+
 	// Annotations for the content deployment
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors={"urn:alm:descriptor:com.tectonic.ui:hidden"}
@@ -656,6 +674,15 @@ type Worker struct {
 
 	// Environment variables to add to pulpcore-worker container
 	EnvVars []corev1.EnvVar `json:"env_vars,omitempty"`
+
+	// ServiceAccount to use in pulpcore-worker pods
+	ServiceAccountName string `json:"service_account_name,omitempty"`
+
+	// Volumes to add to pulpcore-worker pods
+	ExtraVolumes []corev1.Volume `json:"extra_volumes,omitempty"`
+
+	// Volume mounts to add to pulpcore-worker container
+	ExtraVolumeMounts []corev1.VolumeMount `json:"extra_volume_mounts,omitempty"`
 
 	// Annotations for the worker deployment
 	// +kubebuilder:validation:Optional

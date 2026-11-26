@@ -1094,3 +1094,59 @@ func SplitCAConfigMapNameKey(pulp pulpv1.Pulp) (string, string) {
 	}
 	return configMapName, configMapKey
 }
+
+// extraVolumes returns the custom volumes defined in Pulp CR
+func extraVolumes(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) []corev1.Volume {
+	switch pulpcoreType {
+	case settings.API:
+		return pulp.Spec.Api.ExtraVolumes
+	case settings.CONTENT:
+		return pulp.Spec.Content.ExtraVolumes
+	case settings.WORKER:
+		return pulp.Spec.Worker.ExtraVolumes
+	}
+	return nil
+}
+
+// extraVolumeMounts returns the custom volume mounts defined in Pulp CR
+func extraVolumeMounts(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) []corev1.VolumeMount {
+	switch pulpcoreType {
+	case settings.API:
+		return pulp.Spec.Api.ExtraVolumeMounts
+	case settings.CONTENT:
+		return pulp.Spec.Content.ExtraVolumeMounts
+	case settings.WORKER:
+		return pulp.Spec.Worker.ExtraVolumeMounts
+	}
+	return nil
+}
+
+// PulpcoreServiceAccountName returns the ServiceAccount name of a pulpcore component
+func PulpcoreServiceAccountName(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) string {
+	name := ""
+	switch pulpcoreType {
+	case settings.API:
+		name = pulp.Spec.Api.ServiceAccountName
+	case settings.CONTENT:
+		name = pulp.Spec.Content.ServiceAccountName
+	case settings.WORKER:
+		name = pulp.Spec.Worker.ServiceAccountName
+	}
+	if name == "" {
+		return settings.PulpServiceAccount(pulp.Name)
+	}
+	return name
+}
+
+// customSAImagePullSecrets returns the image pull secrets to set in the pods that do not
+// use the operator-managed ServiceAccount (which already holds them)
+func customSAImagePullSecrets(pulp pulpv1.Pulp, pulpcoreType settings.PulpcoreType) []corev1.LocalObjectReference {
+	if PulpcoreServiceAccountName(pulp, pulpcoreType) == settings.PulpServiceAccount(pulp.Name) {
+		return nil
+	}
+	var secrets []corev1.LocalObjectReference
+	for _, name := range pulp.Spec.ImagePullSecrets {
+		secrets = append(secrets, corev1.LocalObjectReference{Name: name})
+	}
+	return secrets
+}

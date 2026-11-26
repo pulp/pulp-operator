@@ -1,0 +1,44 @@
+---
+apiVersion: repo-manager.pulpproject.org/v1
+kind: Pulp
+metadata:
+  name: example-pulp
+spec:
+  api:
+    replicas: 1
+    extra_volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: my-secrets
+    extra_volume_mounts:
+      - name: secrets-store
+        mountPath: /mnt/secrets
+        readOnly: true
+  content:
+    replicas: 1
+  worker:
+    replicas: 1
+    service_account_name: pulp-worker
+    extra_volumes:
+      - name: signing-scripts
+        secret:
+          secretName: my-signing-scripts
+          defaultMode: 0755
+    extra_volume_mounts:
+      - name: signing-scripts
+        mountPath: /opt/pulp-scripts
+  web:
+    replicas: 1
+  database:
+    postgres_image: postgres:15
+    postgres_storage_class: standard
+
+  file_storage_access_mode: "ReadWriteMany"
+  file_storage_size: "2Gi"
+  file_storage_storage_class: standard
+
+  ingress_type: nodeport
+  nodeport_port: 30000
