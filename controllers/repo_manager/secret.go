@@ -620,24 +620,19 @@ func debugLogging(resources controllers.FunctionResources, pulpSettings *string)
 // needsMigrationSetting defines settings.py with some specific configurations that when changed will
 // also trigger a migration job
 func needsMigrationSetting(resources controllers.FunctionResources, pulpSettings *string, customSettings map[string]struct{}) {
-	for operatorFieldName, pulpFieldName := range controllers.MigrationSettingsList() {
-		customSettingsFound := false
-		if _, exists := customSettings[pulpFieldName]; exists {
-			logMessage := fmt.Sprintf("%v should not be defined in custom_pulp_settings. Use pulp.Spec.%v instead", pulpFieldName, strings.ToLower(pulpFieldName))
+	for _, s := range controllers.MigrationSettingsList() {
+		if _, exists := customSettings[s.PulpField]; exists {
+			logMessage := fmt.Sprintf("%v should not be defined in custom_pulp_settings. Use pulp.Spec.%v instead", s.PulpField, strings.ToLower(s.PulpField))
 			controllers.CustomZapLogger().Warn(logMessage)
-			customSettingsFound = true
-		}
-		if customSettingsFound {
 			continue
 		}
 
-		config := reflect.ValueOf(resources.Pulp.Spec).FieldByName(operatorFieldName).Bool()
+		config := reflect.ValueOf(resources.Pulp.Spec).FieldByName(s.OperatorField).Bool()
 		if !config {
-			return
+			continue
 		}
 		configCapitalized := cases.Title(language.English, cases.Compact).String(strconv.FormatBool(config))
-		*pulpSettings = *pulpSettings + fmt.Sprintf("%v = %v\n", pulpFieldName, configCapitalized)
-
+		*pulpSettings = *pulpSettings + fmt.Sprintf("%v = %v\n", s.PulpField, configCapitalized)
 	}
 }
 
