@@ -30,6 +30,7 @@ Api defines desired state of pulpcore-api resources
 | hpa | HPA defines the Horizontal Pod Autoscaler configuration for the pulp-api deployment | *[HPA](#hpa) | false |
 | affinity | Affinity is a group of affinity scheduling rules. | *corev1.Affinity | false |
 | node_selector | NodeSelector for the Pulp pods. | map[string]string | false |
+| pod_security_context | PodSecurityContext defines the pod-level security attributes for the pulp-api pods. If unset, runAsUser and fsGroup default to 700. | *corev1.PodSecurityContext | false |
 | tolerations | Node tolerations for the Pulp pods. | []corev1.Toleration | false |
 | topology_spread_constraints | Topology rule(s) for the pods. | []corev1.TopologySpreadConstraint | false |
 | gunicorn_timeout | The timeout for the gunicorn process. Default: 90 | int | false |
@@ -82,6 +83,7 @@ Content defines desired state of pulpcore-content resources
 | resource_requirements | Resource requirements for the pulp-content container | corev1.ResourceRequirements | false |
 | affinity | Affinity is a group of affinity scheduling rules. | *corev1.Affinity | false |
 | node_selector | NodeSelector for the Pulp pods. | map[string]string | false |
+| pod_security_context | PodSecurityContext defines the pod-level security attributes for the pulp-content pods. If unset, runAsUser and fsGroup default to 700. | *corev1.PodSecurityContext | false |
 | tolerations | Node tolerations for the Pulp pods. | []corev1.Toleration | false |
 | topology_spread_constraints | Topology rule(s) for the pods. | []corev1.TopologySpreadConstraint | false |
 | gunicorn_timeout | The timeout for the gunicorn process. Default: 90 | int | false |
@@ -324,6 +326,7 @@ Web defines desired state of pulpcore-web (reverse-proxy) resources
 | readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |
 | livenessProbe | Periodic probe of container liveness. Container will be restarted if the probe fails. | *corev1.Probe | false |
 | node_selector | NodeSelector for the Web pods. | map[string]string | false |
+| pod_security_context | PodSecurityContext defines the pod-level security attributes for the pulp-web pods. If unset, runAsUser and fsGroup default to 700. | *corev1.PodSecurityContext | false |
 | pdb | PodDisruptionBudget is an object to define the max disruption that can be caused to a collection of pods | *policy.PodDisruptionBudgetSpec | false |
 | strategy | The deployment strategy to use to replace existing pods with new ones. | appsv1.DeploymentStrategy | false |
 | service_annotations | Annotations for the service | map[string]string | false |
@@ -345,6 +348,7 @@ Worker defines desired state of pulpcore-worker resources
 | resource_requirements | Resource requirements for the pulp-api container | corev1.ResourceRequirements | false |
 | affinity | Affinity is a group of affinity scheduling rules. | *corev1.Affinity | false |
 | node_selector | NodeSelector for the Pulp pods. | map[string]string | false |
+| pod_security_context | PodSecurityContext defines the pod-level security attributes for the pulp-worker pods. If unset, runAsUser and fsGroup default to 700. | *corev1.PodSecurityContext | false |
 | tolerations | Node tolerations for the Pulp pods. | []corev1.Toleration | false |
 | topology_spread_constraints | Topology rule(s) for the pods. | []corev1.TopologySpreadConstraint | false |
 | readinessProbe | Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. | *corev1.Probe | false |

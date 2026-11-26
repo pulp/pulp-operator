@@ -282,6 +282,12 @@ spec:
         path: api.pod_labels
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: PodSecurityContext defines the pod-level security attributes
+          for the pulp-api pods. If unset, runAsUser and fsGroup default to 700.
+        displayName: Pod Security Context
+        path: api.pod_security_context
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container service readiness. Container will
           be removed from service endpoints if the probe fails.
         displayName: Readiness Probe
@@ -496,6 +502,12 @@ spec:
       - description: Labels to add to content pods
         displayName: Pod Labels
         path: content.pod_labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: PodSecurityContext defines the pod-level security attributes
+          for the pulp-content pods. If unset, runAsUser and fsGroup default to 700.
+        displayName: Pod Security Context
+        path: content.pod_security_context
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container service readiness. Container will
@@ -1019,6 +1031,12 @@ spec:
         path: web.pod_labels
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: PodSecurityContext defines the pod-level security attributes
+          for the pulp-web pods. If unset, runAsUser and fsGroup default to 700.
+        displayName: Pod Security Context
+        path: web.pod_security_context
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container service readiness. Container will
           be removed from service endpoints if the probe fails.
         displayName: Readiness Probe
@@ -1101,6 +1119,12 @@ spec:
       - description: Labels to add to worker pods
         displayName: Pod Labels
         path: worker.pod_labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: PodSecurityContext defines the pod-level security attributes
+          for the pulp-worker pods. If unset, runAsUser and fsGroup default to 700.
+        displayName: Pod Security Context
+        path: worker.pod_security_context
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - description: Periodic probe of container service readiness. Container will

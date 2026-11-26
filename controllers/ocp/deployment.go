@@ -17,15 +17,25 @@ limitations under the License.
 package ocp
 
 import (
+	"reflect"
+
 	pulpv1 "github.com/pulp/pulp-operator/apis/repo-manager.pulpproject.org/v1"
 	"github.com/pulp/pulp-operator/controllers"
+	"github.com/pulp/pulp-operator/controllers/settings"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// defaultsForOCPDeployment sets the common Deployment configurations specific to OCP clusters
-func defaultsForOCPDeployment(deployment *appsv1.Deployment, pulp *pulpv1.Pulp) {
+// defaultsForOCPDeployment sets the common Deployment configurations specific to OCP clusters.
+// If the CR sets an explicit pod_security_context for this component, that override is honored
+// instead of being discarded, matching how web.go already behaves on OCP.
+func defaultsForOCPDeployment(deployment *appsv1.Deployment, pulp *pulpv1.Pulp, pulpcoreType settings.PulpcoreType) {
+	specField := reflect.ValueOf(pulp.Spec).FieldByName(string(pulpcoreType)).FieldByName("PodSecurityContext").Interface().(*corev1.PodSecurityContext)
+	if specField != nil {
+		return
+	}
+
 	// in OCP we use SCC so there is no need to define PodSecurityContext
 	deployment.Spec.Template.Spec.SecurityContext = &corev1.PodSecurityContext{}
 }
@@ -40,7 +50,7 @@ func (d DeploymentAPIOCP) Deploy(resources controllers.FunctionResources) client
 
 	// get the current pulpcore-api common deployment definition
 	deployment := d.DeploymentAPICommon.Deploy(resources).(*appsv1.Deployment)
-	defaultsForOCPDeployment(deployment, resources.Pulp)
+	defaultsForOCPDeployment(deployment, resources.Pulp, settings.API)
 
 	// update the hash label
 	controllers.AddHashLabel(resources, deployment)
@@ -58,7 +68,7 @@ func (d DeploymentContentOCP) Deploy(resources controllers.FunctionResources) cl
 
 	// get the current pulpcore-content common deployment definition
 	deployment := d.DeploymentContentCommon.Deploy(resources).(*appsv1.Deployment)
-	defaultsForOCPDeployment(deployment, resources.Pulp)
+	defaultsForOCPDeployment(deployment, resources.Pulp, settings.CONTENT)
 
 	// update the hash label
 	controllers.AddHashLabel(resources, deployment)
@@ -76,7 +86,7 @@ func (d DeploymentWorkerOCP) Deploy(resources controllers.FunctionResources) cli
 
 	// get the current pulpcore-worker common deployment definition
 	deployment := d.DeploymentWorkerCommon.Deploy(resources).(*appsv1.Deployment)
-	defaultsForOCPDeployment(deployment, resources.Pulp)
+	defaultsForOCPDeployment(deployment, resources.Pulp, settings.WORKER)
 
 	// update the hash label
 	controllers.AddHashLabel(resources, deployment)
