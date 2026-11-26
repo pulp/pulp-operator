@@ -1,0 +1,1 @@
+Stop hardcoding IPFamilies/IPFamilyPolicy on the api, content, database, and otel Services, letting Kubernetes default them from the cluster's own Service CIDR instead (matching pulp-web and the redis Service). Fixes Service creation failures on single-stack IPv6 clusters.
