@@ -1,0 +1,1 @@
+Fixed `settings.py` changing between reconciles (and dropping `REDIRECT_TO_OBJECT_STORAGE`) because the migration-related settings were written in random map order, which made the operator reprovision the pulpcore pods in a loop.
