@@ -182,6 +182,9 @@ PulpJob defines the jobs used by pulpcore containers to run single-shot administ
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
 | container |  | [PulpContainer](#pulpcontainer) | false |
+| node_selector | NodeSelector for the Job pods. | map[string]string | false |
+| tolerations | Node tolerations for the Job pods. | []corev1.Toleration | false |
+| affinity | Affinity is a group of affinity scheduling rules for the Job pods. | *corev1.Affinity | false |
 
 [Back to Custom Resources](#custom-resources)
 

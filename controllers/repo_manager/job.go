@@ -67,6 +67,7 @@ func (r *RepoManagerReconciler) updateAdminPasswordJob(ctx context.Context, pulp
 		&jobTTL,
 		containers,
 		volumes,
+		pulp.Spec.AdminPasswordJob,
 	})
 
 	ctrl.SetControllerReference(pulp, job, r.Scheme)
@@ -222,6 +223,7 @@ func (r *RepoManagerReconciler) migrationJob(ctx context.Context, pulp *pulpv1.P
 		&jobTTL,
 		containers,
 		volumes,
+		pulp.Spec.MigrationJob,
 	})
 
 	ctrl.SetControllerReference(pulp, job, r.Scheme)
@@ -292,6 +294,8 @@ func (r *RepoManagerReconciler) updateContentChecksumsJob(ctx context.Context, p
 		&jobTTL,
 		containers,
 		volumes,
+		// like its container resources, this Job follows the migration_job settings
+		pulp.Spec.MigrationJob,
 	})
 
 	ctrl.SetControllerReference(pulp, job, r.Scheme)
@@ -524,6 +528,7 @@ func (r *RepoManagerReconciler) signingScriptJob(ctx context.Context, pulp *pulp
 		&jobTTL,
 		[]corev1.Container{signingScriptContainer(ctx, pulp, *secret, *r)},
 		signingScriptJobVolumes(pulp, *secret),
+		pulp.Spec.SigningJob,
 	})
 
 	job.Spec.Template.Spec.InitContainers = []corev1.Container{initContainer(pulp, pulp.Spec.SigningJob.PulpContainer.ResourceRequirements, signingScriptContainerImage(*pulp))}
@@ -612,6 +617,7 @@ type pulpJobConfig struct {
 	ttlSecondsAfterFinished *int32
 	containers              []corev1.Container
 	volumes                 []corev1.Volume
+	scheduling              pulpv1.PulpJob
 }
 
 // commonJob returns a k8s Job with a common resource definition
@@ -641,6 +647,9 @@ func commonJob(jobConfig pulpJobConfig) *batchv1.Job {
 					Volumes:            jobConfig.volumes,
 					ServiceAccountName: jobConfig.saName,
 					SecurityContext:    securityContext,
+					NodeSelector:       jobConfig.scheduling.NodeSelector,
+					Tolerations:        jobConfig.scheduling.Tolerations,
+					Affinity:           jobConfig.scheduling.Affinity,
 				},
 			},
 		},
