@@ -1,0 +1,1 @@
+Changed the default API liveness probe from `/status/` to `/livez/`. `/status/` runs database queries, so a slow database made the liveness probe restart healthy API pods.

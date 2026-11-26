@@ -511,7 +511,7 @@ var _ = Describe("Pulp controller", Ordered, func() {
 		FailureThreshold: 10,
 		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
-				Path: "/pulp/api/v3/status/",
+				Path: "/pulp/api/v3/livez/",
 				Port: intstr.IntOrString{
 					IntVal: 24817,
 				},
