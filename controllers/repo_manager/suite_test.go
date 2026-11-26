@@ -19,6 +19,7 @@ package repo_manager_test
 import (
 	"context"
 	"go/build"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -36,6 +37,25 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	//+kubebuilder:scaffold:imports
 )
+
+// envtestBinaryAssetsDir returns the path to envtest control-plane binaries
+// installed via `make testbin` (i.e. bin/k8s/<version>-<os>-<arch>).
+// This makes raw `go test ./...` and IDE runs work without exporting
+// KUBEBUILDER_ASSETS, which is the modern kubebuilder pattern. When the
+// env var IS set (e.g. by `make test`), envtest uses it instead.
+func envtestBinaryAssetsDir() string {
+	basePath := filepath.Join("..", "..", "bin", "k8s")
+	entries, err := os.ReadDir(basePath)
+	if err != nil {
+		return ""
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			return filepath.Join(basePath, entry.Name())
+		}
+	}
+	return ""
+}
 
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
@@ -64,6 +84,7 @@ var _ = BeforeSuite(func() {
 			filepath.Join(build.Default.GOPATH, "pkg", "mod", "github.com", "openshift", "api@v0.0.0-20220825183227-75c111537c4d", "route", "v1", "route.crd.yaml"),
 		},
 		ErrorIfCRDPathMissing: true,
+		BinaryAssetsDirectory: envtestBinaryAssetsDir(),
 	}
 
 	var err error
